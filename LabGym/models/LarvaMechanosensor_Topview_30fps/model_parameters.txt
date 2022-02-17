@@ -1,0 +1,5 @@
+classnames,dim_tconv,dim_conv,channel,time_step,network,level_tconv,level_conv,inner_code,std,background_free
+crawling,8,32,1,20,2,1,2,1,0,0
+hunching,8,32,1,20,2,1,2,1,0,0
+immobile,8,32,1,20,2,1,2,1,0,0
+turning,8,32,1,20,2,1,2,1,0,0

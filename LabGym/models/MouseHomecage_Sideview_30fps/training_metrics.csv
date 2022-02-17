@@ -1,0 +1,24 @@
+,precision,recall,f1-score,support
+behind the wheel,0.94,0.91,0.93,35.00
+body grooming fv,0.71,0.83,0.77,18.00
+body grooming sv,0.85,0.79,0.82,29.00
+chewing fv,0.75,0.72,0.73,25.00
+chewing sv,0.89,0.78,0.83,40.00
+coming down,0.96,0.96,0.96,75.00
+face grooming fv,0.85,0.93,0.89,30.00
+face grooming sv,0.83,0.83,0.83,18.00
+foraging fv,0.93,0.92,0.93,74.00
+foraging sv,0.85,0.94,0.90,100.00
+rearing up,0.92,0.92,0.92,63.00
+resting on the wheel,0.97,0.85,0.90,66.00
+running on the wheel,0.91,0.98,0.94,85.00
+sniffing fv,0.68,0.57,0.62,23.00
+sniffing sv,0.84,0.89,0.86,46.00
+standing,0.94,0.95,0.94,62.00
+turning front,0.76,0.81,0.79,16.00
+turning side,0.92,0.79,0.85,43.00
+unknown bv,0.97,0.96,0.97,78.00
+walking,0.88,0.92,0.90,48.00
+accuracy,0.90,0.90,0.90,0.90
+macro avg,0.87,0.86,0.86,974.00
+weighted avg,0.90,0.90,0.89,974.00
