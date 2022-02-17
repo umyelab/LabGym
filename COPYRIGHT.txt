@@ -1,0 +1,4 @@
+LabGym
+(C) 2021 The Regents of the University of Michigan
+Bing Ye Lab : https://www.lsi.umich.edu/science/our-labs/bing-ye-lab
+Developers: Yujia Hu and Bing Ye
