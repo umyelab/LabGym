@@ -1239,6 +1239,8 @@ class WindowLv1_Tester(wx.Frame):
 	def select_model(self,event):
 
 		models=[i for i in os.listdir(self.model_path) if os.path.isdir(os.path.join(self.model_path,i))]
+		if '__pycache__' in models:
+			models.remove('__pycache__')
 		models.sort()
 
 		dialog=wx.SingleChoiceDialog(self,message='Select a neural network to test',
@@ -1264,6 +1266,8 @@ class WindowLv1_Tester(wx.Frame):
 	def remove_model(self,event):
 
 		models=[i for i in os.listdir(self.model_path) if os.path.isdir(os.path.join(self.model_path,i))]
+		if '__pycache__' in models:
+			models.remove('__pycache__')
 		models.sort()
 
 		dialog=wx.SingleChoiceDialog(self,message='Select a neural network to delete',
@@ -1509,6 +1513,8 @@ class WindowLv1_Analyzer(wx.Frame):
 			self.model_path=os.path.join(the_absolute_current_path,'models')
 
 		models=[i for i in os.listdir(self.model_path) if os.path.isdir(os.path.join(self.model_path,i))]
+		if '__pycache__' in models:
+			models.remove('__pycache__')
 		models.sort()
 		if 'Choose a new directory' not in models:
 			models.append('Choose a new directory')
