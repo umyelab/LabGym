@@ -1,1 +1,1 @@
-[link](http://github.com/umyelab/LabGym)
+LabGym is a multi-animal-tracking and deep-learning based package for quantifying user-defined animal behaviors without restrictions on animal species or behavior types. It also provides users a way to generate visualizable datasets for the user-defined behaviors.
