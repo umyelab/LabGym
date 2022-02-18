@@ -2,6 +2,10 @@ LabGym is a multi-animal-tracking and deep-learning based package for quantifyin
 
 The graphical user interface (GUI) of LabGym has 4 functional units: 'Generate Datasets', 'Train Networks', 'Test Networks', and 'Analyze Behaviors'.
 
+
+![alt text](https://github.com/yujiahu415/LabGym/blob/3cac15a69c386673853d91a93f73818f35726e71/Examples/Graphical_user_interface.png)
+
+
 First you need to use the 'Generate Datasets' functional unit to generate some visualizable behavior data pairs (a data pair comprises an animation & a pattern image) like:
 
 
