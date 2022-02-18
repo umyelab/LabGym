@@ -1,6 +1,6 @@
 LabGym is a multi-animal-tracking and deep-learning based package for quantifying user-defined animal behaviors without restrictions on animal species or behavior types. It also provides users a way to generate visualizable datasets for the user-defined behaviors.
 
-The graphical user interface (GUI) of LabGym has 4 functional units: 'Generate Datasets', 'Train Networks', 'Test Networks', and 'Analyze Behaviors'.
+The graphical user interface (GUI) of LabGym has 4 functional units: 'Generate Datasets', 'Train Networks', 'Test Networks', and 'Analyze Behaviors':
 
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/3cac15a69c386673853d91a93f73818f35726e71/Examples/Graphical_user_interface.png)
@@ -44,34 +44,36 @@ The outputs of analysis results are:
 
 
 
+
+
 To use LabGym:
 
 First install Python3 (version >= 3.9)
 
 Then in your terminal or cmd prompt, type:
 
-    `pip install LabGym`
+    pip install LabGym
 
 or
 
-    `pip3 install LabGym`
+    pip3 install LabGym
 
 or
 
-    `python3 -m pip install LabGym`
+    python3 -m pip install LabGym
 
 or
 
-    `py -m pip install LabGym`
+    py -m pip install LabGym
 
 After LabGym is installed, activate python interaction shell by typing 'python3' or 'py' in the terminal or cmd prompt.
 
 Then type:
 
-    `from LabGym import gui`
+    from LabGym import gui
 
 Then type:
 
-    `gui.gui()`
+    gui.gui()
 
 Now the graphical user interface is initiated and is ready to use.
