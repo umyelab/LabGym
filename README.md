@@ -40,3 +40,38 @@ The outputs of analysis results are:
 
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/6ea290e8b86b30ae882631a8301ef6c80545f802/Examples/Analysis_output.jpg)
+
+
+
+
+To use LabGym:
+
+First install Python3 (version >= 3.9)
+
+Then in your terminal or cmd prompt, type:
+
+    `pip install LabGym`
+
+or
+
+    `pip3 install LabGym`
+
+or
+
+    `python3 -m pip install LabGym`
+
+or
+
+    `py -m pip install LabGym`
+
+After LabGym is installed, activate python interaction shell by typing 'python3' or 'py' in the terminal or cmd prompt.
+
+Then type:
+
+    `from LabGym import gui`
+
+Then type:
+
+    `gui.gui()`
+
+Now the graphical user interface is initiated and is ready to use.
