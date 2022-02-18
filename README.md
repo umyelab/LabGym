@@ -1,4 +1,4 @@
-LabGym is a multi-animal-tracking and deep-learning based package for quantifying user-defined animal behaviors without restrictions on animal species or behavior types. It also provides users a way to generate visualizable datasets for the user-defined behaviors.
+LabGym is a multi-animal-tracking and deep-learning based package for end-to-end classification and quantification of user-defined animal behaviors without restrictions on animal species or behavior types. It also provides users a way to generate visualizable datasets for the user-defined behaviors.
 
 The graphical user interface (GUI) of LabGym has 4 functional units: 'Generate Datasets', 'Train Networks', 'Test Networks', and 'Analyze Behaviors':
 
@@ -15,9 +15,9 @@ First you need to use the 'Generate Datasets' functional unit to generate some v
 ![alt text](https://github.com/yujiahu415/LabGym/blob/6ea290e8b86b30ae882631a8301ef6c80545f802/Examples/Rats.gif)
 
 
-The duration of the animations are user-definable.
+The duration of the animation is user-definable.
 
-And manually sort them into different folders under the behavior names defined by you. Then input all the folders into LabGym to let it generated a labeled training dataset for training a 'Categorizer' using the 'Train Network functional unit'. There are various complexity levels of the Cateogirzer for you to choose to suit diffenret behavior datasets.
+Next, you need to manually sort them into different folders under the behavior names defined by you. Then input all the folders into LabGym to let it generated a labeled training dataset for training a 'Categorizer' using the 'Train Network functional unit'. There are various complexity levels of the Cateogirzer for you to choose to suit diffenret behavior datasets. This is the end-to-end process that you 'teach' LabGym to recognize the behaviors defined by you. 
 
 After the Categorizer is trained, you can use 'Test Networks' functional unit to test it in unbiased manner and it will appear in the 'Analyze Behavior' functional unit. You can select it to analyze behavior videos and output annoated videos with behavior names (and %confidence) in each frame, like:
 
