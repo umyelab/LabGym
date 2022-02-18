@@ -1,6 +1,8 @@
+LabGym is a multi-animal-tracking and deep-learning based package for end-to-end classification and quantification of user-defined animal behaviors without restrictions on animal species or behavior types. It also provides users a way to generate visualizable datasets for the user-defined behaviors.
+
+Please cite:
 https://www.biorxiv.org/content/10.1101/2022.02.17.480911v1
 
-LabGym is a multi-animal-tracking and deep-learning based package for end-to-end classification and quantification of user-defined animal behaviors without restrictions on animal species or behavior types. It also provides users a way to generate visualizable datasets for the user-defined behaviors.
 
 The graphical user interface (GUI) of LabGym has 4 functional units: 'Generate Datasets', 'Train Networks', 'Test Networks', and 'Analyze Behaviors':
 
