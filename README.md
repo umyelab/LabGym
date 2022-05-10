@@ -1,9 +1,12 @@
-What is LabGym?
+# What is LabGym?
 
 LabGym is a multi-animal-tracking and deep-learning based package for end-to-end classification and quantification of user-defined animal behaviors without restrictions on animal species or behavior types. It also provides users a way to generate visualizable datasets for the user-defined behaviors.
 
 Please cite:
 https://www.biorxiv.org/content/10.1101/2022.02.17.480911v2
+
+
+
 
 
 
@@ -13,12 +16,18 @@ The graphical user interface (GUI) of LabGym has 4 functional units: 'Generate D
 
 
 
+
+
+
 First you need to use the 'Generate Datasets' functional unit to generate some visualizable behavior data pairs (a data pair comprises an animation & a pattern image) like:
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/a9c77cd1f25ca1edc97aadb2257dd8fc0552483d/Examples/Larvae.gif)
 ![alt text](https://github.com/yujiahu415/LabGym/blob/4484050e52480cdc0e0611eaff3545dfedf03908/Examples/Flies.gif)
 ![alt text](https://github.com/yujiahu415/LabGym/blob/6ea290e8b86b30ae882631a8301ef6c80545f802/Examples/Mice.gif)
 ![alt text](https://github.com/yujiahu415/LabGym/blob/6ea290e8b86b30ae882631a8301ef6c80545f802/Examples/Rats.gif)
+
+
+
 
 
 
@@ -36,10 +45,16 @@ After the Categorizer is trained, you can use 'Test Networks' functional unit to
 
 
 
+
+
+
 Notably, LabGym calculates diverse behavioral parameters to provide quantitative measurements of the intensity and dynamics of each user-defined behavior, and the animal movement kinetics during a behavior, like:
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/6ea290e8b86b30ae882631a8301ef6c80545f802/Examples/Quantify%20behavior_1.jpg)
 ![alt text](https://github.com/yujiahu415/LabGym/blob/6ea290e8b86b30ae882631a8301ef6c80545f802/Examples/Quantify%20behavior_2.jpg)
+
+
+
 
 
 
@@ -52,9 +67,16 @@ The outputs of analysis results are:
 
 
 
-How to use LabGym:
+
+
+
+
+# How to use LabGym:
 
 LabGym does not require labeling or training to track the animals. In turn, it does have preferred video recording setting: LabGym works best for videos with stable background and illumination (the illumination can have dark-to-bright transitions but need to be stable before and after transitions). Animals are expected to present some locational changes instead of being completely immobile during a video recording. Users need to specify a time window during which the animals are moving for background extraction (the shorter the duration of the time window is, the shorter processing time it would take).
+
+
+
 
 
 
@@ -101,7 +123,11 @@ A manual containing explanations on all the buttons in the GUI and the tips for 
 
 
 
-If you encounter any issue in using LabGym:
+
+
+
+
+# If you encounter any issue in using LabGym:
 
 Please first refer to the issue page (https://github.com/umyelab/LabGym/issues?q=) to see whether it was listed in addressed issues. If not, please contact the author: Yujia Hu (henryhu@umich.edu).
 
@@ -110,17 +136,19 @@ Please first refer to the issue page (https://github.com/umyelab/LabGym/issues?q
 
 
 
-Change logs:
+
+
+
+
+# Change logs:
 
 
 
 v1.2:
 
 1. Now LabGym can also be used in categorizing binary behaviors (yes or no behavior, or behaviors with only 2 categories)
-
 2. Fixed a bug that caused a path error if users did not select any behavior parameters for quantification.
-
-3. Now users have an option to choose whether to relink newly detected animals to deregistered IDs. 
+3. Now users have an option to choose whether to relink newly detected animals to deregistered IDs.
 
 
 
@@ -133,6 +161,8 @@ Changed a typo in setup.
 v1.0:
 
 Initial release.
+
+
 
 
 
