@@ -599,14 +599,13 @@ class WindowLv1_Generator(wx.Frame):
 
 					if self.animal_number==1:
 						self.entangle_number=1
-						self.deregister=0
 					else:
 						if self.animal_collision==0:
 							self.entangle_number=1
-							self.deregister=1
 						else:
 							self.entangle_number=self.animal_number
-							self.deregister=0
+
+					self.deregister=0
 
 					AA=AnalyzeAnimal()
 					AA.prepare_analysis(i,self.result_path,self.delta,self.animal_number,self.entangle_number,names_and_colors=None,
@@ -1715,6 +1714,14 @@ class WindowLv1_Analyzer(wx.Frame):
 				'Exclude entangled animals',wx.YES_NO|wx.ICON_QUESTION)
 			if dialog.ShowModal()==wx.ID_YES:
 				self.animal_collision=0
+				dialog1=wx.MessageDialog(self,
+				'Allow to relink reappeared animals\nto the lost-track IDs?',
+				'Relink IDs',wx.YES_NO|wx.ICON_QUESTION)
+				if dialog1.ShowModal()==wx.ID_YES:
+					self.deregister=0
+				else:
+					self.deregister=1
+				dialog1.Destroy()
 			else:
 				self.animal_collision=1
 			dialog.Destroy()
@@ -1991,7 +1998,6 @@ class WindowLv1_Analyzer(wx.Frame):
 				else:
 					if self.animal_collision==0:
 						self.entangle_number=1
-						self.deregister=1
 					else:
 						self.entangle_number=self.animal_number
 						self.deregister=0
@@ -2040,7 +2046,8 @@ class WindowLv1_Analyzer(wx.Frame):
 					all_summary=pd.DataFrame()
 					for folder in folders:
 						individual_summary=os.path.join(self.result_path,folder,behavior_name,'all_summary.xlsx')
-						all_summary=all_summary.append(pd.read_excel(individual_summary), ignore_index=True)
+						if os.path.exists(individual_summary) is True:
+							all_summary=all_summary.append(pd.read_excel(individual_summary), ignore_index=True)
 					all_summary.to_excel(os.path.join(self.result_path,behavior_name+'_summary.xlsx'),float_format='%.2f')
 
 
@@ -2060,7 +2067,7 @@ class InitialWindow(wx.Frame):
 		panel=wx.Panel(self)
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
 
-		self.text_1=wx.StaticText(panel,label='Welcome to LabGymnastics!\n\nVersion 1.1',
+		self.text_1=wx.StaticText(panel,label='Welcome to LabGymnastics!\n\nVersion 1.2',
 			style=wx.ALIGN_CENTER|wx.ST_ELLIPSIZE_END)
 		boxsizer.Add(0,50,0)
 		boxsizer.Add(self.text_1,0,wx.LEFT|wx.RIGHT|wx.EXPAND,5)
@@ -2123,7 +2130,7 @@ def gui():
 
 	app=wx.App()
 	
-	InitialWindow('LabGymnastics ver 1.1')
+	InitialWindow('LabGymnastics ver 1.2')
 
 	print('The graphical user interface initialized!')
 	
