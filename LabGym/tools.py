@@ -509,7 +509,7 @@ def contour_frame(frame,animal_number,entangle_number,background,stim_background
 	
 	for i in cnts:
 		if animal_number>1:
-			if contour_area*0.5<cv2.contourArea(i)<contour_area*(entangle_number+0.8):
+			if contour_area*0.3<cv2.contourArea(i)<contour_area*(entangle_number+0.9):
 				contours.append(i)
 		else:
 			if contour_area*0.2<cv2.contourArea(i)<contour_area*2.5:
@@ -748,6 +748,8 @@ def plot_evnets(result_path,event_probability,time_points,names_and_colors,to_in
 		colorbar.outline.set_linewidth(0)
 			
 		plt.savefig(os.path.join(result_path,behavior_name+'_colorbar.png'),bbox_inches='tight')
+
+	plt.close('all')
 
 	print('Behavioral events stored in: '+str(result_path))
 

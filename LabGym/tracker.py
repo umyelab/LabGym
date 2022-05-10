@@ -211,8 +211,8 @@ class TrackAnimals():
 
 			for i in list(set(list(range(0,len(existing_centers))))-set(used_exi_indx)):
 
-				# if lost track over 1 seconds
-				if self.to_deregister[i]>fps:
+				# if lost track over 2 seconds
+				if self.to_deregister[i]>2*fps:
 					# deregister the animal
 					self.centers[i].append((-10000,-10000))
 				else:

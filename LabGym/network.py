@@ -446,7 +446,7 @@ class DeepNetwork():
 			x=BatchNormalization()(x)
 			x=Dropout(0.5)(x)
 			if classes==2:
-				x=Dense(1,activation='softmax')(x)
+				x=Dense(1,activation='sigmoid')(x)
 			else:
 				x=Dense(classes,activation='softmax')(x)
 
@@ -500,7 +500,7 @@ class DeepNetwork():
 			x=BatchNormalization()(x)
 			x=Dropout(0.5)(x)
 			if classes==2:
-				x=Dense(1,activation='softmax')(x)
+				x=Dense(1,activation='sigmoid')(x)
 			else:
 				x=Dense(classes,activation='softmax')(x)
 
@@ -651,7 +651,7 @@ class DeepNetwork():
 
 			x=Dropout(0.5)(x)
 			if classes==2:
-				x=Dense(1,activation='softmax')(x)
+				x=Dense(1,activation='sigmoid')(x)
 			else:
 				x=Dense(classes,activation='softmax')(x)
 
@@ -720,7 +720,7 @@ class DeepNetwork():
 				
 			x=Dropout(0.5)(x)
 			if classes==2:
-				x=Dense(1,activation='softmax')(x)
+				x=Dense(1,activation='sigmoid')(x)
 			else:
 				x=Dense(classes,activation='softmax')(x)
 
@@ -775,7 +775,7 @@ class DeepNetwork():
 		outputs=BatchNormalization()(outputs)
 		outputs=Dropout(0.5)(outputs)
 		if classes==2:
-			predictions=Dense(1,activation='softmax')(outputs)
+			predictions=Dense(1,activation='sigmoid')(outputs)
 		else:
 			predictions=Dense(classes,activation='softmax')(outputs)
 
@@ -925,6 +925,7 @@ class DeepNetwork():
 		if out_path is not None:
 			plt.savefig(os.path.join(out_path,'training_history.png'))
 			print('Training reports saved in: '+str(out_path))
+		plt.close('all')
 
 
 	# train the convolutional recurrent network
@@ -1072,6 +1073,7 @@ class DeepNetwork():
 		if out_path is not None:
 			plt.savefig(os.path.join(out_path,'training_history.png'))
 			print('Training reports saved in: '+str(out_path))
+		plt.close('all')
 
 
 	# train the combined network for both animation and pattern_image
@@ -1202,6 +1204,7 @@ class DeepNetwork():
 		if out_path is not None:
 			plt.savefig(os.path.join(out_path,'training_history.png'))
 			print('Training reports saved in: '+str(out_path))
+		plt.close('all')
 
 
 	# test the trained model

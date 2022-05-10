@@ -31,7 +31,6 @@ from collections import OrderedDict,deque
 import tensorflow as tf
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array
-import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap,Normalize
 from matplotlib.colorbar import ColorbarBase
 import pandas as pd
@@ -491,15 +490,35 @@ class AnalyzeAnimal():
 						if check>self.length/2:
 							probability=-1
 						else:
-							probability=prediction[behavior_names.index(behavior_name)]
+							if len(behavior_names)==2:
+								if behavior_names.index(behavior_name)==0:
+									probability=1-prediction[0]
+								else:
+									probability=prediction[0]
+							else:
+								probability=prediction[behavior_names.index(behavior_name)]
 					self.all_behavior_parameters[behavior_name]['probability'][n].append(probability)
 				if i<self.length:
 					self.event_probability[n].append(['NA',-1])
 				else:
-					if sorted(prediction)[-1]-sorted(prediction)[-2]>uncertain:
-						self.event_probability[n].append([behavior_names[np.argmax(prediction)],max(prediction)])
+					if len(behavior_names)==2:
+						if prediction[0]>0.5:
+							if prediction[0]-(1-prediction[0])>uncertain:
+								self.event_probability[n].append([behavior_names[1],prediction[0]])
+							else:
+								self.event_probability[n].append(['NA',0])
+						elif prediction[0]<0.5:
+							if (1-prediction[0])-prediction[0]>uncertain:
+								self.event_probability[n].append([behavior_names[0],1-prediction[0]])
+							else:
+								self.event_probability[n].append(['NA',0])
+						else:
+							self.event_probability[n].append(['NA',0])
 					else:
-						self.event_probability[n].append(['NA',0])
+						if sorted(prediction)[-1]-sorted(prediction)[-2]>uncertain:
+							self.event_probability[n].append([behavior_names[np.argmax(prediction)],max(prediction)])
+						else:
+							self.event_probability[n].append(['NA',0])
 				i+=1
 				idx+=1
 
@@ -1247,6 +1266,10 @@ class AnalyzeAnimal():
 		'''
 
 		all_parameters=[]
+
+		if self.analyze==0:
+			all_parameters.append('probability')
+			
 		if 'angle' in included_parameters:
 			all_parameters.append('angle')
 		if 'count' in included_parameters:
