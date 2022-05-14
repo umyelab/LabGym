@@ -40,17 +40,15 @@ import seaborn as sb
 # extract static background
 def extract_background(frames,minimum=0,invert=0):
 
-	# frame_min: the first frame
+	# frame_initial: the first frame
 	# minimum: if 0, use minimum, otherwise use stable value detector for background extraction
 	# invert: if 0, animals brighter than the background
 	#         if 1, invert the pixel value (for animals darker than the background)
 	#         if 2, use absdiff
 
-	if len(frames)>10:
-		frames=frames[4:-4]
 	len_frames=len(frames)
 	
-	if len_frames<=1:
+	if len_frames<=3:
 		background=None
 	else:
 		frames=np.array(frames,dtype='float32')
@@ -63,7 +61,7 @@ def extract_background(frames,minimum=0,invert=0):
 				else:
 					background=np.uint8(frames.min(0))
 			else:
-				if len_frames>105:
+				if len_frames>101:
 					frames_mean=[]
 					check_frames=[]
 					n=0
@@ -109,11 +107,12 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,method=
 	#         if 1, invert the pixel value (for animals darker than the background)
 	#         if 2, use both
 	# path_background: if not None, load backgrounds (need to put the background images under the name
-	#                  'background.jpg' and 'stim_background.jpg' in the 'path_background' path)
+	#                  'background.jpg', 'background_low.jpg' and 'background_high.jpg' in the 'path_background' path)
 
 	fps=mv.VideoFileClip(path_to_video).fps
-	frame_min=None
-	stim_t=2
+	frame_initial=None
+	stim_t=None
+	kernel=5
 
 	# if using background subtraction
 	if method==0:
@@ -140,10 +139,12 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,method=
 		
 			# initiate all parameters
 			frames=[]
-			stim_frames=[]
+			frames_low=[]
+			frames_high=[]
 			frame_count=1
 			backgrounds=[]
-			stim_backgrounds=[]
+			backgrounds_low=[]
+			backgrounds_high=[]
 
 			# store frames
 			while True:
@@ -160,26 +161,31 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,method=
 					if framewidth is not None:
 						frame=cv2.resize(frame,(framewidth,int(frame.shape[0]*framewidth/frame.shape[1])),
 							interpolation=cv2.INTER_AREA)
-					if frame_min is None:
-						frame_min=frame
+					if frame_initial is None:
+						frame_initial=frame
 						frames.append(frame)
 					else:
-						if np.mean(frame)>delta*np.mean(frame_min):
-							stim_t=frame_count/fps
-							stim_frames.append(frame)
+						if np.mean(frame)<np.mean(frame_initial)/delta:
+							if stim_t is None:
+								stim_t=frame_count/fps
+							frames_low.append(frame)
+						elif np.mean(frame)>delta*np.mean(frame_initial):
+							if stim_t is None:
+								stim_t=frame_count/fps
+							frames_high.append(frame)
 						else:
 							frames.append(frame)
 
 				frame_count+=1
 
-				if len(frames)==1500:
+				if len(frames)==1000:
 					background=extract_background(frames,minimum=minimum,invert=invert)
 					del frames
 					gc.collect()
 					frames=[]
 					backgrounds.append(background)
 
-					if len(backgrounds)==1500:
+					if len(backgrounds)==1000:
 						backgrounds=np.array(backgrounds,dtype='float32')
 						if invert==1:
 							background=np.uint8(backgrounds.max(0))
@@ -190,23 +196,41 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,method=
 						backgrounds=[]
 						backgrounds.append(background)
 
-				if len(stim_frames)==1500:
-					stim_background=extract_background(stim_frames,minimum=minimum,invert=invert)
-					del stim_frames
+				if len(frames_low)==1000:
+					background_low=extract_background(frames_low,minimum=minimum,invert=invert)
+					del frames_low
 					gc.collect()
-					stim_frames=[]
-					stim_backgrounds.append(stim_background)
+					frames_low=[]
+					backgrounds_low.append(background_low)
 
-					if len(stim_backgrounds)==1500:
-						stim_backgrounds=np.array(stim_backgrounds,dtype='float32')
+					if len(backgrounds_low)==1000:
+						backgrounds_low=np.array(backgrounds_low,dtype='float32')
 						if invert==1:
-							stim_background=np.uint8(stim_backgrounds.max(0))
+							background_low=np.uint8(backgrounds_low.max(0))
 						else:
-							stim_background=np.uint8(stim_backgrounds.min(0))
-						del stim_backgrounds
+							background_low=np.uint8(backgrounds_low.min(0))
+						del backgrounds_low
 						gc.collect()
-						stim_backgrounds=[]
-						stim_backgrounds.append(stim_background)
+						backgrounds_low=[]
+						backgrounds_low.append(background_low)
+
+				if len(frames_high)==1000:
+					background_high=extract_background(frames_high,minimum=minimum,invert=invert)
+					del frames_high
+					gc.collect()
+					frames_high=[]
+					backgrounds_high.append(background_high)
+
+					if len(backgrounds_high)==1000:
+						backgrounds_high=np.array(backgrounds_high,dtype='float32')
+						if invert==1:
+							background_high=np.uint8(backgrounds_high.max(0))
+						else:
+							background_high=np.uint8(backgrounds_high.min(0))
+						del backgrounds_high
+						gc.collect()
+						backgrounds_high=[]
+						backgrounds_high.append(background_high)
 
 			capture.release()
 
@@ -225,36 +249,64 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,method=
 			else:
 				background=extract_background(frames,minimum=minimum,invert=invert)
 
-			if len(stim_backgrounds)>0:
-				if len(stim_frames)>1000:
-					stim_background=extract_background(stim_frames,minimum=minimum,invert=invert)
-					stim_backgrounds.append(stim_background)
-				if len(stim_backgrounds)==1:
-					stim_background=stim_backgrounds[0]
+			if len(backgrounds_low)>0:
+				if len(frames_low)>1000:
+					background_low=extract_background(frames_low,minimum=minimum,invert=invert)
+					backgrounds_low.append(background_low)
+				if len(backgrounds_low)==1:
+					background_low=backgrounds_low[0]
 				else:
-					stim_backgrounds=np.array(stim_backgrounds,dtype='float32')
+					backgrounds_low=np.array(backgrounds_low,dtype='float32')
 					if invert==1:
-						stim_background=np.uint8(stim_backgrounds.max(0))
+						background_low=np.uint8(backgrounds_low.max(0))
 					else:
-						stim_background=np.uint8(stim_backgrounds.min(0))
+						background_low=np.uint8(backgrounds_low.min(0))
 			else:
-				stim_background=extract_background(stim_frames,minimum=minimum,invert=invert)
+				background_low=extract_background(frames_low,minimum=minimum,invert=invert)
+
+			if len(backgrounds_high)>0:
+				if len(frames_high)>1000:
+					background_high=extract_background(frames_high,minimum=minimum,invert=invert)
+					backgrounds_high.append(background_high)
+				if len(backgrounds_high)==1:
+					background_high=backgrounds_high[0]
+				else:
+					backgrounds_high=np.array(backgrounds_high,dtype='float32')
+					if invert==1:
+						background_high=np.uint8(backgrounds_high.max(0))
+					else:
+						background_high=np.uint8(backgrounds_high.min(0))
+			else:
+				background_high=extract_background(frames_high,minimum=minimum,invert=invert)
 
 			if background is None:
-				background=frame_min
-			if stim_background is None:
-				stim_background=background
+				background=frame_initial
+			if background_low is None:
+				background_low=background
+			if background_high is None:
+				background_high=background
 
 			print('Background extraction completed!')
 
 		else:
 
 			background=cv2.imread(os.path.join(path_background,'background.jpg'))
-			stim_background=cv2.imread(os.path.join(path_background,'stim_background.jpg'))
+			background_low=cv2.imread(os.path.join(path_background,'background_low.jpg'))
+			background_high=cv2.imread(os.path.join(path_background,'background_high.jpg'))
 			if framewidth is not None:
 				frameheight=int(background.shape[0]*framewidth/background.shape[1])
 				background=cv2.resize(background,(framewidth,frameheight),interpolation=cv2.INTER_AREA)
-				stim_background=cv2.resize(stim_background,(framewidth,frameheight),interpolation=cv2.INTER_AREA)
+				background_low=cv2.resize(background_low,(framewidth,frameheight),interpolation=cv2.INTER_AREA)
+				background_high=cv2.resize(background_high,(framewidth,frameheight),interpolation=cv2.INTER_AREA)
+
+		if min(frame_initial.shape[0],frame_initial.shape[1])/animal_number<500:
+			kernel=5
+		elif min(frame_initial.shape[0],frame_initial.shape[1])/animal_number<1000:
+			kernel=7
+		elif min(frame_initial.shape[0],frame_initial.shape[1])/animal_number<1500:
+			kernel=9
+		else:
+			kernel=11
 
 	print('Estimating animal size...')
 	print(datetime.datetime.now())
@@ -266,6 +318,7 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,method=
 
 			capture=cv2.VideoCapture(path_to_video)
 			frame_count=1
+			stim_t=None
 
 			while True:
 
@@ -277,36 +330,45 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,method=
 					frame=cv2.resize(frame,(framewidth,int(frame.shape[0]*framewidth/frame.shape[1])),
 						interpolation=cv2.INTER_AREA)
 
-				if frame_min is None:
-					frame_min=frame
+				if frame_initial is None:
+					frame_initial=frame
 				else:
-					if np.mean(frame)>delta*np.mean(frame_min):
-						stim_t=frame_count/fps
-						break
-
+					if np.mean(frame)<np.mean(frame_initial)/delta:
+						if stim_t is None:
+							stim_t=frame_count/fps
+							break
+					if np.mean(frame)>delta*np.mean(frame_initial):
+						if stim_t is None:
+							stim_t=frame_count/fps
+							break
+						
 				frame_count+=1
 
 			capture.release()
 
 	if method!=0:
-		background=stim_background=frame_min
+		background=background_low=background_high=frame_initial
 
 	# estimate animal contour area
 	capture=cv2.VideoCapture(path_to_video)
 	total_contour_area=[]
 	frame_count=1
-	min_area=(background.shape[1]/200)*(background.shape[0]/200)
-	max_area=(background.shape[1]*background.shape[0])*2/3
+	min_area=(background.shape[1]/100)*(background.shape[0]/100)
+	max_area=(background.shape[1]*background.shape[0])*3/4
 
 	if invert==1:
 		background_estimation=np.uint8(255-background)
+		background_low_estimation=np.uint8(255-background_low)
+		background_high_estimation=np.uint8(255-background_high)
 	else:
 		background_estimation=background
+		background_low_estimation=background_low
+		background_high_estimation=background_high
 
 	while True:
 		retval,frame=capture.read()
-		if frame_min is None:
-			frame_min=frame
+		if frame_initial is None:
+			frame_initial=frame
 		if frame is None:
 			break
 		if es_end is not None:
@@ -324,46 +386,56 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,method=
 
 			contour_area=0
 
-			# exlude stimulation frames and find contours
-			if np.mean(frame)<delta*np.mean(frame_min):
-				if method==0:
+			
+			if method==0:
+				if np.mean(frame)<np.mean(frame_initial)/delta:
+					if invert==2:
+						foreground=cv2.absdiff(frame,background_low_estimation)
+					else:
+						foreground=cv2.subtract(frame,background_low_estimation)
+				elif np.mean(frame)>delta*np.mean(frame_initial):
+					if invert==2:
+						foreground=cv2.absdiff(frame,background_high_estimation)
+					else:
+						foreground=cv2.subtract(frame,background_high_estimation)
+				else:
 					if invert==2:
 						foreground=cv2.absdiff(frame,background_estimation)
 					else:
 						foreground=cv2.subtract(frame,background_estimation)
-					foreground=cv2.morphologyEx(foreground,cv2.MORPH_CLOSE,np.ones((5,5),np.uint8))
-					foreground=cv2.cvtColor(foreground,cv2.COLOR_BGR2GRAY)
-					thred=cv2.threshold(foreground,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]
-				elif method==1:
-					contrast=np.uint8(exposure.rescale_intensity(frame,out_range=(0,255)))
-					contrast=cv2.morphologyEx(cv2.cvtColor(contrast,cv2.COLOR_BGR2GRAY),
-						cv2.MORPH_CLOSE,np.ones((5,5),np.uint8))
-					thred=cv2.adaptiveThreshold(contrast,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,11,-2)
-				elif method==2:
-					contrast=cv2.cvtColor(np.uint8(exposure.rescale_intensity(frame,out_range=(0,255))),
-						cv2.COLOR_BGR2GRAY)
-					thred=cv2.Canny(cv2.GaussianBlur(contrast,(3,3),0),40,120,apertureSize=3,L2gradient=True)
-					thred=cv2.morphologyEx(thred,cv2.MORPH_CLOSE,np.ones((5,5),np.uint8))
-				contours,_=cv2.findContours(thred,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
+				foreground=cv2.morphologyEx(foreground,cv2.MORPH_CLOSE,np.ones((kernel,kernel),np.uint8))
+				foreground=cv2.cvtColor(foreground,cv2.COLOR_BGR2GRAY)
+				thred=cv2.threshold(foreground,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]
+			elif method==1:
+				contrast=np.uint8(exposure.rescale_intensity(frame,out_range=(0,255)))
+				contrast=cv2.morphologyEx(cv2.cvtColor(contrast,cv2.COLOR_BGR2GRAY),
+					cv2.MORPH_CLOSE,np.ones((kernel,kernel),np.uint8))
+				thred=cv2.adaptiveThreshold(contrast,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,11,-2)
+			elif method==2:
+				contrast=cv2.cvtColor(np.uint8(exposure.rescale_intensity(frame,out_range=(0,255))),
+					cv2.COLOR_BGR2GRAY)
+				thred=cv2.Canny(cv2.GaussianBlur(contrast,(3,3),0),40,120,apertureSize=3,L2gradient=True)
+				thred=cv2.morphologyEx(thred,cv2.MORPH_CLOSE,np.ones((kernel,kernel),np.uint8))
+			contours,_=cv2.findContours(thred,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
 
-				# if using edge detection
-				if method==2:
-					cts=contours
-					contours=[]
-					gray=cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
-					bg=np.zeros_like(gray)
-					for i in cts:
-						cv2.drawContours(bg,[i],0,(255,255,255),-1)
-					cnts,_=cv2.findContours(bg,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
-					for i in cnts:
-						contours.append(i)
+			# if using edge detection
+			if method==2:
+				cts=contours
+				contours=[]
+				gray=cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
+				bg=np.zeros_like(gray)
+				for i in cts:
+					cv2.drawContours(bg,[i],0,(255,255,255),-1)
+				cnts,_=cv2.findContours(bg,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
+				for i in cnts:
+					contours.append(i)
 
-				# add contour areas of individual animals
-				for i in contours:
-					if min_area<cv2.contourArea(i)<max_area:
-						contour_area+=cv2.contourArea(i)
-				# add to total contour area
-				total_contour_area.append(contour_area)
+			# add contour areas of individual animals
+			for i in contours:
+				if min_area<cv2.contourArea(i)<max_area:
+					contour_area+=cv2.contourArea(i)
+			# add to total contour area
+			total_contour_area.append(contour_area)
 
 		frame_count+=1
 
@@ -383,7 +455,10 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,method=
 
 	print('Single animal size: '+str(animal_area))
 
-	return (background,stim_background,stim_t,animal_area)
+	if stim_t is None:
+		stim_t=2
+
+	return (background,background_low,background_high,stim_t,animal_area,kernel)
 
 
 def crop_frame(frame,animal_contours):
@@ -459,8 +534,8 @@ def extract_blob(frame,animal_contour,y_bt=0,y_tp=0,x_lf=0,x_rt=0,analyze=0,back
 
 
 # find the contours in each frame
-def contour_frame(frame,animal_number,entangle_number,background,stim_background,delta,contour_area,
-	method=1,invert=0,inner_code=1):
+def contour_frame(frame,animal_number,entangle_number,background,background_low,background_high,delta,contour_area,
+	method=1,invert=0,inner_code=1,kernel=5):
 
 	# entangle_number: the number of animal allowed to be entangled
 	# delta: the light intensity increase when apply optogenetic stimulation
@@ -473,34 +548,40 @@ def contour_frame(frame,animal_number,entangle_number,background,stim_background
 	#         if 1, invert the pixel value (for animals darker than the background)
 	#         if 2, use absdiff
 	# inner_code: if 0, include inner contours of animal body parts in pattern images, else not
+	# kernel: the kernel size for morphological changes
 	
 	if invert==1:
 		frame=np.uint8(255-frame)
 
 	if method==0:
-		if np.mean(frame)>delta*np.mean(background):
+		if np.mean(frame)<np.mean(background)/delta:
 			if invert==2:
-				foreground=cv2.absdiff(frame,stim_background)
+				foreground=cv2.absdiff(frame,background_low)
 			else:
-				foreground=cv2.subtract(frame,stim_background)
+				foreground=cv2.subtract(frame,background_low)
+		elif np.mean(frame)>delta*np.mean(background):
+			if invert==2:
+				foreground=cv2.absdiff(frame,background_high)
+			else:
+				foreground=cv2.subtract(frame,background_high)
 		else:
 			if invert==2:
 				foreground=cv2.absdiff(frame,background)
 			else:
 				foreground=cv2.subtract(frame,background)
-		foreground=cv2.morphologyEx(foreground,cv2.MORPH_CLOSE,np.ones((5,5),np.uint8))
+		foreground=cv2.morphologyEx(foreground,cv2.MORPH_CLOSE,np.ones((kernel,kernel),np.uint8))
 		foreground=cv2.cvtColor(foreground,cv2.COLOR_BGR2GRAY)
 		thred=cv2.threshold(foreground,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]
 		
 	elif method==1:
 		contrast=cv2.cvtColor(np.uint8(exposure.rescale_intensity(frame,out_range=(0,255))),cv2.COLOR_BGR2GRAY)
-		contrast=cv2.morphologyEx(contrast,cv2.MORPH_CLOSE,np.ones((5,5),np.uint8))
+		contrast=cv2.morphologyEx(contrast,cv2.MORPH_CLOSE,np.ones((kernel,kernel),np.uint8))
 		thred=cv2.adaptiveThreshold(contrast,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,11,-2)
 
 	elif method==2:
 		contrast=cv2.cvtColor(np.uint8(exposure.rescale_intensity(frame,out_range=(0,255))),cv2.COLOR_BGR2GRAY)
 		thred=cv2.Canny(cv2.GaussianBlur(contrast,(3,3),0),40,120,apertureSize=3,L2gradient=True)
-		thred=cv2.morphologyEx(thred,cv2.MORPH_CLOSE,np.ones((5,5),np.uint8))
+		thred=cv2.morphologyEx(thred,cv2.MORPH_CLOSE,np.ones((kernel,kernel),np.uint8))
 
 	cnts,_=cv2.findContours(thred,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
 

@@ -3,7 +3,7 @@
 LabGym is a multi-animal-tracking and deep-learning based package for end-to-end classification and quantification of user-defined animal behaviors without restrictions on animal species or behavior types. It also provides users a way to generate visualizable datasets for the user-defined behaviors.
 
 Please cite:
-https://www.biorxiv.org/content/10.1101/2022.02.17.480911v2
+https://www.biorxiv.org/content/10.1101/2022.02.17.480911v3
 
 
 
@@ -73,7 +73,7 @@ The outputs of analysis results are:
 
 # How to use LabGym:
 
-LabGym does not require labeling or training to track the animals. In turn, it does have preferred video recording setting: LabGym works best for videos with stable background and illumination (the illumination can have dark-to-bright transitions but need to be stable before and after transitions). Animals are expected to present some locational changes instead of being completely immobile during a video recording. Users need to specify a time window during which the animals are moving for background extraction (the shorter the duration of the time window is, the shorter processing time it would take).
+LabGym does not require labeling or training to track the animals. In turn, it does have preferred video recording setting: LabGym works best for videos with stable background and illumination (the illumination can have dark-to-bright or bright-to-dark transitions but need to be stable before and after the transitions). Animals are expected to present some locational changes instead of being completely immobile all the time during a video recording. Users need to specify a time window during which the animals are moving for background extraction (the shorter the duration of the time window is, the shorter processing time it would take).
 
 
 
@@ -141,6 +141,13 @@ Please first refer to the issue page (https://github.com/umyelab/LabGym/issues?q
 
 
 # Change logs:
+
+
+
+v1.3:
+
+1. Improved background subtraction and the tracking is more accurate.
+2. Now LabGym not only can work for videos with illumination transitions from dark to bright, but also can work for those from bright to dark, too.
 
 
 
