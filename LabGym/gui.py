@@ -69,7 +69,7 @@ class WindowLv1_Generator(wx.Frame):
 
 		# if want to adjust the size, add arg 'size=(x,y)'
 		super(WindowLv1_Generator,self).__init__(parent=None,title=title,size=(1000,550))
-		# if not None, will load background 'background.jpg' and 'stim_background.jpg' from path
+		# if not None, will load background images from path
 		self.background_path=None
 		# path to all video files
 		self.path_to_videos=None
@@ -283,7 +283,7 @@ class WindowLv1_Generator(wx.Frame):
 
 	def specify_timing(self,event):
 
-		dialog=wx.MessageDialog(self,'Sudden increase in illumination (e.g. light stimulation) in videos?','Sudden illumination increase',
+		dialog=wx.MessageDialog(self,'Sudden increase / decrease of illumination in videos?','Sudden illumination changes',
 			wx.YES_NO|wx.ICON_QUESTION)
 		if dialog.ShowModal()==wx.ID_YES:
 			self.delta=1.2
@@ -300,9 +300,9 @@ class WindowLv1_Generator(wx.Frame):
 			caption='Beginning time for generator',choices=methods)
 		if dialog.ShowModal()==wx.ID_OK:
 			method=dialog.GetStringSelection()
-			if method=='Automatic (for optogenetics)':
+			if method=='Automatic (for illumination changes)':
 				self.auto=0
-				self.text_3.SetLabel('Automatically find the beginning time (when illumination increases).')
+				self.text_3.SetLabel('Automatically find the beginning time (when illumination changes).')
 			elif method=='Decode from filenames: "_bt_"':
 				self.auto=-1
 				self.text_3.SetLabel(
@@ -1303,7 +1303,7 @@ class WindowLv1_Analyzer(wx.Frame):
 
 		# if want to adjust the size, add arg 'size=(x,y)'
 		super(WindowLv1_Analyzer,self).__init__(parent=None,title=title,size=(1000,600))
-		# if not None, will load background 'background.jpg' and 'stim_background.jpg' from path
+		# if not None, will load background images from path
 		self.background_path=None
 		# the parent path of the models
 		self.model_path=None
@@ -1638,7 +1638,7 @@ class WindowLv1_Analyzer(wx.Frame):
 
 	def specify_timing(self,event):
 
-		dialog=wx.MessageDialog(self,'Sudden increase in illumination (e.g. light stimulation) in videos?','Sudden illumination increase',
+		dialog=wx.MessageDialog(self,'Sudden increase / decrease of illumination in videos?','Sudden illumination changes',
 			wx.YES_NO|wx.ICON_QUESTION)
 		if dialog.ShowModal()==wx.ID_YES:
 			self.delta=1.2
@@ -1655,9 +1655,9 @@ class WindowLv1_Analyzer(wx.Frame):
 			caption='Beginning time of analysis',choices=methods)
 		if dialog.ShowModal()==wx.ID_OK:
 			method=dialog.GetStringSelection()
-			if method=='Automatic (for optogenetics)':
+			if method=='Automatic (for illumination changes)':
 				self.auto=0
-				self.text_4.SetLabel('Automatically find the beginning time (when illumination increases).')
+				self.text_4.SetLabel('Automatically find the beginning time (when illumination changes).')
 			elif method=='Decode from filenames: "_bt_"':
 				self.auto=-1
 				self.text_4.SetLabel(
@@ -2067,7 +2067,7 @@ class InitialWindow(wx.Frame):
 		panel=wx.Panel(self)
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
 
-		self.text_1=wx.StaticText(panel,label='Welcome to LabGymnastics!\n\nVersion 1.2',
+		self.text_1=wx.StaticText(panel,label='Welcome to LabGymnastics!\n\nVersion 1.3',
 			style=wx.ALIGN_CENTER|wx.ST_ELLIPSIZE_END)
 		boxsizer.Add(0,50,0)
 		boxsizer.Add(self.text_1,0,wx.LEFT|wx.RIGHT|wx.EXPAND,5)
@@ -2130,7 +2130,7 @@ def gui():
 
 	app=wx.App()
 	
-	InitialWindow('LabGymnastics ver 1.2')
+	InitialWindow('LabGymnastics version 1.3')
 
 	print('The graphical user interface initialized!')
 	

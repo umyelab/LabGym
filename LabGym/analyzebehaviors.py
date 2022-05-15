@@ -54,6 +54,8 @@ class AnalyzeAnimal():
 		self.fps=None
 		# the framewidth dimension to resize
 		self.framewidth=None
+		# the kernel size for morphology changes
+		self.kernel=None
 		# path to store all the results
 		self.results_path=None
 		# if not 0, not categorize behaviors
@@ -76,8 +78,10 @@ class AnalyzeAnimal():
 		self.invert=None
 		# static background
 		self.background=None
-		# static background during stimulation
-		self.stim_background=None
+		# static background_low
+		self.background_low=None
+		# static background_high
+		self.background_high=None
 		# path to Categorizer
 		self.model=None
 		# the entire count of the frames
@@ -129,7 +133,7 @@ class AnalyzeAnimal():
 		# minimum: if 0, use minimum or maximum pixel value for background extraction
 		# analyze: if not 0, track animals without analyzing behaviors
 		# path_background: if not None, load backgrounds (need to put the background images under the name
-		#                  'background.jpg' and 'stim_background.jpg' in the 'path_background' path)
+		#                  'background.jpg', 'background_low.jpg' and 'background_high.jpg' in the 'path_background' path)
 		# auto: 0--optogenetic stimulation onset as start_t
 		#       1--t
 		# t: if auto is else, t is the start_t for cropping the video
@@ -195,14 +199,17 @@ class AnalyzeAnimal():
 			method=self.method,minimum=minimum,ex_start=ex_start,ex_end=ex_end,es_start=es_start,es_end=es_end,
 			invert=self.invert,path_background=path_background)
 
-		self.animal_area=constants[3]
+		self.animal_area=constants[4]
+		self.kernel=constants[5]
 		self.background=constants[0]
-		self.stim_background=constants[1]
+		self.background_low=constants[1]
+		self.background_high=constants[2]
 		cv2.imwrite(os.path.join(self.results_path,'background.jpg'),constants[0])
-		cv2.imwrite(os.path.join(self.results_path,'stim_background.jpg'),constants[1])
+		cv2.imwrite(os.path.join(self.results_path,'background_low.jpg'),constants[1])
+		cv2.imwrite(os.path.join(self.results_path,'background_high.jpg'),constants[2])
 		# if using optogenetics
 		if self.auto==0:
-			self.t=constants[2]
+			self.t=constants[3]
 
 		print('Processing completed!')
 
@@ -225,11 +232,13 @@ class AnalyzeAnimal():
 
 		# prepare backgrounds
 		background=self.background
-		stim_background=self.stim_background
+		background_low=self.background_low
+		background_high=self.background_high
 		
 		if self.invert==1:
 			background=np.uint8(255-background)
-			stim_background=np.uint8(255-stim_background)
+			background_low=np.uint8(255-background_low)
+			background_high=np.uint8(255-background_high)
 
 		capture=cv2.VideoCapture(self.path_to_video)
 
@@ -269,8 +278,8 @@ class AnalyzeAnimal():
 
 				# find contours in this frame
 				(contours,inners)=contour_frame(frame,self.animal_number,self.entangle_number,background,
-					stim_background,self.delta,self.animal_area,method=self.method,invert=self.invert,
-					inner_code=inner_code)
+					background_low,background_high,self.delta,self.animal_area,method=self.method,invert=self.invert,
+					inner_code=inner_code,kernel=self.kernel)
 
 				# skip the frame if no contours
 				if len(contours)==0:
@@ -541,11 +550,13 @@ class AnalyzeAnimal():
 		print(datetime.datetime.now())
 
 		background=self.background
-		stim_background=self.stim_background
+		background_low=self.background_low
+		background_high=self.background_high
 		
 		if self.invert==1:
 			background=np.uint8(255-background)
-			stim_background=np.uint8(255-stim_background)
+			background_low=np.uint8(255-background_low)
+			background_high=np.uint8(255-background_high)
 
 		capture=cv2.VideoCapture(self.path_to_video)
 
@@ -578,8 +589,8 @@ class AnalyzeAnimal():
 
 				# find contours in this frame
 				(contours,inners)=contour_frame(frame,self.animal_number,self.entangle_number,background,
-					stim_background,self.delta,self.animal_area,method=self.method,invert=self.invert,
-					inner_code=inner_code)
+					background_low,background_high,self.delta,self.animal_area,method=self.method,invert=self.invert,
+					inner_code=inner_code,kernel=self.kernel)
 
 				# skip the frame if no contours
 				if len(contours)>0:
