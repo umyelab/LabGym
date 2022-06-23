@@ -2067,7 +2067,7 @@ class InitialWindow(wx.Frame):
 		panel=wx.Panel(self)
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
 
-		self.text_1=wx.StaticText(panel,label='Welcome to LabGymnastics!\n\nVersion 1.3',
+		self.text_1=wx.StaticText(panel,label='Welcome to LabGymnastics!\n\nVersion 1.4',
 			style=wx.ALIGN_CENTER|wx.ST_ELLIPSIZE_END)
 		boxsizer.Add(0,50,0)
 		boxsizer.Add(self.text_1,0,wx.LEFT|wx.RIGHT|wx.EXPAND,5)
@@ -2130,7 +2130,7 @@ def gui():
 
 	app=wx.App()
 	
-	InitialWindow('LabGymnastics version 1.3')
+	InitialWindow('LabGymnastics version 1.4')
 
 	print('The graphical user interface initialized!')
 	

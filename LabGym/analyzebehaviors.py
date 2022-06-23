@@ -246,9 +246,9 @@ class AnalyzeAnimal():
 		frame_count=0
 		self.temp_frames=deque(maxlen=self.length)
 
-		start_t=round((self.t-self.length/self.fps),1)
+		start_t=round((self.t-self.length/self.fps),2)
 		if start_t<0:
-			start_t=0.0
+			start_t=0.00
 		if self.duration==0:
 			end_t=float('inf')
 		else:
@@ -257,7 +257,7 @@ class AnalyzeAnimal():
 		while True:
 
 			retval,frame=capture.read()
-			time=round((self.frame_count+1)/self.fps,1)
+			time=round((self.frame_count+1)/self.fps,2)
 
 			if time>=end_t:
 				break
@@ -291,7 +291,7 @@ class AnalyzeAnimal():
 					if background_free!=0:
 						self.temp_frames.append(frame)
 
-					self.all_time.append(round((time-start_t),1))
+					self.all_time.append(round((time-start_t),2))
 
 					# get contour parameters
 					(new_contours,centers,angles,heights,widths)=get_parameters(frame,contours)
@@ -563,9 +563,9 @@ class AnalyzeAnimal():
 		frame_count=0
 		self.temp_frames=deque(maxlen=self.length)
 
-		start_t=round((self.t-self.length/self.fps),1)
+		start_t=round((self.t-self.length/self.fps),2)
 		if start_t<0:
-			start_t=0.0
+			start_t=0.00
 		if self.duration==0:
 			end_t=float('inf')
 		else:
@@ -574,7 +574,7 @@ class AnalyzeAnimal():
 		while True:
 
 			retval,frame=capture.read()
-			time=round((frame_count+1)/self.fps,1)
+			time=round((frame_count+1)/self.fps,2)
 
 			if time>=end_t:
 				break
@@ -814,9 +814,9 @@ class AnalyzeAnimal():
 		frame_count=0
 		index=0
 
-		start_t=round((self.t-self.length/self.fps),1)
+		start_t=round((self.t-self.length/self.fps),2)
 		if start_t<0:
-			start_t=0.0
+			start_t=0.00
 		if self.duration==0:
 			end_t=float('inf')
 		else:
@@ -824,7 +824,7 @@ class AnalyzeAnimal():
 
 		while True:
 			retval,frame=capture.read()
-			time=round((frame_count+1)/self.fps,1)
+			time=round((frame_count+1)/self.fps,2)
 
 			if time>=end_t:
 				break

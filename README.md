@@ -144,6 +144,13 @@ Please first refer to the issue page (https://github.com/umyelab/LabGym/issues?q
 
 
 
+v1.4:
+
+1. Make the time points in the output time-series sheets more precise.
+2. Fixed an error when using the 'load background image' option.
+
+
+
 v1.3:
 
 1. Improved background subtraction and the tracking is more accurate.

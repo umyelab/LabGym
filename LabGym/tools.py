@@ -299,6 +299,8 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,method=
 				background_low=cv2.resize(background_low,(framewidth,frameheight),interpolation=cv2.INTER_AREA)
 				background_high=cv2.resize(background_high,(framewidth,frameheight),interpolation=cv2.INTER_AREA)
 
+			frame_initial=background
+
 		if min(frame_initial.shape[0],frame_initial.shape[1])/animal_number<500:
 			kernel=5
 		elif min(frame_initial.shape[0],frame_initial.shape[1])/animal_number<1000:
@@ -807,7 +809,7 @@ def plot_evnets(result_path,event_probability,time_points,names_and_colors,to_in
 
 		all_data=np.array(all_data)
 		masks=np.array(masks)
-		dataframe=pd.DataFrame(all_data,columns=time_points)
+		dataframe=pd.DataFrame(all_data,columns=[float('{:.1f}'.format(i)) for i in time_points])
 
 		heatmap=sb.heatmap(dataframe,mask=masks,xticklabels=x_intvl,
 			cmap=LinearSegmentedColormap.from_list('',names_and_colors[behavior_name]),cbar=False,
