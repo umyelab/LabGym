@@ -211,7 +211,7 @@ class AnalyzeAnimal():
 		if self.auto==0:
 			self.t=constants[3]
 
-		print('Processing completed!')
+		print('Video processing completed!')
 
 
 	# get all information in each frame during the analysis
@@ -546,7 +546,7 @@ class AnalyzeAnimal():
 		# background_free: if 0, do not include background in blobs
 		# skip_redundant: number of overlapped frames to skip
 		
-		print('Generating data...')
+		print('Generating behavior examples...')
 		print(datetime.datetime.now())
 
 		background=self.background
@@ -713,7 +713,7 @@ class AnalyzeAnimal():
 
 		capture.release()
 
-		print('Data generation completed!')
+		print('Behavior example generation completed!')
 
 
 	# craft data
@@ -1250,7 +1250,7 @@ class AnalyzeAnimal():
 
 		print('Completed!')
 
-		print('Quantifying parameters...')
+		print('Quantifying animal behaviors...')
 		print(datetime.datetime.now())
 
 		self.analyze_parameters(normalize=normalize,included_parameters=included_parameters)
