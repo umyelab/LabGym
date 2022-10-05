@@ -116,7 +116,7 @@ class DeepNetwork():
 					pattern_image=cv2.resize(pattern_image,(resize,resize),interpolation=cv2.INTER_AREA)
 				cv2.imwrite(new_pattern_image,pattern_image)
 
-		print('All prepared data stored in: '+str(new_path))
+		print('All prepared training examples stored in: '+str(new_path))
 
 
 	# reconstruct the dataset for training and testing
@@ -393,7 +393,7 @@ class DeepNetwork():
 				# count the data
 				amount+=1
 				if amount%10000==0:
-					print('The built data amount: '+str(amount))
+					print('The augmented example amount: '+str(amount))
 					print(datetime.datetime.now())
 			
 		animations=np.array(animations,dtype='float32')/255.0
@@ -808,7 +808,7 @@ class DeepNetwork():
 
 		inputs=Input(shape=(dim,dim,channel))
 
-		print('Training the convolutional neural network (Pattern Recognizer) using the data in: '
+		print('Training the Categorizer w/o Animation Analyzer using the behavior examples in: '
 			+str(data_path))
 
 		files=[i for i in os.listdir(data_path) if i.endswith(self.extension_video)]
@@ -826,7 +826,7 @@ class DeepNetwork():
 		labels=lb.fit_transform(labels)
 		self.classnames=lb.classes_
 
-		print('Found class names: '+str(self.classnames))
+		print('Found behavior names: '+str(self.classnames))
 
 		# save model parameters
 		parameters={'classnames':list(self.classnames),'dim_conv':int(dim),'channel':int(channel),
@@ -838,16 +838,16 @@ class DeepNetwork():
 		# split files into 80% training and 20% testing
 		(train_files,test_files,y1,y2)=train_test_split(path_files,labels,test_size=0.2,stratify=labels)
 
-		print('Building the data for training...')
+		print('Perform augmentation for the behavior examples...')
 		print('This might take hours or days, depending on the capacity of your computer.')
 		print(datetime.datetime.now())
 
 		# rebuild training datasets and perform data augmentation on training dataset
-		print('Start to build training data...')
+		print('Start to augment training examples...')
 		_,trainX,trainY=self.build_data(train_files,dim_tconv=dim,dim_conv=dim,channel=channel,
 			time_step=time_step,aug_methods=aug_methods,background_free=background_free)
 		trainY=lb.fit_transform(trainY)
-		print('Start to build validation data...')
+		print('Start to augment validation examples...')
 		if augvalid==0:
 			_,testX,testY=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,
 				time_step=time_step,aug_methods=aug_methods,background_free=background_free)
@@ -856,9 +856,9 @@ class DeepNetwork():
 				time_step=time_step,aug_methods=[],background_free=background_free)
 		testY=lb.fit_transform(testY)
 
-		print('Training data shape : '+str(trainX.shape))
+		print('Training example shape : '+str(trainX.shape))
 		print('Training label shape : '+str(trainY.shape))
-		print('Validation data shape : '+str(testX.shape))
+		print('Validation example shape : '+str(testX.shape))
 		print('Validation label shape : '+str(testY.shape))
 		print(datetime.datetime.now())
 
@@ -908,7 +908,7 @@ class DeepNetwork():
 			pd.DataFrame(report).transpose().to_excel(os.path.join(out_path,'training_metrics.xlsx'),float_format='%.2f')
 		
 		model.save(model_path)
-		print('Trained model saved in: '+str(model_path))
+		print('Trained Categorizer saved in: '+str(model_path))
 
 		# plot parameters
 		plt.style.use('seaborn-bright')
@@ -952,7 +952,7 @@ class DeepNetwork():
 		inputs=Input(shape=(time_step,dim,dim,channel))
 
 		print(
-			'Training the convolutional recurrent neural network (Animation Analyzer) using data in: '
+			'Training the Categorizer w/o Pattern Recognizer using the behavior examples in: '
 			+str(data_path))
 
 		files=[i for i in os.listdir(data_path) if i.endswith(self.extension_video)]
@@ -973,7 +973,7 @@ class DeepNetwork():
 		labels=lb.fit_transform(labels)
 		self.classnames=lb.classes_
 
-		print('Found class names: '+str(self.classnames))
+		print('Found behavior names: '+str(self.classnames))
 
 		# save model parameters
 		parameters={'classnames':list(self.classnames),'dim_tconv':int(dim),'channel':int(channel),
@@ -985,16 +985,16 @@ class DeepNetwork():
 		# split files into 80% training and 20% testing
 		(train_files,test_files,y1,y2)=train_test_split(path_files,labels,test_size=0.2,stratify=labels)
 
-		print('Building the data for training...')
+		print('Perform augmentation for the behavior examples...')
 		print('This might take hours or days, depending on the capacity of your computer.')
 		print(datetime.datetime.now())
 
 		# rebuild training datasets and perform data augmentation on training dataset
-		print('Start to build training data...')
+		print('Start to augment training examples...')
 		trainX,_,trainY=self.build_data(train_files,dim_tconv=dim,dim_conv=dim,channel=channel,
 			time_step=time_step,aug_methods=aug_methods,background_free=background_free)
 		trainY=lb.fit_transform(trainY)
-		print('Start to build validation data...')
+		print('Start to augment validation examples...')
 		if augvalid==0:
 			testX,_,testY=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,
 				time_step=time_step,aug_methods=aug_methods,background_free=background_free)
@@ -1003,9 +1003,9 @@ class DeepNetwork():
 					time_step=time_step,aug_methods=[],background_free=background_free)
 		testY=lb.fit_transform(testY)
 
-		print('Training data shape : '+str(trainX.shape))
+		print('Training example shape : '+str(trainX.shape))
 		print('Training label shape : '+str(trainY.shape))
-		print('Validation data shape : '+str(testX.shape))
+		print('Validation example shape : '+str(testX.shape))
 		print('Validation label shape : '+str(testY.shape))
 		print(datetime.datetime.now())
 
@@ -1056,7 +1056,7 @@ class DeepNetwork():
 			pd.DataFrame(report).transpose().to_excel(os.path.join(out_path,'training_metrics.xlsx'),float_format='%.2f')
 		
 		model.save(model_path)
-		print('Trained model saved in: '+str(model_path))
+		print('Trained Categorizer saved in: '+str(model_path))
 
 		# plot parameters
 		plt.style.use('seaborn-bright')
@@ -1091,7 +1091,7 @@ class DeepNetwork():
 		# std: std for excluding static pixels in inners
 		# background_free: if 0, do not include background in blobs
 
-		print('Training Categorizer using the data in: '+str(data_path))
+		print('Training Categorizer with both Animation Analyzer and Pattern Recognizer using the behavior examples in: '+str(data_path))
 
 		files=[i for i in os.listdir(data_path) if i.endswith(self.extension_video)]
 
@@ -1108,7 +1108,7 @@ class DeepNetwork():
 		labels=lb.fit_transform(labels)
 		self.classnames=lb.classes_
 
-		print('Found class names: '+str(self.classnames))
+		print('Found behavior names: '+str(self.classnames))
 
 		# save model parameters
 		parameters={'classnames':list(self.classnames),'dim_tconv':int(dim_tconv),'dim_conv':int(dim_conv),
@@ -1121,16 +1121,16 @@ class DeepNetwork():
 		# split files into 80% training and 20% testing
 		(train_files,test_files,y1,y2)=train_test_split(path_files,labels,test_size=0.2,stratify=labels)
 
-		print('Building the data for training...')
+		print('Perform augmentation for the behavior examples...')
 		print('This might take hours or days, depending on the capacity of your computer.')
 		print(datetime.datetime.now())
 
 		# rebuild training datasets and perform data augmentation on training dataset
-		print('Start to build training data...')
+		print('Start to augment training examples...')
 		train_animations,train_pattern_images,trainY=self.build_data(train_files,dim_tconv=dim_tconv,dim_conv=dim_conv,
 			channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free)
 		trainY=lb.fit_transform(trainY)
-		print('Start to build validation data...')
+		print('Start to augment validation examples...')
 		if augvalid==0:
 			test_animations,test_pattern_images,testY=self.build_data(test_files,dim_tconv=dim_tconv,dim_conv=dim_conv,
 				channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free)
@@ -1139,9 +1139,9 @@ class DeepNetwork():
 				channel=channel,time_step=time_step,aug_methods=[],background_free=background_free)
 		testY=lb.fit_transform(testY)
 
-		print('Training data shape : '+str(train_animations.shape)+', '+str(train_pattern_images.shape))
+		print('Training example shape : '+str(train_animations.shape)+', '+str(train_pattern_images.shape))
 		print('Training label shape : '+str(trainY.shape))
-		print('Validation data shape : '+str(test_animations.shape)+', '+str(test_pattern_images.shape))
+		print('Validation example shape : '+str(test_animations.shape)+', '+str(test_pattern_images.shape))
 		print('Validation label shape : '+str(testY.shape))
 		print(datetime.datetime.now())
 
@@ -1187,7 +1187,7 @@ class DeepNetwork():
 			pd.DataFrame(report).transpose().to_excel(os.path.join(out_path,'training_metrics.xlsx'),float_format='%.2f')
 		
 		model.save(model_path)
-		print('Trained model saved in: '+str(model_path))
+		print('Trained Categorizer saved in: '+str(model_path))
 
 		# plot parameters
 		plt.style.use('seaborn-bright')
@@ -1208,11 +1208,12 @@ class DeepNetwork():
 
 
 	# test the trained model
-	def test_network(self,groundtruth_path,model_path):
+	def test_network(self,groundtruth_path,model_path,result_path):
 
 		# groundtruth_path: ground truth data
+		# result_path: path to store the testing results
 
-		print('Testing the selected network...')
+		print('Testing the selected Categorizer...')
 
 		animations=deque()
 		pattern_images=deque()
@@ -1222,7 +1223,7 @@ class DeepNetwork():
 		parameters=pd.read_csv(os.path.join(model_path,'model_parameters.txt'))
 
 		classnames=list(parameters['classnames'])
-		print('Behavior names in the model: '+str(classnames))
+		print('Behavior names in the Categorizer: '+str(classnames))
 					
 		if 'dim_conv' in list(parameters.keys()):
 			dim_conv=int(parameters['dim_conv'][0])
@@ -1237,9 +1238,9 @@ class DeepNetwork():
 		incorrect_behaviors=list(set(behaviornames)-set(classnames))
 		incorrect_classes=list(set(classnames)-set(behaviornames))
 		if len(incorrect_behaviors)>0:
-			print('Mismatched behavior names in labels: '+str(incorrect_behaviors))
+			print('Mismatched behavior names in testing examples: '+str(incorrect_behaviors))
 		if len(incorrect_classes)>0:
-			print('Unused behavior names in the model: '+str(incorrect_classes))
+			print('Unused behavior names in the Categorizer: '+str(incorrect_classes))
 
 		if len(incorrect_behaviors)==0 and len(incorrect_classes)==0:
 
@@ -1308,7 +1309,7 @@ class DeepNetwork():
 				print(classification_report(labels,predictions.argmax(axis=1),target_names=classnames))
 				report=classification_report(labels,predictions.argmax(axis=1),target_names=classnames,output_dict=True)
 
-			pd.DataFrame(report).transpose().to_excel(os.path.join(groundtruth_path,'testing_reports.xlsx'),float_format='%.2f')
+			pd.DataFrame(report).transpose().to_excel(os.path.join(result_path,'testing_reports.xlsx'),float_format='%.2f')
 
 			print('Test completed!')
 

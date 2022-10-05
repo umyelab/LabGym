@@ -53,7 +53,7 @@ def extract_background(frames,minimum=0,invert=0):
 	else:
 		frames=np.array(frames,dtype='float32')
 		if invert==2:
-			background=np.uint8(frames.mean(0))
+			background=np.uint8(np.median(frames,axis=0))
 		else:
 			if minimum==0:
 				if invert==1:
@@ -119,18 +119,18 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,method=
 
 		if path_background is None:
 
-			print('Extracting static background...')
+			print('Extracting the static background...')
 
 			if ex_start>=mv.VideoFileClip(path_to_video).duration:
-				print('The beginning time for background extraction exceeds the duration of the video!')
-				print('Will use the beginning of the video as the beginning time for background extraction!')
+				print('The beginning time for background extraction is later than the end of the video!')
+				print('Will use the 1st second of the video as the beginning time for background extraction!')
 				ex_start=0
 			if ex_start==ex_end:
 				ex_end=ex_start+1
 
 			if es_start>=mv.VideoFileClip(path_to_video).duration:
-				print('The beginning time for estimating animal contours exceeds the duration of the video!')
-				print('Will use the beginning of the video as the beginning time for estimation!')
+				print('The beginning time for estimating the animal size is later than end of the video!')
+				print('Will use the 1st second of the video as the beginning time for estimation!')
 				es_start=0
 			if es_start==es_end:
 				es_end=es_start+1
@@ -310,7 +310,7 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,method=
 		else:
 			kernel=11
 
-	print('Estimating animal size...')
+	print('Estimating the animal size...')
 	print(datetime.datetime.now())
 
 	if delta<10000:
@@ -447,12 +447,12 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,method=
 
 	if len(total_contour_area)>0:
 		if animal_number==0:
-			print('Animal number is 0. Please check animal number!')
+			print('Animal number is 0. Please enter the correct animal number!')
 			animal_area=1
 		else:
 			animal_area=(sum(total_contour_area)/len(total_contour_area))/animal_number
 	else:
-		print('No object!')
+		print('No animal detected!')
 		animal_area=1
 
 	print('Single animal size: '+str(animal_area))
@@ -689,7 +689,7 @@ def concatenate_blobs(frame,outlines,y_bt,y_tp,x_lf,x_rt,inners=None,std=0):
 
 	if len(outlines)==0:
 
-		print('No contours!')
+		print('No animal detected!')
 		return (background_outlines,(0,0,0,0))
 
 	else:
@@ -763,7 +763,7 @@ def plot_evnets(result_path,event_probability,time_points,names_and_colors,to_in
 	# to_include: the behaviors selected for annotation
 	# width/height: size for the raster plot figure
 
-	print('Exporting raster plot for behaviors...')
+	print('Exporting the raster plot for this analysis batch...')
 	print(datetime.datetime.now())
 
 	# define width and height of the figure
@@ -834,7 +834,7 @@ def plot_evnets(result_path,event_probability,time_points,names_and_colors,to_in
 
 	plt.close('all')
 
-	print('Behavioral events stored in: '+str(result_path))
+	print('The raster plot stored in: '+str(result_path))
 
 
 
