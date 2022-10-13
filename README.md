@@ -142,7 +142,7 @@ Please refer to the issue page (https://github.com/umyelab/LabGym/issues?q=) to 
 
 <p>&nbsp;</p>
 
-# Change logs:
+# Changelog:
 
 **v1.6**:
 
