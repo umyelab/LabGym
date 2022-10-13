@@ -4,11 +4,13 @@ LabGym is a multi-animal-tracking and deep-learning based software for end-to-en
 
 Please cite the LabGym paper: https://www.biorxiv.org/content/10.1101/2022.02.17.480911v3.
 
+<p>&nbsp;</p>
+
 # How to use LabGym?
 
 LabGym has a graphical user interface (GUI) for users to use with **no need of writing code**. 
 
-The full manual for using the GUI of LabGym: .
+The **full manual** for using the GUI of LabGym: coming in two days.
 
 The GUI has 4 functional units: '**Generate Behavior Examples**', '**Train Categorizers**', '**Test Categorizers**', and '**Analyze Behaviors**':
  
@@ -148,18 +150,18 @@ Please refer to the issue page (https://github.com/umyelab/LabGym/issues?q=) to 
 
 **v1.5**:
 
-1. Simplified the user interface, making it more self-illustrative.
+1. Simplified the GUI and made it more self-illustrative.
 2. Added an option of whether to output the distances in pixels when calculating behavior parameters. Previously all the distances were just normalized by the size of a single animal.
 
 **v1.4**:
 
 1. Made the time points in the output time-series sheets more precise.
-2. Fixed an error when using the 'load background image' option.
+2. Fixed an error when using the option of 'load background image'.
 
 **v1.3**:
 
 1. Improved background subtraction and the tracking is more accurate.
-2. Now LabGym not only can work for videos with illumination transitions from dark to bright, but also can work for those from bright to dark.
+2. Now LabGym not only can work for videos with illumination transitions from dark to bright, but can also work for those from bright to dark.
 
 **v1.2**:
 
@@ -169,7 +171,7 @@ Please refer to the issue page (https://github.com/umyelab/LabGym/issues?q=) to 
 
 **v1.1**:
 
-Changed a typo in setup.
+1. Changed a typo in setup.
 
 **v1.0**:
 
