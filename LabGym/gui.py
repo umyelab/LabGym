@@ -21,6 +21,8 @@ Email: bingye@umich.edu
 import wx
 import os
 import shutil
+import json
+from urllib import request
 import matplotlib as mpl
 from pathlib import Path
 import pandas as pd
@@ -32,6 +34,17 @@ from collections import OrderedDict
 
 
 the_absolute_current_path=str(Path(__file__).resolve().parent)
+current_version=1.6
+
+try:
+
+	latest_version=float(list(json.loads(request.urlopen('https://pypi.python.org/pypi/LabGym/json').read())['releases'].keys())[-1])
+	if latest_version>current_version:
+		print('A newer version '+'('+str(latest_version)+')'+' of LabGym is available. You may upgrade it by "python3 -m pip install --upgrade LabGym".\nFor the details of new changes, check: "https://github.com/umyelab/LabGym".')
+
+except:
+	
+	pass
 
 
 
@@ -402,8 +415,9 @@ class WindowLv1_Generator(wx.Frame):
 				dialog2.Destroy()
 		dialog.Destroy()
 
+		# these are for versions < 1.5
+
 		'''
-		# these are for previous versions
 		methods=['Background subtraction','Basic thresholding','Basic edge detection']
 		dialog=wx.SingleChoiceDialog(self,message='Select a method to detect animals',
 			caption='Methods to detect animals',choices=methods)
@@ -877,8 +891,9 @@ class WindowLv1_Trainer(wx.Frame):
 
 	def specify_network(self,event):
 
+		# these are for versions < 1.5
+
 		'''
-		# these are for previous versions
 		dialog=wx.MessageDialog(self,'Continue to train an existing network?\nSelect "No" if dont know what it is.',
 			'Continue previous training?',wx.YES_NO|wx.ICON_QUESTION)
 		if dialog.ShowModal()==wx.ID_YES:
@@ -922,8 +937,9 @@ class WindowLv1_Trainer(wx.Frame):
 			shape_tconv='('+str(self.dim_tconv)+','+str(self.dim_tconv)+','+str(self.channel)+')'
 			shape_conv='('+str(self.dim_conv)+','+str(self.dim_conv)+','+'3)'
 
+			# these are for versions < 1.5
+
 			'''
-			# these are for previous versions
 			dialog=wx.SingleChoiceDialog(self,message='Select the Categorizer type',
 				caption='Categorizer types',choices=network_types)
 			if dialog.ShowModal()==wx.ID_OK:
@@ -1105,8 +1121,15 @@ class WindowLv1_Trainer(wx.Frame):
 
 		else:
 
+			# these are for versions < 1.5
+
+			'''
 			aug_methods=['random rotation','horizontal flipping','vertical flipping','random brightening',
 			'random dimming','random shearing','random rescaling','random deletion','exclude original']
+			'''
+
+			aug_methods=['random rotation','horizontal flipping','vertical flipping','random brightening',
+			'random dimming','random shearing','random rescaling','random deletion']
 			selected=''
 
 			dialog1=wx.MultiChoiceDialog(self,message='Data augmentation methods',
@@ -1310,6 +1333,10 @@ class WindowLv1_Tester(wx.Frame):
 		models=[i for i in os.listdir(self.model_path) if os.path.isdir(os.path.join(self.model_path,i))]
 		if '__pycache__' in models:
 			models.remove('__pycache__')
+		if '__init__' in models:
+			models.remove('__init__')
+		if '__init__.py' in models:
+			models.remove('__init__.py')
 		models.sort()
 
 		dialog=wx.SingleChoiceDialog(self,message='Select a Categorizer to test',
@@ -1361,6 +1388,10 @@ class WindowLv1_Tester(wx.Frame):
 		models=[i for i in os.listdir(self.model_path) if os.path.isdir(os.path.join(self.model_path,i))]
 		if '__pycache__' in models:
 			models.remove('__pycache__')
+		if '__init__' in models:
+			models.remove('__init__')
+		if '__init__.py' in models:
+			models.remove('__init__.py')
 		models.sort()
 
 		dialog=wx.SingleChoiceDialog(self,message='Select a Categorizer to delete',
@@ -1598,6 +1629,10 @@ class WindowLv1_Analyzer(wx.Frame):
 		models=[i for i in os.listdir(self.model_path) if os.path.isdir(os.path.join(self.model_path,i))]
 		if '__pycache__' in models:
 			models.remove('__pycache__')
+		if '__init__' in models:
+			models.remove('__init__')
+		if '__init__.py' in models:
+			models.remove('__init__.py')
 		models.sort()
 		if 'No behavior classification, just track animals and quantify motion kinematics' not in models:
 			models.append('No behavior classification, just track animals and quantify motion kinematics')
@@ -1634,8 +1669,9 @@ class WindowLv1_Analyzer(wx.Frame):
 
 			if self.model is not None:
 
+				# these are for versions < 1.5
+
 				'''
-				# these are for previous versions
 				dialog=wx.MessageDialog(self,'Set a uncertain threshold?\nSelect "No" if dont know what it is.',
 					'(Optional) set uncertain threshold',wx.YES_NO|wx.ICON_QUESTION)
 				if dialog.ShowModal()==wx.ID_YES:
@@ -1852,8 +1888,9 @@ class WindowLv1_Analyzer(wx.Frame):
 				dialog2.Destroy()
 		dialog.Destroy()
 
+		# these are for versions < 1.5
+
 		'''
-		# these are for the previous versions
 		methods=['Background subtraction','Basic thresholding','Basic edge detection']
 		dialog=wx.SingleChoiceDialog(self,message='Select a method to detect animals',
 			caption='Methods to detect animals',choices=methods)
@@ -2189,7 +2226,7 @@ class InitialWindow(wx.Frame):
 		panel=wx.Panel(self)
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
 
-		self.text_1=wx.StaticText(panel,label='Welcome to LabGym!\n\nVersion 1.5',
+		self.text_1=wx.StaticText(panel,label='Welcome to LabGym!\n\nVersion '+str(current_version),
 			style=wx.ALIGN_CENTER|wx.ST_ELLIPSIZE_END)
 		boxsizer.Add(0,50,0)
 		boxsizer.Add(self.text_1,0,wx.LEFT|wx.RIGHT|wx.EXPAND,5)
@@ -2252,7 +2289,7 @@ def gui():
 
 	app=wx.App()
 	
-	InitialWindow('LabGym version 1.5')
+	InitialWindow('LabGym version '+str(current_version))
 
 	print('The user interface initialized!')
 	
