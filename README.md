@@ -10,7 +10,7 @@ Please cite the LabGym paper: https://www.biorxiv.org/content/10.1101/2022.02.17
 
 LabGym has a graphical user interface (GUI) for users to use with **no need of writing code**. 
 
-The **full manual** for using the GUI of LabGym: coming in two days.
+The **full manual** for using the GUI of LabGym: https://github.com/yujiahu415/LabGym/blob/master/The%20full%20manual%20of%20LabGym_v1.6.pdf.
 
 The GUI has 4 functional units: '**Generate Behavior Examples**', '**Train Categorizers**', '**Test Categorizers**', and '**Analyze Behaviors**':
  
