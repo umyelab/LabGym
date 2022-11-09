@@ -34,7 +34,7 @@ from collections import OrderedDict
 
 
 the_absolute_current_path=str(Path(__file__).resolve().parent)
-current_version=1.6
+current_version=1.7
 
 try:
 
@@ -122,8 +122,6 @@ class WindowLv1_Generator(wx.Frame):
 		self.es_end=None
 		# 0, animals birghter than the background; 1, animals darker than the background; 2, hard to tell
 		self.invert=0
-		# use optogenetic method (0) or threshold (1) or edge detection (2)
-		self.method=0
 		# minimum: if 0, use minimum, otherwise use stable value detector for background extraction
 		self.minimum=0
 		# the length for Animation Analyzer inputs/data clip length
@@ -207,7 +205,7 @@ class WindowLv1_Generator(wx.Frame):
 		module_7=wx.BoxSizer(wx.HORIZONTAL)
 		button_7=wx.Button(panel,label='Specify the time window for\nbackground extraction',size=(300,40))
 		button_7.Bind(wx.EVT_BUTTON,self.specify_extraction)
-		self.text_7=wx.StaticText(panel,label='A time window during which the animals are NOT static.',
+		self.text_7=wx.StaticText(panel,label='A time window (typcially 10-60 sec) during which the animals are NOT static.',
 			style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_7.Add(button_7,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_7.Add(self.text_7,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -217,7 +215,7 @@ class WindowLv1_Generator(wx.Frame):
 		module_8=wx.BoxSizer(wx.HORIZONTAL)
 		button_8=wx.Button(panel,label='Specify the time window for\nestimating the animal size',size=(300,40))
 		button_8.Bind(wx.EVT_BUTTON,self.specify_estimation)
-		self.text_8=wx.StaticText(panel,label='A time window during which all the animals are present in the video.',
+		self.text_8=wx.StaticText(panel,label='A time window (typcially 10-30 sec) during which all the animals are present in the video.',
 			style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_8.Add(button_8,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_8.Add(self.text_8,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -415,86 +413,44 @@ class WindowLv1_Generator(wx.Frame):
 				dialog2.Destroy()
 		dialog.Destroy()
 
-		# these are for versions < 1.5
-
-		'''
-		methods=['Background subtraction','Basic thresholding','Basic edge detection']
-		dialog=wx.SingleChoiceDialog(self,message='Select a method to detect animals',
-			caption='Methods to detect animals',choices=methods)
-		if dialog.ShowModal()==wx.ID_OK:
-			method=dialog.GetStringSelection()
-			if method=='Background subtraction':
-				self.method=0
-				dialog2=wx.MessageDialog(self,'Load an existing background from a folder?\nSelect "No" if dont know what it is.',
-					'(Optional) load existing background?',wx.YES_NO|wx.ICON_QUESTION)
-				if dialog2.ShowModal()==wx.ID_YES:
-					dialog3=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
-					if dialog3.ShowModal()==wx.ID_OK:
-						self.background_path=dialog3.GetPath()
-					dialog3.Destroy()
-				else:
-					self.background_path=None
-					if self.invert!=2:
-						dialog3=wx.MessageDialog(self,'Unstable illumination in the video?\nSelect "Yes" if dont know what it is.',
-						'(Optional) unstable illumination',wx.YES_NO|wx.ICON_QUESTION)
-						if dialog3.ShowModal()==wx.ID_YES:
-							self.minimum=1
-						else:
-							self.minimum=0
-						dialog3.Destroy()
-				dialog2.Destroy()
-			elif method=='Basic thresholding':
-				self.method=1
-			else:
-				self.method=2
-			self.text_6.SetLabel('Detect animals by: '+method+'.')
-		dialog.Destroy()
-		'''
 
 	def specify_extraction(self,event):
 
-		if self.method!=0:
+		methods=['Use the entire duration of a video','Decode from filenames: "_xst_" and "_xet_"','Enter two time points']
+		dialog=wx.SingleChoiceDialog(self,message='Specify the time window for background extraction',
+			caption='Time window for background extraction',choices=methods)
 
-			wx.MessageBox('No need to specify this since the method\nto detect animals is not "Background subtraction".',
-				'Error',wx.OK|wx.ICON_ERROR)
-
-		else:
-
-			methods=['Use the entire duration of a video','Decode from filenames: "_xst_" and "_xet_"','Enter two time points']
-			dialog=wx.SingleChoiceDialog(self,message='Specify the time window for background extraction',
-				caption='Time window for background extraction',choices=methods)
-
-			if dialog.ShowModal()==wx.ID_OK:
-				method=dialog.GetStringSelection()
-				if method=='Use the entire duration of a video':
-					self.x_code=0
-					self.text_7.SetLabel('Use the entire duration of the video for background extraction.')
-				elif method=='Decode from filenames: "_xst_" and "_xet_"':
-					self.x_code=1
-					self.text_7.SetLabel(
-						'Decode from the filenames: the "t" immediately after the letters "xs" (start) / "xe" (end).')
+		if dialog.ShowModal()==wx.ID_OK:
+			method=dialog.GetStringSelection()
+			if method=='Use the entire duration of a video':
+				self.x_code=0
+				self.text_7.SetLabel('Use the entire duration of the video for background extraction.')
+			elif method=='Decode from filenames: "_xst_" and "_xet_"':
+				self.x_code=1
+				self.text_7.SetLabel(
+					'Decode from the filenames: the "t" immediately after the letters "xs" (start) / "xe" (end).')
+			else:
+				self.x_code=0
+				dialog2=wx.NumberEntryDialog(self,'Enter the start time','The unit is second:',
+					'Start time for background extraction',0,0,100000000000000)
+				if dialog2.ShowModal()==wx.ID_OK:
+					self.ex_start=int(dialog2.GetValue())
+				dialog2.Destroy()
+				dialog2=wx.NumberEntryDialog(self,'Enter the end time','The unit is second:',
+					'End time for background extraction',0,0,100000000000000)
+				if dialog2.ShowModal()==wx.ID_OK:
+					self.ex_end=int(dialog2.GetValue())
+					if self.ex_end==0:
+						self.ex_end=None
+				dialog2.Destroy()
+				if self.ex_end is None:
+					self.text_7.SetLabel('The start / end time for background extraction is (in seconds): '+
+						str(self.ex_start)+' / the end of the video')
 				else:
-					self.x_code=0
-					dialog2=wx.NumberEntryDialog(self,'Enter the start time','The unit is second:',
-						'Start time for background extraction',0,0,100000000000000)
-					if dialog2.ShowModal()==wx.ID_OK:
-						self.ex_start=int(dialog2.GetValue())
-					dialog2.Destroy()
-					dialog2=wx.NumberEntryDialog(self,'Enter the end time','The unit is second:',
-						'End time for background extraction',0,0,100000000000000)
-					if dialog2.ShowModal()==wx.ID_OK:
-						self.ex_end=int(dialog2.GetValue())
-						if self.ex_end==0:
-							self.ex_end=None
-					dialog2.Destroy()
-					if self.ex_end is None:
-						self.text_7.SetLabel('The start / end time for background extraction is (in seconds): '+
-							str(self.ex_start)+' / the end of the video')
-					else:
-						self.text_7.SetLabel('The start / end time for background extraction is (in seconds): '+
-							str(self.ex_start)+' / '+str(self.ex_end))
+					self.text_7.SetLabel('The start / end time for background extraction is (in seconds): '+
+						str(self.ex_start)+' / '+str(self.ex_end))
 
-			dialog.Destroy()
+		dialog.Destroy()
 
 
 	def specify_estimation(self,event):
@@ -648,9 +604,8 @@ class WindowLv1_Generator(wx.Frame):
 
 					AA=AnalyzeAnimal()
 					AA.prepare_analysis(i,self.result_path,self.delta,self.animal_number,self.entangle_number,names_and_colors=None,
-						framewidth=self.framewidth,method=self.method,minimum=self.minimum,
-						analyze=1,path_background=self.background_path,auto=self.auto,t=self.t,duration=self.duration,
-						ex_start=self.ex_start,ex_end=self.ex_end,es_start=self.es_start,es_end=self.es_end,
+						framewidth=self.framewidth,minimum=self.minimum,analyze=1,path_background=self.background_path,auto=self.auto,
+						t=self.t,duration=self.duration,ex_start=self.ex_start,ex_end=self.ex_end,es_start=self.es_start,es_end=self.es_end,
 						length=self.length,invert=self.invert)
 					AA.generate_data(deregister=self.deregister,inner_code=self.inner_code,
 						std=self.std,background_free=self.background_free,skip_redundant=self.skip_redundant)
@@ -672,8 +627,6 @@ class WindowLv1_Trainer(wx.Frame):
 		self.new_path=None
 		# 0: Pattern Recognizer, 1: Animation Analyzer, 2 Categorizer
 		self.network=2
-		# if 1, resume the training from a previous check point
-		self.resume=0
 		# the level of Animation Analyzer
 		self.level_tconv=2
 		# the level of Pattern Recognizer
@@ -891,190 +844,91 @@ class WindowLv1_Trainer(wx.Frame):
 
 	def specify_network(self,event):
 
-		# these are for versions < 1.5
+		network_types=['Categorizer with both Animation Analyzer and Pattern Recognizer',
+		'Categorizer w/o Animation Analyzer (much faster but less accurate)']
 
-		'''
-		dialog=wx.MessageDialog(self,'Continue to train an existing network?\nSelect "No" if dont know what it is.',
-			'Continue previous training?',wx.YES_NO|wx.ICON_QUESTION)
-		if dialog.ShowModal()==wx.ID_YES:
-			models=[i for i in os.listdir(self.model_path) if os.path.isdir(os.path.join(self.model_path,i))]
-			models.sort()
-			dialog2=wx.SingleChoiceDialog(self,message='Select a neural network to continue training',
-				caption='Continue to train a neural network',choices=models)
-			if dialog2.ShowModal()==wx.ID_OK:
-				model=dialog2.GetStringSelection()
-				self.path_to_model=os.path.join(self.model_path,model)
-				self.resume=1
-				self.text_5.SetLabel('Continue to train an existing network.')
-				self.text_6.SetLabel('Automatically load from the path to the trained network.')
-				self.text_7.SetLabel('Automatically load from the path to the trained network.')
-			dialog2.Destroy()
-		else:
-			self.resume=0
-			shape_tconv='('+str(self.dim_tconv)+','+str(self.dim_tconv)+','+str(self.channel)+')'
-			shape_conv='('+str(self.dim_conv)+','+str(self.dim_conv)+','+'3)'
-			if self.network==0:
-				self.text_5.SetLabel('Network type: Pattern Recognizer')
+		shape_tconv='('+str(self.dim_tconv)+','+str(self.dim_tconv)+','+str(self.channel)+')'
+		shape_conv='('+str(self.dim_conv)+','+str(self.dim_conv)+','+'3)'
+
+		dialog=wx.SingleChoiceDialog(self,message='Select the Categorizer type',
+			caption='Categorizer types',choices=network_types)
+		if dialog.ShowModal()==wx.ID_OK:
+			network_type=dialog.GetStringSelection()
+			if network_type=='Categorizer w/o Animation Analyzer (much faster but less accurate)':
+				self.network=0
+				dialog2=wx.NumberEntryDialog(self,'Complexity level from 1 to 7\nhigher level = deeper network','Enter a number (1~7)',
+					'Pattern Recognizer level',2,1,7)
+				if dialog2.ShowModal()==wx.ID_OK:
+					self.level_conv=int(dialog2.GetValue())
+				dialog2.Destroy()
+				self.text_5.SetLabel('Categorizer type: '+network_type+
+					'; Level: '+str(self.level_conv))
 				self.text_6.SetLabel('Input shapes: '+shape_conv)
-			elif self.network==1:
-				self.text_5.SetLabel('Network type: Animation Analyzer')
-				self.text_6.SetLabel('Input shapes: '+shape_tconv)
 			else:
-				self.text_5.SetLabel('Network type: Categorizer (Animation Analyzer+Pattern Recognizer)')
+				self.network=2
+				dialog2=wx.NumberEntryDialog(self,'Complexity level from 1 to 7\nhigher level = deeper network','Enter a number (1~7)',
+					'Animation Analyzer level',2,1,7)
+				if dialog2.ShowModal()==wx.ID_OK:
+					self.level_tconv=int(dialog2.GetValue())
+				dialog2.Destroy()
+				dialog2=wx.NumberEntryDialog(self,'Complexity level from 1 to 7\nhigher level = deeper network','Enter a number (1~7)',
+					'Pattern Recognizer level',2,1,7)
+				if dialog2.ShowModal()==wx.ID_OK:
+					self.level_conv=int(dialog2.GetValue())
+				dialog2.Destroy()
+				self.text_5.SetLabel('Categorizer type: Categorizer with both Animation Analyzer (level '+str(self.level_tconv)+
+					') and Pattern Recognizer (level '+str(self.level_conv)+')')
 				self.text_6.SetLabel('Input shapes: Animation Analyzer'+shape_tconv+'; Pattern Recognizer'+shape_conv)
-			self.text_7.SetLabel('The number of frames for assessing behaviors is :'+str(self.length)+'.')
-			self.text_5.SetLabel('Use Categorizer (default) unless you have a reason to use others.')
-			self.text_6.SetLabel('Default: (width,height,channel) is (32,32,1) / (32,32,3).')
-			self.text_7.SetLabel('The length of the scanning window for categorizing behaviors.')
 		dialog.Destroy()
-		'''
-
-		if self.resume==0:
-
-			network_types=['Categorizer with both Animation Analyzer and Pattern Recognizer',
-			'Categorizer w/o Animation Analyzer (much faster but less accurate)']
-
-			shape_tconv='('+str(self.dim_tconv)+','+str(self.dim_tconv)+','+str(self.channel)+')'
-			shape_conv='('+str(self.dim_conv)+','+str(self.dim_conv)+','+'3)'
-
-			# these are for versions < 1.5
-
-			'''
-			dialog=wx.SingleChoiceDialog(self,message='Select the Categorizer type',
-				caption='Categorizer types',choices=network_types)
-			if dialog.ShowModal()==wx.ID_OK:
-				network_type=dialog.GetStringSelection()
-				if network_type=='Categorizer w/o Animation Analyzer (much faster but less accurate)':
-					self.network=0
-					dialog2=wx.NumberEntryDialog(self,'Complexity level from 1 to 7\nhigher level = deeper network','Enter a number (1~7)',
-						'Pattern Recognizer level',2,1,7)
-					if dialog2.ShowModal()==wx.ID_OK:
-						self.level_conv=int(dialog2.GetValue())
-					dialog2.Destroy()
-					self.text_5.SetLabel('Categorizer type: '+network_type+
-						'; Level: '+str(self.level_conv))
-					self.text_6.SetLabel('Input shapes: '+shape_conv)
-				elif network_type=='Convolutional recurrent network (Animation Analyzer)':
-					self.network=1
-					dialog2=wx.NumberEntryDialog(self,'Network level from 1 to 7\nhigher level = deeper network','Enter a number (1~7)',
-						'Animation Analyzer level',2,1,7)
-					if dialog2.ShowModal()==wx.ID_OK:
-						self.level_tconv=int(dialog2.GetValue())
-					dialog2.Destroy()
-					self.text_5.SetLabel('Network type: '+network_type+
-						'; Level: '+str(self.level_tconv))
-					self.text_6.SetLabel('Input shapes: '+shape_tconv)
-				else:
-					self.network=2
-					dialog2=wx.NumberEntryDialog(self,'Complexity level from 1 to 7\nhigher level = deeper network','Enter a number (1~7)',
-						'Animation Analyzer level',2,1,7)
-					if dialog2.ShowModal()==wx.ID_OK:
-						self.level_tconv=int(dialog2.GetValue())
-					dialog2.Destroy()
-					dialog2=wx.NumberEntryDialog(self,'Complexity level from 1 to 7\nhigher level = deeper network','Enter a number (1~7)',
-						'Pattern Recognizer level',2,1,7)
-					if dialog2.ShowModal()==wx.ID_OK:
-						self.level_conv=int(dialog2.GetValue())
-					dialog2.Destroy()
-					self.text_5.SetLabel('Categorizer type: Categorizer w/ both Animation Analyzer (level '+str(self.level_tconv)+
-						') and Pattern Recognizer (level '+str(self.level_conv)+')')
-					self.text_6.SetLabel('Input shapes: Animation Analyzer'+shape_tconv+'; Pattern Recognizer'+shape_conv)
-			dialog.Destroy()
-			'''
-			
-			dialog=wx.SingleChoiceDialog(self,message='Select the Categorizer type',
-				caption='Categorizer types',choices=network_types)
-			if dialog.ShowModal()==wx.ID_OK:
-				network_type=dialog.GetStringSelection()
-				if network_type=='Categorizer w/o Animation Analyzer (much faster but less accurate)':
-					self.network=0
-					dialog2=wx.NumberEntryDialog(self,'Complexity level from 1 to 7\nhigher level = deeper network','Enter a number (1~7)',
-						'Pattern Recognizer level',2,1,7)
-					if dialog2.ShowModal()==wx.ID_OK:
-						self.level_conv=int(dialog2.GetValue())
-					dialog2.Destroy()
-					self.text_5.SetLabel('Categorizer type: '+network_type+
-						'; Level: '+str(self.level_conv))
-					self.text_6.SetLabel('Input shapes: '+shape_conv)
-				else:
-					self.network=2
-					dialog2=wx.NumberEntryDialog(self,'Complexity level from 1 to 7\nhigher level = deeper network','Enter a number (1~7)',
-						'Animation Analyzer level',2,1,7)
-					if dialog2.ShowModal()==wx.ID_OK:
-						self.level_tconv=int(dialog2.GetValue())
-					dialog2.Destroy()
-					dialog2=wx.NumberEntryDialog(self,'Complexity level from 1 to 7\nhigher level = deeper network','Enter a number (1~7)',
-						'Pattern Recognizer level',2,1,7)
-					if dialog2.ShowModal()==wx.ID_OK:
-						self.level_conv=int(dialog2.GetValue())
-					dialog2.Destroy()
-					self.text_5.SetLabel('Categorizer type: Categorizer with both Animation Analyzer (level '+str(self.level_tconv)+
-						') and Pattern Recognizer (level '+str(self.level_conv)+')')
-					self.text_6.SetLabel('Input shapes: Animation Analyzer'+shape_tconv+'; Pattern Recognizer'+shape_conv)
-			dialog.Destroy()
 
 
 	def set_network(self,event):
 
-		if self.resume==1:
+		if self.network>0:
+			dialog=wx.NumberEntryDialog(self,'Input dimension of Animation Analyzer\nlarger dimension = wider network',
+				'Enter a number:','Animation Analyzer input',32,1,300)
+			if dialog.ShowModal()==wx.ID_OK:
+				self.dim_tconv=int(dialog.GetValue())
+			dialog.Destroy()
 
-			wx.MessageBox('Automatically loaded from the trained Categorizer!',
-				'Warning',wx.OK|wx.ICON_WARNING)
+		if self.network!=1:
+			dialog=wx.NumberEntryDialog(self,'Input dimension of Pattern Recognizer\nlarger dimension = wider network',
+				'Enter a number:','Input the dimension',32,1,300)
+			if dialog.ShowModal()==wx.ID_OK:
+				self.dim_conv=int(dialog.GetValue())
+			dialog.Destroy()
 
-		else:
-
-			if self.network>0:
-				dialog=wx.NumberEntryDialog(self,'Input dimension of Animation Analyzer\nlarger dimension = wider network',
-					'Enter a number:','Animation Analyzer input',32,1,300)
-				if dialog.ShowModal()==wx.ID_OK:
-					self.dim_tconv=int(dialog.GetValue())
-				dialog.Destroy()
-
-			if self.network!=1:
-				dialog=wx.NumberEntryDialog(self,'Input dimension of Pattern Recognizer\nlarger dimension = wider network',
-					'Enter a number:','Input the dimension',32,1,300)
-				if dialog.ShowModal()==wx.ID_OK:
-					self.dim_conv=int(dialog.GetValue())
-				dialog.Destroy()
-
-			if self.network>0:
-				dialog=wx.MessageDialog(self,
-					'Grayscale input of Animation Analyzer?\nSelect "Yes" if the color of animals is behavior irrelevant.',
-					'Grayscale Animation Analyzer?',wx.YES_NO|wx.ICON_QUESTION)
-				if dialog.ShowModal()==wx.ID_YES:
-					self.channel=1
-				else:
-					self.channel=3
-				dialog.Destroy()
-
-			shape_tconv='('+str(self.dim_tconv)+','+str(self.dim_tconv)+','+str(self.channel)+')'
-			shape_conv='('+str(self.dim_conv)+','+str(self.dim_conv)+','+'3)'
-
-			if self.network==0:
-				self.text_6.SetLabel('Input shapes: Pattern Recognizer'+shape_conv)
-			elif self.network==1:
-				self.text_6.SetLabel('Input shapes: Animation Analyzer'+shape_tconv)
+		if self.network>0:
+			dialog=wx.MessageDialog(self,
+				'Grayscale input of Animation Analyzer?\nSelect "Yes" if the color of animals is behavior irrelevant.',
+				'Grayscale Animation Analyzer?',wx.YES_NO|wx.ICON_QUESTION)
+			if dialog.ShowModal()==wx.ID_YES:
+				self.channel=1
 			else:
-				self.text_6.SetLabel('Input shapes: Animation Analyzer'+shape_tconv+'; Pattern Recognizer'+shape_conv)
+				self.channel=3
+			dialog.Destroy()
+
+		shape_tconv='('+str(self.dim_tconv)+','+str(self.dim_tconv)+','+str(self.channel)+')'
+		shape_conv='('+str(self.dim_conv)+','+str(self.dim_conv)+','+'3)'
+
+		if self.network==0:
+			self.text_6.SetLabel('Input shapes: Pattern Recognizer'+shape_conv)
+		elif self.network==1:
+			self.text_6.SetLabel('Input shapes: Animation Analyzer'+shape_tconv)
+		else:
+			self.text_6.SetLabel('Input shapes: Animation Analyzer'+shape_tconv+'; Pattern Recognizer'+shape_conv)
 
 
 	def input_timesteps(self,event):
 
-		if self.resume==1:
-
-			wx.MessageBox('Automatically loaded from the trained Categorizer!',
-				'Warning',wx.OK|wx.ICON_WARNING)
-
-		else:
-
-			dialog=wx.NumberEntryDialog(self,'The number of frames of an animation\nin the training examples',
-				'Enter a number (minimum=3):','Duration of animation',15,1,1000)
-			if dialog.ShowModal()==wx.ID_OK:
-				self.length=int(dialog.GetValue())
-				if self.length<3:
-					self.length=3
-				self.text_7.SetLabel('The duration of an animation (the time step) is :'+str(self.length)+'.')
-			dialog.Destroy()
+		dialog=wx.NumberEntryDialog(self,'The number of frames of an animation\nin the training examples',
+			'Enter a number (minimum=3):','Duration of animation',15,1,1000)
+		if dialog.ShowModal()==wx.ID_OK:
+			self.length=int(dialog.GetValue())
+			if self.length<3:
+				self.length=3
+			self.text_7.SetLabel('The duration of an animation (the time step) is :'+str(self.length)+'.')
+		dialog.Destroy()
 
 
 	def select_datapath(self,event):
@@ -1120,13 +974,6 @@ class WindowLv1_Trainer(wx.Frame):
 			self.aug_methods=['default']
 
 		else:
-
-			# these are for versions < 1.5
-
-			'''
-			aug_methods=['random rotation','horizontal flipping','vertical flipping','random brightening',
-			'random dimming','random shearing','random rescaling','random deletion','exclude original']
-			'''
 
 			aug_methods=['random rotation','horizontal flipping','vertical flipping','random brightening',
 			'random dimming','random shearing','random rescaling','random deletion']
@@ -1192,66 +1039,40 @@ class WindowLv1_Trainer(wx.Frame):
 		else:
 
 			do_nothing=False
-
-			if self.resume==1:
-				# load all parameters from the check point
-				parameters=pd.read_csv(os.path.join(self.path_to_model,'model_parameters.txt'))
-
-				if 'dim_conv' in list(parameters.keys()):
-					self.dim_conv=int(parameters['dim_conv'][0])
-				if 'dim_tconv' in list(parameters.keys()):
-					self.dim_tconv=int(parameters['dim_tconv'][0])
-				self.channel=int(parameters['channel'][0])
-				self.length=int(parameters['time_step'][0])
-				if self.length<3:
-					self.length=3
-				self.network=int(parameters['network'][0])
-				if 'level_tconv' in list(parameters.keys()):
-					self.level_tconv=int(parameters['level_tconv'][0])
-				if 'level_conv' in list(parameters.keys()):
-					self.level_conv=int(parameters['level_conv'][0])
-				self.inner_code=int(parameters['inner_code'][0])
-				self.std=int(parameters['std'][0])
-				self.background_free=int(parameters['background_free'][0])
-
-			else:
 				
-				stop=False
-				while stop is False:
-					dialog=wx.TextEntryDialog(self,'Enter a name for the Categorizer to train','Categorizer name')
-					if dialog.ShowModal()==wx.ID_OK:
-						if dialog.GetValue()!='':
-							self.path_to_model=os.path.join(self.model_path,dialog.GetValue())
-							if not os.path.isdir(self.path_to_model):
-								os.mkdir(self.path_to_model)
-								stop=True
-							else:
-								wx.MessageBox('The name already exists.','Error',wx.OK|wx.ICON_ERROR)
-					else:
-						do_nothing=True
-						stop=True
-					dialog.Destroy()
+			stop=False
+			while stop is False:
+				dialog=wx.TextEntryDialog(self,'Enter a name for the Categorizer to train','Categorizer name')
+				if dialog.ShowModal()==wx.ID_OK:
+					if dialog.GetValue()!='':
+						self.path_to_model=os.path.join(self.model_path,dialog.GetValue())
+						if not os.path.isdir(self.path_to_model):
+							os.mkdir(self.path_to_model)
+							stop=True
+						else:
+							wx.MessageBox('The name already exists.','Error',wx.OK|wx.ICON_ERROR)
+				else:
+					do_nothing=True
+					stop=True
+				dialog.Destroy()
 
 			if do_nothing is False:
 				if self.network==0:
 					DN=DeepNetwork()
 					DN.train_cnn(self.data_path,self.path_to_model,self.out_path,dim=self.dim_conv,channel=3,
-						time_step=self.length,level=self.level_conv,resume=self.resume,
-						aug_methods=self.aug_methods,augvalid=self.augvalid,inner_code=self.inner_code,
-						std=self.std,background_free=self.background_free)
+						time_step=self.length,level=self.level_conv,aug_methods=self.aug_methods,augvalid=self.augvalid,
+						inner_code=self.inner_code,std=self.std,background_free=self.background_free)
 				elif self.network==1:
 					DN=DeepNetwork()
 					DN.train_crnn(self.data_path,self.path_to_model,self.out_path,dim=self.dim_tconv,channel=self.channel,
-						time_step=self.length,level=self.level_tconv,resume=self.resume,
-						aug_methods=self.aug_methods,augvalid=self.augvalid,inner_code=self.inner_code,std=self.std,
-						background_free=self.background_free)
+						time_step=self.length,level=self.level_tconv,aug_methods=self.aug_methods,augvalid=self.augvalid,
+						inner_code=self.inner_code,std=self.std,background_free=self.background_free)
 				else:
 					DN=DeepNetwork()
 					DN.train_combnet(self.data_path,self.path_to_model,self.out_path,dim_tconv=self.dim_tconv,
 						dim_conv=self.dim_conv,channel=self.channel,time_step=self.length,
-						level_tconv=self.level_tconv,level_conv=self.level_conv,resume=self.resume,
-						aug_methods=self.aug_methods,augvalid=self.augvalid,inner_code=self.inner_code,std=self.std,
-						background_free=self.background_free)	
+						level_tconv=self.level_tconv,level_conv=self.level_conv,aug_methods=self.aug_methods,augvalid=self.augvalid,
+						inner_code=self.inner_code,std=self.std,background_free=self.background_free)	
 
 
 
@@ -1470,8 +1291,6 @@ class WindowLv1_Analyzer(wx.Frame):
 		self.length=15
 		# 0, animals birghter than the background; 1, animals darker than the background; 2, hard to tell
 		self.invert=0
-		# use optogenetic method (0) or threshold (1) or edge detection (2)
-		self.method=0
 		# minimum: if 0, use minimum, otherwise use stable value detector for background extraction
 		self.minimum=0
 		# network: if 0, use Pattern Recognizer, if 1, use Animation Analyzer, if 2, use Categorizer
@@ -1574,7 +1393,7 @@ class WindowLv1_Analyzer(wx.Frame):
 		module_8=wx.BoxSizer(wx.HORIZONTAL)
 		button_8=wx.Button(panel,label='Specify the time window for\nbackground extraction',size=(300,40))
 		button_8.Bind(wx.EVT_BUTTON,self.specify_extraction)
-		self.text_8=wx.StaticText(panel,label='A time window during which the animals are NOT static.',
+		self.text_8=wx.StaticText(panel,label='A time window (typcially 10-60 sec) during which the animals are NOT static.',
 			style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_8.Add(button_8,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_8.Add(self.text_8,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -1584,7 +1403,7 @@ class WindowLv1_Analyzer(wx.Frame):
 		module_9=wx.BoxSizer(wx.HORIZONTAL)
 		button_9=wx.Button(panel,label='Specify the time window for\nestimating the animal size',size=(300,40))
 		button_9.Bind(wx.EVT_BUTTON,self.specify_estimation)
-		self.text_9=wx.StaticText(panel,label='A time window during which all the animals are present in the video.',
+		self.text_9=wx.StaticText(panel,label='A time window (typcially 10-30 sec) during which all the animals are present in the video.',
 			style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_9.Add(button_9,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_9.Add(self.text_9,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -1668,25 +1487,6 @@ class WindowLv1_Analyzer(wx.Frame):
 				self.text_1.SetLabel('Categorizer: '+model+'.')
 
 			if self.model is not None:
-
-				# these are for versions < 1.5
-
-				'''
-				dialog=wx.MessageDialog(self,'Set a uncertain threshold?\nSelect "No" if dont know what it is.',
-					'(Optional) set uncertain threshold',wx.YES_NO|wx.ICON_QUESTION)
-				if dialog.ShowModal()==wx.ID_YES:
-					dialog1=wx.NumberEntryDialog(self,
-						'The probability difference between the most\nand the 2nd most likely categories of a behavior',
-						'Enter a number\nbetween 0 and 100:','The threshold for uncertainty',0,0,100)
-					if dialog1.ShowModal()==wx.ID_OK:
-						self.uncertain=int(dialog1.GetValue())/100
-					else:
-						self.uncertain=0
-					dialog1.Destroy()
-				else:
-					self.uncertain=0
-				dialog.Destroy()
-				'''
 
 				# get all parameters for the network model
 				parameters=pd.read_csv(os.path.join(self.model,'model_parameters.txt'))
@@ -1888,87 +1688,44 @@ class WindowLv1_Analyzer(wx.Frame):
 				dialog2.Destroy()
 		dialog.Destroy()
 
-		# these are for versions < 1.5
-
-		'''
-		methods=['Background subtraction','Basic thresholding','Basic edge detection']
-		dialog=wx.SingleChoiceDialog(self,message='Select a method to detect animals',
-			caption='Methods to detect animals',choices=methods)
-		if dialog.ShowModal()==wx.ID_OK:
-			method=dialog.GetStringSelection()
-			if method=='Background subtraction':
-				self.method=0
-				dialog2=wx.MessageDialog(self,'Load an existing background from a folder?\nSelect "No" if dont know what it is.',
-					'(Optional) load existing background?',wx.YES_NO|wx.ICON_QUESTION)
-				if dialog2.ShowModal()==wx.ID_YES:
-					dialog3=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
-					if dialog3.ShowModal()==wx.ID_OK:
-						self.background_path=dialog3.GetPath()
-					dialog3.Destroy()
-				else:
-					self.background_path=None
-					if self.invert!=2:
-						dialog3=wx.MessageDialog(self,'Unstable illumination in the video?\nSelect "Yes" if dont know what it is.',
-						'(Optional) unstable illumination',wx.YES_NO|wx.ICON_QUESTION)
-						if dialog3.ShowModal()==wx.ID_YES:
-							self.minimum=1
-						else:
-							self.minimum=0
-						dialog3.Destroy()
-				dialog2.Destroy()
-			elif method=='Basic thresholding':
-				self.method=1
-			else:
-				self.method=2
-			self.text_7.SetLabel('Detect animals by: '+method+'.')
-		dialog.Destroy()
-		'''
-
 
 	def specify_extraction(self,event):
 
-		if self.method!=0:
+		methods=['Use the entire duration of a video','Decode from filenames: "_xst_" and "_xet_"','Enter two time points']
+		dialog=wx.SingleChoiceDialog(self,message='Specify the time window for background extraction',
+			caption='Time window for background extraction',choices=methods)
 
-			wx.MessageBox('No need to specify this since the method\nto detect animals is not "Background subtraction".',
-				'Error',wx.OK|wx.ICON_ERROR)
-
-		else:
-
-			methods=['Use the entire duration of a video','Decode from filenames: "_xst_" and "_xet_"','Enter two time points']
-			dialog=wx.SingleChoiceDialog(self,message='Specify the time window for background extraction',
-				caption='Time window for background extraction',choices=methods)
-
-			if dialog.ShowModal()==wx.ID_OK:
-				method=dialog.GetStringSelection()
-				if method=='Use the entire duration of a video':
-					self.x_code=0
-					self.text_8.SetLabel('Use the entire duration of the video for background extraction.')
-				elif method=='Decode from filenames: "_xst_" and "_xet_"':
-					self.x_code=1
-					self.text_8.SetLabel(
-						'Decode from the filenames: the "t" immediately after the letters "xs" (start) / "xe" (end).')
+		if dialog.ShowModal()==wx.ID_OK:
+			method=dialog.GetStringSelection()
+			if method=='Use the entire duration of a video':
+				self.x_code=0
+				self.text_8.SetLabel('Use the entire duration of the video for background extraction.')
+			elif method=='Decode from filenames: "_xst_" and "_xet_"':
+				self.x_code=1
+				self.text_8.SetLabel(
+					'Decode from the filenames: the "t" immediately after the letters "xs" (start) / "xe" (end).')
+			else:
+				self.x_code=0
+				dialog2=wx.NumberEntryDialog(self,'Enter the start time','The unit is second:',
+					'Start time for background extraction',0,0,100000000000000)
+				if dialog2.ShowModal()==wx.ID_OK:
+					self.ex_start=int(dialog2.GetValue())
+				dialog2.Destroy()
+				dialog2=wx.NumberEntryDialog(self,'Enter the end time','The unit is second:',
+					'End time for background extraction',0,0,100000000000000)
+				if dialog2.ShowModal()==wx.ID_OK:
+					self.ex_end=int(dialog2.GetValue())
+					if self.ex_end==0:
+						self.ex_end=None
+				dialog2.Destroy()
+				if self.ex_end is None:
+					self.text_8.SetLabel('The start / end time for background extraction is (in seconds): '+
+						str(self.ex_start)+' / the end of the video')
 				else:
-					self.x_code=0
-					dialog2=wx.NumberEntryDialog(self,'Enter the start time','The unit is second:',
-						'Start time for background extraction',0,0,100000000000000)
-					if dialog2.ShowModal()==wx.ID_OK:
-						self.ex_start=int(dialog2.GetValue())
-					dialog2.Destroy()
-					dialog2=wx.NumberEntryDialog(self,'Enter the end time','The unit is second:',
-						'End time for background extraction',0,0,100000000000000)
-					if dialog2.ShowModal()==wx.ID_OK:
-						self.ex_end=int(dialog2.GetValue())
-						if self.ex_end==0:
-							self.ex_end=None
-					dialog2.Destroy()
-					if self.ex_end is None:
-						self.text_8.SetLabel('The start / end time for background extraction is (in seconds): '+
-							str(self.ex_start)+' / the end of the video')
-					else:
-						self.text_8.SetLabel('The start / end time for background extraction is (in seconds): '+
-							str(self.ex_start)+' / '+str(self.ex_end))
+					self.text_8.SetLabel('The start / end time for background extraction is (in seconds): '+
+						str(self.ex_start)+' / '+str(self.ex_end))
 
-			dialog.Destroy()
+		dialog.Destroy()
 
 
 	def specify_estimation(self,event):
@@ -2167,10 +1924,9 @@ class WindowLv1_Analyzer(wx.Frame):
 				else:
 					analyze=0
 				AA.prepare_analysis(i,self.result_path,self.delta,self.animal_number,self.entangle_number,
-					names_and_colors=self.behaviornames_and_colors,framewidth=self.framewidth,method=self.method,
-					minimum=self.minimum,analyze=analyze,path_background=self.background_path,auto=self.auto,t=self.t,
-					duration=self.duration,ex_start=self.ex_start,ex_end=self.ex_end,es_start=self.es_start,es_end=self.es_end,
-					length=self.length,invert=self.invert)
+					names_and_colors=self.behaviornames_and_colors,framewidth=self.framewidth,minimum=self.minimum,analyze=analyze,
+					path_background=self.background_path,auto=self.auto,t=self.t,duration=self.duration,ex_start=self.ex_start,ex_end=self.ex_end,
+					es_start=self.es_start,es_end=self.es_end,length=self.length,invert=self.invert)
 				AA.acquire_parameters(deregister=self.deregister,dim_tconv=self.dim_tconv,dim_conv=self.dim_conv,
 					channel=self.channel,network=self.network,inner_code=self.inner_code,std=self.std,
 					background_free=self.background_free)

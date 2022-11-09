@@ -28,7 +28,7 @@ import scipy.ndimage as ndimage
 from skimage import exposure
 import math
 from tensorflow.keras.preprocessing.image import img_to_array
-from collections import OrderedDict
+from collections import OrderedDict,deque
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap,Normalize
 from matplotlib.colorbar import ColorbarBase
@@ -53,7 +53,26 @@ def extract_background(frames,minimum=0,invert=0):
 	else:
 		frames=np.array(frames,dtype='float32')
 		if invert==2:
-			background=np.uint8(np.median(frames,axis=0))
+			if len_frames>101:
+				frames_mean=[]
+				check_frames=[]
+				mean_overall=frames.mean(0)
+				n=0
+				while n<len_frames-101:
+					frames_temp=frames[n:n+100]
+					mean=frames_temp.mean(0)
+					frames_mean.append(mean)	
+					check_frames.append(abs(mean-mean_overall)+frames_temp.std(0))
+					n+=30
+				frames_mean=np.array(frames_mean,dtype='float32')
+				check_frames=np.array(check_frames,dtype='float32')
+				background=np.uint8(np.take_along_axis(frames_mean,np.argsort(check_frames,axis=0),axis=0)[0])
+				del frames_mean
+				del check_frames
+				del frames_temp
+				gc.collect()
+			else:
+				background=np.uint8(np.median(frames,axis=0))	
 		else:
 			if minimum==0:
 				if invert==1:
@@ -66,18 +85,21 @@ def extract_background(frames,minimum=0,invert=0):
 					check_frames=[]
 					n=0
 					while n<len_frames-101:
-						frames_mean.append(frames[n:n+100].mean(0))
+						frames_temp=frames[n:n+100]
+						mean=frames_temp.mean(0)
+						frames_mean.append(mean)
 						if invert==1:
-							frames_inv=255-frames
-							check_frames.append(frames_inv[n:n+100].mean(0)+frames_inv[n:n+100].std(0))
+							frames_temp_inv=255-frames_temp
+							check_frames.append(frames_temp_inv.mean(0)+frames_temp_inv.std(0))
 						else:
-							check_frames.append(frames[n:n+100].mean(0)+frames[n:n+100].std(0))
+							check_frames.append(mean+frames_temp.std(0))
 						n+=30
 					frames_mean=np.array(frames_mean,dtype='float32')
 					check_frames=np.array(check_frames,dtype='float32')
 					background=np.uint8(np.take_along_axis(frames_mean,np.argsort(check_frames,axis=0),axis=0)[0])
 					del frames_mean
 					del check_frames
+					del frames_temp
 					gc.collect()
 				else:
 					if invert==1:
@@ -89,15 +111,11 @@ def extract_background(frames,minimum=0,invert=0):
 
 
 # estimate some constants that can be used in anlysis, need to import background extraction
-def estimate_constants(path_to_video,delta,animal_number,framewidth=None,method=0,minimum=0,ex_start=0,ex_end=None,
+def estimate_constants(path_to_video,delta,animal_number,framewidth=None,minimum=0,ex_start=0,ex_end=None,
 	es_start=0,es_end=None,invert=0,path_background=None):
 
 	# delta: an estimated fold change of the light intensity (normally about 1.2)
 	# framewidth: width dimension to resize
-	# method: threshold animal by:
-	#       0--subtracting static background
-	#       1--basic threshold
-	#       2--edge detection
 	# minimum: if 0, use minimum, otherwise use stable value detector for background extraction
 	# ex_start: the start time point for background extraction
 	# ex_end: the end time point for background extraction, if None, use the entire video
@@ -114,201 +132,195 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,method=
 	stim_t=None
 	kernel=5
 
-	# if using background subtraction
-	if method==0:
+	if path_background is None:
 
-		if path_background is None:
+		print('Extracting the static background...')
 
-			print('Extracting the static background...')
+		if ex_start>=mv.VideoFileClip(path_to_video).duration:
+			print('The beginning time for background extraction is later than the end of the video!')
+			print('Will use the 1st second of the video as the beginning time for background extraction!')
+			ex_start=0
+		if ex_start==ex_end:
+			ex_end=ex_start+1
 
-			if ex_start>=mv.VideoFileClip(path_to_video).duration:
-				print('The beginning time for background extraction is later than the end of the video!')
-				print('Will use the 1st second of the video as the beginning time for background extraction!')
-				ex_start=0
-			if ex_start==ex_end:
-				ex_end=ex_start+1
+		if es_start>=mv.VideoFileClip(path_to_video).duration:
+			print('The beginning time for estimating the animal size is later than end of the video!')
+			print('Will use the 1st second of the video as the beginning time for estimation!')
+			es_start=0
+		if es_start==es_end:
+			es_end=es_start+1
 
-			if es_start>=mv.VideoFileClip(path_to_video).duration:
-				print('The beginning time for estimating the animal size is later than end of the video!')
-				print('Will use the 1st second of the video as the beginning time for estimation!')
-				es_start=0
-			if es_start==es_end:
-				es_end=es_start+1
-
-			capture=cv2.VideoCapture(path_to_video)
+		capture=cv2.VideoCapture(path_to_video)
 		
-			# initiate all parameters
-			frames=[]
-			frames_low=[]
-			frames_high=[]
-			frame_count=1
-			backgrounds=[]
-			backgrounds_low=[]
-			backgrounds_high=[]
+		# initiate all parameters
+		frames=deque(maxlen=1000)
+		frames_low=deque(maxlen=1000)
+		frames_high=deque(maxlen=1000)
+		backgrounds=deque(maxlen=1000)
+		backgrounds_low=deque(maxlen=1000)
+		backgrounds_high=deque(maxlen=1000)
+		frame_number=1
+		frame_count=1
+		frame_low_count=1
+		frame_high_count=1
 
-			# store frames
-			while True:
+		# store frames
+		while True:
 
-				retval,frame=capture.read()
-				if frame is None:
+			retval,frame=capture.read()
+			if frame is None:
+				break
+
+			if ex_end is not None:
+				if frame_number>=ex_end*fps:
 					break
 
-				if ex_end is not None:
-					if frame_count>=ex_end*fps:
-						break
+			if frame_number>=ex_start*fps:
 
-				if frame_count>=ex_start*fps:
-					if framewidth is not None:
-						frame=cv2.resize(frame,(framewidth,int(frame.shape[0]*framewidth/frame.shape[1])),
-							interpolation=cv2.INTER_AREA)
-					if frame_initial is None:
-						frame_initial=frame
+				if framewidth is not None:
+					frame=cv2.resize(frame,(framewidth,int(frame.shape[0]*framewidth/frame.shape[1])),
+						interpolation=cv2.INTER_AREA)
+
+				if frame_initial is None:
+					frame_initial=frame
+					frames.append(frame)
+					frame_count+=1
+				else:
+					if np.mean(frame)<np.mean(frame_initial)/delta:
+						if stim_t is None:
+							stim_t=frame_number/fps
+						frames_low.append(frame)
+						frame_low_count+=1
+					elif np.mean(frame)>delta*np.mean(frame_initial):
+						if stim_t is None:
+							stim_t=frame_number/fps
+						frames_high.append(frame)
+						frame_high_count+=1
+					else:
 						frames.append(frame)
-					else:
-						if np.mean(frame)<np.mean(frame_initial)/delta:
-							if stim_t is None:
-								stim_t=frame_count/fps
-							frames_low.append(frame)
-						elif np.mean(frame)>delta*np.mean(frame_initial):
-							if stim_t is None:
-								stim_t=frame_count/fps
-							frames_high.append(frame)
-						else:
-							frames.append(frame)
+						frame_count+=1
 
-				frame_count+=1
-
-				if len(frames)==1000:
-					background=extract_background(frames,minimum=minimum,invert=invert)
-					del frames
-					gc.collect()
-					frames=[]
-					backgrounds.append(background)
-
-					if len(backgrounds)==1000:
-						backgrounds=np.array(backgrounds,dtype='float32')
-						if invert==1:
-							background=np.uint8(backgrounds.max(0))
-						else:
-							background=np.uint8(backgrounds.min(0))
-						del backgrounds
-						gc.collect()
-						backgrounds=[]
-						backgrounds.append(background)
-
-				if len(frames_low)==1000:
-					background_low=extract_background(frames_low,minimum=minimum,invert=invert)
-					del frames_low
-					gc.collect()
-					frames_low=[]
-					backgrounds_low.append(background_low)
-
-					if len(backgrounds_low)==1000:
-						backgrounds_low=np.array(backgrounds_low,dtype='float32')
-						if invert==1:
-							background_low=np.uint8(backgrounds_low.max(0))
-						else:
-							background_low=np.uint8(backgrounds_low.min(0))
-						del backgrounds_low
-						gc.collect()
-						backgrounds_low=[]
-						backgrounds_low.append(background_low)
-
-				if len(frames_high)==1000:
-					background_high=extract_background(frames_high,minimum=minimum,invert=invert)
-					del frames_high
-					gc.collect()
-					frames_high=[]
-					backgrounds_high.append(background_high)
-
-					if len(backgrounds_high)==1000:
-						backgrounds_high=np.array(backgrounds_high,dtype='float32')
-						if invert==1:
-							background_high=np.uint8(backgrounds_high.max(0))
-						else:
-							background_high=np.uint8(backgrounds_high.min(0))
-						del backgrounds_high
-						gc.collect()
-						backgrounds_high=[]
-						backgrounds_high.append(background_high)
-
-			capture.release()
-
-			if len(backgrounds)>0:
-				if len(frames)>1000:
-					background=extract_background(frames,minimum=minimum,invert=invert)
-					backgrounds.append(background)
-				if len(backgrounds)==1:
-					background=backgrounds[0]
-				else:
-					backgrounds=np.array(backgrounds,dtype='float32')
-					if invert==1:
-						background=np.uint8(backgrounds.max(0))
-					else:
-						background=np.uint8(backgrounds.min(0))
-			else:
+			if frame_count==1001:
+				frame_count=1
 				background=extract_background(frames,minimum=minimum,invert=invert)
+				backgrounds.append(background)
 
-			if len(backgrounds_low)>0:
-				if len(frames_low)>1000:
-					background_low=extract_background(frames_low,minimum=minimum,invert=invert)
-					backgrounds_low.append(background_low)
-				if len(backgrounds_low)==1:
-					background_low=backgrounds_low[0]
-				else:
-					backgrounds_low=np.array(backgrounds_low,dtype='float32')
-					if invert==1:
-						background_low=np.uint8(backgrounds_low.max(0))
-					else:
-						background_low=np.uint8(backgrounds_low.min(0))
-			else:
+			if frame_low_count==1001:
+				frame_low_count=1
 				background_low=extract_background(frames_low,minimum=minimum,invert=invert)
+				backgrounds_low.append(background_low)
 
-			if len(backgrounds_high)>0:
-				if len(frames_high)>1000:
-					background_high=extract_background(frames_high,minimum=minimum,invert=invert)
-					backgrounds_high.append(background_high)
-				if len(backgrounds_high)==1:
-					background_high=backgrounds_high[0]
-				else:
-					backgrounds_high=np.array(backgrounds_high,dtype='float32')
-					if invert==1:
-						background_high=np.uint8(backgrounds_high.max(0))
-					else:
-						background_high=np.uint8(backgrounds_high.min(0))
-			else:
+			if frame_high_count==1001:
+				frame_high_count=1
 				background_high=extract_background(frames_high,minimum=minimum,invert=invert)
+				backgrounds_high.append(background_high)
 
-			if background is None:
-				background=frame_initial
-			if background_low is None:
-				background_low=background
-			if background_high is None:
-				background_high=background
+			frame_number+=1
 
-			print('Background extraction completed!')
+		capture.release()
 
+		if len(backgrounds)>0:
+			if frame_count>600:
+				background=extract_background(frames,minimum=minimum,invert=invert)
+				del frames
+				gc.collect()
+				backgrounds.append(background)
+			if len(backgrounds)==1:
+				background=backgrounds[0]
+			else:
+				backgrounds=np.array(backgrounds,dtype='float32')
+				if invert==1:
+					background=np.uint8(backgrounds.max(0))
+				elif invert==2:
+					background=np.uint8(np.median(backgrounds,axis=0))
+				else:
+					background=np.uint8(backgrounds.min(0))
+				del backgrounds
+				gc.collect()
 		else:
+			background=extract_background(frames,minimum=minimum,invert=invert)
+			del frames
+			gc.collect()
+		
 
-			background=cv2.imread(os.path.join(path_background,'background.jpg'))
-			background_low=cv2.imread(os.path.join(path_background,'background_low.jpg'))
-			background_high=cv2.imread(os.path.join(path_background,'background_high.jpg'))
-			if framewidth is not None:
-				frameheight=int(background.shape[0]*framewidth/background.shape[1])
-				background=cv2.resize(background,(framewidth,frameheight),interpolation=cv2.INTER_AREA)
-				background_low=cv2.resize(background_low,(framewidth,frameheight),interpolation=cv2.INTER_AREA)
-				background_high=cv2.resize(background_high,(framewidth,frameheight),interpolation=cv2.INTER_AREA)
-
-			frame_initial=background
-
-		if min(frame_initial.shape[0],frame_initial.shape[1])/animal_number<500:
-			kernel=5
-		elif min(frame_initial.shape[0],frame_initial.shape[1])/animal_number<1000:
-			kernel=7
-		elif min(frame_initial.shape[0],frame_initial.shape[1])/animal_number<1500:
-			kernel=9
+		if len(backgrounds_low)>0:
+			if frame_low_count>600:
+				background_low=extract_background(frames_low,minimum=minimum,invert=invert)
+				del frames_low
+				gc.collect()
+				backgrounds_low.append(background_low)
+			if len(backgrounds_low)==1:
+				background_low=backgrounds_low[0]
+			else:
+				backgrounds_low=np.array(backgrounds_low,dtype='float32')
+				if invert==1:
+					background_low=np.uint8(backgrounds_low.max(0))
+				elif invert==2:
+					background_low=np.uint8(np.median(backgrounds_low,axis=0))
+				else:
+					background_low=np.uint8(backgrounds_low.min(0))
+				del backgrounds_low
+				gc.collect()
 		else:
-			kernel=11
+			background_low=extract_background(frames_low,minimum=minimum,invert=invert)
+			del frames_low
+			gc.collect()
+
+		if len(backgrounds_high)>0:
+			if frame_high_count>600:
+				background_high=extract_background(frames_high,minimum=minimum,invert=invert)
+				del frames_high
+				gc.collect()
+				backgrounds_high.append(background_high)
+			if len(backgrounds_high)==1:
+				background_high=backgrounds_high[0]
+			else:
+				backgrounds_high=np.array(backgrounds_high,dtype='float32')
+				if invert==1:
+					background_high=np.uint8(backgrounds_high.max(0))
+				elif invert==2:
+					background_high=np.uint8(np.median(backgrounds_high,axis=0))
+				else:
+					background_high=np.uint8(backgrounds_high.min(0))
+				del backgrounds_high
+				gc.collect()
+		else:
+			background_high=extract_background(frames_high,minimum=minimum,invert=invert)
+			del frames_high
+			gc.collect()
+
+		if background is None:
+			background=frame_initial
+		if background_low is None:
+			background_low=background
+		if background_high is None:
+			background_high=background
+
+		print('Background extraction completed!')
+
+	else:
+
+		background=cv2.imread(os.path.join(path_background,'background.jpg'))
+		background_low=cv2.imread(os.path.join(path_background,'background_low.jpg'))
+		background_high=cv2.imread(os.path.join(path_background,'background_high.jpg'))
+		if framewidth is not None:
+			frameheight=int(background.shape[0]*framewidth/background.shape[1])
+			background=cv2.resize(background,(framewidth,frameheight),interpolation=cv2.INTER_AREA)
+			background_low=cv2.resize(background_low,(framewidth,frameheight),interpolation=cv2.INTER_AREA)
+			background_high=cv2.resize(background_high,(framewidth,frameheight),interpolation=cv2.INTER_AREA)
+
+		frame_initial=background
+
+	if min(frame_initial.shape[0],frame_initial.shape[1])/animal_number<250:
+		kernel=3
+	elif min(frame_initial.shape[0],frame_initial.shape[1])/animal_number<500:
+		kernel=5
+	elif min(frame_initial.shape[0],frame_initial.shape[1])/animal_number<1000:
+		kernel=7
+	elif min(frame_initial.shape[0],frame_initial.shape[1])/animal_number<1500:
+		kernel=9
+	else:
+		kernel=11
 
 	print('Estimating the animal size...')
 	print(datetime.datetime.now())
@@ -316,7 +328,7 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,method=
 	if delta<10000:
 		
 		# if no background extraction or manually set the start time for background extraction, re-compute stim_t
-		if method!=0 or ex_start!=0 or path_background is not None:
+		if ex_start!=0 or path_background is not None:
 
 			capture=cv2.VideoCapture(path_to_video)
 			frame_count=1
@@ -347,9 +359,6 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,method=
 				frame_count+=1
 
 			capture.release()
-
-	if method!=0:
-		background=background_low=background_high=frame_initial
 
 	# estimate animal contour area
 	capture=cv2.VideoCapture(path_to_video)
@@ -388,49 +397,28 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,method=
 
 			contour_area=0
 
-			
-			if method==0:
-				if np.mean(frame)<np.mean(frame_initial)/delta:
-					if invert==2:
-						foreground=cv2.absdiff(frame,background_low_estimation)
-					else:
-						foreground=cv2.subtract(frame,background_low_estimation)
-				elif np.mean(frame)>delta*np.mean(frame_initial):
-					if invert==2:
-						foreground=cv2.absdiff(frame,background_high_estimation)
-					else:
-						foreground=cv2.subtract(frame,background_high_estimation)
+			if np.mean(frame)<np.mean(frame_initial)/delta:
+				if invert==2:
+					foreground=cv2.absdiff(frame,background_low_estimation)
 				else:
-					if invert==2:
-						foreground=cv2.absdiff(frame,background_estimation)
-					else:
-						foreground=cv2.subtract(frame,background_estimation)
-				foreground=cv2.morphologyEx(foreground,cv2.MORPH_CLOSE,np.ones((kernel,kernel),np.uint8))
-				foreground=cv2.cvtColor(foreground,cv2.COLOR_BGR2GRAY)
-				thred=cv2.threshold(foreground,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]
-			elif method==1:
-				contrast=np.uint8(exposure.rescale_intensity(frame,out_range=(0,255)))
-				contrast=cv2.morphologyEx(cv2.cvtColor(contrast,cv2.COLOR_BGR2GRAY),
-					cv2.MORPH_CLOSE,np.ones((kernel,kernel),np.uint8))
-				thred=cv2.adaptiveThreshold(contrast,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,11,-2)
-			elif method==2:
-				contrast=cv2.cvtColor(np.uint8(exposure.rescale_intensity(frame,out_range=(0,255))),
-					cv2.COLOR_BGR2GRAY)
-				thred=cv2.Canny(cv2.GaussianBlur(contrast,(3,3),0),40,120,apertureSize=3,L2gradient=True)
-				thred=cv2.morphologyEx(thred,cv2.MORPH_CLOSE,np.ones((kernel,kernel),np.uint8))
+					foreground=cv2.subtract(frame,background_low_estimation)
+			elif np.mean(frame)>delta*np.mean(frame_initial):
+				if invert==2:
+					foreground=cv2.absdiff(frame,background_high_estimation)
+				else:
+					foreground=cv2.subtract(frame,background_high_estimation)
+			else:
+				if invert==2:
+					foreground=cv2.absdiff(frame,background_estimation)
+				else:
+					foreground=cv2.subtract(frame,background_estimation)
+			foreground=cv2.cvtColor(foreground,cv2.COLOR_BGR2GRAY)
+			thred=cv2.threshold(foreground,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]
+			thred=cv2.morphologyEx(thred,cv2.MORPH_CLOSE,np.ones((kernel,kernel),np.uint8))
+			if invert==2:
+				kernel_erode=max(kernel-4,1)
+				thred=cv2.erode(thred,np.ones((kernel_erode,kernel_erode),np.uint8))
 			contours,_=cv2.findContours(thred,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
-
-			# if using edge detection
-			if method==2:
-				cts=contours
-				contours=[]
-				gray=cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
-				bg=np.zeros_like(gray)
-				for i in cts:
-					cv2.drawContours(bg,[i],0,(255,255,255),-1)
-				cnts,_=cv2.findContours(bg,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
-				for i in cnts:
-					contours.append(i)
 
 			# add contour areas of individual animals
 			for i in contours:
@@ -537,15 +525,11 @@ def extract_blob(frame,animal_contour,y_bt=0,y_tp=0,x_lf=0,x_rt=0,analyze=0,back
 
 # find the contours in each frame
 def contour_frame(frame,animal_number,entangle_number,background,background_low,background_high,delta,contour_area,
-	method=1,invert=0,inner_code=1,kernel=5):
+	invert=0,inner_code=1,kernel=5):
 
 	# entangle_number: the number of animal allowed to be entangled
 	# delta: the light intensity increase when apply optogenetic stimulation
 	# contour_area: estimated area of an individual contour	
-	# method: threshold contour by:
-	#         0--subtracting static background
-	#         1--basic threshold
-	#         2--edge detection
 	# invert: if 0, animals brighter than the background
 	#         if 1, invert the pixel value (for animals darker than the background)
 	#         if 2, use absdiff
@@ -555,60 +539,39 @@ def contour_frame(frame,animal_number,entangle_number,background,background_low,
 	if invert==1:
 		frame=np.uint8(255-frame)
 
-	if method==0:
-		if np.mean(frame)<np.mean(background)/delta:
-			if invert==2:
-				foreground=cv2.absdiff(frame,background_low)
-			else:
-				foreground=cv2.subtract(frame,background_low)
-		elif np.mean(frame)>delta*np.mean(background):
-			if invert==2:
-				foreground=cv2.absdiff(frame,background_high)
-			else:
-				foreground=cv2.subtract(frame,background_high)
+	if np.mean(frame)<np.mean(background)/delta:
+		if invert==2:
+			foreground=cv2.absdiff(frame,background_low)
 		else:
-			if invert==2:
-				foreground=cv2.absdiff(frame,background)
-			else:
-				foreground=cv2.subtract(frame,background)
-		foreground=cv2.morphologyEx(foreground,cv2.MORPH_CLOSE,np.ones((kernel,kernel),np.uint8))
-		foreground=cv2.cvtColor(foreground,cv2.COLOR_BGR2GRAY)
-		thred=cv2.threshold(foreground,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]
-		
-	elif method==1:
-		contrast=cv2.cvtColor(np.uint8(exposure.rescale_intensity(frame,out_range=(0,255))),cv2.COLOR_BGR2GRAY)
-		contrast=cv2.morphologyEx(contrast,cv2.MORPH_CLOSE,np.ones((kernel,kernel),np.uint8))
-		thred=cv2.adaptiveThreshold(contrast,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,11,-2)
-
-	elif method==2:
-		contrast=cv2.cvtColor(np.uint8(exposure.rescale_intensity(frame,out_range=(0,255))),cv2.COLOR_BGR2GRAY)
-		thred=cv2.Canny(cv2.GaussianBlur(contrast,(3,3),0),40,120,apertureSize=3,L2gradient=True)
-		thred=cv2.morphologyEx(thred,cv2.MORPH_CLOSE,np.ones((kernel,kernel),np.uint8))
-
+			foreground=cv2.subtract(frame,background_low)
+	elif np.mean(frame)>delta*np.mean(background):
+		if invert==2:
+			foreground=cv2.absdiff(frame,background_high)
+		else:
+			foreground=cv2.subtract(frame,background_high)
+	else:
+		if invert==2:
+			foreground=cv2.absdiff(frame,background)
+		else:
+			foreground=cv2.subtract(frame,background)
+	foreground=cv2.cvtColor(foreground,cv2.COLOR_BGR2GRAY)
+	thred=cv2.threshold(foreground,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]
+	thred=cv2.morphologyEx(thred,cv2.MORPH_CLOSE,np.ones((kernel,kernel),np.uint8))
+	if invert==2:
+		kernel_erode=max(kernel-4,1)
+		thred=cv2.erode(thred,np.ones((kernel_erode,kernel_erode),np.uint8))
 	cnts,_=cv2.findContours(thred,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
 
 	# exclude too large or too small contours
 	contours=[]
 	
-	for i in cnts:
-		if animal_number>1:
-			if contour_area*0.3<cv2.contourArea(i)<contour_area*(entangle_number+0.9):
-				contours.append(i)
-		else:
-			if contour_area*0.2<cv2.contourArea(i)<contour_area*2.5:
-				contours.append(i)
-
-	# if using edge detection
-	if method==2:
-		cts=contours
-		contours=[]
-		gray=cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
-		bg=np.zeros_like(gray)
-		for i in cts:
-			cv2.drawContours(bg,[i],0,(255,255,255),-1)
-		cnts,_=cv2.findContours(bg,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
+	
+	if animal_number>1:
 		for i in cnts:
-			contours.append(i)
+			if contour_area*0.2<cv2.contourArea(i)<contour_area*(entangle_number+1.2):
+				contours.append(i)
+	else:
+		contours=[sorted(cnts,key=cv2.contourArea,reverse=True)[0]]
 
 	# if 0, include inner contours of animal body parts in pattern images
 	if inner_code==0:

@@ -118,18 +118,14 @@ class AnalyzeAnimal():
 
 	# preparation before the analysis
 	def prepare_analysis(self,path_to_video,results_path,delta,animal_number,entangle_number,names_and_colors=None,
-		framewidth=None,method=0,minimum=0,analyze=0,path_background=None,auto=1,t=0,duration=12.5,
-		ex_start=0,ex_end=None,es_start=0,es_end=None,length=15,invert=0):
+		framewidth=None,minimum=0,analyze=0,path_background=None,auto=1,t=0,duration=12.5,ex_start=0,ex_end=None,
+		es_start=0,es_end=None,length=15,invert=0):
 
 		# delta: an estimated fold change (1.2) of the light intensity for optogenetics only
 		# animal_number: the number of animals in the video
 		# entangle_number: the number of animals allowed to be entangled
 		# names_and_colors: the behavior names and their representing colors
 		# framewidth: the width of the frame to resize
-		# method: threshold animal by:
-		#       0--subtracting static background
-		#       1--basic threshold
-		#       2--edge detection
 		# minimum: if 0, use minimum or maximum pixel value for background extraction
 		# analyze: if not 0, track animals without analyzing behaviors
 		# path_background: if not None, load backgrounds (need to put the background images under the name
@@ -158,7 +154,6 @@ class AnalyzeAnimal():
 		self.delta=delta
 		self.animal_number=animal_number
 		self.entangle_number=entangle_number
-		self.method=method
 		self.analyze=analyze
 		self.auto=auto
 		self.t=t
@@ -195,9 +190,8 @@ class AnalyzeAnimal():
 			print('Folder already exists: '+str(self.results_path))
 
 		# estimate constants
-		constants=estimate_constants(self.path_to_video,self.delta,self.animal_number,framewidth=self.framewidth,
-			method=self.method,minimum=minimum,ex_start=ex_start,ex_end=ex_end,es_start=es_start,es_end=es_end,
-			invert=self.invert,path_background=path_background)
+		constants=estimate_constants(self.path_to_video,self.delta,self.animal_number,framewidth=self.framewidth,minimum=minimum,
+			ex_start=ex_start,ex_end=ex_end,es_start=es_start,es_end=es_end,invert=self.invert,path_background=path_background)
 
 		self.animal_area=constants[4]
 		self.kernel=constants[5]
@@ -277,9 +271,8 @@ class AnalyzeAnimal():
 						interpolation=cv2.INTER_AREA)
 
 				# find contours in this frame
-				(contours,inners)=contour_frame(frame,self.animal_number,self.entangle_number,background,
-					background_low,background_high,self.delta,self.animal_area,method=self.method,invert=self.invert,
-					inner_code=inner_code,kernel=self.kernel)
+				(contours,inners)=contour_frame(frame,self.animal_number,self.entangle_number,background,background_low,
+					background_high,self.delta,self.animal_area,invert=self.invert,inner_code=inner_code,kernel=self.kernel)
 
 				# skip the frame if no contours
 				if len(contours)==0:
@@ -588,9 +581,8 @@ class AnalyzeAnimal():
 						interpolation=cv2.INTER_AREA)
 
 				# find contours in this frame
-				(contours,inners)=contour_frame(frame,self.animal_number,self.entangle_number,background,
-					background_low,background_high,self.delta,self.animal_area,method=self.method,invert=self.invert,
-					inner_code=inner_code,kernel=self.kernel)
+				(contours,inners)=contour_frame(frame,self.animal_number,self.entangle_number,background,background_low,
+					background_high,self.delta,self.animal_area,invert=self.invert,inner_code=inner_code,kernel=self.kernel)
 
 				# skip the frame if no contours
 				if len(contours)>0:
@@ -1268,13 +1260,6 @@ class AnalyzeAnimal():
 				events_df.to_excel(os.path.join(self.results_path,'all_event_probability.xlsx'),float_format='%.2f')
 			else:
 				events_df.to_csv(os.path.join(self.results_path,'all_event_probability.csv'),float_format='%.2f')
-
-		'''
-		centers_df=pd.DataFrame.from_dict(self.animal_centers,orient='index',columns=self.all_time)
-		centers_df.to_excel(os.path.join(self.results_path,'all_centers.xlsx'))
-		contours_df=pd.DataFrame.from_dict(self.animal_contours,orient='index',columns=self.all_time)
-		contours_df.to_excel(os.path.join(self.results_path,'all_contours.xlsx'))
-		'''
 
 		all_parameters=[]
 
