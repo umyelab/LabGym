@@ -786,14 +786,13 @@ class DeepNetwork():
 
 
 	# train the convolutional network
-	def train_cnn(self,data_path,model_path,out_path=None,dim=64,channel=3,time_step=15,level=2,resume=0,
+	def train_cnn(self,data_path,model_path,out_path=None,dim=64,channel=3,time_step=15,level=2,
 		aug_methods=[],augvalid=0,inner_code=0,std=0,background_free=0):
 
 		# out_path: for export the training report
 		# dim: input dimension
 		# time_step: the number of the frames to concatenate
 		# level: the complex level of the network
-		# resume: if 1, resume the training from a previous check point
 		# aug_methods: the augmentation methods
 		# augvalid: if 0, also perform augmentation in validation data
 		# inners: the inner contours of animal body parts in pattern images
@@ -870,19 +869,16 @@ class DeepNetwork():
 			batch_size=32
 
 		# set up the model
-		if resume==1:
-			model=load_model(model_path)
+		if level<5:
+			model=self.simple_vgg(inputs,filters,classes=len(self.classnames),level=level,module=1)
 		else:
-			if level<5:
-				model=self.simple_vgg(inputs,filters,classes=len(self.classnames),level=level,module=1)
-			else:
-				model=self.simple_resnet(inputs,filters,classes=len(self.classnames),level=level,module=1)
-			if len(self.classnames)==2:
-				model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='binary_crossentropy',
-					metrics=['accuracy'])
-			else:
-				model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='categorical_crossentropy',
-					metrics=['accuracy'])
+			model=self.simple_resnet(inputs,filters,classes=len(self.classnames),level=level,module=1)
+		if len(self.classnames)==2:
+			model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='binary_crossentropy',
+				metrics=['accuracy'])
+		else:
+			model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='categorical_crossentropy',
+				metrics=['accuracy'])
 
 		# set model check point, early stoping and learning rate reducing
 		cp=ModelCheckpoint(model_path,monitor='val_loss',verbose=1,save_best_only=True,save_weights_only=False,
@@ -929,14 +925,13 @@ class DeepNetwork():
 
 
 	# train the convolutional recurrent network
-	def train_crnn(self,data_path,model_path,out_path=None,dim=64,channel=1,time_step=15,level=2,resume=0,
+	def train_crnn(self,data_path,model_path,out_path=None,dim=64,channel=1,time_step=15,level=2,
 		aug_methods=[],augvalid=0,inner_code=0,std=0,background_free=0):
 
 		# out_path: for export the training report
 		# dim: input dimension
 		# tiem_step: the number of input frames
 		# level: the complex level of the network
-		# resume: if 1, resume the training from a previous check point
 		# aug_methods: the augmentation methods
 		# augvalid: if 0, also perform augmentation in validation data
 		# inners: the inner contours of animal body parts in pattern images
@@ -1017,20 +1012,17 @@ class DeepNetwork():
 			batch_size=32
 
 		# set up the model
-		if resume==1:
-			model=load_model(model_path)
+		if level<5:
+			model=self.simple_tvgg(inputs,filters,classes=len(self.classnames),level=level,module=1)
 		else:
-			if level<5:
-				model=self.simple_tvgg(inputs,filters,classes=len(self.classnames),level=level,module=1)
-			else:
-				model=self.simple_tresnet(inputs,filters,classes=len(self.classnames),level=level,module=1)
+			model=self.simple_tresnet(inputs,filters,classes=len(self.classnames),level=level,module=1)
 
-			if len(self.classnames)==2:
-				model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='binary_crossentropy',
-					metrics=['accuracy'])
-			else:
-				model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='categorical_crossentropy',
-					metrics=['accuracy'])
+		if len(self.classnames)==2:
+			model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='binary_crossentropy',
+				metrics=['accuracy'])
+		else:
+			model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='categorical_crossentropy',
+				metrics=['accuracy'])
 
 		# set model check point, early stoping and learning rate reducing
 		cp=ModelCheckpoint(model_path,monitor='val_loss',verbose=1,save_best_only=True,save_weights_only=False,
@@ -1078,13 +1070,12 @@ class DeepNetwork():
 
 	# train the combined network for both animation and pattern_image
 	def train_combnet(self,data_path,model_path,out_path=None,dim_tconv=32,dim_conv=64,channel=1,time_step=15,
-		level_tconv=1,level_conv=2,resume=0,aug_methods=[],augvalid=0,inner_code=0,std=0,background_free=0):
+		level_tconv=1,level_conv=2,aug_methods=[],augvalid=0,inner_code=0,std=0,background_free=0):
 
 		# out_path: for export the training report
 		# dim: input dimension for Animation Analyzer or Pattern Recognizer
 		# time_step: the number of input frames
 		# level: the complex level of the network
-		# resume: if 1, resume the training from a previous check point
 		# aug_methods: the augmentation methods
 		# augvalid: if 0, also perform augmentation in validation data
 		# inners: the inner contours of animal body parts in pattern images
@@ -1153,15 +1144,12 @@ class DeepNetwork():
 			batch_size=32
 
 		# set up the model
-		if resume==1:
-			model=load_model(model_path)
+		model=self.combined_network(time_step=time_step,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,
+			classes=len(self.classnames),level_tconv=level_tconv,level_conv=level_conv)
+		if len(self.classnames)==2:
+			model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='binary_crossentropy',metrics=['accuracy'])
 		else:
-			model=self.combined_network(time_step=time_step,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,
-				classes=len(self.classnames),level_tconv=level_tconv,level_conv=level_conv)
-			if len(self.classnames)==2:
-				model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='binary_crossentropy',metrics=['accuracy'])
-			else:
-				model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='categorical_crossentropy',metrics=['accuracy'])
+			model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='categorical_crossentropy',metrics=['accuracy'])
 
 		# set model check point, early stoping and learning rate reducing
 		cp=ModelCheckpoint(model_path,monitor='val_loss',verbose=1,save_best_only=True,save_weights_only=False,

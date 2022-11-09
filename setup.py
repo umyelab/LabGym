@@ -31,9 +31,9 @@ except Exception:
     long_description=''
 
 
-setup(name='LabGym',version='1.6',author='Yujia Hu',
+setup(name='LabGym',version='1.7',author='Yujia Hu',
     author_email='henryhu@umich.edu',
-    description='Quantification of user-defined animal behaviors',
+    description='Quantify user-defined behaviors',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='http://github.com/umyelab/LabGym',
@@ -48,7 +48,7 @@ setup(name='LabGym',version='1.6',author='Yujia Hu',
     'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
     'Operating System :: OS Independent',
     ],
-    keywords='quantification of user-defined behaviors',
+    keywords='user-defined behaviors',
     python_requires='>=3.9',
     install_requires=[
     'tensorflow>=2.6.0',
