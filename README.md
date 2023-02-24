@@ -2,7 +2,11 @@
 
 LabGym is a multi-animal-tracking and deep-learning based software for end-to-end **classification** and **quantification** of user-defined behaviors without restrictions on animal species or behavior types. Users may also use it to establish **visualizable behavioral datasets** across species.
 
-Please cite the LabGym paper: https://www.biorxiv.org/content/10.1101/2022.02.17.480911v3.
+Please cite the LabGym paper: https://www.cell.com/cell-reports-methods/fulltext/S2667-2375(23)00026-7.
+
+**LabGym 2.0 is coming soon!** (Hopefully in the end of April)
+
+In LabGym 2.0, a detection module will be included so that LabGym will work for any videos including those with changing illumination or background; a data mining module will also be added so that LabGym will automatically mine the data and tell users which behavior parameters show statistically significant differences among groups.
 
 <p>&nbsp;</p>
 
