@@ -14,7 +14,7 @@ In LabGym 2.0, a mask-RCNN-based detection module will be included so that LabGy
 
 LabGym has a graphical user interface (GUI) for users to use with **no need of writing code**. 
 
-The **full manual** for using the GUI of LabGym: https://github.com/yujiahu415/LabGym/blob/master/The%20full%20manual%20of%20LabGym_v1.7.pdf.
+The **full manual** for using the GUI of LabGym: https://github.com/umyelab/LabGym/blob/master/The%20full%20manual%20of%20LabGym_v1.8.pdf.
 
 The GUI has 4 functional units: '**Generate Behavior Examples**', '**Train Categorizers**', '**Test Categorizers**', and '**Analyze Behaviors**':
  
@@ -110,6 +110,8 @@ Obviously, selecting the time window of 20th~40th second achieves the best resul
 
 First install Python3 (version >= 3.9.7)
 
+Note: not recommend to install the latest version of Python3 since many Python libraries LabGym uses might not be updated in time to be compatible with the latest version of Python3.
+
 Then in your terminal or cmd prompt, type:
 
     pip install LabGym
@@ -140,6 +142,18 @@ Now the GUI is initiated and ready to use.
 
 <p>&nbsp;</p>
 
+If there are dependency errors when installing LabGym, try uninstall current Python3 and download and install Python 3.9.8 (https://www.python.org/downloads/release/python-398/). Then download the 'requirements.txt' here (https://github.com/umyelab/LabGym/blob/master/requirements.txt). After that, use 'cd' command in your terminal or cmd to navigate to where the 'requirements.txt' locates, then type:
+
+    pip install -r requirements.txt
+
+or
+
+    python3 -m pip install -r requirements.txt
+
+And then, install LabGym again.
+
+<p>&nbsp;</p>
+
 # If you encounter any issues when using LabGym:
 
 Please refer to the issue page (https://github.com/umyelab/LabGym/issues?q=) to see whether it is listed in addressed issues. If not, please contact the author: Yujia Hu (henryhu@umich.edu).
@@ -147,6 +161,13 @@ Please refer to the issue page (https://github.com/umyelab/LabGym/issues?q=) to 
 <p>&nbsp;</p>
 
 # Changelog:
+
+**v1.8**:
+
+1. In previous versions, if no animal is detected in a frame, this frame will be skipped. From now on, such frames will not be skipped, and the behavioral classification and quantification will be output as 'NA's so that the raster plots and the quantification results can be perfectly aligned for every frame with other data (e.g., ephys recordings).
+2. An 'uncertain level' can be added into the Categorizers for reducing the false positives in behavior classification. The Categorizer will output an ‘NA’ if the difference between probability of the highest-likely behavior and the second highest-likely behavior is less than the uncertainty level.
+3. Simplified the GUI. 
+4. Optimized the processing speed.
 
 **v1.7**:
 
