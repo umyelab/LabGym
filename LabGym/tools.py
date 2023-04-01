@@ -37,14 +37,11 @@ import seaborn as sb
 
 
 
-# extract static background
 def extract_background(frames,minimum=0,invert=0):
 
 	# frame_initial: the first frame
-	# minimum: if 0, use minimum, otherwise use stable value detector for background extraction
-	# invert: if 0, animals brighter than the background
-	#         if 1, invert the pixel value (for animals darker than the background)
-	#         if 2, use absdiff
+	# minimum: 0: use minimum, otherwise use stable value detector for background extraction
+	# invert: 0: animals brighter than the background; 1: invert the pixel value (for animals darker than the background); 2: use absdiff
 
 	len_frames=len(frames)
 	
@@ -110,22 +107,14 @@ def extract_background(frames,minimum=0,invert=0):
 	return background
 
 
-# estimate some constants that can be used in anlysis, need to import background extraction
-def estimate_constants(path_to_video,delta,animal_number,framewidth=None,minimum=0,ex_start=0,ex_end=None,
-	es_start=0,es_end=None,invert=0,path_background=None):
+def estimate_constants(path_to_video,delta,animal_number,framewidth=None,minimum=0,ex_start=0,ex_end=None,t=None,duration=10,invert=0,path_background=None):
 
 	# delta: an estimated fold change of the light intensity (normally about 1.2)
 	# framewidth: width dimension to resize
-	# minimum: if 0, use minimum, otherwise use stable value detector for background extraction
 	# ex_start: the start time point for background extraction
 	# ex_end: the end time point for background extraction, if None, use the entire video
-	# es_start: the start time point for estimation of animal contour area
-	# es_end: the end time point for estimation of animal contour area, if None, use the entire video
-	# invert: if 0, animals brighter than the background
-	#         if 1, invert the pixel value (for animals darker than the background)
-	#         if 2, use both
-	# path_background: if not None, load backgrounds (need to put the background images under the name
-	#                  'background.jpg', 'background_low.jpg' and 'background_high.jpg' in the 'path_background' path)
+	# t: analysis start time
+	# path_background: if not None, load backgrounds (need to put the background images under the name 'background.jpg', 'background_low.jpg' and 'background_high.jpg' in the 'path_background' path)
 
 	fps=mv.VideoFileClip(path_to_video).fps
 	frame_initial=None
@@ -143,16 +132,8 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,minimum
 		if ex_start==ex_end:
 			ex_end=ex_start+1
 
-		if es_start>=mv.VideoFileClip(path_to_video).duration:
-			print('The beginning time for estimating the animal size is later than end of the video!')
-			print('Will use the 1st second of the video as the beginning time for estimation!')
-			es_start=0
-		if es_start==es_end:
-			es_end=es_start+1
-
 		capture=cv2.VideoCapture(path_to_video)
 		
-		# initiate all parameters
 		frames=deque(maxlen=1000)
 		frames_low=deque(maxlen=1000)
 		frames_high=deque(maxlen=1000)
@@ -164,7 +145,6 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,minimum
 		frame_low_count=1
 		frame_high_count=1
 
-		# store frames
 		while True:
 
 			retval,frame=capture.read()
@@ -175,30 +155,29 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,minimum
 				if frame_number>=ex_end*fps:
 					break
 
+			if frame_initial is None:
+				frame_initial=frame
+				if framewidth is not None:
+					frame_initial=cv2.resize(frame,(framewidth,int(frame.shape[0]*framewidth/frame.shape[1])),interpolation=cv2.INTER_AREA)
+
 			if frame_number>=ex_start*fps:
 
 				if framewidth is not None:
-					frame=cv2.resize(frame,(framewidth,int(frame.shape[0]*framewidth/frame.shape[1])),
-						interpolation=cv2.INTER_AREA)
+					frame=cv2.resize(frame,(framewidth,int(frame.shape[0]*framewidth/frame.shape[1])),interpolation=cv2.INTER_AREA)
 
-				if frame_initial is None:
-					frame_initial=frame
+				if np.mean(frame)<np.mean(frame_initial)/delta:
+					if stim_t is None:
+						stim_t=frame_number/fps
+					frames_low.append(frame)
+					frame_low_count+=1
+				elif np.mean(frame)>delta*np.mean(frame_initial):
+					if stim_t is None:
+						stim_t=frame_number/fps
+					frames_high.append(frame)
+					frame_high_count+=1
+				else:
 					frames.append(frame)
 					frame_count+=1
-				else:
-					if np.mean(frame)<np.mean(frame_initial)/delta:
-						if stim_t is None:
-							stim_t=frame_number/fps
-						frames_low.append(frame)
-						frame_low_count+=1
-					elif np.mean(frame)>delta*np.mean(frame_initial):
-						if stim_t is None:
-							stim_t=frame_number/fps
-						frames_high.append(frame)
-						frame_high_count+=1
-					else:
-						frames.append(frame)
-						frame_count+=1
 
 			if frame_count==1001:
 				frame_count=1
@@ -327,12 +306,10 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,minimum
 
 	if delta<10000:
 		
-		# if no background extraction or manually set the start time for background extraction, re-compute stim_t
 		if ex_start!=0 or path_background is not None:
 
 			capture=cv2.VideoCapture(path_to_video)
 			frame_count=1
-			stim_t=None
 
 			while True:
 
@@ -341,26 +318,33 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,minimum
 					break
 
 				if framewidth is not None:
-					frame=cv2.resize(frame,(framewidth,int(frame.shape[0]*framewidth/frame.shape[1])),
-						interpolation=cv2.INTER_AREA)
+					frame=cv2.resize(frame,(framewidth,int(frame.shape[0]*framewidth/frame.shape[1])),interpolation=cv2.INTER_AREA)
 
 				if frame_initial is None:
 					frame_initial=frame
 				else:
 					if np.mean(frame)<np.mean(frame_initial)/delta:
-						if stim_t is None:
-							stim_t=frame_count/fps
-							break
+						stim_t=frame_count/fps
+						break
 					if np.mean(frame)>delta*np.mean(frame_initial):
-						if stim_t is None:
-							stim_t=frame_count/fps
-							break
+						stim_t=frame_count/fps
+						break
 						
 				frame_count+=1
 
 			capture.release()
 
-	# estimate animal contour area
+	if t is None:
+		if stim_t is None:
+			es_start=0
+		else:
+			es_start=stim_t
+	else:
+		es_start=t
+	if duration>30 or duration<=0:
+		duration=30
+	es_end=es_start+duration
+
 	capture=cv2.VideoCapture(path_to_video)
 	total_contour_area=[]
 	frame_count=1
@@ -389,8 +373,7 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,minimum
 		if frame_count>=es_start*fps:
 
 			if framewidth is not None:
-				frame=cv2.resize(frame,(framewidth,int(frame.shape[0]*framewidth/frame.shape[1])),
-					interpolation=cv2.INTER_AREA)
+				frame=cv2.resize(frame,(framewidth,int(frame.shape[0]*framewidth/frame.shape[1])),interpolation=cv2.INTER_AREA)
 
 			if invert==1:
 				frame=np.uint8(255-frame)
@@ -420,11 +403,9 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,minimum
 				thred=cv2.erode(thred,np.ones((kernel_erode,kernel_erode),np.uint8))
 			contours,_=cv2.findContours(thred,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
 
-			# add contour areas of individual animals
 			for i in contours:
 				if min_area<cv2.contourArea(i)<max_area:
 					contour_area+=cv2.contourArea(i)
-			# add to total contour area
 			total_contour_area.append(contour_area)
 
 		frame_count+=1
@@ -479,12 +460,11 @@ def crop_frame(frame,animal_contours):
 	return (y_bt,y_tp,x_lf,x_rt)
 
 
-# extract a blob for an animal
 def extract_blob(frame,animal_contour,y_bt=0,y_tp=0,x_lf=0,x_rt=0,analyze=0,background_free=0,channel=1):
 
 	# analyze: if not 0, generate data
-	# background_free: if 0, do not include background in animations
-	# channel: if 1, gray scale
+	# background_free: 0: do not include background in animations
+	# channel: 1: gray scale
 
 	if background_free==0:
 
@@ -495,7 +475,6 @@ def extract_blob(frame,animal_contour,y_bt=0,y_tp=0,x_lf=0,x_rt=0,analyze=0,back
 		if analyze==0:
 			x,y,w,h=cv2.boundingRect(animal_contour)
 			difference=int(abs(w-h)/2)+1
-			# form a square blob
 			if w>h:
 				y_bt=max(y-difference-1,0)
 				y_tp=min(y+h+difference+1,frame.shape[0])
@@ -523,17 +502,11 @@ def extract_blob(frame,animal_contour,y_bt=0,y_tp=0,x_lf=0,x_rt=0,analyze=0,back
 	return blob
 
 
-# find the contours in each frame
-def contour_frame(frame,animal_number,entangle_number,background,background_low,background_high,delta,contour_area,
-	invert=0,inner_code=1,kernel=5):
+def contour_frame(frame,animal_number,background,background_low,background_high,delta,contour_area,invert=0,inner_code=1,kernel=5):
 
-	# entangle_number: the number of animal allowed to be entangled
 	# delta: the light intensity increase when apply optogenetic stimulation
 	# contour_area: estimated area of an individual contour	
-	# invert: if 0, animals brighter than the background
-	#         if 1, invert the pixel value (for animals darker than the background)
-	#         if 2, use absdiff
-	# inner_code: if 0, include inner contours of animal body parts in pattern images, else not
+	# inner_code: 0: include inner contours of animal body parts in pattern images
 	# kernel: the kernel size for morphological changes
 	
 	if invert==1:
@@ -562,18 +535,15 @@ def contour_frame(frame,animal_number,entangle_number,background,background_low,
 		thred=cv2.erode(thred,np.ones((kernel_erode,kernel_erode),np.uint8))
 	cnts,_=cv2.findContours(thred,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
 
-	# exclude too large or too small contours
 	contours=[]
-	
 	
 	if animal_number>1:
 		for i in cnts:
-			if contour_area*0.2<cv2.contourArea(i)<contour_area*(entangle_number+1.2):
+			if contour_area*0.2<cv2.contourArea(i)<contour_area*1.2:
 				contours.append(i)
 	else:
 		contours=[sorted(cnts,key=cv2.contourArea,reverse=True)[0]]
 
-	# if 0, include inner contours of animal body parts in pattern images
 	if inner_code==0:
 		inners=[]
 		n=0
@@ -597,15 +567,12 @@ def contour_frame(frame,animal_number,entangle_number,background,background_low,
 	return (contours,inners)
 
 
-# extract some common contour parameters for analysis
 def get_parameters(frame,contours):
 
-	# store centers, angles, heights, widths
 	new_contours=[]
 	centers=[]
 	angles=[]
 	heights=[]
-	widths=[]
 
 	n=0
 	
@@ -625,17 +592,14 @@ def get_parameters(frame,contours):
 
 		(_,_),(w,h),_=cv2.minAreaRect(contours[n])
 		height=max(w,h)
-		width=min(w,h)
 
 		heights.append(height)
-		widths.append(width)
 
 		n+=1
 
-	return (new_contours,centers,angles,heights,widths)
+	return (new_contours,centers,angles,heights)
 
 
-# concatenate sets of contours (body parts and outlines, color indicating their sequence) into a square blob
 def concatenate_blobs(frame,outlines,y_bt,y_tp,x_lf,x_rt,inners=None,std=0):
 
 	if inners is None:
@@ -657,20 +621,17 @@ def concatenate_blobs(frame,outlines,y_bt,y_tp,x_lf,x_rt,inners=None,std=0):
 
 	else:
 
-		# determine the pixel size for drawing the contours
 		p_size=int(max(abs(y_bt-y_tp),abs(x_lf-x_rt))/150+1)
 
 		n=0
 
 		while n<len(outlines):
 
-			# evaluate the std between frames
 			if std>0:
 				background_std=np.zeros_like(frame)
 				cv2.drawContours(background_std,inners[n],-1,(255,255,255),-1)
 				backgrounds_std.append(background_std)
 
-			# use different colors to indicate the sequence of contours
 			if n<len(outlines)/4:
 				d=n*int((255*4/len(outlines)))
 				cv2.drawContours(background_outlines,[outlines[n]],0,(255,d,0),p_size)
@@ -719,7 +680,6 @@ def concatenate_blobs(frame,outlines,y_bt,y_tp,x_lf,x_rt,inners=None,std=0):
 		return pattern_image
 
 
-# plot behaviral event and probability as raster plot
 def plot_evnets(result_path,event_probability,time_points,names_and_colors,to_include,width=0,height=0):
 
 	# names_and_colors: the behavior names and their representing colors
@@ -729,7 +689,6 @@ def plot_evnets(result_path,event_probability,time_points,names_and_colors,to_in
 	print('Exporting the raster plot for this analysis batch...')
 	print(datetime.datetime.now())
 
-	# define width and height of the figure
 	if width==0 or height==0:
 		time_length=len(time_points)
 		if time_length>30000:
@@ -748,7 +707,6 @@ def plot_evnets(result_path,event_probability,time_points,names_and_colors,to_in
 		if height<=5:
 			figure.subplots_adjust(bottom=0.25)
 	
-	# plot all selected behavioral events
 	for behavior_name in to_include:
 
 		all_data=[]
@@ -774,23 +732,18 @@ def plot_evnets(result_path,event_probability,time_points,names_and_colors,to_in
 		masks=np.array(masks)
 		dataframe=pd.DataFrame(all_data,columns=[float('{:.1f}'.format(i)) for i in time_points])
 
-		heatmap=sb.heatmap(dataframe,mask=masks,xticklabels=x_intvl,
-			cmap=LinearSegmentedColormap.from_list('',names_and_colors[behavior_name]),cbar=False,
-			vmin=0,vmax=1)
+		heatmap=sb.heatmap(dataframe,mask=masks,xticklabels=x_intvl,cmap=LinearSegmentedColormap.from_list('',names_and_colors[behavior_name]),cbar=False,vmin=0,vmax=1)
 		heatmap.set_xticklabels(heatmap.get_xticklabels(),rotation=90) 
 		# no ticks
 		#ax.tick_params(axis='both',which='both',length=0)
 	
 	plt.savefig(os.path.join(result_path,'behaviors_plot.png'))
 
-	# plot all colorbars
 	for behavior_name in to_include: 
 
 		colorbar_fig=plt.figure(figsize=(5,1))
 		ax=colorbar_fig.add_axes([0,1,1,1])
-		colorbar=ColorbarBase(ax,orientation='horizontal',
-			cmap=LinearSegmentedColormap.from_list('',names_and_colors[behavior_name]),
-			norm=Normalize(vmin=0,vmax=1),ticks=[])
+		colorbar=ColorbarBase(ax,orientation='horizontal',cmap=LinearSegmentedColormap.from_list('',names_and_colors[behavior_name]),norm=Normalize(vmin=0,vmax=1),ticks=[])
 		colorbar.outline.set_linewidth(0)
 			
 		plt.savefig(os.path.join(result_path,behavior_name+'_colorbar.png'),bbox_inches='tight')
@@ -798,8 +751,5 @@ def plot_evnets(result_path,event_probability,time_points,names_and_colors,to_in
 	plt.close('all')
 
 	print('The raster plot stored in: '+str(result_path))
-
-
-
 
 
