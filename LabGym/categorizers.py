@@ -46,24 +46,20 @@ import pandas as pd
 
 
 
-class DeepNetwork():
+class Categorizers():
 
 	def __init__(self):
 
-		# file extensions
 		self.extension_image=('.png','.jpeg','.jpg','.tiff','.gif','.bmp')
 		self.extension_video=('.avi','.mpg','.wmv','.mp4','.mkv','.m4v','.mov')
-		# the classnames of the network
 		self.classnames=None
 
 
-	# rename animations and pattern_images with label name
-	def rename_label(self,file_path,new_path,normalize=0,resize=None,background_free=0):
+	def rename_label(self,file_path,new_path,resize=None,background_free=0):
 
 		# new_path: the path for storing renamed files
-		# normalize: if 0, enhance the contrast of animations and create new
 		# resize: resize the animations and pattern_images
-		# background_free: if 0, do not include background in blobs
+		# background_free: 0: do not include background in blobs
 
 		folder_list=[i for i in os.listdir(file_path) if os.path.isdir(os.path.join(file_path,i))]
 		print('Behavior names are: '+str(folder_list))
@@ -72,7 +68,6 @@ class DeepNetwork():
 
 			name_list=[i for i in os.listdir(os.path.join(file_path,folder)) if i.endswith('.avi')]
 		
-			# rename all files in file path
 			for i in name_list:
 
 				animation=os.path.join(file_path,folder,i)
@@ -87,22 +82,19 @@ class DeepNetwork():
 					retval,frame=capture.read()
 					if frame is None:
 						break
-					if normalize==0:
-						frame_contrast=np.uint8(exposure.rescale_intensity(frame,out_range=(0,255)))
-						if resize is not None:
-							frame_contrast=cv2.resize(frame_contrast,(resize,resize),interpolation=cv2.INTER_AREA)
-						if background_free==0:
-							frame_gray=cv2.cvtColor(frame_contrast,cv2.COLOR_BGR2GRAY)
-							mask=np.zeros_like(frame_contrast)
-							thred=cv2.threshold(frame_gray,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]
-							cnts,_=cv2.findContours(thred,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
-							cnts=sorted(cnts,key=cv2.contourArea,reverse=True)
-							if len(cnts)!=0:
-								cv2.drawContours(mask,[cnts[0]],0,(255,255,255),-1)
-								mask=cv2.dilate(mask,np.ones((5,5),np.uint8))
-								frame=np.uint8(frame_contrast*(mask/255))
-							else:
-								frame=frame_contrast
+					frame_contrast=np.uint8(exposure.rescale_intensity(frame,out_range=(0,255)))
+					if resize is not None:
+						frame_contrast=cv2.resize(frame_contrast,(resize,resize),interpolation=cv2.INTER_AREA)
+					if background_free==0:
+						frame_gray=cv2.cvtColor(frame_contrast,cv2.COLOR_BGR2GRAY)
+						mask=np.zeros_like(frame_contrast)
+						thred=cv2.threshold(frame_gray,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]
+						cnts,_=cv2.findContours(thred,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
+						cnts=sorted(cnts,key=cv2.contourArea,reverse=True)
+						if len(cnts)!=0:
+							cv2.drawContours(mask,[cnts[0]],0,(255,255,255),-1)
+							mask=cv2.dilate(mask,np.ones((5,5),np.uint8))
+							frame=np.uint8(frame_contrast*(mask/255))
 						else:
 							frame=frame_contrast
 					if writer is None:
@@ -119,7 +111,6 @@ class DeepNetwork():
 		print('All prepared training examples stored in: '+str(new_path))
 
 
-	# reconstruct the dataset for training and testing
 	def build_data(self,path_to_animations,dim_tconv=32,dim_conv=64,channel=1,time_step=15,
 		aug_methods=[],background_free=0):
 
@@ -127,7 +118,6 @@ class DeepNetwork():
 		# channel: the channel for Animation Analyzer
 		# time_step: the number of input frames
 		# aug_methods: the methods for data augmentation
-		# background_free: if 0, do not include background in blobs
 
 		animations=deque()
 		pattern_images=deque()
@@ -142,16 +132,9 @@ class DeepNetwork():
 
 			remove=[]
 
-			all_methods=['orig','del1','del2','rot1','rot2','rot3','rot4',
-			'flph','flpv','brih','bril','shrp','shrn','sclh','sclw',
-			'rot1_brih','rot1_bril','rot4_brih','rot4_bril',
-			'flph_brih','flph_bril','flpv_brih','flpv_bril',
-			'del2_rot5_brii','del2_rot6_brii','del2_rot5_brid','del2_rot6_brid',
-			'del2_flph_brii','del2_flph_brid','del2_flpv_brii','del2_flpv_brid',
-			'flph_rot5_brii','flph_rot6_brii','flph_rot5_brid','flph_rot6_brid',
-			'flpv_rot5_brii','flpv_rot6_brii','flpv_rot5_brid','flpv_rot6_brid',
-			'flph_shrp_brii','flph_shrn_brii','flph_shrp_brid','flph_shrn_brid',
-			'flpv_shrp_brii','flpv_shrn_brii','flpv_shrp_brid','flpv_shrn_brid']
+			all_methods=['orig','del1','del2','rot1','rot2','rot3','rot4','flph','flpv','brih','bril','shrp','shrn','sclh','sclw','rot1_brih','rot1_bril','rot4_brih','rot4_bril','flph_brih','flph_bril','flpv_brih','flpv_bril',
+			'del2_rot5_brii','del2_rot6_brii','del2_rot5_brid','del2_rot6_brid','del2_flph_brii','del2_flph_brid','del2_flpv_brii','del2_flpv_brid','flph_rot5_brii','flph_rot6_brii','flph_rot5_brid','flph_rot6_brid',
+			'flpv_rot5_brii','flpv_rot6_brii','flpv_rot5_brid','flpv_rot6_brid','flph_shrp_brii','flph_shrn_brii','flph_shrp_brid','flph_shrn_brid','flpv_shrp_brii','flpv_shrn_brii','flpv_shrp_brid','flpv_shrn_brid']
 
 			for i in all_methods:
 				if 'random rotation' not in aug_methods:
@@ -189,13 +172,10 @@ class DeepNetwork():
 			label=os.path.splitext(i)[0].split('_')[-1]
 			path_to_pattern_image=os.path.splitext(i)[0]+'.jpg'
 			
-			# shuffle the augmentation sequences
 			random.shuffle(methods)
 
-			# perform data augmentation
 			for m in methods:
 
-				# rotate the data with an random angle
 				if 'rot1' in m:
 					angle=np.random.uniform(10,50)
 				elif 'rot2' in m:
@@ -211,7 +191,6 @@ class DeepNetwork():
 				else:
 					angle=None
 
-				# flip the data
 				if 'flph' in m:
 					code=1
 				elif 'flpv' in m:
@@ -219,7 +198,6 @@ class DeepNetwork():
 				else:
 					code=None
 
-				# change brightness
 				if 'brih' in m:
 					beta=np.random.uniform(30,80)
 				elif 'brii' in m:
@@ -231,7 +209,6 @@ class DeepNetwork():
 				else:
 					beta=None
 
-				# shear the data
 				if 'shrp' in m:
 					shear=np.random.uniform(0.15,0.21)
 				elif 'shrn' in m:
@@ -239,7 +216,6 @@ class DeepNetwork():
 				else:
 					shear=None
 
-				# rescale the data
 				if 'sclh' in m:
 					width=0
 					scale=np.random.uniform(0.6,0.9)
@@ -261,7 +237,6 @@ class DeepNetwork():
 				else:
 					to_delete=None
 
-				# process each animation
 				capture=cv2.VideoCapture(i)
 				animation=deque()
 				frames=deque(maxlen=time_step)
@@ -280,7 +255,6 @@ class DeepNetwork():
 
 				for frame in frames:
 
-					# if need to delete
 					if to_delete is not None and n in to_delete:
 
 						blob=np.zeros_like(original_frame)
@@ -301,11 +275,9 @@ class DeepNetwork():
 						else:
 							blob=frame_contrast
 
-						# if need to flip
 						if code is not None:
 							blob=cv2.flip(blob,code)
 
-						# if the brightness needs to change
 						if beta is not None:
 							blob=blob.astype('float')
 							if background_free==0:
@@ -314,24 +286,19 @@ class DeepNetwork():
 								blob+=beta
 							blob=np.uint8(np.clip(blob,0,255))
 
-						# if need to rotate
 						if angle is not None:
 							blob=ndimage.rotate(blob,angle,reshape=False,prefilter=False)
 
-						# if need to shear
 						if shear is not None:
 							tf=AffineTransform(shear=shear)
 							blob=transform.warp(blob,tf,order=1,preserve_range=True,mode='constant')
 
-						# if need to rescale
 						if scale is not None:
 							blob_black=np.zeros_like(blob)
 							if width==0:
-								blob_scl=cv2.resize(blob,(blob.shape[1],int(blob.shape[0]*scale)),
-									interpolation=cv2.INTER_AREA)
+								blob_scl=cv2.resize(blob,(blob.shape[1],int(blob.shape[0]*scale)),interpolation=cv2.INTER_AREA)
 							else:
-								blob_scl=cv2.resize(blob,(int(blob.shape[1]*scale),blob.shape[0]),
-									interpolation=cv2.INTER_AREA)
+								blob_scl=cv2.resize(blob,(int(blob.shape[1]*scale),blob.shape[0]),interpolation=cv2.INTER_AREA)
 							blob_scl=img_to_array(blob_scl)
 							x=(blob_black.shape[1]-blob_scl.shape[1])//2
 							y=(blob_black.shape[0]-blob_scl.shape[0])//2
@@ -349,13 +316,10 @@ class DeepNetwork():
 
 				capture.release()
 
-				# add the animation
 				animations.append(np.array(animation))
 
-				# read the pattern image
 				pattern_image=cv2.imread(path_to_pattern_image)
 
-				# augment the pattern image
 				if code is not None:
 					pattern_image=cv2.flip(pattern_image,code)
 
@@ -364,33 +328,25 @@ class DeepNetwork():
 
 				if shear is not None:
 					tf=AffineTransform(shear=shear)
-					pattern_image=transform.warp(pattern_image,tf,order=1,preserve_range=True,
-						mode='constant')
+					pattern_image=transform.warp(pattern_image,tf,order=1,preserve_range=True,mode='constant')
 
 				if scale is not None:
 					pattern_image_black=np.zeros_like(pattern_image)
 					if width==0:
-						pattern_image_scl=cv2.resize(pattern_image,
-							(pattern_image.shape[1],int(pattern_image.shape[0]*scale)),
-							interpolation=cv2.INTER_AREA)
+						pattern_image_scl=cv2.resize(pattern_image,(pattern_image.shape[1],int(pattern_image.shape[0]*scale)),interpolation=cv2.INTER_AREA)
 					else:
-						pattern_image_scl=cv2.resize(pattern_image,
-							(int(pattern_image.shape[1]*scale),pattern_image.shape[0]),
-							interpolation=cv2.INTER_AREA)
+						pattern_image_scl=cv2.resize(pattern_image,(int(pattern_image.shape[1]*scale),pattern_image.shape[0]),interpolation=cv2.INTER_AREA)
 					x=(pattern_image_black.shape[1]-pattern_image_scl.shape[1])//2
 					y=(pattern_image_black.shape[0]-pattern_image_scl.shape[0])//2
 					pattern_image_black[y:y+pattern_image_scl.shape[0],
 					x:x+pattern_image_scl.shape[1],:]=pattern_image_scl
 					pattern_image=pattern_image_black
 
-				# add the concatenated_image
 				pattern_image=cv2.resize(pattern_image,(dim_conv,dim_conv),interpolation=cv2.INTER_AREA)
 				pattern_images.append(img_to_array(pattern_image))
 
-				# add the label
 				labels.append(label)
 
-				# count the data
 				amount+=1
 				if amount%10000==0:
 					print('The augmented example amount: '+str(amount))
@@ -403,7 +359,6 @@ class DeepNetwork():
 		return animations,pattern_images,labels
 
 
-	# a simple vgg
 	def simple_vgg(self,inputs,filters,classes=3,level=2,module=0):
 
 		# filters: the number of filters (node of neurons), related to input dimension
@@ -456,12 +411,7 @@ class DeepNetwork():
 			return model
 
 
-	# vgg with time distributed warper
 	def simple_tvgg(self,inputs,filters,classes=3,level=2,module=0):
-
-		# filters: the number of filters (node of neurons), related to input dimension
-		# level: the complex level of the network
-		# module: if !=0, return model with classifier
 
 		if level<2:
 			layers=[2]
@@ -510,10 +460,8 @@ class DeepNetwork():
 			return model
 
 
-	# the block for building resnet
 	def res_block(self,x,filters,strides=2,block=0,basic=0):
 
-		# filters: the number of filters (node of neurons), related to input dimension
 		# block: if !=0, shortcut=x
 		# basic: if 0, 2 operations, else 3
 
@@ -558,12 +506,7 @@ class DeepNetwork():
 		return x
 
 
-	# the block for building time distributed resnet
 	def tres_block(self,x,filters,strides=2,block=0,basic=0):
-
-		# filters: the number of filters (node of neurons), related to input dimension
-		# block: if !=0, shortcut=x
-		# basic: if 0, 2 operations, else 3
 
 		shortcut=x
 
@@ -606,12 +549,7 @@ class DeepNetwork():
 		return x
 
 
-	# a simple resnet 
 	def simple_resnet(self,inputs,filters,classes=3,level=5,module=0):
-
-		# filters: the number of filters (node of neurons), related to input dimension
-		# level: the complex level of the network
-		# module: if !=0, return model with classifier
 
 		x=ZeroPadding2D((3,3))(inputs)
 		x=Conv2D(filters,(5,5),strides=(2,2))(x)
@@ -661,12 +599,7 @@ class DeepNetwork():
 			return model
 
 
-	# a simple time distributed resnet 
 	def simple_tresnet(self,inputs,filters,classes=3,level=5,module=0):
-
-		# filters: the number of filters (node of neurons), related to input dimension
-		# level: the complex level of the network
-		# module: if !=0, return model with classifier
 
 		x=TimeDistributed(ZeroPadding2D((3,3)))(inputs)
 		x=TimeDistributed(Conv2D(filters,(5,5),strides=(2,2)))(x)
@@ -730,21 +663,11 @@ class DeepNetwork():
 			return model
 
 
-	# a combined network to process both animations and pattern_image
-	def combined_network(self,time_step=15,dim_tconv=32,dim_conv=64,channel=1,classes=9,
-		level_tconv=1,level_conv=2):
+	def combined_network(self,time_step=15,dim_tconv=32,dim_conv=64,channel=1,classes=9,level_tconv=1,level_conv=2):
 
-		# time_step: the number of input frames
-		# dim: input dimension for Animation Analyzer or Pattern Recognizer
-		# channel: input channel for Animation Analyzer
-		# classes: label classes
-		# level: the complex level of Animation Analyzer or Pattern Recognizer
-
-		# define input shapes
 		animation_inputs=Input(shape=(time_step,dim_tconv,dim_tconv,channel))
 		pattern_image_inputs=Input(shape=(dim_conv,dim_conv,3))
 
-		# set the node numbers according to input dimension
 		filters_tconv=8
 		filters_conv=8
 
@@ -754,7 +677,6 @@ class DeepNetwork():
 		for i in range(round(dim_conv/60)):
 			filters_conv=min(int(filters_conv*2),64)
 
-		# process 2 differnet features
 		if level_tconv<5:
 			animation_feature=self.simple_tvgg(animation_inputs,filters_tconv,level=level_tconv,module=0)
 		else:
@@ -767,7 +689,6 @@ class DeepNetwork():
 
 		merged_features=concatenate([animation_feature,pattern_image_feature])
 
-		# compute classification probabilities
 		nodes=32
 		for i in range(max(level_tconv,level_conv)):
 			nodes=int(nodes*2)
@@ -785,21 +706,14 @@ class DeepNetwork():
 		return model
 
 
-	# train the convolutional network
-	def train_cnn(self,data_path,model_path,out_path=None,dim=64,channel=3,time_step=15,level=2,
+	def train_pattern_recognizer(self,data_path,model_path,out_path=None,dim=64,channel=3,time_step=15,level=2,
 		aug_methods=[],augvalid=0,inner_code=0,std=0,background_free=0):
 
 		# out_path: for export the training report
-		# dim: input dimension
-		# time_step: the number of the frames to concatenate
-		# level: the complex level of the network
-		# aug_methods: the augmentation methods
-		# augvalid: if 0, also perform augmentation in validation data
+		# augvalid: 0: also perform augmentation in validation data
 		# inners: the inner contours of animal body parts in pattern images
 		# std: std for excluding static pixels in inners
-		# background_free: if 0, do not include background in blobs
 
-		# compute filters
 		filters=8
 
 		for i in range(round(dim/60)):
@@ -807,8 +721,7 @@ class DeepNetwork():
 
 		inputs=Input(shape=(dim,dim,channel))
 
-		print('Training the Categorizer w/o Animation Analyzer using the behavior examples in: '
-			+str(data_path))
+		print('Training the Categorizer w/ only Pattern Recognizer using the behavior examples in: '+str(data_path))
 
 		files=[i for i in os.listdir(data_path) if i.endswith(self.extension_video)]
 
@@ -827,32 +740,24 @@ class DeepNetwork():
 
 		print('Found behavior names: '+str(self.classnames))
 
-		# save model parameters
-		parameters={'classnames':list(self.classnames),'dim_conv':int(dim),'channel':int(channel),
-		'time_step':int(time_step),'network':0,'level_conv':int(level),
-		'inner_code':int(inner_code),'std':int(std),'background_free':int(background_free)}
+		parameters={'classnames':list(self.classnames),'dim_conv':int(dim),'channel':int(channel),'time_step':int(time_step),'network':0,'level_conv':int(level),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_free)}
 		pd_parameters=pd.DataFrame.from_dict(parameters)
 		pd_parameters.to_csv(os.path.join(model_path,'model_parameters.txt'),index=False)
 
-		# split files into 80% training and 20% testing
 		(train_files,test_files,y1,y2)=train_test_split(path_files,labels,test_size=0.2,stratify=labels)
 
 		print('Perform augmentation for the behavior examples...')
 		print('This might take hours or days, depending on the capacity of your computer.')
 		print(datetime.datetime.now())
 
-		# rebuild training datasets and perform data augmentation on training dataset
 		print('Start to augment training examples...')
-		_,trainX,trainY=self.build_data(train_files,dim_tconv=dim,dim_conv=dim,channel=channel,
-			time_step=time_step,aug_methods=aug_methods,background_free=background_free)
+		_,trainX,trainY=self.build_data(train_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free)
 		trainY=lb.fit_transform(trainY)
 		print('Start to augment validation examples...')
 		if augvalid==0:
-			_,testX,testY=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,
-				time_step=time_step,aug_methods=aug_methods,background_free=background_free)
+			_,testX,testY=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free)
 		else:
-			_,testX,testY=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,
-				time_step=time_step,aug_methods=[],background_free=background_free)
+			_,testX,testY=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free)
 		testY=lb.fit_transform(testY)
 
 		print('Training example shape : '+str(trainX.shape))
@@ -868,27 +773,20 @@ class DeepNetwork():
 		else:
 			batch_size=32
 
-		# set up the model
 		if level<5:
 			model=self.simple_vgg(inputs,filters,classes=len(self.classnames),level=level,module=1)
 		else:
 			model=self.simple_resnet(inputs,filters,classes=len(self.classnames),level=level,module=1)
 		if len(self.classnames)==2:
-			model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='binary_crossentropy',
-				metrics=['accuracy'])
+			model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='binary_crossentropy',metrics=['accuracy'])
 		else:
-			model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='categorical_crossentropy',
-				metrics=['accuracy'])
+			model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='categorical_crossentropy',metrics=['accuracy'])
 
-		# set model check point, early stoping and learning rate reducing
-		cp=ModelCheckpoint(model_path,monitor='val_loss',verbose=1,save_best_only=True,save_weights_only=False,
-			mode='min',save_freq='epoch')
+		cp=ModelCheckpoint(model_path,monitor='val_loss',verbose=1,save_best_only=True,save_weights_only=False,mode='min',save_freq='epoch')
 		es=EarlyStopping(monitor='val_loss',min_delta=0.001,mode='min',verbose=1,patience=4,restore_best_weights=True)
 		rl=ReduceLROnPlateau(monitor='val_loss',min_delta=0.001,factor=0.2,patience=2,verbose=1,mode='min',min_learning_rate=1e-7)
 
-		# train the network
-		H=model.fit(trainX,trainY,batch_size=batch_size,validation_data=(testX,testY),epochs=1000000,
-			callbacks=[cp,es,rl])
+		H=model.fit(trainX,trainY,batch_size=batch_size,validation_data=(testX,testY),epochs=1000000,callbacks=[cp,es,rl])
 		
 		predictions=model.predict(testX,batch_size=batch_size)
 
@@ -906,7 +804,6 @@ class DeepNetwork():
 		model.save(model_path)
 		print('Trained Categorizer saved in: '+str(model_path))
 
-		# plot parameters
 		plt.style.use('seaborn-bright')
 		plt.figure()
 		plt.plot(H.history['loss'],label='train_loss')
@@ -924,21 +821,8 @@ class DeepNetwork():
 		plt.close('all')
 
 
-	# train the convolutional recurrent network
-	def train_crnn(self,data_path,model_path,out_path=None,dim=64,channel=1,time_step=15,level=2,
-		aug_methods=[],augvalid=0,inner_code=0,std=0,background_free=0):
+	def train_animation_analyzer(self,data_path,model_path,out_path=None,dim=64,channel=1,time_step=15,level=2,aug_methods=[],augvalid=0,inner_code=0,std=0,background_free=0):
 
-		# out_path: for export the training report
-		# dim: input dimension
-		# tiem_step: the number of input frames
-		# level: the complex level of the network
-		# aug_methods: the augmentation methods
-		# augvalid: if 0, also perform augmentation in validation data
-		# inners: the inner contours of animal body parts in pattern images
-		# std: std for excluding static pixels in inners
-		# background_free: if 0, do not include background in blobs
-
-		# compute filters
 		filters=8
 
 		for i in range(round(dim/60)):
@@ -946,23 +830,18 @@ class DeepNetwork():
 		
 		inputs=Input(shape=(time_step,dim,dim,channel))
 
-		print(
-			'Training the Categorizer w/o Pattern Recognizer using the behavior examples in: '
-			+str(data_path))
+		print('Training the Categorizer w/o Pattern Recognizer using the behavior examples in: '+str(data_path))
 
 		files=[i for i in os.listdir(data_path) if i.endswith(self.extension_video)]
 
-		# initiate datalists
 		path_files=[]
 		labels=[]
 
-		# extract path to files and labels
 		for i in files:
 			path_file=os.path.join(data_path,i)
 			path_files.append(path_file)
 			labels.append(os.path.splitext(i)[0].split('_')[-1])
 
-		# encode the labels and get the class names
 		labels=np.array(labels)
 		lb=LabelBinarizer()
 		labels=lb.fit_transform(labels)
@@ -970,32 +849,24 @@ class DeepNetwork():
 
 		print('Found behavior names: '+str(self.classnames))
 
-		# save model parameters
-		parameters={'classnames':list(self.classnames),'dim_tconv':int(dim),'channel':int(channel),
-		'time_step':int(time_step),'network':1,'level_tconv':int(level),
-		'inner_code':int(inner_code),'std':int(std),'background_free':int(background_free)}
+		parameters={'classnames':list(self.classnames),'dim_tconv':int(dim),'channel':int(channel),'time_step':int(time_step),'network':1,'level_tconv':int(level),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_free)}
 		pd_parameters=pd.DataFrame.from_dict(parameters)
 		pd_parameters.to_csv(os.path.join(model_path,'model_parameters.txt'),index=False)
 
-		# split files into 80% training and 20% testing
 		(train_files,test_files,y1,y2)=train_test_split(path_files,labels,test_size=0.2,stratify=labels)
 
 		print('Perform augmentation for the behavior examples...')
 		print('This might take hours or days, depending on the capacity of your computer.')
 		print(datetime.datetime.now())
 
-		# rebuild training datasets and perform data augmentation on training dataset
 		print('Start to augment training examples...')
-		trainX,_,trainY=self.build_data(train_files,dim_tconv=dim,dim_conv=dim,channel=channel,
-			time_step=time_step,aug_methods=aug_methods,background_free=background_free)
+		trainX,_,trainY=self.build_data(train_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free)
 		trainY=lb.fit_transform(trainY)
 		print('Start to augment validation examples...')
 		if augvalid==0:
-			testX,_,testY=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,
-				time_step=time_step,aug_methods=aug_methods,background_free=background_free)
+			testX,_,testY=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free)
 		else:
-			testX,_,testY=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,
-					time_step=time_step,aug_methods=[],background_free=background_free)
+			testX,_,testY=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free)
 		testY=lb.fit_transform(testY)
 
 		print('Training example shape : '+str(trainX.shape))
@@ -1011,28 +882,21 @@ class DeepNetwork():
 		else:
 			batch_size=32
 
-		# set up the model
 		if level<5:
 			model=self.simple_tvgg(inputs,filters,classes=len(self.classnames),level=level,module=1)
 		else:
 			model=self.simple_tresnet(inputs,filters,classes=len(self.classnames),level=level,module=1)
 
 		if len(self.classnames)==2:
-			model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='binary_crossentropy',
-				metrics=['accuracy'])
+			model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='binary_crossentropy',metrics=['accuracy'])
 		else:
-			model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='categorical_crossentropy',
-				metrics=['accuracy'])
+			model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='categorical_crossentropy',metrics=['accuracy'])
 
-		# set model check point, early stoping and learning rate reducing
-		cp=ModelCheckpoint(model_path,monitor='val_loss',verbose=1,save_best_only=True,save_weights_only=False,
-			mode='min',save_freq='epoch')
+		cp=ModelCheckpoint(model_path,monitor='val_loss',verbose=1,save_best_only=True,save_weights_only=False,mode='min',save_freq='epoch')
 		es=EarlyStopping(monitor='val_loss',min_delta=0.001,mode='min',verbose=1,patience=4,restore_best_weights=True)
 		rl=ReduceLROnPlateau(monitor='val_loss',min_delta=0.001,factor=0.2,patience=2,verbose=1,mode='min',min_learning_rate=1e-7)
 
-		# train the network
-		H=model.fit(trainX,trainY,batch_size=batch_size,validation_data=(testX,testY),epochs=1000000,
-			callbacks=[cp,es,rl])
+		H=model.fit(trainX,trainY,batch_size=batch_size,validation_data=(testX,testY),epochs=1000000,callbacks=[cp,es,rl])
 		
 		predictions=model.predict(testX,batch_size=batch_size)
 
@@ -1050,7 +914,6 @@ class DeepNetwork():
 		model.save(model_path)
 		print('Trained Categorizer saved in: '+str(model_path))
 
-		# plot parameters
 		plt.style.use('seaborn-bright')
 		plt.figure()
 		plt.plot(H.history['loss'],label='train_loss')
@@ -1068,19 +931,7 @@ class DeepNetwork():
 		plt.close('all')
 
 
-	# train the combined network for both animation and pattern_image
-	def train_combnet(self,data_path,model_path,out_path=None,dim_tconv=32,dim_conv=64,channel=1,time_step=15,
-		level_tconv=1,level_conv=2,aug_methods=[],augvalid=0,inner_code=0,std=0,background_free=0):
-
-		# out_path: for export the training report
-		# dim: input dimension for Animation Analyzer or Pattern Recognizer
-		# time_step: the number of input frames
-		# level: the complex level of the network
-		# aug_methods: the augmentation methods
-		# augvalid: if 0, also perform augmentation in validation data
-		# inners: the inner contours of animal body parts in pattern images
-		# std: std for excluding static pixels in inners
-		# background_free: if 0, do not include background in blobs
+	def train_combnet(self,data_path,model_path,out_path=None,dim_tconv=32,dim_conv=64,channel=1,time_step=15,level_tconv=1,level_conv=2,aug_methods=[],augvalid=0,inner_code=0,std=0,background_free=0):
 
 		print('Training Categorizer with both Animation Analyzer and Pattern Recognizer using the behavior examples in: '+str(data_path))
 
@@ -1101,33 +952,24 @@ class DeepNetwork():
 
 		print('Found behavior names: '+str(self.classnames))
 
-		# save model parameters
-		parameters={'classnames':list(self.classnames),'dim_tconv':int(dim_tconv),'dim_conv':int(dim_conv),
-		'channel':int(channel),'time_step':int(time_step),'network':2,'level_tconv':int(level_tconv),
-		'level_conv':int(level_conv),'inner_code':int(inner_code),'std':int(std),
-		'background_free':int(background_free)}
+		parameters={'classnames':list(self.classnames),'dim_tconv':int(dim_tconv),'dim_conv':int(dim_conv),'channel':int(channel),'time_step':int(time_step),'network':2,'level_tconv':int(level_tconv),'level_conv':int(level_conv),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_free)}
 		pd_parameters=pd.DataFrame.from_dict(parameters)
 		pd_parameters.to_csv(os.path.join(model_path,'model_parameters.txt'),index=False)
 
-		# split files into 80% training and 20% testing
 		(train_files,test_files,y1,y2)=train_test_split(path_files,labels,test_size=0.2,stratify=labels)
 
 		print('Perform augmentation for the behavior examples...')
 		print('This might take hours or days, depending on the capacity of your computer.')
 		print(datetime.datetime.now())
 
-		# rebuild training datasets and perform data augmentation on training dataset
 		print('Start to augment training examples...')
-		train_animations,train_pattern_images,trainY=self.build_data(train_files,dim_tconv=dim_tconv,dim_conv=dim_conv,
-			channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free)
+		train_animations,train_pattern_images,trainY=self.build_data(train_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free)
 		trainY=lb.fit_transform(trainY)
 		print('Start to augment validation examples...')
 		if augvalid==0:
-			test_animations,test_pattern_images,testY=self.build_data(test_files,dim_tconv=dim_tconv,dim_conv=dim_conv,
-				channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free)
+			test_animations,test_pattern_images,testY=self.build_data(test_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free)
 		else:
-			test_animations,test_pattern_images,testY=self.build_data(test_files,dim_tconv=dim_tconv,dim_conv=dim_conv,
-				channel=channel,time_step=time_step,aug_methods=[],background_free=background_free)
+			test_animations,test_pattern_images,testY=self.build_data(test_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free)
 		testY=lb.fit_transform(testY)
 
 		print('Training example shape : '+str(train_animations.shape)+', '+str(train_pattern_images.shape))
@@ -1143,23 +985,17 @@ class DeepNetwork():
 		else:
 			batch_size=32
 
-		# set up the model
-		model=self.combined_network(time_step=time_step,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,
-			classes=len(self.classnames),level_tconv=level_tconv,level_conv=level_conv)
+		model=self.combined_network(time_step=time_step,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,classes=len(self.classnames),level_tconv=level_tconv,level_conv=level_conv)
 		if len(self.classnames)==2:
 			model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='binary_crossentropy',metrics=['accuracy'])
 		else:
 			model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='categorical_crossentropy',metrics=['accuracy'])
 
-		# set model check point, early stoping and learning rate reducing
-		cp=ModelCheckpoint(model_path,monitor='val_loss',verbose=1,save_best_only=True,save_weights_only=False,
-			mode='min',save_freq='epoch')
+		cp=ModelCheckpoint(model_path,monitor='val_loss',verbose=1,save_best_only=True,save_weights_only=False,mode='min',save_freq='epoch')
 		es=EarlyStopping(monitor='val_loss',min_delta=0.001,mode='min',verbose=1,patience=4,restore_best_weights=True)
 		rl=ReduceLROnPlateau(monitor='val_loss',min_delta=0.001,factor=0.2,patience=2,verbose=1,mode='min',min_learning_rate=1e-7)
 
-		# train the network
-		H=model.fit([train_animations,train_pattern_images],trainY,batch_size=batch_size,
-			validation_data=([test_animations,test_pattern_images],testY),epochs=1000000,callbacks=[cp,es,rl])
+		H=model.fit([train_animations,train_pattern_images],trainY,batch_size=batch_size,validation_data=([test_animations,test_pattern_images],testY),epochs=1000000,callbacks=[cp,es,rl])
 		
 		predictions=model.predict([test_animations,test_pattern_images],batch_size=batch_size)
 
@@ -1177,7 +1013,6 @@ class DeepNetwork():
 		model.save(model_path)
 		print('Trained Categorizer saved in: '+str(model_path))
 
-		# plot parameters
 		plt.style.use('seaborn-bright')
 		plt.figure()
 		plt.plot(H.history['loss'],label='train_loss')
@@ -1195,8 +1030,7 @@ class DeepNetwork():
 		plt.close('all')
 
 
-	# test the trained model
-	def test_network(self,groundtruth_path,model_path,result_path):
+	def test_categorizer(self,groundtruth_path,model_path,result_path):
 
 		# groundtruth_path: ground truth data
 		# result_path: path to store the testing results
@@ -1207,7 +1041,6 @@ class DeepNetwork():
 		pattern_images=deque()
 		labels=deque()
 
-		# get all parameters for the network model
 		parameters=pd.read_csv(os.path.join(model_path,'model_parameters.txt'))
 
 		classnames=list(parameters['classnames'])
@@ -1300,7 +1133,5 @@ class DeepNetwork():
 			pd.DataFrame(report).transpose().to_excel(os.path.join(result_path,'testing_reports.xlsx'),float_format='%.2f')
 
 			print('Test completed!')
-
-
 
 

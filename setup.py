@@ -31,7 +31,7 @@ except Exception:
     long_description=''
 
 
-setup(name='LabGym',version='1.7',author='Yujia Hu',
+setup(name='LabGym',version='1.8',author='Yujia Hu',
     author_email='henryhu@umich.edu',
     description='Quantify user-defined behaviors',
     long_description=long_description,
@@ -51,17 +51,17 @@ setup(name='LabGym',version='1.7',author='Yujia Hu',
     keywords='user-defined behaviors',
     python_requires='>=3.9',
     install_requires=[
-    'tensorflow>=2.6.0',
-    'matplotlib>=3.4.3',
-    'moviepy>=1.0.3',
-    'opencv-contrib-python>=4.5.3.56',
-    'opencv-python>=4.5.3',
-    'openpyxl>=3.0.9',
-    'pandas>=1.3.3',
-    'pathlib>=1.0.1',
-    'scikit-learn>=1.0',
-    'scikit-image>=0.18.3',
-    'seaborn>=0.11.2',
-    'wxPython>=4.1.1',
+    'tensorflow',
+    'matplotlib',
+    'moviepy',
+    'opencv-contrib-python',
+    'opencv-python',
+    'openpyxl',
+    'pandas',
+    'pathlib',
+    'scikit-learn',
+    'scikit-image',
+    'seaborn',
+    'wxPython',
     ]  
 )
