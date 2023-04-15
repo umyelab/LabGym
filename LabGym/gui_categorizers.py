@@ -23,7 +23,6 @@ import os
 import shutil
 from pathlib import Path
 from .analyzebehaviors import AnalyzeAnimal
-from .tools import plot_evnets
 from .categorizers import Categorizers
 
 
@@ -239,12 +238,10 @@ class WindowLv1_GenerateExamples(wx.Frame):
 	def input_duration(self,event):
 
 		dialog=wx.NumberEntryDialog(self,'Enter the duration for generating examples','The unit is second:','Duration for generating examples',0,0,100000000000000)
-
 		if dialog.ShowModal()==wx.ID_OK:
 			self.duration=int(dialog.GetValue())
 			if self.duration!=0:
 				self.text_duration.SetLabel('The generation of behavior examples lasts for '+str(self.duration)+' seconds.')
-
 		dialog.Destroy()
 
 
@@ -456,7 +453,7 @@ class WindowLv1_GenerateExamples(wx.Frame):
 					self.deregister=0
 
 					AA=AnalyzeAnimal()
-					AA.prepare_analysis(i,self.result_path,self.delta,self.animal_number,names_and_colors=None,framewidth=self.framewidth,minimum=self.minimum,analyze=1,path_background=self.background_path,auto=self.auto,t=self.t,duration=self.duration,ex_start=self.ex_start,ex_end=self.ex_end,length=self.length,invert=self.invert)
+					AA.prepare_analysis(i,self.result_path,self.animal_number,delta=self.delta,names_and_colors=None,framewidth=self.framewidth,minimum=self.minimum,analyze=1,path_background=self.background_path,auto=self.auto,t=self.t,duration=self.duration,ex_start=self.ex_start,ex_end=self.ex_end,length=self.length,invert=self.invert)
 					AA.generate_data(deregister=self.deregister,inner_code=self.inner_code,std=self.std,background_free=self.background_free,skip_redundant=self.skip_redundant)
 						
 
@@ -846,7 +843,7 @@ class WindowLv1_TesterCategorizers(wx.Frame):
 
 	def __init__(self,title):
 
-		super(WindowLv1_TesterCategorizers,self).__init__(parent=None,title=title,size=(1000,300))
+		super(WindowLv1_TesterCategorizers,self).__init__(parent=None,title=title,size=(1000,250))
 		# the model parent path
 		self.model_path=os.path.join(the_absolute_current_path,'models')
 		self.path_to_categorizer=None
@@ -887,16 +884,16 @@ class WindowLv1_TesterCategorizers(wx.Frame):
 		module_testreport.Add(button_testreport,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_testreport.Add(self.text_testreport,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		boxsizer.Add(module_testreport,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
-		boxsizer.Add(0,5,0)
-
-		button_test=wx.Button(panel,label='Test the selected Categorizer',size=(300,40))
-		button_test.Bind(wx.EVT_BUTTON,self.test_model)
-		boxsizer.Add(button_test,0,wx.RIGHT|wx.ALIGN_RIGHT,90)
 		boxsizer.Add(0,10,0)
 
+		testanddelete=wx.BoxSizer(wx.HORIZONTAL)
+		button_test=wx.Button(panel,label='Test the selected Categorizer',size=(300,40))
+		button_test.Bind(wx.EVT_BUTTON,self.test_model)
 		button_delete=wx.Button(panel,label='Delete a Categorizer',size=(300,40))
 		button_delete.Bind(wx.EVT_BUTTON,self.remove_model)
-		boxsizer.Add(button_delete,0,wx.RIGHT|wx.ALIGN_RIGHT,90)
+		testanddelete.Add(button_test,0,wx.RIGHT,50)
+		testanddelete.Add(button_delete,0,wx.LEFT,50)
+		boxsizer.Add(testanddelete,0,wx.RIGHT|wx.ALIGN_RIGHT,90)
 		boxsizer.Add(0,10,0)
 
 		panel.SetSizer(boxsizer)

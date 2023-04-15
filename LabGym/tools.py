@@ -753,3 +753,53 @@ def plot_evnets(result_path,event_probability,time_points,names_and_colors,to_in
 	print('The raster plot stored in: '+str(result_path))
 
 
+def extract_frames(path_to_video,out_path,framewidth=None,start_t=0,duration=0,skip_redundant=1000):
+
+	fps=mv.VideoFileClip(path_to_video).fps
+	video_name=os.path.splitext(os.path.basename(path_to_video))[0]
+	example_path=os.path.join(out_path,video_name)
+
+	if not os.path.isdir(example_path):
+		os.mkdir(example_path)
+		print('Folder created: '+str(example_path))
+	else:
+		print('Folder already exists: '+str(example_path))
+
+	if start_t>=mv.VideoFileClip(path_to_video).duration:
+		print('The beginning time is later than the end of the video!')
+		print('Will use the beginning of the video as the beginning time!')
+		start_t=0
+	if duration<=0:
+		duration=mv.VideoFileClip(path_to_video).duration
+	end_t=start_t+duration
+
+	capture=cv2.VideoCapture(path_to_video)
+		
+	frame_count=1
+	frame_count_generate=0
+
+	while True:
+
+		retval,frame=capture.read()
+		t=(frame_count)/fps
+		if frame is None:
+			break
+		if t>=end_t:
+			break
+
+		if t>=start_t:
+			
+			if frame_count_generate%skip_redundant==0:
+
+				if framewidth is not None:
+					frame=cv2.resize(frame,(framewidth,int(frame.shape[0]*framewidth/frame.shape[1])),interpolation=cv2.INTER_AREA)
+
+				cv2.imwrite(os.path.join(example_path,video_name+'_'+str(frame_count_generate)+'.jpg'),frame)
+
+			frame_count_generate+=1
+
+		frame_count+=1
+
+	capture.release()
+
+
