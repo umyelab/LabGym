@@ -654,7 +654,7 @@ class WindowLv1_AnalyzeBehaviors(wx.Frame):
 					analyze=1
 				else:
 					analyze=0
-				AA.prepare_analysis(i,self.result_path,self.delta,self.animal_number,names_and_colors=self.behaviornames_and_colors,framewidth=self.framewidth,minimum=self.minimum,analyze=analyze,path_background=self.background_path,auto=self.auto,t=self.t,duration=self.duration,ex_start=self.ex_start,ex_end=self.ex_end,length=self.length,invert=self.invert)
+				AA.prepare_analysis(i,self.result_path,self.animal_number,delta=self.delta,names_and_colors=self.behaviornames_and_colors,framewidth=self.framewidth,minimum=self.minimum,analyze=analyze,path_background=self.background_path,auto=self.auto,t=self.t,duration=self.duration,ex_start=self.ex_start,ex_end=self.ex_end,length=self.length,invert=self.invert)
 				AA.acquire_parameters(deregister=self.deregister,dim_tconv=self.dim_tconv,dim_conv=self.dim_conv,channel=self.channel,categorizer_type=self.categorizer_type,inner_code=self.inner_code,std=self.std,background_free=self.background_free)
 				AA.craft_data()
 				if self.path_to_categorizer is not None:
@@ -690,7 +690,8 @@ class WindowLv1_AnalyzeBehaviors(wx.Frame):
 						individual_summary=os.path.join(self.result_path,folder,behavior_name,'all_summary.xlsx')
 						if os.path.exists(individual_summary) is True:
 							all_summary.append(pd.read_excel(individual_summary))
-					all_summary=pd.concat(all_summary,ignore_index=True)
-					all_summary.to_excel(os.path.join(self.result_path,behavior_name+'_summary.xlsx'),float_format='%.2f')
+					if len(all_summary)>=1:
+						all_summary=pd.concat(all_summary,ignore_index=True)
+						all_summary.to_excel(os.path.join(self.result_path,behavior_name+'_summary.xlsx'),float_format='%.2f')
 
 

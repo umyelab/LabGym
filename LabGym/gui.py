@@ -19,6 +19,7 @@ Email: bingye@umich.edu
 
 
 import wx
+import wx.lib.agw.hyperlink as hl
 import json
 from urllib import request
 from pathlib import Path
@@ -45,7 +46,7 @@ class InitialWindow(wx.Frame):
 
 	def __init__(self,title):
 
-		super(InitialWindow,self).__init__(parent=None,title=title,size=(760,475))
+		super(InitialWindow,self).__init__(parent=None,title=title,size=(750,500))
 		self.dispaly_window()
 
 
@@ -61,6 +62,14 @@ class InitialWindow(wx.Frame):
 		self.text_developers=wx.StaticText(panel,label='Developed by Yujia Hu\n\nBing Ye Lab, Life Sciences Institute, University of Michigan',style=wx.ALIGN_CENTER|wx.ST_ELLIPSIZE_END)
 		boxsizer.Add(self.text_developers,0,wx.LEFT|wx.RIGHT|wx.EXPAND,5)
 		boxsizer.Add(0,60,0)
+		
+		links=wx.BoxSizer(wx.HORIZONTAL)
+		homepage=wx.lib.agw.hyperlink.HyperLinkCtrl(panel,0,'Home Page',URL='https://github.com/umyelab/LabGym')
+		userguide=wx.lib.agw.hyperlink.HyperLinkCtrl(panel,0,'User Guide',URL="https://github.com/umyelab/LabGym/blob/master/The%20full%20manual%20of%20LabGym_v1.8.pdf")
+		links.Add(homepage,0,wx.LEFT|wx.EXPAND,10)
+		links.Add(userguide,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(links,0,wx.ALIGN_CENTER,50)
+		boxsizer.Add(0,30,0)
 
 		module_detectors=wx.BoxSizer(wx.HORIZONTAL)
 		button_generateimages=wx.Button(panel,label='Generate Object Images',size=(200,40))
@@ -72,7 +81,7 @@ class InitialWindow(wx.Frame):
 		module_detectors.Add(button_generateimages,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_detectors.Add(button_traindetectors,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_detectors.Add(button_testdetectors,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
-		boxsizer.Add(module_detectors,0,wx.LEFT|wx.RIGHT|wx.EXPAND,50)
+		boxsizer.Add(module_detectors,0,wx.ALIGN_CENTER,50)
 		boxsizer.Add(0,10,0)
 
 		module_categorizers=wx.BoxSizer(wx.HORIZONTAL)
@@ -85,7 +94,7 @@ class InitialWindow(wx.Frame):
 		module_categorizers.Add(button_generateexamples,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_categorizers.Add(button_traincategorizers,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_categorizers.Add(button_testcategorizers,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
-		boxsizer.Add(module_categorizers,0,wx.LEFT|wx.RIGHT|wx.EXPAND,50)
+		boxsizer.Add(module_categorizers,0,wx.ALIGN_CENTER,50)
 		boxsizer.Add(0,10,0)
 
 		module_analysis=wx.BoxSizer(wx.HORIZONTAL)
@@ -95,7 +104,7 @@ class InitialWindow(wx.Frame):
 		button_minedata.Bind(wx.EVT_BUTTON,self.mine_data)	
 		module_analysis.Add(button_analyzebehaviors,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_analysis.Add(button_minedata,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
-		boxsizer.Add(module_analysis,0,wx.LEFT|wx.RIGHT|wx.EXPAND,50)
+		boxsizer.Add(module_analysis,0,wx.ALIGN_CENTER,50)
 		boxsizer.Add(0,50,0)
 
 		panel.SetSizer(boxsizer)
@@ -128,6 +137,7 @@ class InitialWindow(wx.Frame):
 
 		WindowLv1_TrainCategorizers('Train Categorizers')
 
+
 	def test_categorizers(self,event):
 
 		WindowLv1_TesterCategorizers('Test Categorizers')
@@ -136,6 +146,7 @@ class InitialWindow(wx.Frame):
 	def analyze_behaviors(self,event):
 
 		WindowLv1_AnalyzeBehaviors('Analyze Behaviors')
+		
 
 	def mine_data(self,event):
 

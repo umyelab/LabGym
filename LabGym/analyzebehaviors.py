@@ -53,9 +53,9 @@ class AnalyzeAnimal():
 		self.analyze=None
 		self.delta=None
 		self.animal_number=None
-		self.auto=None
-		self.t=None
-		self.duration=None
+		self.auto=1
+		self.t=0
+		self.duration=5
 		self.length=None
 		self.animal_area=None
 		self.invert=None
@@ -64,6 +64,7 @@ class AnalyzeAnimal():
 		self.background_high=None
 		self.model=None
 		self.batch_size=32
+		self.detector_batch=100
 		self.skipped_frames=[]
 		self.all_time=[]
 		self.register_counts=OrderedDict()
@@ -73,14 +74,13 @@ class AnalyzeAnimal():
 		self.animal_angles=OrderedDict()
 		self.animal_heights=OrderedDict()
 		self.animal_blobs=OrderedDict()
-		self.temp_frames=deque()
 		self.animations=OrderedDict()
 		self.pattern_images=OrderedDict()
 		self.event_probability=OrderedDict()
 		self.all_behavior_parameters=OrderedDict()
 		
 
-	def prepare_analysis(self,path_to_video,results_path,delta,animal_number,names_and_colors=None,framewidth=None,minimum=0,analyze=0,path_background=None,auto=1,t=0,duration=12.5,ex_start=0,ex_end=None,length=15,invert=0):
+	def prepare_analysis(self,path_to_video,results_path,animal_number,delta=1.2,names_and_colors=None,framewidth=None,minimum=0,analyze=0,path_background=None,auto=1,t=0,duration=5,ex_start=0,ex_end=None,length=15,invert=0,dynamic=0):
 
 		# delta: an estimated fold change (1.2) of the light intensity for optogenetics only
 		# names_and_colors: the behavior names and their representing colors
@@ -95,6 +95,7 @@ class AnalyzeAnimal():
 		# ex_end: the end time point for background extraction, if None, use the entire video
 		# length: the number of input frames for assessing the behavior
 		# invert: 0: animals brighter than the background; 1: invert the pixel value (for animals darker than the background); 2: use absdiff
+		# dynamic: if not 0, using Detectors
 		
 		print('Processing video...')
 		print(datetime.datetime.now())
@@ -104,14 +105,11 @@ class AnalyzeAnimal():
 		self.fps=mv.VideoFileClip(self.path_to_video).fps
 		self.framewidth=framewidth
 		self.results_path=os.path.join(results_path,os.path.splitext(self.basename)[0])
-		self.delta=delta
 		self.animal_number=animal_number
 		self.analyze=analyze
-		self.auto=auto
 		self.t=t
 		self.duration=duration
 		self.length=length
-		self.invert=invert
 
 		capture=cv2.VideoCapture(self.path_to_video)
 		while True:
@@ -144,24 +142,30 @@ class AnalyzeAnimal():
 		else:
 			print('Folder already exists: '+str(self.results_path))
 
-		if self.auto==0:
-			es_start=None
-		else:
-			es_start=self.t
+		if dynamic==0:
 
-		constants=estimate_constants(self.path_to_video,self.delta,self.animal_number,framewidth=self.framewidth,minimum=minimum,ex_start=ex_start,ex_end=ex_end,t=es_start,duration=self.duration,invert=self.invert,path_background=path_background)
+			self.delta=delta
+			self.auto=auto
+			self.invert=invert
 
-		self.animal_area=constants[4]
-		self.kernel=constants[5]
-		self.background=constants[0]
-		self.background_low=constants[1]
-		self.background_high=constants[2]
-		cv2.imwrite(os.path.join(self.results_path,'background.jpg'),constants[0])
-		cv2.imwrite(os.path.join(self.results_path,'background_low.jpg'),constants[1])
-		cv2.imwrite(os.path.join(self.results_path,'background_high.jpg'),constants[2])
+			if self.auto==0:
+				es_start=None
+			else:
+				es_start=self.t
 
-		if self.auto==0:
-			self.t=constants[3]
+			constants=estimate_constants(self.path_to_video,self.delta,self.animal_number,framewidth=self.framewidth,minimum=minimum,ex_start=ex_start,ex_end=ex_end,t=es_start,duration=self.duration,invert=self.invert,path_background=path_background)
+
+			self.animal_area=constants[4]
+			self.kernel=constants[5]
+			self.background=constants[0]
+			self.background_low=constants[1]
+			self.background_high=constants[2]
+			cv2.imwrite(os.path.join(self.results_path,'background.jpg'),constants[0])
+			cv2.imwrite(os.path.join(self.results_path,'background_low.jpg'),constants[1])
+			cv2.imwrite(os.path.join(self.results_path,'background_high.jpg'),constants[2])
+
+			if self.auto==0:
+				self.t=constants[3]
 
 		print('Video processing completed!')
 
@@ -193,7 +197,7 @@ class AnalyzeAnimal():
 
 		frame_count=0
 		frame_count_analyze=0
-		self.temp_frames=deque(maxlen=self.length)
+		temp_frames=deque(maxlen=self.length)
 
 		start_t=round((self.t-self.length/self.fps),2)
 		if start_t<0:
@@ -223,8 +227,7 @@ class AnalyzeAnimal():
 					print(datetime.datetime.now())
 
 				if self.framewidth is not None:
-					frame=cv2.resize(frame,(self.framewidth,int(frame.shape[0]*self.framewidth/frame.shape[1])),
-						interpolation=cv2.INTER_AREA)
+					frame=cv2.resize(frame,(self.framewidth,int(frame.shape[0]*self.framewidth/frame.shape[1])),interpolation=cv2.INTER_AREA)
 
 				(contours,inners)=contour_frame(frame,self.animal_number,background,background_low,background_high,self.delta,self.animal_area,invert=self.invert,inner_code=inner_code,kernel=self.kernel)
 
@@ -245,7 +248,8 @@ class AnalyzeAnimal():
 							if inner_code==0:
 								TA.factors1[n].append(TA.factors1[n][-1])
 							if categorizer_type!=0:
-								self.animal_blobs[n].append(np.zeros((dim_tconv,dim_tconv,channel),dtype='uint8'))
+								if background_free==0:
+									self.animal_blobs[n].append(np.zeros((dim_tconv,dim_tconv,channel),dtype='uint8'))
 								self.animations[n].append(np.zeros((self.length,dim_tconv,dim_tconv,channel),dtype='uint8'))
 							if categorizer_type!=1:
 								self.pattern_images[n].append(np.zeros((dim_conv,dim_conv,3),dtype='uint8'))
@@ -255,7 +259,7 @@ class AnalyzeAnimal():
 					lost_track=0
 
 					if background_free!=0:
-						self.temp_frames.append(frame)
+						temp_frames.append(frame)
 
 					(new_contours,centers,angles,heights)=get_parameters(frame,contours)
 
@@ -321,13 +325,13 @@ class AnalyzeAnimal():
 										animation=deque(maxlen=self.length)
 										while i<self.length:
 											if TA.angles[n][-self.length:][i]==-10000:
-												blob=np.zeros_like(frame)[y_bt:y_tp,x_lf:x_rt]
+												blob=np.zeros((dim_tconv,dim_tconv,channel),dtype='uint8')
 											else:
-												if i>=len(self.temp_frames):
-													blob=np.zeros_like(frame)[y_bt:y_tp,x_lf:x_rt]
+												if i>=len(temp_frames):
+													blob=np.zeros((dim_tconv,dim_tconv,channel),dtype='uint8')
 												else:
-													blob=extract_blob(self.temp_frames[i],TA.contours[n][-self.length:][i],y_bt=y_bt,y_tp=y_tp,x_lf=x_lf,x_rt=x_rt,background_free=1,channel=channel)	
-											blob=cv2.resize(blob,(dim_tconv,dim_tconv),interpolation=cv2.INTER_AREA)
+													blob=extract_blob(temp_frames[i],TA.contours[n][-self.length:][i],y_bt=y_bt,y_tp=y_tp,x_lf=x_lf,x_rt=x_rt,background_free=1,channel=channel)	
+													blob=cv2.resize(blob,(dim_tconv,dim_tconv),interpolation=cv2.INTER_AREA)
 											animation.append(img_to_array(blob))
 											i+=1
 										self.animations[n].append(np.array(animation))
@@ -381,6 +385,7 @@ class AnalyzeAnimal():
 
 		TA.clear_tracker()
 
+		'''
 		dim=max(dim_tconv,dim_conv)
 		if dim<=64:
 			self.batch_size=3000
@@ -390,6 +395,7 @@ class AnalyzeAnimal():
 			self.batch_size=200
 		else:
 			self.batch_size=32
+		'''
 
 		print('Information acquisition completed!')
 
@@ -495,7 +501,7 @@ class AnalyzeAnimal():
 		capture=cv2.VideoCapture(self.path_to_video)
 
 		frame_count=0
-		self.temp_frames=deque(maxlen=self.length)
+		temp_frames=deque(maxlen=self.length)
 
 		start_t=round((self.t-self.length/self.fps),2)
 		if start_t<0:
@@ -524,7 +530,7 @@ class AnalyzeAnimal():
 
 				if len(contours)>0:
 
-					self.temp_frames.append(frame)
+					temp_frames.append(frame)
 
 					(new_contours,centers,angles,heights)=get_parameters(frame,contours)
 
@@ -582,10 +588,10 @@ class AnalyzeAnimal():
 										if TA.angles[n][-self.length:][i]==-10000:
 											blob=np.zeros_like(frame)[y_bt:y_tp,x_lf:x_rt]
 										else:
-											if i>=len(self.temp_frames):
+											if i>=len(temp_frames):
 												blob=np.zeros_like(frame)[y_bt:y_tp,x_lf:x_rt]
 											else:
-												blob=extract_blob(self.temp_frames[i],TA.contours[n][-self.length:][i],y_bt=y_bt,y_tp=y_tp,x_lf=x_lf,x_rt=x_rt,analyze=1,background_free=background_free,channel=frame.shape[2])
+												blob=extract_blob(temp_frames[i],TA.contours[n][-self.length:][i],y_bt=y_bt,y_tp=y_tp,x_lf=x_lf,x_rt=x_rt,analyze=1,background_free=background_free,channel=frame.shape[2])
 										writer.write(blob)
 										i+=1
 									writer.release()
@@ -626,8 +632,8 @@ class AnalyzeAnimal():
 				lengths.append(len(self.animal_centers[i]))
 			else:
 				check=0
-				for x in self.animal_centers[i]:
-					if x==(-10000,-10000):
+				for x in self.animal_angles[i]:
+					if x==-10000:
 						check+=1	
 				if check>len(self.animal_centers[i])/4:
 					to_delete.append(i)
@@ -643,8 +649,6 @@ class AnalyzeAnimal():
 			del self.animal_angles[i]
 			del self.animal_heights[i]
 			if self.analyze==0:
-				if len(self.animal_blobs[i])>0:
-					del self.animal_blobs[i]
 				if len(self.animations[i])>0:
 					del self.animations[i]
 				if len(self.pattern_images[i])>0:
@@ -1160,7 +1164,7 @@ class AnalyzeAnimal():
 				if not os.path.isdir(behavior_path):
 					os.mkdir(behavior_path)
 
-				summary=[pd.DataFrame(list(self.event_probability.keys()),columns=['ID'])]
+				summary=[]
 
 				for parameter_name in all_parameters:
 					if parameter_name in ['count','duration','distance','latency']:
@@ -1176,12 +1180,12 @@ class AnalyzeAnimal():
 						else:
 							individual_df.to_csv(os.path.join(behavior_path,parameter_name+'.csv'),float_format='%.2f')
 
-				if len(summary)>1:
+				if len(summary)>=1:
 					pd.concat(summary,axis=1).to_excel(os.path.join(behavior_path,'all_summary.xlsx'),float_format='%.2f')
 
 		else:
 
-			summary=[pd.DataFrame(list(self.animal_centers.keys()),columns=['ID'])]
+			summary=[]
 
 			for parameter_name in all_parameters:
 				if parameter_name=='distance':
@@ -1199,7 +1203,7 @@ class AnalyzeAnimal():
 					else:
 						individual_df.to_csv(os.path.join(self.results_path,parameter_name+'.csv'),float_format='%.2f')
 
-			if len(summary)>1:
+			if len(summary)>=1:
 				pd.concat(summary,axis=1).to_excel(os.path.join(self.results_path,'all_summary.xlsx'),float_format='%.2f')			
 
 		print('All results exported in: '+str(self.results_path))
