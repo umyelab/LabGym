@@ -1,0 +1,21 @@
+classnames,dim_tconv,dim_conv,channel,time_step,network,level_tconv,level_conv,inner_code,std,background_free
+behind the wheel,64,64,1,14,2,4,4,0,50,0
+body grooming fv,64,64,1,14,2,4,4,0,50,0
+body grooming sv,64,64,1,14,2,4,4,0,50,0
+chewing fv,64,64,1,14,2,4,4,0,50,0
+chewing sv,64,64,1,14,2,4,4,0,50,0
+coming down,64,64,1,14,2,4,4,0,50,0
+face grooming fv,64,64,1,14,2,4,4,0,50,0
+face grooming sv,64,64,1,14,2,4,4,0,50,0
+foraging fv,64,64,1,14,2,4,4,0,50,0
+foraging sv,64,64,1,14,2,4,4,0,50,0
+rearing up,64,64,1,14,2,4,4,0,50,0
+resting on the wheel,64,64,1,14,2,4,4,0,50,0
+running on the wheel,64,64,1,14,2,4,4,0,50,0
+sniffing fv,64,64,1,14,2,4,4,0,50,0
+sniffing sv,64,64,1,14,2,4,4,0,50,0
+standing,64,64,1,14,2,4,4,0,50,0
+turning front,64,64,1,14,2,4,4,0,50,0
+turning side,64,64,1,14,2,4,4,0,50,0
+unknown bv,64,64,1,14,2,4,4,0,50,0
+walking,64,64,1,14,2,4,4,0,50,0

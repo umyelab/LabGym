@@ -18,13 +18,12 @@ Email: bingye@umich.edu
 
 
 
-from .tools import extract_blob
+from .tools import *
 import matplotlib
 matplotlib.use("Agg")
 import os
 import cv2
 import datetime
-import moviepy.editor as mv
 import numpy as np
 import matplotlib.pyplot as plt
 import random
@@ -55,11 +54,11 @@ class Categorizers():
 		self.classnames=None
 
 
-	def rename_label(self,file_path,new_path,resize=None,background_free=0):
+	def rename_label(self,file_path,new_path,resize=None,background_free=True):
 
 		# new_path: the path for storing renamed files
 		# resize: resize the animations and pattern_images
-		# background_free: 0: do not include background in blobs
+		# background_free: not include background in animations
 
 		folder_list=[i for i in os.listdir(file_path) if os.path.isdir(os.path.join(file_path,i))]
 		print('Behavior names are: '+str(folder_list))
@@ -77,7 +76,7 @@ class Categorizers():
 				new_pattern_image=os.path.join(new_path,str(name_list.index(i))+'_'+folder+'.jpg')
 				writer=None
 				capture=cv2.VideoCapture(animation)
-				clip=mv.VideoFileClip(animation,audio=False)
+				fps=round(capture.get(cv2.CAP_PROP_FPS))
 				while True:
 					retval,frame=capture.read()
 					if frame is None:
@@ -85,7 +84,7 @@ class Categorizers():
 					frame_contrast=np.uint8(exposure.rescale_intensity(frame,out_range=(0,255)))
 					if resize is not None:
 						frame_contrast=cv2.resize(frame_contrast,(resize,resize),interpolation=cv2.INTER_AREA)
-					if background_free==0:
+					if background_free is True:
 						frame_gray=cv2.cvtColor(frame_contrast,cv2.COLOR_BGR2GRAY)
 						mask=np.zeros_like(frame_contrast)
 						thred=cv2.threshold(frame_gray,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]
@@ -99,7 +98,7 @@ class Categorizers():
 							frame=frame_contrast
 					if writer is None:
 						(h,w)=frame.shape[:2]
-						writer=cv2.VideoWriter(new_animation,cv2.VideoWriter_fourcc(*'MJPG'),clip.fps,(w,h),True)
+						writer=cv2.VideoWriter(new_animation,cv2.VideoWriter_fourcc(*'MJPG'),fps,(w,h),True)
 					writer.write(frame)
 				capture.release()
 				writer.release()
@@ -111,8 +110,7 @@ class Categorizers():
 		print('All prepared training examples stored in: '+str(new_path))
 
 
-	def build_data(self,path_to_animations,dim_tconv=32,dim_conv=64,channel=1,time_step=15,
-		aug_methods=[],background_free=0):
+	def build_data(self,path_to_animations,dim_tconv=32,dim_conv=64,channel=1,time_step=15,aug_methods=[],background_free=True):
 
 		# dim: the input dimension for Animation Analyzer or Pattern Recognizer
 		# channel: the channel for Animation Analyzer
@@ -263,7 +261,7 @@ class Categorizers():
 
 						frame_contrast=np.uint8(exposure.rescale_intensity(frame,out_range=(0,255)))
 
-						if background_free==0:
+						if background_free is True:
 							frame_gray=cv2.cvtColor(frame_contrast,cv2.COLOR_BGR2GRAY)
 							thred=cv2.threshold(frame_gray,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]
 							cnts,_=cv2.findContours(thred,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
@@ -280,7 +278,7 @@ class Categorizers():
 
 						if beta is not None:
 							blob=blob.astype('float')
-							if background_free==0:
+							if background_free is True:
 								blob[blob>30]+=beta
 							else:
 								blob+=beta
@@ -359,11 +357,11 @@ class Categorizers():
 		return animations,pattern_images,labels
 
 
-	def simple_vgg(self,inputs,filters,classes=3,level=2,module=0):
+	def simple_vgg(self,inputs,filters,classes=3,level=2,with_classifier=False):
 
 		# filters: the number of filters (node of neurons), related to input dimension
 		# level: the complex level of the network
-		# module: if !=0, return model with classifier
+		# with_classifier: whether to return the model with classifier
 
 		if level<2:
 			layers=[2]
@@ -391,7 +389,7 @@ class Categorizers():
 
 		x=Flatten()(x)
 
-		if module==0:
+		if with_classifier is False:
 
 			return x
 
@@ -411,7 +409,7 @@ class Categorizers():
 			return model
 
 
-	def simple_tvgg(self,inputs,filters,classes=3,level=2,module=0):
+	def simple_tvgg(self,inputs,filters,classes=3,level=2,with_classifier=False):
 
 		if level<2:
 			layers=[2]
@@ -440,7 +438,7 @@ class Categorizers():
 		x=TimeDistributed(Flatten())(x)
 		x=LSTM(int(filters/2),return_sequences=False,return_state=False)(x)
 
-		if module==0:
+		if with_classifier is False:
 
 			return x
 
@@ -460,14 +458,14 @@ class Categorizers():
 			return model
 
 
-	def res_block(self,x,filters,strides=2,block=0,basic=0):
+	def res_block(self,x,filters,strides=2,block=False,basic=True):
 
-		# block: if !=0, shortcut=x
-		# basic: if 0, 2 operations, else 3
+		# block: if True, shortcut=x
+		# basic: if True, 2 operations, else 3
 
 		shortcut=x
 
-		if basic==0:
+		if basic is True:
 
 			x=ZeroPadding2D((1,1))(x)
 			x=Conv2D(filters,(3,3),strides=(strides,strides))(x)
@@ -483,9 +481,9 @@ class Categorizers():
 		x=Conv2D(filters,(3,3),strides=(1,1))(x)
 		x=BatchNormalization()(x)
 
-		if basic==0:
+		if basic is True:
 
-			if block==0:
+			if block is False:
 				shortcut=Conv2D(filters,(1,1),strides=(strides,strides))(shortcut)
 				shortcut=BatchNormalization()(shortcut)
 
@@ -496,7 +494,7 @@ class Categorizers():
 			x=Conv2D(int(filters*4),(1,1),strides=(1,1))(x)
 			x=BatchNormalization()(x)
 
-			if block==0:
+			if block is False:
 				shortcut=Conv2D(filters*4,(1,1),strides=(strides,strides))(shortcut)
 				shortcut=BatchNormalization()(shortcut)
 
@@ -506,11 +504,11 @@ class Categorizers():
 		return x
 
 
-	def tres_block(self,x,filters,strides=2,block=0,basic=0):
+	def tres_block(self,x,filters,strides=2,block=False,basic=True):
 
 		shortcut=x
 
-		if basic==0:
+		if basic is True:
 
 			x=TimeDistributed(ZeroPadding2D((1,1)))(x)
 			x=TimeDistributed(Conv2D(filters,(3,3),strides=(strides,strides)))(x)
@@ -526,9 +524,9 @@ class Categorizers():
 		x=TimeDistributed(Conv2D(filters,(3,3),strides=(1,1)))(x)
 		x=TimeDistributed(BatchNormalization())(x)
 
-		if basic==0:
+		if basic is True:
 
-			if block==0:
+			if block is False:
 				shortcut=TimeDistributed(Conv2D(filters,(1,1),strides=(strides,strides)))(shortcut)
 				shortcut=TimeDistributed(BatchNormalization())(shortcut)
 
@@ -539,7 +537,7 @@ class Categorizers():
 			x=TimeDistributed(Conv2D(int(filters*4),(1,1),strides=(1,1)))(x)
 			x=TimeDistributed(BatchNormalization())(x)
 
-			if block==0:
+			if block is False:
 				shortcut=TimeDistributed(Conv2D(int(filters*4),(1,1),strides=(strides,strides)))(shortcut)
 				shortcut=TimeDistributed(BatchNormalization())(shortcut)
 
@@ -549,7 +547,7 @@ class Categorizers():
 		return x
 
 
-	def simple_resnet(self,inputs,filters,classes=3,level=5,module=0):
+	def simple_resnet(self,inputs,filters,classes=3,level=5,with_classifier=False):
 
 		x=ZeroPadding2D((3,3))(inputs)
 		x=Conv2D(filters,(5,5),strides=(2,2))(x)
@@ -559,29 +557,29 @@ class Categorizers():
 
 		if level<6:
 			layers=[2,2,2,2]
-			basic=0
+			basic=True
 		elif level<7:
 			layers=[3,4,6,3]
-			basic=0
+			basic=True
 		else:
 			layers=[3,4,6,3]
-			basic=1
+			basic=False
 
 		for i in layers:
 			for n in range(i):
 				if n==0:
 					if layers.index(i)==0:
-						x=self.res_block(x,filters,strides=1,block=0,basic=basic)
+						x=self.res_block(x,filters,strides=1,block=False,basic=basic)
 					else:
-						x=self.res_block(x,filters,strides=2,block=0,basic=basic)
+						x=self.res_block(x,filters,strides=2,block=False,basic=basic)
 				else:
-					x=self.res_block(x,filters,strides=1,block=1,basic=basic)
+					x=self.res_block(x,filters,strides=1,block=True,basic=basic)
 			filters=int(filters*2)
 
 		x=AveragePooling2D((2,2))(x)
 		x=Flatten()(x)
 
-		if module==0:
+		if with_classifier is False:
 
 			return x
 
@@ -599,7 +597,7 @@ class Categorizers():
 			return model
 
 
-	def simple_tresnet(self,inputs,filters,classes=3,level=5,module=0):
+	def simple_tresnet(self,inputs,filters,classes=3,level=5,with_classifier=False):
 
 		x=TimeDistributed(ZeroPadding2D((3,3)))(inputs)
 		x=TimeDistributed(Conv2D(filters,(5,5),strides=(2,2)))(x)
@@ -609,23 +607,23 @@ class Categorizers():
 
 		if level<6:
 			layers=[2,2,2,2]
-			basic=0
+			basic=True
 		elif level<7:
 			layers=[3,4,6,3]
-			basic=0
+			basic=True
 		else:
 			layers=[3,4,6,3]
-			basic=1
+			basic=False
 
 		for i in layers:
 			for n in range(i):
 				if n==0:
 					if layers.index(i)==0:
-						x=self.tres_block(x,filters,strides=1,block=0,basic=basic)
+						x=self.tres_block(x,filters,strides=1,block=False,basic=basic)
 					else:
-						x=self.tres_block(x,filters,strides=2,block=0,basic=basic)
+						x=self.tres_block(x,filters,strides=2,block=False,basic=basic)
 				else:
-					x=self.tres_block(x,filters,strides=1,block=1,basic=basic)
+					x=self.tres_block(x,filters,strides=1,block=True,basic=basic)
 			filters=int(filters*2)
 
 		x=TimeDistributed(AveragePooling2D((2,2)))(x)
@@ -638,7 +636,7 @@ class Categorizers():
 		else:
 			x=LSTM(4096,return_sequences=False,return_state=False)(x)
 			
-		if module==0:
+		if with_classifier is False:
 
 			return x
 
@@ -678,14 +676,14 @@ class Categorizers():
 			filters_conv=min(int(filters_conv*2),64)
 
 		if level_tconv<5:
-			animation_feature=self.simple_tvgg(animation_inputs,filters_tconv,level=level_tconv,module=0)
+			animation_feature=self.simple_tvgg(animation_inputs,filters_tconv,level=level_tconv,with_classifier=False)
 		else:
-			animation_feature=self.simple_tresnet(animation_inputs,filters_tconv,level=level_tconv,module=0)
+			animation_feature=self.simple_tresnet(animation_inputs,filters_tconv,level=level_tconv,with_classifier=False)
 		
 		if level_conv<5:
-			pattern_image_feature=self.simple_vgg(pattern_image_inputs,filters_conv,level=level_conv,module=0)
+			pattern_image_feature=self.simple_vgg(pattern_image_inputs,filters_conv,level=level_conv,with_classifier=False)
 		else:
-			pattern_image_feature=self.simple_resnet(pattern_image_inputs,filters_conv,level=level_conv,module=0)
+			pattern_image_feature=self.simple_resnet(pattern_image_inputs,filters_conv,level=level_conv,with_classifier=False)
 
 		merged_features=concatenate([animation_feature,pattern_image_feature])
 
@@ -706,12 +704,11 @@ class Categorizers():
 		return model
 
 
-	def train_pattern_recognizer(self,data_path,model_path,out_path=None,dim=64,channel=3,time_step=15,level=2,
-		aug_methods=[],augvalid=0,inner_code=0,std=0,background_free=0):
+	def train_pattern_recognizer(self,data_path,model_path,out_path=None,dim=64,channel=3,time_step=15,level=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True):
 
 		# out_path: for export the training report
-		# augvalid: 0: also perform augmentation in validation data
-		# inners: the inner contours of animal body parts in pattern images
+		# augvalid: also perform augmentation in validation data
+		# include_bodyparts: whether to include body parts in pattern images
 		# std: std for excluding static pixels in inners
 
 		filters=8
@@ -740,7 +737,17 @@ class Categorizers():
 
 		print('Found behavior names: '+str(self.classnames))
 
-		parameters={'classnames':list(self.classnames),'dim_conv':int(dim),'channel':int(channel),'time_step':int(time_step),'network':0,'level_conv':int(level),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_free)}
+		if include_bodyparts is True:
+			inner_code=0
+		else:
+			inner_code=1
+
+		if background_free is True:
+			background_code=0
+		else:
+			background_code=1
+
+		parameters={'classnames':list(self.classnames),'dim_conv':int(dim),'channel':int(channel),'time_step':int(time_step),'network':0,'level_conv':int(level),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code)}
 		pd_parameters=pd.DataFrame.from_dict(parameters)
 		pd_parameters.to_csv(os.path.join(model_path,'model_parameters.txt'),index=False)
 
@@ -754,7 +761,7 @@ class Categorizers():
 		_,trainX,trainY=self.build_data(train_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free)
 		trainY=lb.fit_transform(trainY)
 		print('Start to augment validation examples...')
-		if augvalid==0:
+		if augvalid is True:
 			_,testX,testY=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free)
 		else:
 			_,testX,testY=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free)
@@ -774,9 +781,9 @@ class Categorizers():
 			batch_size=32
 
 		if level<5:
-			model=self.simple_vgg(inputs,filters,classes=len(self.classnames),level=level,module=1)
+			model=self.simple_vgg(inputs,filters,classes=len(self.classnames),level=level,with_classifier=True)
 		else:
-			model=self.simple_resnet(inputs,filters,classes=len(self.classnames),level=level,module=1)
+			model=self.simple_resnet(inputs,filters,classes=len(self.classnames),level=level,with_classifier=True)
 		if len(self.classnames)==2:
 			model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='binary_crossentropy',metrics=['accuracy'])
 		else:
@@ -821,7 +828,7 @@ class Categorizers():
 		plt.close('all')
 
 
-	def train_animation_analyzer(self,data_path,model_path,out_path=None,dim=64,channel=1,time_step=15,level=2,aug_methods=[],augvalid=0,inner_code=0,std=0,background_free=0):
+	def train_animation_analyzer(self,data_path,model_path,out_path=None,dim=64,channel=1,time_step=15,level=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True):
 
 		filters=8
 
@@ -849,7 +856,17 @@ class Categorizers():
 
 		print('Found behavior names: '+str(self.classnames))
 
-		parameters={'classnames':list(self.classnames),'dim_tconv':int(dim),'channel':int(channel),'time_step':int(time_step),'network':1,'level_tconv':int(level),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_free)}
+		if include_bodyparts is True:
+			inner_code=0
+		else:
+			inner_code=1
+
+		if background_free is True:
+			background_code=0
+		else:
+			background_code=1
+
+		parameters={'classnames':list(self.classnames),'dim_tconv':int(dim),'channel':int(channel),'time_step':int(time_step),'network':1,'level_tconv':int(level),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code)}
 		pd_parameters=pd.DataFrame.from_dict(parameters)
 		pd_parameters.to_csv(os.path.join(model_path,'model_parameters.txt'),index=False)
 
@@ -863,7 +880,7 @@ class Categorizers():
 		trainX,_,trainY=self.build_data(train_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free)
 		trainY=lb.fit_transform(trainY)
 		print('Start to augment validation examples...')
-		if augvalid==0:
+		if augvalid is True:
 			testX,_,testY=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free)
 		else:
 			testX,_,testY=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free)
@@ -883,9 +900,9 @@ class Categorizers():
 			batch_size=32
 
 		if level<5:
-			model=self.simple_tvgg(inputs,filters,classes=len(self.classnames),level=level,module=1)
+			model=self.simple_tvgg(inputs,filters,classes=len(self.classnames),level=level,with_classifier=True)
 		else:
-			model=self.simple_tresnet(inputs,filters,classes=len(self.classnames),level=level,module=1)
+			model=self.simple_tresnet(inputs,filters,classes=len(self.classnames),level=level,with_classifier=True)
 
 		if len(self.classnames)==2:
 			model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='binary_crossentropy',metrics=['accuracy'])
@@ -931,7 +948,7 @@ class Categorizers():
 		plt.close('all')
 
 
-	def train_combnet(self,data_path,model_path,out_path=None,dim_tconv=32,dim_conv=64,channel=1,time_step=15,level_tconv=1,level_conv=2,aug_methods=[],augvalid=0,inner_code=0,std=0,background_free=0):
+	def train_combnet(self,data_path,model_path,out_path=None,dim_tconv=32,dim_conv=64,channel=1,time_step=15,level_tconv=1,level_conv=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True):
 
 		print('Training Categorizer with both Animation Analyzer and Pattern Recognizer using the behavior examples in: '+str(data_path))
 
@@ -952,7 +969,17 @@ class Categorizers():
 
 		print('Found behavior names: '+str(self.classnames))
 
-		parameters={'classnames':list(self.classnames),'dim_tconv':int(dim_tconv),'dim_conv':int(dim_conv),'channel':int(channel),'time_step':int(time_step),'network':2,'level_tconv':int(level_tconv),'level_conv':int(level_conv),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_free)}
+		if include_bodyparts is True:
+			inner_code=0
+		else:
+			inner_code=1
+
+		if background_free is True:
+			background_code=0
+		else:
+			background_code=1
+
+		parameters={'classnames':list(self.classnames),'dim_tconv':int(dim_tconv),'dim_conv':int(dim_conv),'channel':int(channel),'time_step':int(time_step),'network':2,'level_tconv':int(level_tconv),'level_conv':int(level_conv),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code)}
 		pd_parameters=pd.DataFrame.from_dict(parameters)
 		pd_parameters.to_csv(os.path.join(model_path,'model_parameters.txt'),index=False)
 
@@ -966,7 +993,7 @@ class Categorizers():
 		train_animations,train_pattern_images,trainY=self.build_data(train_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free)
 		trainY=lb.fit_transform(trainY)
 		print('Start to augment validation examples...')
-		if augvalid==0:
+		if augvalid is True:
 			test_animations,test_pattern_images,testY=self.build_data(test_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free)
 		else:
 			test_animations,test_pattern_images,testY=self.build_data(test_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free)

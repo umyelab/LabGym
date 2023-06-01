@@ -17,11 +17,12 @@ Email: bingye@umich.edu
 
 import scipy.stats as stats
 import scikit_posthocs as sp
-import statsmodels.stats.proportion as sm
 import pandas as pd
 import os
 import openpyxl
 from collections import OrderedDict
+
+
 
 class data_mining():
 	def __init__(self, data_in, control_in = None, paired_in = False, result_path_in = None, pval_in = 0.05, file_names_in = None):
