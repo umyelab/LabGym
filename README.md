@@ -58,7 +58,7 @@ Use this to extract frames (images) from videos. The extracted frames can be use
 
 ## 'Train Detectors'
 
-Use this to train Detectron2(https://github.com/facebookresearch/detectron2)-based **Detectors**. The trained **Detectors** will be listed in the detection methods in ‘**Test Detectors**’, ‘**Generate Behavior Examples**’, and ‘**Analyze Behaviors**’ functional units. In LabGym, there are two detection methods:
+Use this to train Detectron2 (https://github.com/facebookresearch/detectron2) -based **Detectors**. The trained **Detectors** will be listed in the detection methods in ‘**Test Detectors**’, ‘**Generate Behavior Examples**’, and ‘**Analyze Behaviors**’ functional units. In LabGym, there are two detection methods:
 
 One is **Detector**-based method, which is versatile. It is useful in any kind of videos or experimental settings. It is also useful for differentiating individual animals when they entangle. But well-annotated images are needed to train a **Detector** of high detection accuracy, and the analysis speed can be slow. However, users may decrease the inferencing frame size of the **Detector** to increase the speed.
 
