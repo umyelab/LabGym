@@ -36,40 +36,32 @@ class WindowLv1_GenerateExamples(wx.Frame):
 	def __init__(self,title):
 
 		super(WindowLv1_GenerateExamples,self).__init__(parent=None,title=title,size=(1000,480))
-		# 0: background subtraction; 1: detectors
-		self.detect_method=0
-		# if not None, will load background images from path
+		self.use_detector=False
+		self.detector_path=None
+		self.path_to_detector=None
+		self.detection_threshold=0.5
 		self.background_path=None
 		self.path_to_videos=None
 		self.result_path=None
 		self.framewidth=None
 		self.delta=10000
-		# if not 0, decode animal number from filename (_nn_), the 'n' immediately after the letter 'n'
-		self.auto_animalnumber=0
+		self.decode_animalnumber=False
 		self.animal_number=1
-		# 0: link new animal to deregistered animal; 1: never re-link if an animal is deregistered
-		self.deregister=1
-		# the method to find the start_t in; 0: optogenetics; 1: self.t
-		self.auto=1
+		self.autofind_t=False
+		self.decode_t=False
 		self.t=0
 		self.duration=0
-		# 1: decode the background extration time window from '_xs_' and '_xe'
-		self.x_code=0
+		self.decode_extraction=False
 		self.ex_start=0
-		# the end time point for background extraction, if None, use the entire video
 		self.ex_end=None
 		# 0: animals birghter than the background; 1: animals darker than the background; 2: hard to tell
-		self.invert=0
-		# 0: use minimum, otherwise use stable value detector for background extraction
-		self.minimum=0
+		self.animal_vs_bg=0
+		self.stable_illumination=True
 		self.length=15
 		self.skip_redundant=1
-		# 0: include the inner contours of animal body parts in pattern images
-		self.inner_code=1
-		# std for excluding static pixels in inners
+		self.include_bodyparts=False
 		self.std=0
-		# 0: do not include background in animations
-		self.background_free=0
+		self.background_free=True
 
 		self.dispaly_window()
 
@@ -218,13 +210,16 @@ class WindowLv1_GenerateExamples(wx.Frame):
 		if dialog.ShowModal()==wx.ID_OK:
 			method=dialog.GetStringSelection()
 			if method=='Automatic (for light on and off)':
-				self.auto=0
+				self.autofind_t=True
+				self.decode_t=False
 				self.text_startgenerate.SetLabel('Automatically find the onset of the 1st time when light on / off as the beginning time.')
 			elif method=='Decode from filenames: "_bt_"':
-				self.auto=-1
+				self.autofind_t=False
+				self.decode_t=True
 				self.text_startgenerate.SetLabel('Decode from the filenames: the "t" immediately after the letter "b"" in "_bt_".')
 			else:
-				self.auto=1
+				self.autofind_t=False
+				self.decode_t=False
 				dialog2=wx.NumberEntryDialog(self,'Enter beginning time to generate examples','The unit is second:','Beginning time to generate examples',0,0,100000000000000)
 				if dialog2.ShowModal()==wx.ID_OK:
 					self.t=float(dialog2.GetValue())
@@ -242,6 +237,8 @@ class WindowLv1_GenerateExamples(wx.Frame):
 			self.duration=int(dialog.GetValue())
 			if self.duration!=0:
 				self.text_duration.SetLabel('The generation of behavior examples lasts for '+str(self.duration)+' seconds.')
+			else:
+				self.text_duration.SetLabel('The generation of behavior examples lasts for the entire duration of a video.')
 		dialog.Destroy()
 
 
@@ -254,19 +251,19 @@ class WindowLv1_GenerateExamples(wx.Frame):
 			if method=='Enter the number of animals':
 				dialog2=wx.NumberEntryDialog(self,'','The number of animals:','Animal number',1,1,100)
 				if dialog2.ShowModal()==wx.ID_OK:
-					self.auto_animalnumber=0
+					self.decode_animalnumber=False
 					self.animal_number=int(dialog2.GetValue())
 					self.text_animalnumber.SetLabel('The total number of animals in a video is '+str(self.animal_number)+'.')
 				dialog2.Destroy()
 			else:
-				self.auto_animalnumber=1
+				self.decode_animalnumber=True
 				self.text_animalnumber.SetLabel('Decode from the filenames: the "n" immediately after the letter "n" in _"nn"_.')
 		dialog.Destroy()
 
 
 	def select_method(self,event):
 
-		methods=['Subtract background (much faster but requires static background & stable illumination)','Use trained detectors (versatile, good for social behaviors but much slower)']
+		methods=['Subtract background (much faster but requires static background & stable illumination)','Use trained Detectors (versatile, good for social behaviors but much slower)']
 		dialog=wx.SingleChoiceDialog(self,message='How to detect the animals?',caption='Detection methods',choices=methods)
 
 		if dialog.ShowModal()==wx.ID_OK:
@@ -274,7 +271,7 @@ class WindowLv1_GenerateExamples(wx.Frame):
 
 			if method=='Subtract background (much faster but requires static background & stable illumination)':
 
-				self.detect_method=0
+				self.use_detector=False
 
 				contrasts=['Animal brighter than background','Animal darker than background','Hard to tell']
 				dialog1=wx.SingleChoiceDialog(self,message='Select the scenario that fits your experiments best',caption='Which fits best?',choices=contrasts)
@@ -282,86 +279,115 @@ class WindowLv1_GenerateExamples(wx.Frame):
 				if dialog1.ShowModal()==wx.ID_OK:
 					contrast=dialog1.GetStringSelection()
 					if contrast=='Animal brighter than background':
-						self.invert=0
+						self.animal_vs_bg=0
 						self.text_detection.SetLabel('Background subtraction: animal brighter than background.')
 					elif contrast=='Animal darker than background':
-						self.invert=1
+						self.animal_vs_bg=1
 						self.text_detection.SetLabel('Background subtraction: animal darker than background.')
 					else:
-						self.invert=2
+						self.animal_vs_bg=2
 						self.text_detection.SetLabel('Background subtraction: animal partially brighter/darker than background.')
 					dialog2=wx.MessageDialog(self,'Load an existing background from a folder?\nSelect "No" if dont know what it is.','(Optional) load existing background?',wx.YES_NO|wx.ICON_QUESTION)
 					if dialog2.ShowModal()==wx.ID_YES:
 						dialog3=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
 						if dialog3.ShowModal()==wx.ID_OK:
-							self.background_path=dialog2.GetPath()
+							self.background_path=dialog3.GetPath()
 						dialog3.Destroy()
 					else:
 						self.background_path=None
-						if self.invert!=2:
+						if self.animal_vs_bg!=2:
 							dialog3=wx.MessageDialog(self,'Unstable illumination in the video?\nSelect "Yes" if dont know what it is.','(Optional) unstable illumination?',wx.YES_NO|wx.ICON_QUESTION)
 							if dialog3.ShowModal()==wx.ID_YES:
-								self.minimum=1
+								self.stable_illumination=False
 							else:
-								self.minimum=0
+								self.stable_illumination=True
 							dialog3.Destroy()
 					dialog2.Destroy()
 
-					ex_methods=['Use the entire duration (default but NOT recommended)','Decode from filenames: "_xst_" and "_xet_"','Enter two time points']
-					dialog2=wx.SingleChoiceDialog(self,message='Specify the time window for background extraction',caption='Time window for background extraction',choices=ex_methods)
-					if dialog2.ShowModal()==wx.ID_OK:
-						ex_method=dialog2.GetStringSelection()
-						if ex_method=='Use the entire duration (default but NOT recommended)':
-							self.x_code=0
-							if self.invert==0:
-								self.text_detection.SetLabel('Background subtraction: animal brighter, using the entire duration.')
-							elif self.invert==1:
-								self.text_detection.SetLabel('Background subtraction: animal darker, using the entire duration.')
-							else:
-								self.text_detection.SetLabel('Background subtraction: animal partially brighter/darker, using the entire duration.')
-						elif ex_method=='Decode from filenames: "_xst_" and "_xet_"':
-							self.x_code=1
-							if self.invert==0:
-								self.text_detection.SetLabel('Background subtraction: animal brighter, using time window decoded from filenames "_xst_" and "_xet_".')
-							elif self.invert==1:
-								self.text_detection.SetLabel('Background subtraction: animal darker, using time window decoded from filenames "_xst_" and "_xet_".')
-							else:
-								self.text_detection.SetLabel('Background subtraction: animal partially brighter/darker, using time window decoded from filenames "_xst_" and "_xet_".')
-						else:
-							self.x_code=0
-							dialog3=wx.NumberEntryDialog(self,'Enter the start time','The unit is second:','Start time for background extraction',0,0,100000000000000)
-							if dialog3.ShowModal()==wx.ID_OK:
-								self.ex_start=int(dialog3.GetValue())
-							dialog3.Destroy()
-							dialog3=wx.NumberEntryDialog(self,'Enter the end time','The unit is second:','End time for background extraction',0,0,100000000000000)
-							if dialog3.ShowModal()==wx.ID_OK:
-								self.ex_end=int(dialog3.GetValue())
-								if self.ex_end==0:
-									self.ex_end=None
-							dialog3.Destroy()
-							if self.invert==0:
-								if self.ex_end is None:
-									self.text_detection.SetLabel('Background subtraction: animal brighter, using time window (in seconds) from '+str(self.ex_start)+' to the end.')
+					if self.background_path is None:
+						ex_methods=['Use the entire duration (default but NOT recommended)','Decode from filenames: "_xst_" and "_xet_"','Enter two time points']
+						dialog2=wx.SingleChoiceDialog(self,message='Specify the time window for background extraction',caption='Time window for background extraction',choices=ex_methods)
+						if dialog2.ShowModal()==wx.ID_OK:
+							ex_method=dialog2.GetStringSelection()
+							if ex_method=='Use the entire duration (default but NOT recommended)':
+								self.decode_extraction=False
+								if self.animal_vs_bg==0:
+									self.text_detection.SetLabel('Background subtraction: animal brighter, using the entire duration.')
+								elif self.animal_vs_bg==1:
+									self.text_detection.SetLabel('Background subtraction: animal darker, using the entire duration.')
 								else:
-									self.text_detection.SetLabel('Background subtraction: animal brighter, using time window (in seconds) from '+str(self.ex_start)+' to '+str(self.ex_end)+'.')
-							elif self.invert==1:
-								if self.ex_end is None:
-									self.text_detection.SetLabel('Background subtraction: animal darker, using time window (in seconds) from '+str(self.ex_start)+' to the end.')
+									self.text_detection.SetLabel('Background subtraction: animal partially brighter/darker, using the entire duration.')
+							elif ex_method=='Decode from filenames: "_xst_" and "_xet_"':
+								self.decode_extraction=True
+								if self.animal_vs_bg==0:
+									self.text_detection.SetLabel('Background subtraction: animal brighter, using time window decoded from filenames "_xst_" and "_xet_".')
+								elif self.animal_vs_bg==1:
+									self.text_detection.SetLabel('Background subtraction: animal darker, using time window decoded from filenames "_xst_" and "_xet_".')
 								else:
-									self.text_detection.SetLabel('Background subtraction: animal darker, using time window (in seconds) from '+str(self.ex_start)+' to '+str(self.ex_end)+'.')
+									self.text_detection.SetLabel('Background subtraction: animal partially brighter/darker, using time window decoded from filenames "_xst_" and "_xet_".')
 							else:
-								if self.ex_end is None:
-									self.text_detection.SetLabel('Background subtraction: animal partially brighter/darker, using time window (in seconds) from '+str(self.ex_start)+' to the end.')
+								self.decode_extraction=False
+								dialog3=wx.NumberEntryDialog(self,'Enter the start time','The unit is second:','Start time for background extraction',0,0,100000000000000)
+								if dialog3.ShowModal()==wx.ID_OK:
+									self.ex_start=int(dialog3.GetValue())
+								dialog3.Destroy()
+								dialog3=wx.NumberEntryDialog(self,'Enter the end time','The unit is second:','End time for background extraction',0,0,100000000000000)
+								if dialog3.ShowModal()==wx.ID_OK:
+									self.ex_end=int(dialog3.GetValue())
+									if self.ex_end==0:
+										self.ex_end=None
+								dialog3.Destroy()
+								if self.animal_vs_bg==0:
+									if self.ex_end is None:
+										self.text_detection.SetLabel('Background subtraction: animal brighter, using time window (in seconds) from '+str(self.ex_start)+' to the end.')
+									else:
+										self.text_detection.SetLabel('Background subtraction: animal brighter, using time window (in seconds) from '+str(self.ex_start)+' to '+str(self.ex_end)+'.')
+								elif self.animal_vs_bg==1:
+									if self.ex_end is None:
+										self.text_detection.SetLabel('Background subtraction: animal darker, using time window (in seconds) from '+str(self.ex_start)+' to the end.')
+									else:
+										self.text_detection.SetLabel('Background subtraction: animal darker, using time window (in seconds) from '+str(self.ex_start)+' to '+str(self.ex_end)+'.')
 								else:
-									self.text_detection.SetLabel('Background subtraction: animal partially brighter/darker, using time window (in seconds) from '+str(self.ex_start)+' to '+str(self.ex_end)+'.')
-					dialog2.Destroy()
+									if self.ex_end is None:
+										self.text_detection.SetLabel('Background subtraction: animal partially brighter/darker, using time window (in seconds) from '+str(self.ex_start)+' to the end.')
+									else:
+										self.text_detection.SetLabel('Background subtraction: animal partially brighter/darker, using time window (in seconds) from '+str(self.ex_start)+' to '+str(self.ex_end)+'.')
+						dialog2.Destroy()
 
 				dialog1.Destroy()
 
 			else:
 
-				self.detect_method=1
-				wx.MessageBox('Coming soon!','Error',wx.OK|wx.ICON_ERROR)
+				self.use_detector=True
+
+				if self.detector_path is None:
+					self.detector_path=os.path.join(the_absolute_current_path,'detectors')
+
+				detectors=[i for i in os.listdir(self.detector_path) if os.path.isdir(os.path.join(self.detector_path,i))]
+				if '__pycache__' in detectors:
+					detectors.remove('__pycache__')
+				if '__init__' in detectors:
+					detectors.remove('__init__')
+				if '__init__.py' in detectors:
+					detectors.remove('__init__.py')
+				detectors.sort()
+				if 'Choose a new directory of the Detector' not in detectors:
+					detectors.append('Choose a new directory of the Detector')
+
+				dialog1=wx.SingleChoiceDialog(self,message='Select a Detector for animal detection',caption='Select a Detector',choices=detectors)
+
+				if dialog1.ShowModal()==wx.ID_OK:
+					detector=dialog1.GetStringSelection()
+					if detector=='Choose a new directory of the Detector':
+						dialog2=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
+						if dialog2.ShowModal()==wx.ID_OK:
+							self.path_to_detector=dialog2.GetPaths()
+						dialog2.Destroy()
+						self.text_detection.SetLabel('The path to the Detector is: '+self.path_to_detector+'.')
+					else:
+						self.path_to_detector=os.path.join(self.detector_path,detector)
+						self.text_detection.SetLabel('Detector: '+detector+'.')
+				dialog1.Destroy()
 
 		dialog.Destroy()
 
@@ -402,14 +428,14 @@ class WindowLv1_GenerateExamples(wx.Frame):
 
 			dialog=wx.MessageDialog(self,'Include background in animations? Select "No"\nif background is behavior irrelevant.','Including background?',wx.YES_NO|wx.ICON_QUESTION)
 			if dialog.ShowModal()==wx.ID_YES:
-				self.background_free=1
+				self.background_free=False
 			else:
-				self.background_free=0
+				self.background_free=True
 			dialog.Destroy()
 
 			dialog=wx.MessageDialog(self,'Include body parts in pattern images?\nSelect "No" if limb movement is neglectable.','Including body parts?',wx.YES_NO|wx.ICON_QUESTION)
 			if dialog.ShowModal()==wx.ID_YES:
-				self.inner_code=0
+				self.include_bodyparts=True
 				dialog2=wx.NumberEntryDialog(self,'Leave it as it is if dont know what it is.','Enter a number between 0 and 255:','STD for motionless pixels',0,0,255)
 				if dialog2.ShowModal()==wx.ID_OK:
 					self.std=int(dialog2.GetValue())
@@ -417,7 +443,7 @@ class WindowLv1_GenerateExamples(wx.Frame):
 					self.std=0
 				dialog2.Destroy()
 			else:
-				self.inner_code=1
+				self.include_bodyparts=False
 			dialog.Destroy()
 
 			dialog=wx.MessageDialog(self,'Start to generate behavior examples?','Start to generate examples?',wx.YES_NO|wx.ICON_QUESTION)
@@ -432,17 +458,17 @@ class WindowLv1_GenerateExamples(wx.Frame):
 				for i in self.path_to_videos:
 
 					filename=os.path.splitext(os.path.basename(i))[0].split('_')
-					if self.auto_animalnumber!=0:
+					if self.decode_animalnumber is True:
 						for x in filename:
 							if len(x)>0:
 								if x[0]=='n':
 									self.animal_number=int(x[1:])
-					if self.auto==-1:
+					if self.decode_t is True:
 						for x in filename:
 							if len(x)>0:
 								if x[0]=='b':
 									self.t=float(x[1:])
-					if self.x_code==1:
+					if self.decode_extraction is True:
 						for x in filename:
 							if len(x)>0:
 								if x[:2]=='xs':
@@ -450,11 +476,14 @@ class WindowLv1_GenerateExamples(wx.Frame):
 								if x[:2]=='xe':
 									self.ex_end=int(x[2:])
 
-					self.deregister=0
-
 					AA=AnalyzeAnimal()
-					AA.prepare_analysis(i,self.result_path,self.animal_number,delta=self.delta,names_and_colors=None,framewidth=self.framewidth,minimum=self.minimum,analyze=1,path_background=self.background_path,auto=self.auto,t=self.t,duration=self.duration,ex_start=self.ex_start,ex_end=self.ex_end,length=self.length,invert=self.invert)
-					AA.generate_data(deregister=self.deregister,inner_code=self.inner_code,std=self.std,background_free=self.background_free,skip_redundant=self.skip_redundant)
+
+					if self.use_detector is False:
+						AA.prepare_analysis(i,self.result_path,self.animal_number,delta=self.delta,framewidth=self.framewidth,stable_illumination=self.stable_illumination,channel=3,include_bodyparts=self.include_bodyparts,std=self.std,categorize_behavior=False,path_background=self.background_path,autofind_t=self.autofind_t,t=self.t,duration=self.duration,ex_start=self.ex_start,ex_end=self.ex_end,length=self.length,animal_vs_bg=self.animal_vs_bg,use_detector=False)
+						AA.generate_data(background_free=self.background_free,skip_redundant=self.skip_redundant)
+					else:
+						AA.prepare_analysis(i,self.result_path,self.animal_number,delta=self.delta,framewidth=self.framewidth,stable_illumination=self.stable_illumination,channel=3,include_bodyparts=self.include_bodyparts,std=self.std,categorize_behavior=False,path_background=self.background_path,autofind_t=self.autofind_t,t=self.t,duration=self.duration,ex_start=self.ex_start,ex_end=self.ex_end,length=self.length,animal_vs_bg=self.animal_vs_bg,use_detector=True)
+						AA.generate_data_dynamic(self.path_to_detector,background_free=self.background_free,skip_redundant=self.skip_redundant)
 						
 
 
@@ -467,8 +496,7 @@ class WindowLv1_TrainCategorizers(wx.Frame):
 		self.file_path=None
 		# the new path for renamed, labeled examples
 		self.new_path=None
-		# 0: Pattern Recognizer, 1: Animation Analyzer, 2 combined
-		self.categorizer_type=2
+		self.animation_analyzer=True
 		self.level_tconv=2
 		self.level_conv=2
 		self.dim_tconv=32
@@ -476,23 +504,19 @@ class WindowLv1_TrainCategorizers(wx.Frame):
 		self.channel=1
 		self.length=15
 		self.aug_methods=[]
-		# 0: also perform augmentation for validation data
-		self.augvalid=1
+		# also perform augmentation for validation data
+		self.augvalid=True
 		# the path to all prepared training examples
 		self.data_path=None
-		# the model parent path
 		self.model_path=os.path.join(the_absolute_current_path,'models')
 		self.path_to_categorizer=os.path.join(the_absolute_current_path,'models','New_model')
 		# for storing training reports
 		self.out_path=None
-		# 0: include the inner contours of animal body parts in pattern images
-		self.inner_code=0
-		# std for excluding static pixels in inners
+		self.include_bodyparts=False
 		self.std=0
 		# resize the frames and pattern images before data augmentation
 		self.resize=None
-		# 0: do not include background in animations
-		self.background_free=0
+		self.background_free=True
 
 		self.dispaly_window()
 
@@ -624,9 +648,9 @@ class WindowLv1_TrainCategorizers(wx.Frame):
 
 		dialog=wx.MessageDialog(self,'Are the animations (if any) in\ntraining examples background free?','Background-free animations?',wx.YES_NO|wx.ICON_QUESTION)
 		if dialog.ShowModal()==wx.ID_YES:
-			self.background_free=0
+			self.background_free=True
 		else:
-			self.background_free=1
+			self.background_free=False
 		dialog.Destroy()
 
 
@@ -650,7 +674,7 @@ class WindowLv1_TrainCategorizers(wx.Frame):
 		if dialog.ShowModal()==wx.ID_OK:
 			categorizer_tp=dialog.GetStringSelection()
 			if categorizer_tp=='Categorizer w/ Pattern Recognizer only (much faster but maybe less accurate)':
-				self.categorizer_type=0
+				self.animation_analyzer=False
 				dialog2=wx.NumberEntryDialog(self,'Complexity level from 1 to 7\nhigher level = deeper network','Enter a number (1~7)','Pattern Recognizer level',2,1,7)
 				if dialog2.ShowModal()==wx.ID_OK:
 					self.level_conv=int(dialog2.GetValue())
@@ -658,7 +682,7 @@ class WindowLv1_TrainCategorizers(wx.Frame):
 				self.text_categorizertype.SetLabel('Categorizer type: Categorizer with only Pattern Recognizer (level '+str(self.level_conv)+').')
 				self.text_categorizershape.SetLabel('Input shapes: '+shape_conv+'.')
 			else:
-				self.categorizer_type=2
+				self.animation_analyzer=True
 				dialog2=wx.NumberEntryDialog(self,'Complexity level from 1 to 7\nhigher level = deeper network','Enter a number (1~7)','Animation Analyzer level',2,1,7)
 				if dialog2.ShowModal()==wx.ID_OK:
 					self.level_tconv=int(dialog2.GetValue())
@@ -674,7 +698,7 @@ class WindowLv1_TrainCategorizers(wx.Frame):
 
 	def set_categorizer(self,event):
 
-		if self.categorizer_type==2:
+		if self.animation_analyzer is True:
 			dialog=wx.NumberEntryDialog(self,'Input dimension of Animation Analyzer\nlarger dimension = wider network','Enter a number:','Animation Analyzer input',32,1,300)
 			if dialog.ShowModal()==wx.ID_OK:
 				self.dim_tconv=int(dialog.GetValue())
@@ -694,18 +718,15 @@ class WindowLv1_TrainCategorizers(wx.Frame):
 		shape_tconv='('+str(self.dim_tconv)+','+str(self.dim_tconv)+','+str(self.channel)+')'
 		shape_conv='('+str(self.dim_conv)+','+str(self.dim_conv)+','+'3)'
 
-		if self.categorizer_type==0:
+		if self.animation_analyzer is False:
 			self.text_categorizershape.SetLabel('Input shapes: Pattern Recognizer'+shape_conv+'.')
-		elif self.categorizer_type==1:
-			self.text_categorizershape.SetLabel('Input shapes: Animation Analyzer'+shape_tconv+'.')
 		else:
 			self.text_categorizershape.SetLabel('Input shapes: Animation Analyzer'+shape_tconv+'; Pattern Recognizer'+shape_conv+'.')
 
 
 	def input_timesteps(self,event):
 
-		dialog=wx.NumberEntryDialog(self,'The number of frames of\na behavior example',
-			'Enter a number (minimum=3):','Behavior episode duration',15,1,1000)
+		dialog=wx.NumberEntryDialog(self,'The number of frames of\na behavior example','Enter a number (minimum=3):','Behavior episode duration',15,1,1000)
 		if dialog.ShowModal()==wx.ID_OK:
 			self.length=int(dialog.GetValue())
 			if self.length<3:
@@ -718,14 +739,14 @@ class WindowLv1_TrainCategorizers(wx.Frame):
 
 		dialog=wx.MessageDialog(self,'Are the animations (in any) in\ntraining examples background free?','Background-free animations?',wx.YES_NO|wx.ICON_QUESTION)
 		if dialog.ShowModal()==wx.ID_YES:
-			self.background_free=0
+			self.background_free=True
 		else:
-			self.background_free=1
+			self.background_free=False
 		dialog.Destroy()
 
 		dialog=wx.MessageDialog(self,'Do the pattern images in training examples\ninclude body parts?','Body parts in pattern images?',wx.YES_NO|wx.ICON_QUESTION)
 		if dialog.ShowModal()==wx.ID_YES:
-			self.inner_code=0
+			self.include_bodyparts=True
 			dialog2=wx.NumberEntryDialog(self,'Should match the STD of the pattern images in training examples.','Enter a number between 0 and 255:','STD for motionless pixels',0,0,255)
 			if dialog2.ShowModal()==wx.ID_OK:
 				self.std=int(dialog2.GetValue())
@@ -733,19 +754,19 @@ class WindowLv1_TrainCategorizers(wx.Frame):
 				self.std=0
 			dialog2.Destroy()
 		else:
-			self.inner_code=1
+			self.include_bodyparts=False
 		dialog.Destroy()
 
 		dialog=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
 		if dialog.ShowModal()==wx.ID_OK:
 			self.data_path=dialog.GetPath()
-			if self.inner_code==0:
-				if self.background_free==0:
+			if self.include_bodyparts is True:
+				if self.background_free is True:
 					self.text_trainingfolder.SetLabel('Animations w/o background, pattern images w/ bodyparts ('+str(self.std)+') in: '+self.data_path+'.')
 				else:
 					self.text_trainingfolder.SetLabel('Animations w/ background, pattern images w/ bodyparts ('+str(self.std)+') in: '+self.data_path+'.')
 			else:
-				if self.background_free==0:
+				if self.background_free is True:
 					self.text_trainingfolder.SetLabel('Animations w/o background, pattern images w/o bodyparts in: '+self.data_path+'.')
 				else:
 					self.text_trainingfolder.SetLabel('Animations w/ background, pattern images w/o bodyparts in: '+self.data_path+'.')				
@@ -781,10 +802,10 @@ class WindowLv1_TrainCategorizers(wx.Frame):
 
 		dialog=wx.MessageDialog(self,'Also augment the validation data?\nSelect "No" if dont know what it is.','Augment validation data?',wx.YES_NO|wx.ICON_QUESTION)
 		if dialog.ShowModal()==wx.ID_YES:
-			self.augvalid=0
+			self.augvalid=True
 			self.text_augmentation.SetLabel('Augment both training and validation examples with: '+selected+'.')
 		else:
-			self.augvalid=1
+			self.augvalid=False
 			self.text_augmentation.SetLabel('Augment training examples with: '+selected+'.')
 		dialog.Destroy()	
 
@@ -830,21 +851,20 @@ class WindowLv1_TrainCategorizers(wx.Frame):
 				dialog.Destroy()
 
 			if do_nothing is False:
-				if self.categorizer_type==0:
+				if self.animation_analyzer is False:
 					CA=Categorizers()
-					CA.train_pattern_recognizer(self.data_path,self.path_to_categorizer,self.out_path,dim=self.dim_conv,channel=3,time_step=self.length,level=self.level_conv,aug_methods=self.aug_methods,augvalid=self.augvalid,inner_code=self.inner_code,std=self.std,background_free=self.background_free)
+					CA.train_pattern_recognizer(self.data_path,self.path_to_categorizer,self.out_path,dim=self.dim_conv,channel=3,time_step=self.length,level=self.level_conv,aug_methods=self.aug_methods,augvalid=self.augvalid,include_bodyparts=self.include_bodyparts,std=self.std,background_free=self.background_free)
 				else:
 					CA=Categorizers()
-					CA.train_combnet(self.data_path,self.path_to_categorizer,self.out_path,dim_tconv=self.dim_tconv,dim_conv=self.dim_conv,channel=self.channel,time_step=self.length,level_tconv=self.level_tconv,level_conv=self.level_conv,aug_methods=self.aug_methods,augvalid=self.augvalid,inner_code=self.inner_code,std=self.std,background_free=self.background_free)	
+					CA.train_combnet(self.data_path,self.path_to_categorizer,self.out_path,dim_tconv=self.dim_tconv,dim_conv=self.dim_conv,channel=self.channel,time_step=self.length,level_tconv=self.level_tconv,level_conv=self.level_conv,aug_methods=self.aug_methods,augvalid=self.augvalid,include_bodyparts=self.include_bodyparts,std=self.std,background_free=self.background_free)	
 
 
 
-class WindowLv1_TesterCategorizers(wx.Frame):
+class WindowLv1_TestCategorizers(wx.Frame):
 
 	def __init__(self,title):
 
-		super(WindowLv1_TesterCategorizers,self).__init__(parent=None,title=title,size=(1000,250))
-		# the model parent path
+		super(WindowLv1_TestCategorizers,self).__init__(parent=None,title=title,size=(1000,250))
 		self.model_path=os.path.join(the_absolute_current_path,'models')
 		self.path_to_categorizer=None
 		self.groundtruth_path=None

@@ -23,17 +23,27 @@ import wx.lib.agw.hyperlink as hl
 import json
 from urllib import request
 from pathlib import Path
-from .gui_categorizers import WindowLv1_GenerateExamples,WindowLv1_TrainCategorizers,WindowLv1_TesterCategorizers
+from .gui_categorizers import WindowLv1_GenerateExamples,WindowLv1_TrainCategorizers,WindowLv1_TestCategorizers
+from .gui_detectors import WindowLv1_GenerateImages,WindowLv1_TrainDetectors,WindowLv1_TestDetectors
+from .gui_preprocessor import WindowLv1_PreprossData
 from .gui_analyzers import WindowLv1_AnalyzeBehaviors
+from .gui_miners import WindowLv1_MineResults
 
 
 
-current_version=1.8
+current_version=1.9
+current_version_check=19
 
 try:
 
-	latest_version=float(list(json.loads(request.urlopen('https://pypi.python.org/pypi/LabGym/json').read())['releases'].keys())[-1])
-	if latest_version>current_version:
+	latest_version=list(json.loads(request.urlopen('https://pypi.python.org/pypi/LabGym/json').read())['releases'].keys())[-1]
+	latest_version_str=list(latest_version)
+	latest_version_str.remove('.')
+	latest_version_check=latest_version_str[0]
+	for i in latest_version_str[1:]:
+		latest_version_check+=i
+	latest_version_check=float(latest_version_check)
+	if latest_version_check>current_version_check:
 		print('A newer version '+'('+str(latest_version)+')'+' of LabGym is available. You may upgrade it by "python3 -m pip install --upgrade LabGym".\nFor the details of new changes, check: "https://github.com/umyelab/LabGym".')
 
 except:
@@ -59,7 +69,7 @@ class InitialWindow(wx.Frame):
 		boxsizer.Add(0,60,0)
 		boxsizer.Add(self.text_welcome,0,wx.LEFT|wx.RIGHT|wx.EXPAND,5)
 		boxsizer.Add(0,60,0)
-		self.text_developers=wx.StaticText(panel,label='Developed by Yujia Hu\n\nBing Ye Lab, Life Sciences Institute, University of Michigan',style=wx.ALIGN_CENTER|wx.ST_ELLIPSIZE_END)
+		self.text_developers=wx.StaticText(panel,label='Developed by Yujia Hu, Kelly Goss, Isabelle Baker\n\nBing Ye Lab, Life Sciences Institute, University of Michigan',style=wx.ALIGN_CENTER|wx.ST_ELLIPSIZE_END)
 		boxsizer.Add(self.text_developers,0,wx.LEFT|wx.RIGHT|wx.EXPAND,5)
 		boxsizer.Add(0,60,0)
 		
@@ -98,12 +108,15 @@ class InitialWindow(wx.Frame):
 		boxsizer.Add(0,10,0)
 
 		module_analysis=wx.BoxSizer(wx.HORIZONTAL)
-		button_analyzebehaviors=wx.Button(panel,label='Analyze Behaviors',size=(310,40))
+		button_preprocessdata=wx.Button(panel,label='Preprocess Data',size=(200,40))
+		button_preprocessdata.Bind(wx.EVT_BUTTON,self.preprocess_data)
+		button_analyzebehaviors=wx.Button(panel,label='Analyze Behaviors',size=(200,40))
 		button_analyzebehaviors.Bind(wx.EVT_BUTTON,self.analyze_behaviors)
-		button_minedata=wx.Button(panel,label='Mine Analysis Results',size=(310,40))
-		button_minedata.Bind(wx.EVT_BUTTON,self.mine_data)	
+		button_mineresults=wx.Button(panel,label='Mine Analysis Results',size=(200,40))
+		button_mineresults.Bind(wx.EVT_BUTTON,self.mine_results)
+		module_analysis.Add(button_preprocessdata,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_analysis.Add(button_analyzebehaviors,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
-		module_analysis.Add(button_minedata,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		module_analysis.Add(button_mineresults,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		boxsizer.Add(module_analysis,0,wx.ALIGN_CENTER,50)
 		boxsizer.Add(0,50,0)
 
@@ -115,17 +128,17 @@ class InitialWindow(wx.Frame):
 
 	def generate_images(self,event):
 
-		wx.MessageBox('Coming soon!','Error',wx.OK|wx.ICON_ERROR)
+		WindowLv1_GenerateImages('Generate Object Images')
 
 
 	def train_detectors(self,event):
 
-		wx.MessageBox('Coming soon!','Error',wx.OK|wx.ICON_ERROR)
+		WindowLv1_TrainDetectors('Train Detectors')
 
 
 	def test_detectors(self,event):
 
-		wx.MessageBox('Coming soon!','Error',wx.OK|wx.ICON_ERROR)
+		WindowLv1_TestDetectors('Test Detectors')
 
 
 	def generate_examples(self,event):
@@ -140,7 +153,12 @@ class InitialWindow(wx.Frame):
 
 	def test_categorizers(self,event):
 
-		WindowLv1_TesterCategorizers('Test Categorizers')
+		WindowLv1_TestCategorizers('Test Categorizers')
+
+
+	def preprocess_data(self,event):
+
+		WindowLv1_PreprossData('Preprocess Data')
 
 
 	def analyze_behaviors(self,event):
@@ -148,9 +166,9 @@ class InitialWindow(wx.Frame):
 		WindowLv1_AnalyzeBehaviors('Analyze Behaviors')
 		
 
-	def mine_data(self,event):
+	def mine_results(self,event):
 
-		wx.MessageBox('Coming soon!','Error',wx.OK|wx.ICON_ERROR)
+		WindowLv1_MineResults('Mine Analysis Results')
 
 
 

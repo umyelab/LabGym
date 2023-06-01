@@ -1,0 +1,12 @@
+,precision,recall,f1-score,support
+body grooming,0.89,0.88,0.88,74.00
+face grooming,0.82,0.80,0.81,46.00
+head swaying,0.75,0.88,0.81,110.00
+locomotion,0.95,0.98,0.96,110.00
+orientating,0.96,0.92,0.94,108.00
+rearing,0.88,0.88,0.88,111.00
+in place,0.87,0.70,0.77,112.00
+still,0.89,0.93,0.91,102.00
+accuracy,0.88,0.88,0.88,0.88
+macro avg,0.88,0.87,0.87,773.00
+weighted avg,0.88,0.88,0.87,773.00

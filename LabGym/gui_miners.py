@@ -17,6 +17,7 @@ Email: bingye@umich.edu
 '''
 
 
+
 import wx
 import os
 import pandas as pd
@@ -25,15 +26,15 @@ from collections import OrderedDict
 
 		
 
-class WindowLv1_Miner(wx.Frame):
+class WindowLv1_MineResults(wx.Frame):
 	def __init__(self, title):
-		super(WindowLv1_Miner,self).__init__(parent=None,title=title,size=(1000,250))
+		super(WindowLv1_MineResults,self).__init__(parent=None,title=title,size=(1000,250))
 		self.file_path = None
 		self.result_path = None
 		self.dataset = None
 		self.paired = False
 		self.control = None
-		self.pval = None
+		self.pval = 0.05
 		self.file_names = []
 		self.control_file_name = None
 		self.display_window()
@@ -55,7 +56,7 @@ class WindowLv1_Miner(wx.Frame):
 		boxsizer.Add(0,5,0)
 
 		module_selectcontrol=wx.BoxSizer(wx.HORIZONTAL)
-		button_selectcontrol=wx.Button(panel,label='Select the folder for\nthe control group',size=(300,40))
+		button_selectcontrol=wx.Button(panel,label='Select the\ncontrol group',size=(300,40))
 		button_selectcontrol.Bind(wx.EVT_BUTTON, self.select_control)
 		self.text_selectcontrol=wx.StaticText(panel,label='Only select a control group if you are comparing it to at least 2 other groups.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_selectcontrol.Add(button_selectcontrol,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -102,7 +103,9 @@ class WindowLv1_Miner(wx.Frame):
 				self.text_inputfolder.SetLabel('Unpaired input data is in: '+self.file_path+'.')
 		dialog.Destroy()
 
+
 	def select_control(self, event):
+
 		dialog = wx.SingleChoiceDialog(self, 'Select the folder for the control group', 
 									   'Ignore if you wish to compare all groups',
 									   choices=[i for i in os.listdir(self.file_path) if os.path.isdir(os.path.join(self.file_path,i))],
@@ -110,23 +113,21 @@ class WindowLv1_Miner(wx.Frame):
 		if dialog.ShowModal()==wx.ID_OK:
 			control_path=dialog.GetStringSelection()
 			self.text_selectcontrol.SetLabel("The control group is '"+control_path+"'.")
+			self.control = self.read_folder(os.path.join(self.file_path, control_path))
+			self.control_file_name = os.path.split(control_path)[1]
 		else:
-			return
+			self.control = None
+			self.text_selectcontrol.SetLabel("No control group.")
 		dialog.Destroy()
-		self.control = self.read_folder(os.path.join(self.file_path, control_path))
-		self.control_file_name = os.path.split(control_path)[1] 
-
+		
+		 
 	def select_result_path(self, event):
+
 		dialog=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
 		if dialog.ShowModal()==wx.ID_OK:
 			self.result_path=dialog.GetPath()
 			self.text_outputfolder.SetLabel('Mining results are in: '+self.result_path+'.')
 		dialog.Destroy()
-
-		dialog2=wx.TextEntryDialog(self,'Enter a p-value to determine statistical significance','Default p-value is 0.05',"0.05")
-		if dialog2.ShowModal()==wx.ID_OK:
-			self.pval=float(dialog2.GetValue())
-		dialog2.Destroy()
 
 
 	def read_folder(self, folder): #helper function to read in each subfolder
@@ -175,9 +176,22 @@ class WindowLv1_Miner(wx.Frame):
 
 	
 	def mine_data(self, event):
-		self.read_all_folders()
-		self.control_organization()
-		DM = data_mining(self.dataset, self.control, self.paired, self.result_path, self.pval, self.file_names)
-		DM.statistical_analysis()
+
+		if self.file_path is None or self.result_path is None:
+			wx.MessageBox('No input / output folder selected.','Error',wx.OK|wx.ICON_ERROR)
+
+		else:
+
+			dialog=wx.TextEntryDialog(self,'Enter a p-value to determine statistical significance','Default p-value is 0.05',"0.05")
+			if dialog.ShowModal()==wx.ID_OK:
+				self.pval=float(dialog.GetValue())
+			dialog.Destroy()
+
+			print("Start to mine analysis results...")
+
+			self.read_all_folders()
+			self.control_organization()
+			DM = data_mining(self.dataset, self.control, self.paired, self.result_path, self.pval, self.file_names)
+			DM.statistical_analysis()
 
 

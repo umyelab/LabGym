@@ -1,0 +1,9 @@
+classnames,dim_tconv,dim_conv,channel,time_step,network,level_tconv,level_conv,inner_code,std,background_free
+body grooming,32,64,1,28,2,4,4,1,0,0
+face grooming,32,64,1,28,2,4,4,1,0,0
+head swaying,32,64,1,28,2,4,4,1,0,0
+locomotion,32,64,1,28,2,4,4,1,0,0
+orientating,32,64,1,28,2,4,4,1,0,0
+rearing,32,64,1,28,2,4,4,1,0,0
+in place,32,64,1,28,2,4,4,1,0,0
+still,32,64,1,28,2,4,4,1,0,0

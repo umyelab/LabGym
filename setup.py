@@ -31,7 +31,7 @@ except Exception:
     long_description=''
 
 
-setup(name='LabGym',version='1.8.2',author='Yujia Hu',
+setup(name='LabGym',version='1.9',author='Yujia Hu, Kelly Goss, Isabelle Baker',
     author_email='henryhu@umich.edu',
     description='Quantify user-defined behaviors',
     long_description=long_description,
@@ -53,7 +53,6 @@ setup(name='LabGym',version='1.8.2',author='Yujia Hu',
     install_requires=[
     'tensorflow',
     'matplotlib',
-    'moviepy',
     'opencv-contrib-python',
     'opencv-python',
     'openpyxl',
@@ -63,5 +62,11 @@ setup(name='LabGym',version='1.8.2',author='Yujia Hu',
     'scikit-image',
     'seaborn',
     'wxPython',
+    'natsort',
+    'scikit_posthocs',
+    'PyQt5',
+    'torch',
+    'torchvision',
+    'detectron2 @ git+https://github.com/facebookresearch/detectron2.git'
     ]  
 )
