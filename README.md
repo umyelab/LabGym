@@ -32,7 +32,7 @@ Lastly, it can automatically **MINE** the analysis results to discover significa
 
 <p>&nbsp;</p>
 
-Notably, LabGym is fast and accurate, and can be run smoothly on even common laptops **without GPUs**. The processing speed can be even faster when NVIDIA GPUs with CUDA toolkit are used.
+Notably, LabGym is fast and accurate, and can be run smoothly on even average laptops **without GPUs**. The processing speed can be even faster when NVIDIA GPUs with CUDA toolkit are used.
 
 Please cite the LabGym paper: https://www.cell.com/cell-reports-methods/fulltext/S2667-2375(23)00026-7.
 
