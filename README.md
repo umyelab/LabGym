@@ -158,7 +158,17 @@ or
 
     py -m pip install LabGym
 
-After LabGym is installed, activate python interaction shell by typing 'python3' or 'py' in the terminal or cmd prompt.
+<p>&nbsp;</p>
+
+**IMPORTANT** Starting from v1.9, after LabGym is installed, type:
+
+    python3 -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
+
+so that Detectron2 can be installed. If you encounter problems in installing Detectron2, refer to https://detectron2.readthedocs.io/en/latest/tutorials/install.html. 
+
+<p>&nbsp;</p>
+
+After Detectron2 is installed, activate python interaction shell by typing 'python3' or 'py' in the terminal or cmd prompt.
 
 Then type:
 
