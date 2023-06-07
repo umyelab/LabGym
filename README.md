@@ -192,7 +192,7 @@ Please refer to the issue page (https://github.com/umyelab/LabGym/issues?q=) to 
 
 **v1.9**:
 
-1. Implemented Detector-based detection method.
+1. Implemented Detector-based detection method. Now the changing background or illumination in videos is no longer a problem for LabGym. 
 2. Implemented data mining functional unit.
 3. Implemented preprocessing functional unit.
 4. Simplified code and further optimized the processing speed.
