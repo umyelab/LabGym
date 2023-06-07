@@ -32,7 +32,7 @@ from .gui_miners import WindowLv1_MineResults
 
 
 current_version=1.9
-current_version_check=19.1
+current_version_check=19.2
 
 try:
 
@@ -82,7 +82,7 @@ class InitialWindow(wx.Frame):
 		boxsizer.Add(0,30,0)
 
 		module_detectors=wx.BoxSizer(wx.HORIZONTAL)
-		button_generateimages=wx.Button(panel,label='Generate Object Images',size=(200,40))
+		button_generateimages=wx.Button(panel,label='Generate Image Examples',size=(200,40))
 		button_generateimages.Bind(wx.EVT_BUTTON,self.generate_images)
 		button_traindetectors=wx.Button(panel,label='Train Detectors',size=(200,40))
 		button_traindetectors.Bind(wx.EVT_BUTTON,self.train_detectors)
@@ -128,7 +128,7 @@ class InitialWindow(wx.Frame):
 
 	def generate_images(self,event):
 
-		WindowLv1_GenerateImages('Generate Object Images')
+		WindowLv1_GenerateImages('Generate Image Examples')
 
 
 	def train_detectors(self,event):
