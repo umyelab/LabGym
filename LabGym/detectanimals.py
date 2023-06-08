@@ -26,10 +26,14 @@ import torch
 import numpy as np
 import datetime
 from skimage import exposure
-from detectron2.config import get_cfg
-from detectron2.modeling import build_model
-from detectron2.checkpoint import DetectionCheckpointer
 from tensorflow.keras.preprocessing.image import img_to_array
+try:
+	from detectron2.config import get_cfg
+	from detectron2.modeling import build_model
+	from detectron2.checkpoint import DetectionCheckpointer
+except:
+	print('You need to install Detectron2 to use the Detector module in LabGym:')
+	print('https://detectron2.readthedocs.io/en/latest/tutorials/install.html')
 
 
 
@@ -297,7 +301,7 @@ class DetectAnimals():
 		return contours_dict,centers_dict,heights_dict,inners_dict,blobs_dict,area_dict
 
 
-	def test_detector(self,path_to_video,out_path,duration=0,animal_number=1):
+	def run_test(self,path_to_video,out_path,duration=0,animal_number=1):
 
 		print(datetime.datetime.now())
 

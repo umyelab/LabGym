@@ -32,7 +32,7 @@ from .gui_miners import WindowLv1_MineResults
 
 
 current_version=1.9
-current_version_check=19.2
+current_version_check=19.4
 
 try:
 

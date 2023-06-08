@@ -19,7 +19,7 @@ Email: bingye@umich.edu
 
 
 from .tools import extract_frames
-from .detectors import Detectors
+from .traintestdetectors import TrainTestDetectors
 from .detectanimals import DetectAnimals
 from pathlib import Path
 import wx
@@ -346,8 +346,8 @@ class WindowLv1_TrainDetectors(wx.Frame):
 
 			if do_nothing is False:
 
-				DT=Detectors()
-				DT.train_detector(self.path_to_detector,self.path_to_trainingimages,self.path_to_annotation,inference_size=self.inference_size,iteration_num=self.inference_size)
+				TTD=TrainTestDetectors()
+				TTD.train_the_detector(self.path_to_detector,self.path_to_trainingimages,self.path_to_annotation,inference_size=self.inference_size,iteration_num=self.inference_size)
 
 
 
@@ -481,8 +481,8 @@ class WindowLv1_TestDetectors(wx.Frame):
 		if self.path_to_detector is None or self.path_to_video is None or self.out_path is None:
 			wx.MessageBox('No Detector / testing video / path to annotated video selected.','Error',wx.OK|wx.ICON_ERROR)
 		else:
-			DT=Detectors()
-			DT.test_detector(self.path_to_detector,self.path_to_video,self.out_path,duration=self.duration,animal_number=self.animal_number)
+			TTD=TrainTestDetectors()
+			TTD.test_the_detector(self.path_to_detector,self.path_to_video,self.out_path,duration=self.duration,animal_number=self.animal_number)
 
 
 	def remove_model(self,event):
