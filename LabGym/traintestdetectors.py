@@ -22,23 +22,26 @@ from .detectanimals import DetectAnimals
 import os
 import json
 import torch
-from detectron2 import model_zoo
-from detectron2.checkpoint import DetectionCheckpointer
-from detectron2.config import get_cfg
-from detectron2.data import MetadataCatalog,DatasetCatalog
-from detectron2.data.datasets import register_coco_instances
-from detectron2.engine import DefaultTrainer,DefaultPredictor
+try:
+	from detectron2 import model_zoo
+	from detectron2.checkpoint import DetectionCheckpointer
+	from detectron2.config import get_cfg
+	from detectron2.data import MetadataCatalog,DatasetCatalog
+	from detectron2.data.datasets import register_coco_instances
+	from detectron2.engine import DefaultTrainer,DefaultPredictor
+except:
+	print('You need to install Detectron2 to use the Detector module in LabGym:')
+	print('https://detectron2.readthedocs.io/en/latest/tutorials/install.html')
 
 
 
-class Detectors():
+class TrainTestDetectors():
 
 	def __init__(self):
+		pass
 
-		self.path_to_detector=None
 
-
-	def train_detector(self,path_to_detector,path_to_trainingimages,path_to_annotation,inference_size=640,iteration_num=500):
+	def train_the_detector(self,path_to_detector,path_to_trainingimages,path_to_annotation,inference_size=640,iteration_num=500):
 
 		if torch.cuda.is_available():
 			device='cuda'
@@ -110,9 +113,9 @@ class Detectors():
 		print("Detector training completed!")
 
 
-	def test_detector(self,path_to_detector,path_to_video,out_path,duration=10,animal_number=1):
+	def test_the_detector(self,path_to_detector,path_to_video,out_path,duration=10,animal_number=1):
 
 		DA=DetectAnimals(path_to_detector)
-		DA.test_detector(path_to_video,out_path,duration=duration,animal_number=animal_number)
+		DA.run_test(path_to_video,out_path,duration=duration,animal_number=animal_number)
 
 
