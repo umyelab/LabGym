@@ -44,13 +44,13 @@ Next update, **LabGym 2.0**, will be able to work for complex interactive behavi
 
 LabGym has a graphical user interface (GUI) for users to use with **no need of coding**. The **full manual** for using the GUI of LabGym: https://github.com/yujiahu415/LabGym/blob/master/The%20full%20manual%20of%20LabGym_v1.9.pdf.
 
-The GUI has 9 functional units: '**Generate Images Examples**', '**Train Detectors**', '**Test Detectors**', '**Generate Behavior Examples**', '**Train Categorizers**', '**Test Categorizers**', '**Preprocess Data**', '**Analyze Behaviors**', and '**Mine Analysis Results**':
+The GUI has 9 functional units: '**Generate Image Examples**', '**Train Detectors**', '**Test Detectors**', '**Generate Behavior Examples**', '**Train Categorizers**', '**Test Categorizers**', '**Preprocess Data**', '**Analyze Behaviors**', and '**Mine Analysis Results**':
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/User%20interface.png?raw=true)
 
 <p>&nbsp;</p>
 
-## 'Generate Images Examples'
+## 'Generate Image Examples'
 
 Use this to extract frames (images) from videos. The extracted frames can be used for annotating the outline of animals / objects in them. The annotated images can then be used to train a Detector in ‘**Train Detectors**’ functional unit. After images are generated, users may use free online annotation tools such as Roboflow (https://roboflow.com) or CVAT (https://www.cvat.ai) or VGG Image Annotator (https://www.robots.ox.ac.uk/~vgg/software/via/) to annotate the outlines (NOT bounding boxes) of animals / objects of interest in images. When annotated images, make sure to select 'Instance Segmentation' for the annotation type. When exporting the annotation file, make sure to select 'COCO instance segmentation' format, which will be a ‘*.json’ file.
 
