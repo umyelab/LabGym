@@ -21,7 +21,7 @@ These behavior examples can establish visualizable behavioral datasets.
 
 <p>&nbsp;</p>
 
-3. It can also **QUANTIFY** diverse motion / kinematics parameters for each behavior, such as **count**, **duration**, **latency** of a behavior, and **speed**, **acceleration**, **distance traveled**, **motion vigor**, **motion intensity** during a behavior. It outputs an annotated video and a temporal raster plot for every behavior event for each animal at each frame in an analysis batch, and the spread sheets for storing the calculated behavioral parameters:
+3. It can **QUANTIFY** diverse motion / kinematics parameters for each behavior, such as **count**, **duration**, **latency** of a behavior, and **speed**, **acceleration**, **distance traveled**, **motion vigor**, **motion intensity** during a behavior. It outputs an annotated video and a temporal raster plot for every behavior event for each animal at each frame in an analysis batch, and the spread sheets for storing the calculated behavioral parameters:
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Quantify%20behavior.jpg?raw=true)
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Analysis_output.jpg?raw=true)
