@@ -2,7 +2,7 @@
 
 LabGym is an end-to-end platform for **analyzing behaviors of your interest**. 
 
-1. It can **IDENTIFY** non-interactive and interactive behaviors of animals / objects of your interest at each frame in various kinds of recording settings or environments:
+1. It can **IDENTIFY** non-interactive and interactive behaviors of animals / objects of your interest at each frame in various kinds of recording settings / environments or scenarios:
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_chipmunks_1.gif?raw=true)![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_chipmunks_2.gif?raw=true)![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_mice_1.gif?raw=true)![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_flies_1.gif?raw=true)![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_flies_2.gif?raw=true)![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_mice_2.gif?raw=true)![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_voles_1.gif?raw=true)![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_voles_2.gif?raw=true)![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_rats.gif?raw=true)![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_larvae.gif?raw=true)
 
