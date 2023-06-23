@@ -91,15 +91,13 @@ class Categorizers():
 						cnts,_=cv2.findContours(thred,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
 						cnts=sorted(cnts,key=cv2.contourArea,reverse=True)
 						if len(cnts)!=0:
-							cv2.drawContours(mask,[cnts[0]],0,(255,255,255),-1)
+							cv2.drawContours(mask,cnts,-1,(255,255,255),-1)
 							mask=cv2.dilate(mask,np.ones((5,5),np.uint8))
-							frame=np.uint8(frame_contrast*(mask/255))
-						else:
-							frame=frame_contrast
+							frame_contrast=np.uint8(frame_contrast*(mask/255))
 					if writer is None:
-						(h,w)=frame.shape[:2]
+						(h,w)=frame_contrast.shape[:2]
 						writer=cv2.VideoWriter(new_animation,cv2.VideoWriter_fourcc(*'MJPG'),fps,(w,h),True)
-					writer.write(frame)
+					writer.write(frame_contrast)
 				capture.release()
 				writer.release()
 				pattern_image=cv2.imread(pattern_image)
@@ -110,12 +108,13 @@ class Categorizers():
 		print('All prepared training examples stored in: '+str(new_path))
 
 
-	def build_data(self,path_to_animations,dim_tconv=32,dim_conv=64,channel=1,time_step=15,aug_methods=[],background_free=True):
+	def build_data(self,path_to_animations,dim_tconv=32,dim_conv=64,channel=1,time_step=15,aug_methods=[],background_free=True,behavior_kind=0):
 
 		# dim: the input dimension for Animation Analyzer or Pattern Recognizer
 		# channel: the channel for Animation Analyzer
 		# time_step: the number of input frames
 		# aug_methods: the methods for data augmentation
+		# behavior_kind: 0: non-interactive; 1: interactive basic; 2: interactive advance
 
 		animations=deque()
 		pattern_images=deque()
@@ -261,7 +260,7 @@ class Categorizers():
 
 						frame_contrast=np.uint8(exposure.rescale_intensity(frame,out_range=(0,255)))
 
-						if background_free is True:
+						if background_free is True and behavior_kind!=1:
 							frame_gray=cv2.cvtColor(frame_contrast,cv2.COLOR_BGR2GRAY)
 							thred=cv2.threshold(frame_gray,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]
 							cnts,_=cv2.findContours(thred,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
@@ -704,7 +703,7 @@ class Categorizers():
 		return model
 
 
-	def train_pattern_recognizer(self,data_path,model_path,out_path=None,dim=64,channel=3,time_step=15,level=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True):
+	def train_pattern_recognizer(self,data_path,model_path,out_path=None,dim=64,channel=3,time_step=15,level=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,behavior_kind=0):
 
 		# out_path: for export the training report
 		# augvalid: also perform augmentation in validation data
@@ -747,7 +746,7 @@ class Categorizers():
 		else:
 			background_code=1
 
-		parameters={'classnames':list(self.classnames),'dim_conv':int(dim),'channel':int(channel),'time_step':int(time_step),'network':0,'level_conv':int(level),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code)}
+		parameters={'classnames':list(self.classnames),'dim_conv':int(dim),'channel':int(channel),'time_step':int(time_step),'network':0,'level_conv':int(level),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code),'behavior_kind':int(behavior_kind)}
 		pd_parameters=pd.DataFrame.from_dict(parameters)
 		pd_parameters.to_csv(os.path.join(model_path,'model_parameters.txt'),index=False)
 
@@ -758,13 +757,13 @@ class Categorizers():
 		print(datetime.datetime.now())
 
 		print('Start to augment training examples...')
-		_,trainX,trainY=self.build_data(train_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free)
+		_,trainX,trainY=self.build_data(train_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,behavior_kind=behavior_kind)
 		trainY=lb.fit_transform(trainY)
 		print('Start to augment validation examples...')
 		if augvalid is True:
-			_,testX,testY=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free)
+			_,testX,testY=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,behavior_kind=behavior_kind)
 		else:
-			_,testX,testY=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free)
+			_,testX,testY=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free,behavior_kind=behavior_kind)
 		testY=lb.fit_transform(testY)
 
 		print('Training example shape : '+str(trainX.shape))
@@ -828,7 +827,7 @@ class Categorizers():
 		plt.close('all')
 
 
-	def train_animation_analyzer(self,data_path,model_path,out_path=None,dim=64,channel=1,time_step=15,level=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True):
+	def train_animation_analyzer(self,data_path,model_path,out_path=None,dim=64,channel=1,time_step=15,level=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,behavior_kind=0):
 
 		filters=8
 
@@ -866,7 +865,7 @@ class Categorizers():
 		else:
 			background_code=1
 
-		parameters={'classnames':list(self.classnames),'dim_tconv':int(dim),'channel':int(channel),'time_step':int(time_step),'network':1,'level_tconv':int(level),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code)}
+		parameters={'classnames':list(self.classnames),'dim_tconv':int(dim),'channel':int(channel),'time_step':int(time_step),'network':1,'level_tconv':int(level),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code),'behavior_kind':int(behavior_kind)}
 		pd_parameters=pd.DataFrame.from_dict(parameters)
 		pd_parameters.to_csv(os.path.join(model_path,'model_parameters.txt'),index=False)
 
@@ -877,13 +876,13 @@ class Categorizers():
 		print(datetime.datetime.now())
 
 		print('Start to augment training examples...')
-		trainX,_,trainY=self.build_data(train_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free)
+		trainX,_,trainY=self.build_data(train_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,behavior_kind=behavior_kind)
 		trainY=lb.fit_transform(trainY)
 		print('Start to augment validation examples...')
 		if augvalid is True:
-			testX,_,testY=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free)
+			testX,_,testY=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,behavior_kind=behavior_kind)
 		else:
-			testX,_,testY=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free)
+			testX,_,testY=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free,behavior_kind=behavior_kind)
 		testY=lb.fit_transform(testY)
 
 		print('Training example shape : '+str(trainX.shape))
@@ -948,7 +947,7 @@ class Categorizers():
 		plt.close('all')
 
 
-	def train_combnet(self,data_path,model_path,out_path=None,dim_tconv=32,dim_conv=64,channel=1,time_step=15,level_tconv=1,level_conv=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True):
+	def train_combnet(self,data_path,model_path,out_path=None,dim_tconv=32,dim_conv=64,channel=1,time_step=15,level_tconv=1,level_conv=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,behavior_kind=0):
 
 		print('Training Categorizer with both Animation Analyzer and Pattern Recognizer using the behavior examples in: '+str(data_path))
 
@@ -979,7 +978,7 @@ class Categorizers():
 		else:
 			background_code=1
 
-		parameters={'classnames':list(self.classnames),'dim_tconv':int(dim_tconv),'dim_conv':int(dim_conv),'channel':int(channel),'time_step':int(time_step),'network':2,'level_tconv':int(level_tconv),'level_conv':int(level_conv),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code)}
+		parameters={'classnames':list(self.classnames),'dim_tconv':int(dim_tconv),'dim_conv':int(dim_conv),'channel':int(channel),'time_step':int(time_step),'network':2,'level_tconv':int(level_tconv),'level_conv':int(level_conv),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code),'behavior_kind':int(behavior_kind)}
 		pd_parameters=pd.DataFrame.from_dict(parameters)
 		pd_parameters.to_csv(os.path.join(model_path,'model_parameters.txt'),index=False)
 
@@ -990,13 +989,13 @@ class Categorizers():
 		print(datetime.datetime.now())
 
 		print('Start to augment training examples...')
-		train_animations,train_pattern_images,trainY=self.build_data(train_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free)
+		train_animations,train_pattern_images,trainY=self.build_data(train_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,behavior_kind=behavior_kind)
 		trainY=lb.fit_transform(trainY)
 		print('Start to augment validation examples...')
 		if augvalid is True:
-			test_animations,test_pattern_images,testY=self.build_data(test_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free)
+			test_animations,test_pattern_images,testY=self.build_data(test_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,behavior_kind=behavior_kind)
 		else:
-			test_animations,test_pattern_images,testY=self.build_data(test_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free)
+			test_animations,test_pattern_images,testY=self.build_data(test_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free,behavior_kind=behavior_kind)
 		testY=lb.fit_transform(testY)
 
 		print('Training example shape : '+str(train_animations.shape)+', '+str(train_pattern_images.shape))
@@ -1055,110 +1054,5 @@ class Categorizers():
 			plt.savefig(os.path.join(out_path,'training_history.png'))
 			print('Training reports saved in: '+str(out_path))
 		plt.close('all')
-
-
-	def test_categorizer(self,groundtruth_path,model_path,result_path):
-
-		# groundtruth_path: ground truth data
-		# result_path: path to store the testing results
-
-		print('Testing the selected Categorizer...')
-
-		animations=deque()
-		pattern_images=deque()
-		labels=deque()
-
-		parameters=pd.read_csv(os.path.join(model_path,'model_parameters.txt'))
-
-		classnames=list(parameters['classnames'])
-		print('Behavior names in the Categorizer: '+str(classnames))
-					
-		if 'dim_conv' in list(parameters.keys()):
-			dim_conv=int(parameters['dim_conv'][0])
-		if 'dim_tconv' in list(parameters.keys()):
-			dim_tconv=int(parameters['dim_tconv'][0])
-		channel=int(parameters['channel'][0])
-		length=int(parameters['time_step'][0])
-		network=int(parameters['network'][0])
-
-		behaviornames=[i for i in os.listdir(groundtruth_path) if os.path.isdir(os.path.join(groundtruth_path,i))]
-
-		incorrect_behaviors=list(set(behaviornames)-set(classnames))
-		incorrect_classes=list(set(classnames)-set(behaviornames))
-		if len(incorrect_behaviors)>0:
-			print('Mismatched behavior names in testing examples: '+str(incorrect_behaviors))
-		if len(incorrect_classes)>0:
-			print('Unused behavior names in the Categorizer: '+str(incorrect_classes))
-
-		if len(incorrect_behaviors)==0 and len(incorrect_classes)==0:
-
-			for behavior in behaviornames:
-
-				if network!=0:
-					filenames=[i for i in os.listdir(os.path.join(groundtruth_path,behavior)) if i.endswith('.avi')]
-				else:
-					filenames=[i for i in os.listdir(os.path.join(groundtruth_path,behavior)) if i.endswith('.jpg')]
-		
-				for i in filenames:
-
-					if network!=0:
-
-						path_to_animation=os.path.join(groundtruth_path,behavior,i)
-
-						capture=cv2.VideoCapture(path_to_animation)
-						animation=deque()
-						frames=deque(maxlen=length)
-
-						while True:
-							retval,frame=capture.read()
-							if frame is None:
-								break
-							frames.append(frame)
-
-						capture.release()
-
-						for frame in frames:
-							frame=np.uint8(exposure.rescale_intensity(frame,out_range=(0,255)))
-							if channel==1:
-								frame=cv2.cvtColor(np.uint8(frame),cv2.COLOR_BGR2GRAY)
-							frame=cv2.resize(frame,(dim_tconv,dim_tconv),interpolation=cv2.INTER_AREA)
-							frame=img_to_array(frame)
-							animation.append(frame)
-
-						animations.append(np.array(animation))
-				
-					if network!=1:
-
-						path_to_pattern_image=os.path.splitext(os.path.join(groundtruth_path,behavior,i))[0]+'.jpg'
-						pattern_image=cv2.imread(path_to_pattern_image)
-						pattern_image=cv2.resize(pattern_image,(dim_conv,dim_conv),interpolation=cv2.INTER_AREA)
-						pattern_images.append(img_to_array(pattern_image))
-
-					labels.append(classnames.index(behavior))
-			
-			animations=np.array(animations,dtype='float32')/255.0
-			pattern_images=np.array(pattern_images,dtype='float32')/255.0
-
-			labels=np.array(labels)
-
-			model=load_model(model_path)
-
-			if network==0:
-				predictions=model.predict(pattern_images,batch_size=32)
-			elif network==1:
-				predictions=model.predict(animations,batch_size=32)
-			else:
-				predictions=model.predict([animations,pattern_images],batch_size=32)
-
-			if len(classnames)==2:
-				print(classification_report(labels,predictions.argmax(axis=1),target_names=[classnames[0]]))
-				report=classification_report(labels,predictions.argmax(axis=1),target_names=[classnames[0]],output_dict=True)
-			else:
-				print(classification_report(labels,predictions.argmax(axis=1),target_names=classnames))
-				report=classification_report(labels,predictions.argmax(axis=1),target_names=classnames,output_dict=True)
-
-			pd.DataFrame(report).transpose().to_excel(os.path.join(result_path,'testing_reports.xlsx'),float_format='%.2f')
-
-			print('Test completed!')
 
 

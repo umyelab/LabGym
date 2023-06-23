@@ -20,12 +20,13 @@ import scikit_posthocs as sp
 import pandas as pd
 import os
 import openpyxl
-from collections import OrderedDict
 
 
 
 class data_mining():
+
 	def __init__(self, data_in, control_in = None, paired_in = False, result_path_in = None, pval_in = 0.05, file_names_in = None):
+
 		self.data = data_in
 		self.control = control_in
 		self.paired = paired_in
@@ -33,13 +34,19 @@ class data_mining():
 		self.writer = pd.ExcelWriter(os.path.join(result_path_in,'data_mining_results.xlsx'))
 		self.file_names = file_names_in
 
+
 	def normal(self, dataset):
+
+		normal=True
 		for i in dataset:
-			if stats.shapiro(i).pvalue < self.pval:
-				return False
-		return True
+			if len(dataset)>=3:
+				if stats.shapiro(i).pvalue < self.pval:
+					normal=False
+		return normal
+
 
 	def two_groups(self):
+
 		if self.control != None:
 			self.data.insert(0, self.control)
 		for behavior in self.data[0]:
@@ -85,6 +92,7 @@ class data_mining():
 
 
 	def multiple_groups(self):
+
 		for behavior in self.data[0]:
 			startrow = 0
 			print(behavior)
@@ -159,11 +167,14 @@ class data_mining():
 					sheet.write_string(startrow, 3, posthoc_name+"'s post-hoc")
 					startrow += significant_data.shape[0] + 2
 
+
 	def statistical_analysis(self):
+
 		if (len(self.data)==2 and self.control == None) or (len(self.data)==1 and self.control != None): #tests for two groups only
 			self.two_groups()
 		else: #tests for 3+ groups
 			self.multiple_groups()
 		self.writer.close()
 		print('Data mining for statistical analysis completed!')
+
 
