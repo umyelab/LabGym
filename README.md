@@ -165,6 +165,7 @@ Please refer to the issue page (https://github.com/umyelab/LabGym/issues?q=) to 
 2. Implemented data mining functional unit.
 3. Implemented preprocessing functional unit.
 4. Simplified code and further optimized the processing speed.
+5. Implemented basic analysis for interactive behavior.
 
 **v1.8**:
 
