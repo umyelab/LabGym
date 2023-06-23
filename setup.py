@@ -31,7 +31,7 @@ except Exception:
     long_description=''
 
 
-setup(name='LabGym',version='1.9.5',author='Yujia Hu, Kelly Goss, Isabelle Baker',
+setup(name='LabGym',version='1.9.6',author='Yujia Hu, Kelly Goss, Isabelle Baker',
     author_email='henryhu@umich.edu',
     description='Quantify user-defined behaviors',
     long_description=long_description,
@@ -56,7 +56,7 @@ setup(name='LabGym',version='1.9.5',author='Yujia Hu, Kelly Goss, Isabelle Baker
     'opencv-contrib-python',
     'opencv-python',
     'openpyxl',
-    'xlsxwriter'
+    'xlsxwriter',
     'pandas',
     'pathlib',
     'scikit-learn',
