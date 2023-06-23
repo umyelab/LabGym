@@ -69,7 +69,7 @@ Extended user guide: (https://github.com/yujiahu415/LabGym/blob/master/LabGym%20
 
 To let LabGym detect animals / objects of your interest, you have two ways:
 
-1. **background subtraction** -based is fast and accurate and is the first choice for videos with static background and stable illumination. No training is needed for this method but you need to specify a time window background extraction during which animals are moving.
+1. **Background subtraction** -based method is fast and accurate and is the first choice for videos with static background and stable illumination. No training is needed for this method but you need to specify a time window during which animals are moving for background extraction.
 
     ***How to select an appropriate time window for background extraction?***
 
@@ -81,19 +81,21 @@ To let LabGym detect animals / objects of your interest, you have two ways:
 
 <p>&nbsp;</p>
 
-2. using Detectron2 (https://github.com/facebookresearch/detectron2) -based **Detector**, which is slower but more versatile than the **background subtraction** -based method. It can also differentiate individuals when they entangle and is useful for interactive behaviors. You can decrease the frame size during analysis to increase the processing speed.
+2. Detectron2 (https://github.com/facebookresearch/detectron2) -based **Detector** is slower but more versatile than the **background subtraction** -based method. It also differentiates individuals when they entangle and is useful for complex interactive behaviors. You can decrease the frame size during analysis to increase the processing speed.
 
     To train a **Detector**:
 
-    1. Use ‘**Generate Image Examples**’ functional unit to extract images (frames) from your videos.
-    2. Use free online annotation tools such as Roboflow (https://roboflow.com) or CVAT (https://www.cvat.ai) or VGG Image Annotator (https://www.robots.ox.ac.uk/~vgg/software/via/) to annotate the outlines (NOT bounding boxes) of animals / objects of your interest in images. Select 'Instance Segmentation' for the annotation type and 'COCO instance segmentation' format when exporting the annotation, which is a ‘*.json’ file.
+    1. Use ‘**Generate Image Examples**’ functional unit to extract images (frames) from videos.
+    2. Use free online annotation tools such as Roboflow (https://roboflow.com) or CVAT (https://www.cvat.ai) or VGG Image Annotator (https://www.robots.ox.ac.uk/~vgg/software/via/) to annotate the outlines (NOT bounding boxes) of animals / objects of your interest in images. Select 'Instance Segmentation' for annotation type and 'COCO instance segmentation' format when exporting the annotation, which is a ‘*.json’ file.
     3. Train your **Detectors** in ‘**Train Detectors**’ functional unit.
 
-To let LabGym recognize behaviors of your interest, you need to train a **Categorizer**.
+<p>&nbsp;</p>
+
+To let LabGym recognize behaviors of your interest, you need to train a **Categorizer**:
 
 1. Use ‘**Generate Behavior Examples**’ functional unit to generate behavior examples (**Animations** + **Pattern Images**). You need to decide the **duration** of each **Animation** / **Pattern Image**, which should span a behavior episode. The **duration** must be the same across all the examples that are used to train one **Categorizer**. If the **duration** of different behavior episode is different, use the longest one. 
 
-2. Select and sort some examples into different behavior types. ‘**Sort Behavior Examples**’ functional unit can make this much easier. More examples (and more diverse) = higher categorization accuracy, but 100 pairs of well selected examples for each behavior type can train a good **Categorizer** in general.
+2. Select and sort some examples into different behavior types. ‘**Sort Behavior Examples**’ functional unit can make this much easier. More examples (and more diverse) = higher categorization accuracy, but 100 pairs of well-selected examples for each behavior type can train a good **Categorizer** in general.
 
 3. Customize your own **Categorizer** in the ‘**Train Categorizers**’ functional unit and train it on the sorted behavior examples.
 
@@ -101,7 +103,7 @@ To let LabGym recognize behaviors of your interest, you need to train a **Catego
 
 ## 'Analysis Module' (analyze behaviors & data mining)
 
-1. ‘**Analyze Behaviors**’ functional unit analyzes behavioral videos and outputs the annotated videos with behavior names (and %confidence) marked in colors selected by you in each frame. It also calculates diverse behavioral parameters to provide **quantitative measurements** of the intensity and the body kinematics for each behavior.
+1. ‘**Analyze Behaviors**’ functional unit analyzes videos and outputs annotated video copies with behavior names (and %confidence) marked in colors selected by you. It also calculates diverse behavioral parameters to provide **quantitative measurements** of the intensity and kinematics for each behavior.
 
 2. After analysis, use ‘**Mine Results**’ functional unit to let LabGym automatically perform parametric / non-parametric statistical analysis among groups selected by you, according to the data distribution, to compare the mean / median of different groups and display the significant findings.
 
@@ -111,7 +113,7 @@ To let LabGym recognize behaviors of your interest, you need to train a **Catego
 
 1. Install Python3 (version >= 3.9.7)
 
-    Note: not recommend to install the latest version of Python3 since some libraries LabGym uses might not be updated in time to be compatible with the latest Python3.
+    Not to install the latest version of Python3 since it might not be compatible yet.
 
 2. In your terminal / cmd prompt, type:
 
@@ -125,19 +127,16 @@ To let LabGym recognize behaviors of your interest, you need to train a **Catego
 
         py -m pip install LabGym
 
-3. **IMPORTANT** Starting from v1.9, after LabGym is installed, install Detectron2 seperately by typing:
+3. For >= v1.9, after LabGym is installed, install Detectron2 seperately (https://detectron2.readthedocs.io/en/latest/tutorials/install.html):
 
         python3 -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
 
-    For issues in installing Detectron2, refer to https://detectron2.readthedocs.io/en/latest/tutorials/install.html. 
 
-4. Activate python3 by typing 'python3' or 'py' in the terminal / cmd prompt.
-
-    Then type:
+4. Activate python3 by typing 'python3' or 'py' in the terminal / cmd prompt. Then type:
 
         from LabGym import gui
 
-    Then type:
+    Then:
 
         gui.gui()
 
@@ -147,7 +146,7 @@ To let LabGym recognize behaviors of your interest, you need to train a **Catego
 
 # If you encounter any issues when using LabGym:
 
-Refer to the issue page (https://github.com/umyelab/LabGym/issues?q=) or open a new issue. You can also directly contact the author: Yujia Hu (henryhu@umich.edu).
+Refer to the issue page (https://github.com/umyelab/LabGym/issues?q=) or contact the author: Yujia Hu (henryhu@umich.edu).
 
 <p>&nbsp;</p>
 
