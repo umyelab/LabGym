@@ -48,6 +48,8 @@ LabGym has a graphical user interface (GUI) for users to use with **no need of c
 
 **Put your mouse cursor above each button to see a detailed description for it**.
 
+<p>&nbsp;</p>
+
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/User%20interface.jpg?raw=true)
 
 <p>&nbsp;</p>
