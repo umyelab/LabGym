@@ -26,7 +26,7 @@ import datetime
 import scipy.ndimage as ndimage
 from skimage import exposure
 from tensorflow.keras.preprocessing.image import img_to_array
-from collections import OrderedDict,deque
+from collections import deque
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap,Normalize
 from matplotlib.colorbar import ColorbarBase
@@ -502,6 +502,24 @@ def extract_blob_background(frame,contours,contour=None,channel=1,background_fre
 	return blob
 
 
+def extract_blob_all(frame,y_bt,y_tp,x_lf,x_rt,contours=None,channel=1,background_free=False):
+
+	if background_free is True:
+		mask=np.zeros_like(frame)
+		cv2.drawContours(mask,contours,-1,(255,255,255),-1)
+		masked_frame=frame*(mask/255.0)
+	else:
+		masked_frame=frame
+	blob=masked_frame[y_bt:y_tp,x_lf:x_rt]
+	blob=np.uint8(exposure.rescale_intensity(blob,out_range=(0,255)))
+
+	if channel==1:
+		blob=cv2.cvtColor(blob,cv2.COLOR_BGR2GRAY)
+		blob=img_to_array(blob)
+
+	return blob
+
+
 def get_inner(masked_frame_gray,contour):
 
 	blur=cv2.GaussianBlur(masked_frame_gray,(3,3),0)
@@ -662,6 +680,81 @@ def generate_patternimage(frame,outlines,inners=None,std=0):
 	return pattern_image
 
 
+def generate_patternimage_all(frame,y_bt,y_tp,x_lf,x_rt,outlines_list,inners_list,std=0):
+
+	inners_length=len(inners_list[0])
+
+	if inners_length>0:
+		background_inners=np.zeros_like(frame)
+		background_outers=np.zeros_like(frame)
+
+	background_outlines=np.zeros_like(frame)
+
+	if std>0:
+		backgrounds_std=[]
+
+	length=len(outlines_list)
+	p_size=int(max(abs(y_bt-y_tp),abs(x_lf-x_rt))/150+1)
+
+	for n,outlines in enumerate(outlines_list):
+
+		if std>0:
+			background_std=np.zeros_like(frame)
+			if inners_length>0:
+				for inners in inners_list[n]:
+					cv2.drawContours(background_std,inners,-1,(255,255,255),-1)
+				backgrounds_std.append(background_std)
+
+		if n<length/4:
+			d=n*int((255*4/length))
+			cv2.drawContours(background_outlines,outlines,-1,(255,d,0),p_size)
+			if inners_length>0:
+				for inners in inners_list[n]:
+					cv2.drawContours(background_inners,inners,-1,(255,d,0),p_size)	
+		elif n<length/2:
+			d=int((n-length/4)*(255*4/length))
+			cv2.drawContours(background_outlines,outlines,-1,(255,255,d),p_size)
+			if inners_length>0:
+				for inners in inners_list[n]:
+					cv2.drawContours(background_inners,inners,-1,(255,255,d),p_size)
+		elif n<3*length/4:
+			d=int((n-length/2)*(255*4/length))
+			cv2.drawContours(background_outlines,outlines,-1,(255,255-d,255),p_size)
+			if inners_length>0:
+				for inners in inners_list[n]:
+					cv2.drawContours(background_inners,inners,-1,(255,255-d,255),p_size)
+		else:
+			d=int((n-3*length/4)*(255*4/length))
+			cv2.drawContours(background_outlines,outlines,-1,(255-d,0,255),p_size)
+			if inners_length>0:
+				for inners in inners_list[n]:
+					cv2.drawContours(background_inners,inners,-1,(255-d,0,255),p_size)
+
+		if inners_length>0:
+			cv2.drawContours(background_outers,outlines,-1,(255,255,255),int(2*p_size))
+
+	outlines_image=background_outlines[y_bt:y_tp,x_lf:x_rt]
+
+	if inners_length>0:
+		inners_image=background_inners[y_bt:y_tp,x_lf:x_rt]
+		outers_image=background_outers[y_bt:y_tp,x_lf:x_rt]
+		inners_image=cv2.subtract(inners_image,outers_image)
+
+	if std>0:
+		backgrounds_std=np.array(backgrounds_std,dtype='float32')
+		std_images=backgrounds_std[:,y_bt:y_tp,x_lf:x_rt]
+		std_image=std_images.std(0)
+
+		inners_image[std_image<std]=0
+
+	if inners_length>0:
+		pattern_image=cv2.add(inners_image,outlines_image)
+	else:
+		pattern_image=outlines_image
+
+	return pattern_image
+
+
 def plot_evnets(result_path,event_probability,time_points,names_and_colors,behavior_to_annotate,width=0,height=0):
 
 	# names_and_colors: the behavior names and their representing colors
@@ -682,7 +775,7 @@ def plot_evnets(result_path,event_probability,time_points,names_and_colors,behav
 		else:
 			width=round(time_length/30)+1
 			x_intvl=30
-		height=round(len(list(event_probability.keys()))/4)+1
+		height=round(len(event_probability)/4)+1
 		if height<3:
 			height=3
 		figure,ax=plt.subplots(figsize=(width,height))
@@ -694,7 +787,7 @@ def plot_evnets(result_path,event_probability,time_points,names_and_colors,behav
 		all_data=[]
 		masks=[]
 
-		for i in list(event_probability.keys()):
+		for i in event_probability:
 			data=[]
 			mask=[]
 			for n in range(len(event_probability[i])):
@@ -739,13 +832,7 @@ def extract_frames(path_to_video,out_path,framewidth=None,start_t=0,duration=0,s
 	fps=round(capture.get(cv2.CAP_PROP_FPS))
 	full_duration=capture.get(cv2.CAP_PROP_FRAME_COUNT)/fps
 	video_name=os.path.splitext(os.path.basename(path_to_video))[0]
-	example_path=os.path.join(out_path,video_name)
-
-	if not os.path.isdir(example_path):
-		os.mkdir(example_path)
-		print('Folder created: '+str(example_path))
-	else:
-		print('Folder already exists: '+str(example_path))
+	os.makedirs(os.path.join(out_path,video_name),exist_ok=True)
 
 	if start_t>=full_duration:
 		print('The beginning time is later than the end of the video!')
@@ -775,7 +862,7 @@ def extract_frames(path_to_video,out_path,framewidth=None,start_t=0,duration=0,s
 					frameheight=int(frame.shape[0]*framewidth/frame.shape[1])
 					frame=cv2.resize(frame,(framewidth,frameheight),interpolation=cv2.INTER_AREA)
 
-				cv2.imwrite(os.path.join(example_path,video_name+'_'+str(frame_count_generate)+'.jpg'),frame)
+				cv2.imwrite(os.path.join(os.path.join(out_path,video_name),video_name+'_'+str(frame_count_generate)+'.jpg'),frame)
 
 			frame_count_generate+=1
 
@@ -784,20 +871,14 @@ def extract_frames(path_to_video,out_path,framewidth=None,start_t=0,duration=0,s
 	capture.release()
 
 
-def preprocess_video(path_to_video,out_folder,trim_video=False,start_t=0,duration=0,enhance_contrast=True,contrast=1.0,crop_frame=True,left=0,right=0,top=0,bottom=0):
+def preprocess_video(path_to_video,out_folder,trim_video=False,time_windows=[[0,10]],enhance_contrast=True,contrast=1.0,crop_frame=True,left=0,right=0,top=0,bottom=0):
 
 	capture=cv2.VideoCapture(path_to_video)
 	name=os.path.basename(path_to_video).split('.')[0]
 	writer=None
 	fps=round(capture.get(cv2.CAP_PROP_FPS))
 	frame_count=1
-	start_count=0
-	n=1
-	interval=int(duration*fps)
-
-	result_folder=os.path.join(out_folder,name)
-	if not os.path.isdir(result_folder):
-		os.mkdir(result_folder)
+	os.makedirs(os.path.join(out_folder,name),exist_ok=True)
 
 	while True:
 
@@ -807,52 +888,35 @@ def preprocess_video(path_to_video,out_folder,trim_video=False,start_t=0,duratio
 
 		t=frame_count/fps
 
-		if t>=start_t:
+		if crop_frame is True:
+			frame=frame[top:bottom,left:right,:]
 
-			if crop_frame is True:
-				frame=frame[top:bottom,left:right,:]
+		if enhance_contrast is True:
+			frame=frame*contrast
+			frame[frame>255]=255
+			frame=np.uint8(frame)
 
-			if enhance_contrast is True:
-				frame=frame*contrast
-				frame[frame>255]=255
-				frame=np.uint8(frame)
-			
+		(h,w)=frame.shape[:2]
+
+		if trim_video is True:
+			added_name=''
+			for i in time_windows:
+				added_name+='_'+str(i[0])+'-'+str(i[1])
 			if writer is None:
-				(h,w)=frame.shape[:2]
-
-			if trim_video is True and duration!=0:
-
-				if start_count%interval==0:
-					if writer is not None:
-						writer.release()
-					if n<10:
-						writer=cv2.VideoWriter(os.path.join(result_folder,name+'_00000'+str(n)+'_processed.avi'),cv2.VideoWriter_fourcc(*'MJPG'),fps,(w,h),True)
-					elif n<100:
-						writer=cv2.VideoWriter(os.path.join(result_folder,name+'_0000'+str(n)+'_processed.avi'),cv2.VideoWriter_fourcc(*'MJPG'),fps,(w,h),True)
-					elif n<1000:
-						writer=cv2.VideoWriter(os.path.join(result_folder,name+'_000'+str(n)+'_processed.avi'),cv2.VideoWriter_fourcc(*'MJPG'),fps,(w,h),True)
-					elif n<10000:
-						writer=cv2.VideoWriter(os.path.join(result_folder,name+'_00'+str(n)+'_processed.avi'),cv2.VideoWriter_fourcc(*'MJPG'),fps,(w,h),True)
-					elif n<100000:
-						writer=cv2.VideoWriter(os.path.join(result_folder,name+'_0'+str(n)+'_processed.avi'),cv2.VideoWriter_fourcc(*'MJPG'),fps,(w,h),True)
-					else:
-						writer=cv2.VideoWriter(os.path.join(result_folder,name+'_'+str(n)+'_processed.avi'),cv2.VideoWriter_fourcc(*'MJPG'),fps,(w,h),True)
-					n+=1
-
-			else:
-
-				if writer is None:
-					writer=cv2.VideoWriter(os.path.join(result_folder,name+'_processed.avi'),cv2.VideoWriter_fourcc(*'MJPG'),fps,(w,h),True)
-
+				writer=cv2.VideoWriter(os.path.join(out_folder,name,name+added_name+'_processed.avi'),cv2.VideoWriter_fourcc(*'MJPG'),fps,(w,h),True)
+			for i in time_windows:
+				if float(i[0])<=t<=float(i[1]):
+					writer.write(np.uint8(frame))
+		else:
+			if writer is None:
+				writer=cv2.VideoWriter(os.path.join(out_folder,name,name+'_processed.avi'),cv2.VideoWriter_fourcc(*'MJPG'),fps,(w,h),True)
 			writer.write(np.uint8(frame))
-
-			start_count+=1
 
 		frame_count+=1
 
 	writer.release()
 	capture.release()
 
-	print('The processed video(s) stored in: '+str(result_folder))
+	print('The processed video(s) stored in: '+str(os.path.join(out_folder,name)))
 
 
