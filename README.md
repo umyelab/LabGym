@@ -1,12 +1,14 @@
 # What is LabGym?
 
-LabGym is an end-to-end platform for **analyzing behaviors of your interest**. It can **IDENTIFY** non-interactive and interactive behaviors of animals / objects of your interest at each frame in various kinds of recording settings or environments:
+LabGym is an end-to-end platform for **analyzing behaviors of your interest**. 
+
+1. It can **IDENTIFY** non-interactive and interactive behaviors of animals / objects of your interest at each frame in various kinds of recording settings or environments:
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_chipmunks_1.gif?raw=true)![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_chipmunks_2.gif?raw=true)![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_mice_1.gif?raw=true)![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_flies_1.gif?raw=true)![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_flies_2.gif?raw=true)![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_mice_2.gif?raw=true)![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_voles_1.gif?raw=true)![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_voles_2.gif?raw=true)![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_rats.gif?raw=true)![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_larvae.gif?raw=true)
 
 <p>&nbsp;</p>
 
-It can **GENERATE** stand-alone behavior examples for you to sort to 'teach' it the behaviors defined by you. Each behavior example is a pair of a short **Animation** and its paired **Pattern Image**, which spans a duration (a behavior episode) defined by you:
+2. It can **GENERATE** stand-alone behavior examples for you to sort to 'teach' it the behaviors defined by you. Each behavior example is a pair of a short **Animation** and its paired **Pattern Image**, which spans a duration (a behavior episode) defined by you:
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Chipmunks.gif?raw=true)
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Flies.gif?raw=true)
@@ -19,14 +21,14 @@ These behavior examples can establish visualizable behavioral datasets.
 
 <p>&nbsp;</p>
 
-It can also **QUANTIFY** diverse motion / kinematics parameters for each behavior, such as **count**, **duration**, **latency** of a behavior, and **speed**, **acceleration**, **distance traveled**, **motion vigor**, **motion intensity** during a behavior. It outputs an annotated video and a temporal raster plot for every behavior event for each animal at each frame in an analysis batch, and the spread sheets for storing the calculated behavioral parameters:
+3. It can also **QUANTIFY** diverse motion / kinematics parameters for each behavior, such as **count**, **duration**, **latency** of a behavior, and **speed**, **acceleration**, **distance traveled**, **motion vigor**, **motion intensity** during a behavior. It outputs an annotated video and a temporal raster plot for every behavior event for each animal at each frame in an analysis batch, and the spread sheets for storing the calculated behavioral parameters:
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Quantify%20behavior.jpg?raw=true)
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Analysis_output.jpg?raw=true)
 
 <p>&nbsp;</p>
 
-Lastly, it can automatically **MINE** the analysis results to discover significant findings, such as the behavioral parameter that shows statistically significant difference among different groups, and then show the data details:
+4. It can automatically **MINE** the analysis results to discover significant findings, such as the behavioral parameter that shows statistically significant difference among different groups, and then show the data details:
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Results_mining.jpg?raw=true)
 
@@ -42,14 +44,17 @@ Next update, **LabGym 2.0**, will be able to track individuals during complex in
 
 # How to use LabGym?
 
-LabGym has a graphical user interface (GUI) for users to use with **no need of coding**. **Put your mouse cursor above each button to see a detailed description for it**.
+LabGym has a graphical user interface (GUI) for users to use with **no need of coding**. 
+
+**Put your mouse cursor above each button to see a detailed description for it**.
+
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/User%20interface.jpg?raw=true)
 
 <p>&nbsp;</p>
 
-The extended user guide is here: (https://github.com/yujiahu415/LabGym/blob/master/The%20full%20manual%20of%20LabGym_v1.9.pdf).
+Extended user guide: (https://github.com/yujiahu415/LabGym/blob/master/LabGym%20user%20guide_v1.9.pdf).
 
-The GUI has 3 modules: '**Preprocessing Module**' can preprocess your videos to make them fit your analysis goal better; '**Training Module**' is for you to teach LabGym to detect animals / objects of your interest and recognize behaviors defined by you; '**Analysis Module**' can automatically track animals / objects, and identify and quantify their behaviors. It can also automatically mine the analysis results to display the data details that show statistically significant differences among groups of your selection.
+The GUI has 3 modules: '**Preprocessing Module**' can preprocess your videos to make them fit your analysis goal better; '**Training Module**' is for you to teach LabGym to detect animals / objects of your interest and recognize behaviors defined by you; '**Analysis Module**' can automatically track animals / objects, identify, and quantify their behaviors. It can also automatically mine the analysis results to display the data details that show statistically significant differences among groups of your selection.
 
 <p>&nbsp;</p>
 
@@ -61,33 +66,38 @@ You can: 1. select multiple time windows in a video to form a new, trimmed video
 
 ## 'Training Module'
 
-LabGym has two detection methods to detect animals / objects of your interest. One is background subtraction-based, which is the first choice for videos with static background and stable illumination because it is fast and accurate in such videos. When using this method, users need to specify a time window during which animals are moving for background extraction.
+LabGym has two detection methods to detect animals / objects of your interest. One is background subtraction-based, which is the first choice for videos with static background and stable illumination because it is fast and accurate in such videos. When using this method, you need to specify a time window during which animals are moving for background extraction.
+
+<p>&nbsp;</p>
 
 **Tips on how to select an appropriate time window for background extraction**
 
 Shorter time window means faster processing speed (typically a period of 10~30 seconds is sufficient for such time window). Below is an example showing how selecting different time windows would affect the background extraction.
 
-The most left is a 60-second video. The next three images are background extraction results based on the time windows of 0th~20th, 20th~40th, and 40th~60th second, respectively. In the first and last 20 seconds, the mouse mostly stays either in left or right side and moves little. Therefore, the extracted backgrounds contain animal trace and are not ideal. In the middle 20 seconds, the mouse frequently moves around so extracted background is perfect:
+The most left is a video of 60 seconds. The next three images are background extraction results based on the time windows of 0th~20th, 20th~40th, and 40th~60th second, respectively. In the first and last 20 seconds, the mouse mostly stays either in left or right side and moves little. Therefore, the extracted backgrounds contain animal trace and are not ideal. In the middle 20 seconds, the mouse frequently moves around so extracted background is perfect:
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Background_extraction_demo.gif?raw=true)  ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Extracted_background_0-20.jpg?raw=true)  ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Extracted_background_20-40.jpg?raw=true)  ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Extracted_background_40-60.jpg?raw=true)
 
 <p>&nbsp;</p>
 
-The other detection method is using Detectron2 (https://github.com/facebookresearch/detectron2) -based **Detector**, which is versatile and useful in any kind of videos or experimental settings or to differentiate individuals when they entangle. are based on This method can be slow but you may decrease the inferencing frame size of the **Detector** to increase the speed. To train a **Detector**, well-annotated images are needed. You can use free online annotation tools such as Roboflow (https://roboflow.com) or CVAT (https://www.cvat.ai) or VGG Image Annotator (https://www.robots.ox.ac.uk/~vgg/software/via/) to annotate the outlines (NOT bounding boxes) of animals / objects of your interest in images. When annotated images, make sure to select 'Instance Segmentation' for the annotation type. When exporting the annotation file, make sure to select 'COCO instance segmentation' format, which will be a ‘*.json’ file.
+The other detection method is using Detectron2 (https://github.com/facebookresearch/detectron2) -based **Detector**, which is versatile and useful in any kind of videos or experimental settings or to differentiate individuals when they entangle. This method can be slow but you may decrease its inferencing frame size to increase speed. To train a **Detector**, you need to use free online annotation tools such as Roboflow (https://roboflow.com) or CVAT (https://www.cvat.ai) or VGG Image Annotator (https://www.robots.ox.ac.uk/~vgg/software/via/) to annotate the outlines (NOT bounding boxes) of animals / objects of your interest in images. Make sure to select 'Instance Segmentation' for the annotation type and select 'COCO instance segmentation' format when exporting the annotation file, which will be a ‘*.json’ file.
 
-<p>&nbsp;</p>
+To let LabGym recognize behaviors defined by you, you need to train a **Categorizer**. First, you need to use ‘**Generate Behavior Examples**’ functional unit to generate some behavior example pairs (**Animations** + **Pattern Images**). You need to decide the **duration** of each **Animation** / **Pattern Image**, which should approximate the duration of a behavior episode. It must be the same across all the examples that are used to train one **Categorizer**. If the duration of different behavior episode is different, use the longest one. 
 
-To let LabGym recognize behaviors defined by you, you need to train a **Categorizer**. First, you need to use ‘**Generate Behavior Examples**’ functional unit to generate some unsorted behavior example pairs (**Animations** + **Pattern Images**). The **duration** of each **Animation** / **Pattern Image** needs to be defined by users, which should approximate the duration of a behavior episode. It must be the same across all the examples that are used to train one **Categorizer**. If the duration of different behavior episode is different, use the longest one. Next, you need to select and sort some examples into different categories (behavior types). ‘**Sort Behavior Examples**’ functional unit can make the sorting process much easier. Finally, you can customize a **Categorizer** in ‘**Train Categorizers**’ functional unit and train it on the sorted behavior examples.
+Next, you need to select and sort some examples into different categories (behavior types). ‘**Sort Behavior Examples**’ functional unit can make the sorting process much easier. 
+
+Finally, you can customize a **Categorizer** in ‘**Train Categorizers**’ functional unit and train it on the sorted behavior examples.
 
 <p>&nbsp;</p>
 
 ## 'Analysis Module'
 
-Analyze behavioral videos and output the annotated videos with behavior names (and %confidence) marked in user-defined colors in each frame. It also
-calculates diverse behavioral parameters to provide **quantitative measurements** of the intensity and the body kinematics for each user-defined behavior.
-After analysis, you can use ‘**Mine Results**’ functional unit to let LabGym automatically performs parametric / non-parametric statistical analysis among groups that users selected, according to the data distribution, to compare the mean / median of different groups and display the significant findings.
+Analyze behavioral videos and output the annotated videos with behavior names (and %confidence) marked in colors selected by you in each frame. It also
+calculates diverse behavioral parameters to provide **quantitative measurements** of the intensity and the body kinematics for each behavior.
 
-A p value needs to be specified for determining the significance threshold for statistical analysis. The Shapiro test will be first performed to assess the normality of data distribution. For normally distributed data, if unpaired, unpaired t-test for 2 groups, ANOVA for more than 2 groups, with either Tukey (comparing each pair) or Dunnett's (comparing all groups against the control group) posthoc comparison; if paired, paired t-test for 2 groups, ANOVA for more than 2 groups, with either Tukey (comparing each pair) or Dunnett's (comparing all groups against the control group) posthoc comparison. For data that is not normally distributed, if unpaired, Mann Whitney U test for 2 groups, Kruskal Wallis for more than 2 groups, with Dunn's posthoc comparison for both comparing all groups and against control; if paired, Wilcoxon test for 2 groups, Friedman for more than 2 groups with Dunn’s posthoc. The selections of the tests are consistent with those in GraphPad Prism 9.
+After analysis, you can use ‘**Mine Results**’ functional unit to let LabGym automatically perform parametric / non-parametric statistical analysis among groups that you selected, according to the data distribution, to compare the mean / median of different groups and display the significant findings.
+
+The Shapiro test will be first performed to assess the normality of data distribution. For normally distributed data, if unpaired, unpaired t-test for 2 groups, ANOVA for more than 2 groups, with either Tukey (comparing each pair) or Dunnett's (comparing all groups against the control group) posthoc comparison; if paired, paired t-test for 2 groups, ANOVA for more than 2 groups, with either Tukey (comparing each pair) or Dunnett's (comparing all groups against the control group) posthoc comparison. For data that is not normally distributed, if unpaired, Mann Whitney U test for 2 groups, Kruskal Wallis for more than 2 groups, with Dunn's posthoc comparison for both comparing all groups and against control; if paired, Wilcoxon test for 2 groups, Friedman for more than 2 groups with Dunn’s posthoc. The selections of the tests are consistent with those in GraphPad Prism 9.
 
 <p>&nbsp;</p>
 
@@ -95,7 +105,7 @@ A p value needs to be specified for determining the significance threshold for s
 
 First install Python3 (version >= 3.9.7)
 
-Note: not recommend to install the latest version of Python3 since many Python libraries LabGym uses might not be updated in time to be compatible with the latest version of Python3.
+Note: not recommend to install the latest version of Python3 since some libraries LabGym uses might not be updated in time to be compatible with the latest Python3.
 
 Then in your terminal or cmd prompt, type:
 
@@ -115,11 +125,11 @@ or
 
 <p>&nbsp;</p>
 
-**IMPORTANT** Starting from v1.9, after LabGym is installed, type:
+**IMPORTANT** Starting from v1.9, after LabGym is installed, install Detectron2 by typing:
 
     python3 -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
 
-so that Detectron2 can be installed. If you encounter problems in installing Detectron2, refer to https://detectron2.readthedocs.io/en/latest/tutorials/install.html. 
+For issues in installing Detectron2, refer to https://detectron2.readthedocs.io/en/latest/tutorials/install.html. 
 
 <p>&nbsp;</p>
 
