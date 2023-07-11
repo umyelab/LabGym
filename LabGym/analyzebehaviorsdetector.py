@@ -34,6 +34,8 @@ from tensorflow.keras.preprocessing.image import img_to_array
 import pandas as pd
 import seaborn as sb
 from skimage import exposure
+import functools
+import operator
 try:
 	from detectron2.config import get_cfg
 	from detectron2.modeling import build_model
@@ -41,7 +43,6 @@ try:
 except:
 	print('You need to install Detectron2 to use the Detector module in LabGym:')
 	print('https://detectron2.readthedocs.io/en/latest/tutorials/install.html')
-
 
 
 
@@ -77,33 +78,46 @@ class AnalyzeAnimalDetector():
 		self.total_analysis_framecount=None
 		self.animal_area={}
 		self.to_deregister={}
+		self.count_to_deregister=None
 		self.register_counts={}
 		self.animal_contours={}
+		self.animal_other_contours={}
 		self.animal_centers={}
 		self.animal_existingcenters={}
 		self.animal_heights={}
 		self.animal_inners={}
+		self.animal_other_inners={}
 		self.animal_blobs={}
 		self.animations={}
 		self.pattern_images={}
 		self.event_probability={}
 		self.all_behavior_parameters={}
-		self.social_distance=float('inf')
-		self.interact_pair={}
+		self.animal_present={}
+		self.temp_frames=None
+		self.social_distance=0
 
 
-	def prepare_analysis(self,path_to_detector,path_to_video,results_path,animal_number,animal_kinds,behavior_kind,names_and_colors=None,framewidth=None,dim_tconv=8,dim_conv=8,channel=1,include_bodyparts=False,std=0,categorize_behavior=True,animation_analyzer=True,t=0,duration=5,length=15):
-
-		# animal_kinds: the catgories of animals / objects to be analyzed
-		# behavior_kind: 0: non-interactive; 1: interactive basic; 2: interactive advanced
-		# names_and_colors: the behavior names and their representing colors
-		# framewidth: the width of the frame to resize
-		# include_bodyparts: whether to include body parts in pattern images
-		# std: std for excluding static pixels in pattern images
-		# categorize_behavior: whether to categorize behaviors or just track animals without behavioral categorization
-		# t: if autofind_t is False, t is the start_t
-		# duration: the duration for data generation / analysis
-		# length: the number of input frames for assessing the behavior
+	def prepare_analysis(self,
+		path_to_detector,
+		path_to_video,
+		results_path,
+		animal_number,
+		animal_kinds, # the catgories of animals / objects to be analyzed
+		behavior_kind, # 0: non-interactive; 1: interactive basic; 2: interactive advance
+		names_and_colors=None, # the behavior names and their representing colors
+		framewidth=None, # the width of the frame to resize
+		dim_tconv=8, # input dim of Animation Analyzer
+		dim_conv=8, # input dim of Pattern Recognizer
+		channel=1, # color of Animation Analyzer
+		include_bodyparts=False, # whether to include body parts in pattern images
+		std=0, # for excluding static pixels in pattern images
+		categorize_behavior=True, # whether to categorize behaviors or just track animals without behavioral categorization
+		animation_analyzer=True, # whether to include Animation Analyzer
+		t=0, # start time point
+		duration=5, # the duration for example generation / analysis
+		length=15, # the duration (number of frames) of a behavior example (a behavior episode)
+		social_distance=0 # the distance to determine which two animals / objects form a interactive pair / group
+		):
 		
 		print('Preparation started...')
 		print(datetime.datetime.now())
@@ -143,9 +157,13 @@ class AnalyzeAnimalDetector():
 		self.t=t
 		self.duration=duration
 		self.length=length
+		self.social_distance=social_distance
+		if self.social_distance==0:
+			self.social_distance=float('inf')
 		os.makedirs(self.results_path,exist_ok=True)
 		capture=cv2.VideoCapture(self.path_to_video)
 		self.fps=round(capture.get(cv2.CAP_PROP_FPS))
+		self.count_to_deregister=self.fps*2
 
 		if self.duration<=0:
 			self.total_analysis_framecount=int(capture.get(cv2.CAP_PROP_FRAME_COUNT))+1
@@ -162,20 +180,11 @@ class AnalyzeAnimalDetector():
 
 		if self.framewidth is not None:
 			self.frameheight=int(frame.shape[0]*self.framewidth/frame.shape[1])
-			print('The resized video framesize: '+str(self.frameheight)+' X '+str(self.framewidth))
-			if max(self.framewidth,self.frameheight)<dt_infersize:
-				if self.framewidth>self.frameheight:
-					self.frameheight=int(self.frameheight/(self.framewidth/dt_infersize))
-					self.framewidth=dt_infersize
-				else:
-					self.framewidth=int(self.framewidth/(self.frameheight/dt_infersize))
-					self.frameheight=dt_infersize
-				print('The resized frame is smaller than the inferencing framesize of the selected Detector!')
-				print('Will use the inferencing size of the selected Detector as the aimed framesize.')
-				print('The new framesize: '+str(self.frameheight)+' X '+str(self.framewidth))
 			self.background=cv2.resize(frame,(self.framewidth,self.frameheight),interpolation=cv2.INTER_AREA)
+			print('The resized video framesize: '+str(self.frameheight)+' X '+str(self.framewidth))
 		else:
 			self.background=frame
+		self.temp_frames=deque(maxlen=self.length)
 		framesize=min(self.background.shape[0],self.background.shape[1])
 
 		total_number=0
@@ -199,15 +208,37 @@ class AnalyzeAnimalDetector():
 			self.to_deregister[animal_name]={}
 			self.register_counts[animal_name]={}
 			self.animal_contours[animal_name]={}
+			if self.behavior_kind==2:
+				self.animal_other_contours[animal_name]={}
 			self.animal_centers[animal_name]={}
 			self.animal_existingcenters[animal_name]={}
 			self.animal_heights[animal_name]={}
 			self.pattern_images[animal_name]={}
 			if self.include_bodyparts is True:
 				self.animal_inners[animal_name]={}
+				if self.behavior_kind==2:
+					self.animal_other_inners[animal_name]={}
 			if self.animation_analyzer is True:
 				self.animal_blobs[animal_name]={}
 				self.animations[animal_name]={}
+			for i in range(self.animal_number[animal_name]):
+				self.to_deregister[animal_name][i]=0
+				self.register_counts[animal_name][i]=None
+				self.animal_contours[animal_name][i]=[None]*self.total_analysis_framecount
+				if self.behavior_kind==2:
+					self.animal_other_contours[animal_name][i]=deque(maxlen=self.length)
+				self.animal_centers[animal_name][i]=[None]*self.total_analysis_framecount
+				self.animal_existingcenters[animal_name][i]=(-10000,-10000)
+				self.animal_heights[animal_name][i]=[None]*self.total_analysis_framecount
+				if self.include_bodyparts is True:
+					self.animal_inners[animal_name][i]=deque(maxlen=self.length)
+					if self.behavior_kind==2:
+						self.animal_other_inners[animal_name][i]=deque(maxlen=self.length)
+				if self.animation_analyzer is True:
+					self.animal_blobs[animal_name][i]=deque([np.zeros((self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8')],maxlen=self.length)*self.length
+					self.animations[animal_name][i]=[np.zeros((self.length,self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8')]*self.total_analysis_framecount
+				self.pattern_images[animal_name][i]=[np.zeros((self.dim_conv,self.dim_conv,3),dtype='uint8')]*self.total_analysis_framecount
+			self.animal_present[animal_name]=0
 
 		if framesize/total_number<250:
 			self.kernel=3
@@ -223,99 +254,138 @@ class AnalyzeAnimalDetector():
 		print('Prepration completed!')
 
 
-	def register_animal(self,frame_count_analyze,animal_name,index,contour,center,height,inner=None,blob=None):
+	def track_animal(self,frame_count_analyze,animal_name,contours,centers,heights,inners=None,blobs=None):
 
-		self.to_deregister[animal_name][index]=0
-		self.register_counts[animal_name][index]=frame_count_analyze
-		self.animal_contours[animal_name][index]=[None]*self.total_analysis_framecount
-		self.animal_contours[animal_name][index][frame_count_analyze]=contour
-		self.animal_centers[animal_name][index]=[None]*self.total_analysis_framecount
-		self.animal_centers[animal_name][index][frame_count_analyze]=center
-		self.animal_existingcenters[animal_name][index]=center
-		self.animal_heights[animal_name][index]=[None]*self.total_analysis_framecount
-		self.animal_heights[animal_name][index][frame_count_analyze]=height
-		if self.include_bodyparts is True:
-			self.animal_inners[animal_name][index]=[None]*self.total_analysis_framecount
-			self.animal_inners[animal_name][index][frame_count_analyze]=inner
-		if self.animation_analyzer is True:
-			self.animal_blobs[animal_name][index]=deque([np.zeros((self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8')],maxlen=self.length)*self.length
-			blob=img_to_array(cv2.resize(blob,(self.dim_tconv,self.dim_tconv),interpolation=cv2.INTER_AREA))
-			self.animal_blobs[animal_name][index].append(blob)
-			self.animations[animal_name][index]=[np.zeros((self.length,self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8')]*self.total_analysis_framecount
-		self.pattern_images[animal_name][index]=[np.zeros((self.dim_conv,self.dim_conv,3),dtype='uint8')]*self.total_analysis_framecount
-
-
-	def link_animal(self,frame_count_analyze,animal_name,existing_centers,max_distance,contours,centers,heights,inners=None,blobs=None):
-
-		unused_existing_indices=list(range(len(existing_centers)))
+		unused_existing_indices=list(self.animal_existingcenters[animal_name])
+		existing_centers=list(self.animal_existingcenters[animal_name].values())
 		unused_new_indices=list(range(len(centers)))
 		dt_flattened=distance.cdist(existing_centers,centers).flatten()
 		dt_sort_index=dt_flattened.argsort()
 		length=len(centers)
+
 		for idx in dt_sort_index:
-			if dt_flattened[idx]<max_distance:
-				index_in_existing=int(idx/length)
-				index_in_new=int(idx%length)
-				if index_in_existing in unused_existing_indices:
-					if index_in_new in unused_new_indices:
-						unused_existing_indices.remove(index_in_existing)
-						unused_new_indices.remove(index_in_new)
-						self.to_deregister[animal_name][index_in_existing]=0
-						self.animal_contours[animal_name][index_in_existing][frame_count_analyze]=contours[index_in_new]
-						center=centers[index_in_new]
-						self.animal_centers[animal_name][index_in_existing][frame_count_analyze]=center
-						self.animal_existingcenters[animal_name][index_in_existing]=center
-						self.animal_heights[animal_name][index_in_existing][frame_count_analyze]=heights[index_in_new]
-						if self.animation_analyzer is True:
-							blob=blobs[index_in_new]
-							blob=img_to_array(cv2.resize(blob,(self.dim_tconv,self.dim_tconv),interpolation=cv2.INTER_AREA))
-							self.animal_blobs[animal_name][index_in_existing].append(blob)
-							self.animations[animal_name][index_in_existing][frame_count_analyze]=np.array(self.animal_blobs[animal_name][index_in_existing])
-						if self.include_bodyparts is True:
-							self.animal_inners[animal_name][index_in_existing][frame_count_analyze]=inners[index_in_new]
-							pattern_image=generate_patternimage(self.background,self.animal_contours[animal_name][index_in_existing][max(0,(frame_count_analyze-self.length+1)):frame_count_analyze+1],inners=self.animal_inners[animal_name][index_in_existing][max(0,(frame_count_analyze-self.length+1)):frame_count_analyze+1],std=self.std)
-						else:
-							pattern_image=generate_patternimage(self.background,self.animal_contours[animal_name][index_in_existing][max(0,(frame_count_analyze-self.length+1)):frame_count_analyze+1],inners=None,std=0)
-						pattern_image=cv2.resize(pattern_image,(self.dim_conv,self.dim_conv),interpolation=cv2.INTER_AREA)
-						self.pattern_images[animal_name][index_in_existing][frame_count_analyze]=np.array(pattern_image)
-		return (unused_existing_indices,unused_new_indices)
+			index_in_existing=int(idx/length)
+			index_in_new=int(idx%length)
+			if index_in_existing in unused_existing_indices:
+				if index_in_new in unused_new_indices:
+					unused_existing_indices.remove(index_in_existing)
+					unused_new_indices.remove(index_in_new)
+					if self.register_counts[animal_name][index_in_existing] is None:
+						self.register_counts[animal_name][index_in_existing]=frame_count_analyze
+					self.to_deregister[animal_name][index_in_existing]=0
+					self.animal_contours[animal_name][index_in_existing][frame_count_analyze]=contours[index_in_new]
+					center=centers[index_in_new]
+					self.animal_centers[animal_name][index_in_existing][frame_count_analyze]=center
+					self.animal_existingcenters[animal_name][index_in_existing]=center
+					self.animal_heights[animal_name][index_in_existing][frame_count_analyze]=heights[index_in_new]
+					if self.animation_analyzer is True:
+						blob=img_to_array(cv2.resize(blobs[index_in_new],(self.dim_tconv,self.dim_tconv),interpolation=cv2.INTER_AREA))
+						self.animal_blobs[animal_name][index_in_existing].append(blob)
+						self.animations[animal_name][index_in_existing][frame_count_analyze]=np.array(self.animal_blobs[animal_name][index_in_existing])
+					if self.include_bodyparts is True:
+						self.animal_inners[animal_name][index_in_existing].append(inners[index_in_new])
+						pattern_image=generate_patternimage(self.background,self.animal_contours[animal_name][index_in_existing][max(0,(frame_count_analyze-self.length+1)):frame_count_analyze+1],inners=self.animal_inners[animal_name][index_in_existing],std=self.std)
+					else:
+						pattern_image=generate_patternimage(self.background,self.animal_contours[animal_name][index_in_existing][max(0,(frame_count_analyze-self.length+1)):frame_count_analyze+1],inners=None,std=0)
+					pattern_image=cv2.resize(pattern_image,(self.dim_conv,self.dim_conv),interpolation=cv2.INTER_AREA)
+					self.pattern_images[animal_name][index_in_existing][frame_count_analyze]=np.array(pattern_image)
 
-
-	def track_animal(self,frame_count_analyze,animal_name,count_to_deregister,max_distance,contours,centers,heights,inners=None,blobs=None):
-
-		existing_centers=list(self.animal_existingcenters[animal_name].values())
-		(unused_exi_indx,unused_new_indx)=self.link_animal(frame_count_analyze,animal_name,existing_centers,max_distance,contours,centers,heights,inners=inners,blobs=blobs)
-		if len(unused_exi_indx)>0:
-			for i in unused_exi_indx:
-				if self.to_deregister[animal_name][i]<=count_to_deregister:
+		if len(unused_existing_indices)>0:
+			for i in unused_existing_indices:
+				if self.to_deregister[animal_name][i]<=self.count_to_deregister:
 					self.to_deregister[animal_name][i]+=1
 				else:
 					self.animal_existingcenters[animal_name][i]=(-10000,-10000)
-		if len(unused_new_indx)>0:
-			for i in unused_new_indx:
-				idx=len(self.animal_centers[animal_name])
-				if self.include_bodyparts is True:
-					inn=inners[i]
-				else:
-					inn=None
 				if self.animation_analyzer is True:
-					blo=blobs[i]
-				else:
-					blo=None
-				self.register_animal(frame_count_analyze,animal_name,idx,contours[i],centers[i],heights[i],inner=inn,blob=blo)
+					self.animal_blobs[animal_name][i].append(np.zeros((self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8'))
+				if self.include_bodyparts is True:
+					self.animal_inners[animal_name][i].append(None)
 
 
-	def detect_track_individuals(self,frames,batch_size,frame_count_analyze,count_to_deregister,background_free=True,temp_frames=None,animation=None):
+	def track_animal_interact(self,frame_count_analyze,contours,other_contours,centers,heights,inners=None,other_inners=None,blobs=None):
+
+		n=0
+
+		for animal_name in self.animal_number:
+
+			if self.animal_present[animal_name]>0:
+
+				animal_length=n+self.animal_present[animal_name]
+				animal_centers=centers[n:animal_length]
+				animal_contours=contours[n:animal_length]
+				animal_other_contours=other_contours[n:animal_length]
+				animal_heights=heights[n:animal_length]
+				if self.include_bodyparts is True:
+					animal_inners=inners[n:animal_length]
+					animal_other_inners=other_inners[n:animal_length]
+				if self.animation_analyzer is True:
+					animal_blobs=blobs[n:animal_length]
+
+				unused_existing_indices=list(self.animal_existingcenters[animal_name])
+				existing_centers=list(self.animal_existingcenters[animal_name].values())
+				unused_new_indices=list(range(len(animal_centers)))
+				dt_flattened=distance.cdist(existing_centers,animal_centers).flatten()
+				dt_sort_index=dt_flattened.argsort()
+				length=len(animal_centers)
+
+				for idx in dt_sort_index:
+					index_in_existing=int(idx/length)
+					index_in_new=int(idx%length)
+					if index_in_existing in unused_existing_indices:
+						if index_in_new in unused_new_indices:
+							unused_existing_indices.remove(index_in_existing)
+							unused_new_indices.remove(index_in_new)
+							if self.register_counts[animal_name][index_in_existing] is None:
+								self.register_counts[animal_name][index_in_existing]=frame_count_analyze
+							self.to_deregister[animal_name][index_in_existing]=0
+							contour=animal_contours[index_in_new]
+							self.animal_contours[animal_name][index_in_existing][frame_count_analyze]=contour
+							center=animal_centers[index_in_new]
+							self.animal_centers[animal_name][index_in_existing][frame_count_analyze]=center
+							self.animal_existingcenters[animal_name][index_in_existing]=center
+							self.animal_heights[animal_name][index_in_existing][frame_count_analyze]=animal_heights[index_in_new]
+							self.animal_other_contours[animal_name][index_in_existing].append(animal_other_contours[index_in_new])
+							if self.animation_analyzer is True:
+								blob=img_to_array(cv2.resize(animal_blobs[index_in_new],(self.dim_tconv,self.dim_tconv),interpolation=cv2.INTER_AREA))
+								self.animal_blobs[animal_name][index_in_existing].append(blob)
+								self.animations[animal_name][index_in_existing][frame_count_analyze]=np.array(self.animal_blobs[animal_name][index_in_existing])
+							if self.include_bodyparts is True:
+								self.animal_inners[animal_name][index_in_existing].append(animal_inners[index_in_new])
+								self.animal_other_inners[animal_name][index_in_existing].append(animal_other_inners[index_in_new])
+								pattern_image=generate_patternimage_interact(self.background,self.animal_contours[animal_name][index_in_existing][max(0,(frame_count_analyze-self.length+1)):frame_count_analyze+1],self.animal_other_contours[animal_name][index_in_existing],inners=self.animal_inners[animal_name][index_in_existing],other_inners=self.animal_other_inners[animal_name][index_in_existing],std=self.std)
+							else:
+								pattern_image=generate_patternimage_interact(self.background,self.animal_contours[animal_name][index_in_existing][max(0,(frame_count_analyze-self.length+1)):frame_count_analyze+1],self.animal_other_contours[animal_name][index_in_existing],inners=None,other_inners=None,std=0)
+							pattern_image=cv2.resize(pattern_image,(self.dim_conv,self.dim_conv),interpolation=cv2.INTER_AREA)
+							self.pattern_images[animal_name][index_in_existing][frame_count_analyze]=np.array(pattern_image)
+
+				if len(unused_existing_indices)>0:
+					for i in unused_existing_indices:
+						if self.to_deregister[animal_name][i]<=self.count_to_deregister:
+							self.to_deregister[animal_name][i]+=1
+						else:
+							self.animal_existingcenters[animal_name][i]=(-10000,-10000)
+						self.animal_other_contours[animal_name][i].append([None])
+						if self.animation_analyzer is True:
+							self.animal_blobs[animal_name][i].append(np.zeros((self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8'))
+						if self.include_bodyparts is True:
+							self.animal_inners[animal_name][i].append(None)
+							self.animal_other_inners[animal_name][i].append([None])
+
+				n+=self.animal_present[animal_name]
+
+
+	def detect_track_individuals(self,frames,batch_size,frame_count_analyze,background_free=True,animation=None):
 
 		tensor_frames=[torch.as_tensor(frame.astype("float32").transpose(2,0,1)) for frame in frames]
 		inputs=[{"image":tensor_frame} for tensor_frame in tensor_frames]
-		animal_area=None
 
 		with torch.no_grad():
 			outputs=self.detector(inputs)
 
 		for batch_count,output in enumerate(outputs):
 
+			frame=frames[batch_count]
+			self.temp_frames.append(frame)
 			instances=outputs[batch_count]['instances'].to('cpu')
 			masks=instances.pred_masks.numpy().astype(np.uint8)
 			classes=instances.pred_classes.numpy()
@@ -325,63 +395,66 @@ class AnalyzeAnimalDetector():
 
 				self.skipped_frames.append(frame_count_analyze+1-batch_size+batch_count)
 
+				for animal_name in self.animal_kinds:
+					for i in self.animal_centers[animal_name]:
+						if self.animation_analyzer is True:
+							self.animal_blobs[animal_name][i].append(np.zeros((self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8'))
+						if self.include_bodyparts is True:
+							self.animal_inners[animal_name][i].append(None)
+
 			else:
 
-				frame=frames[batch_count]
-				temp_frames.append(frame)
-
-				mask_area=[np.sum(mask) for mask in masks]
+				mask_area=np.sum(np.array(masks),axis=(1,2))
 				exclusion_mask=np.zeros(len(masks),dtype=bool)
-				for n,mask_n in enumerate(masks):
-					size_n=mask_area[n]
-					for m,mask_m in enumerate(masks):
-						if n==m:
-							continue
-						intersection=np.logical_and(mask_n,mask_m)
-						intersection_area=np.sum(intersection)
-						iou=intersection_area/size_n
-						if iou>0.8 and mask_area[m]>size_n:
-							exclusion_mask[n]=True
-							break
-				masks=[masks[x] for x,exclude in enumerate(exclusion_mask) if not exclude]
-				classes=[classes[x] for x,exclude in enumerate(exclusion_mask) if not exclude]
+				exclusion_mask[np.where((np.sum(np.logical_and(masks[:,None],masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
+				masks=[m for m,exclude in zip(masks,exclusion_mask) if not exclude]
+				classes=[c for c,exclude in zip(classes,exclusion_mask) if not exclude]
 				classes=[self.animal_mapping[str(x)] for x in classes]
-				scores=[scores[x] for x,exclude in enumerate(exclusion_mask) if not exclude]
+				scores=[s for s,exclude in zip(scores,exclusion_mask) if not exclude]
 
 				for animal_name in self.animal_kinds:
 
 					contours=[]
 					centers=[]
+					goodcontours=[]
+					goodmasks=[]
 					heights=[]
 					inners=[]
 					blobs=[]
-					goodcontours=[]
-					goodmasks=[]
 
 					animal_number=int(self.animal_number[animal_name])
 					animal_masks=[masks[a] for a,name in enumerate(classes) if name==animal_name]
 					animal_scores=[scores[a] for a,name in enumerate(classes) if name==animal_name]
-					if len(animal_masks)>0:
-						if len(animal_scores)>animal_number*3:
-							sorted_scores_indices=np.argsort(animal_scores)[-int(animal_number*3):]
+
+					if len(animal_masks)==0:
+
+						for i in self.animal_centers[animal_name]:
+							if self.animation_analyzer is True:
+								self.animal_blobs[animal_name][i].append(np.zeros((self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8'))
+							if self.include_bodyparts is True:
+								self.animal_inners[animal_name][i].append(None)
+
+					else:
+
+						if len(animal_scores)>animal_number*2:
+							sorted_scores_indices=np.argsort(animal_scores)[-int(animal_number*2):]
 							animal_masks=[animal_masks[x] for x in sorted_scores_indices]
-						for j,mask in enumerate(animal_masks):
+						for mask in animal_masks:
 							mask=cv2.morphologyEx(mask,cv2.MORPH_CLOSE,np.ones((self.kernel,self.kernel),np.uint8))
+							goodmasks.append(mask)
 							cnts,_=cv2.findContours((mask*255).astype(np.uint8),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
 							goodcontours.append(sorted(cnts,key=cv2.contourArea,reverse=True)[0])
-							goodmasks.append(mask)
 						areas=[cv2.contourArea(ct) for ct in goodcontours]
 						sorted_area_indices=np.argsort(np.array(areas))[-animal_number:]
 						areas_sorted=sorted(areas)[-animal_number:]
 						area=sum(areas_sorted)/len(areas_sorted)
-						if animal_area is None:
-							animal_area=area
+						if self.animal_area[animal_name] is None:
+							self.animal_area[animal_name]=area
 						else:
-							animal_area=(animal_area+area)/2
-						self.animal_area[animal_name]=animal_area
+							self.animal_area[animal_name]=(self.animal_area[animal_name]+area)/2
 						for x in sorted_area_indices:
-							cnt=goodcontours[x]
 							mask=goodmasks[x]
+							cnt=goodcontours[x]
 							contours.append(cnt)
 							centers.append((int(cv2.moments(cnt)['m10']/cv2.moments(cnt)['m00']),int(cv2.moments(cnt)['m01']/cv2.moments(cnt)['m00'])))  
 							(_,_),(w,h),_=cv2.minAreaRect(cnt)
@@ -395,53 +468,196 @@ class AnalyzeAnimalDetector():
 								difference=int(abs(w-h)/2)+1
 								if w>h:
 									y_bt=max(y-difference-1,0)
-									y_tp=min(y+h+difference+1,frame.shape[0])
+									y_tp=min(y+h+difference+1,self.background.shape[0])
 									x_lf=max(x-1,0)
-									x_rt=min(x+w+1,frame.shape[1])
+									x_rt=min(x+w+1,self.background.shape[1])
 								else:
 									y_bt=max(y-1,0)
-									y_tp=min(y+h+1,frame.shape[0])
+									y_tp=min(y+h+1,self.background.shape[0])
 									x_lf=max(x-difference-1,0)
-									x_rt=min(x+w+difference+1,frame.shape[1])
+									x_rt=min(x+w+difference+1,self.background.shape[1])
 								blob=masked_frame[y_bt:y_tp,x_lf:x_rt]
 								blob=np.uint8(exposure.rescale_intensity(blob,out_range=(0,255)))
 								if self.channel==1:
 									blob=cv2.cvtColor(blob,cv2.COLOR_BGR2GRAY)
 									blob=img_to_array(blob)
 								blobs.append(blob)
- 
-						if len(self.animal_centers[animal_name])==0:
-							for i,contour in enumerate(contours):
-								if self.include_bodyparts is True:
-									if self.animation_analyzer is True:
-										self.register_animal(frame_count_analyze+1-batch_size+batch_count,animal_name,i,contour,centers[i],heights[i],inner=inners[i],blob=blobs[i])
-									else:
-										self.register_animal(frame_count_analyze+1-batch_size+batch_count,animal_name,i,contour,centers[i],heights[i],inner=inners[i],blob=None)
-								else:
-									if self.animation_analyzer is True:
-										self.register_animal(frame_count_analyze+1-batch_size+batch_count,animal_name,i,contour,centers[i],heights[i],inner=None,blob=blobs[i])
-									else:
-										self.register_animal(frame_count_analyze+1-batch_size+batch_count,animal_name,i,contour,centers[i],heights[i],inner=None,blob=None)
-						else:
-							max_distance=math.sqrt(animal_area)*2
-							self.track_animal(frame_count_analyze+1-batch_size+batch_count,animal_name,count_to_deregister,max_distance,contours,centers,heights,inners=inners,blobs=blobs)
+
+						self.track_animal(frame_count_analyze+1-batch_size+batch_count,animal_name,contours,centers,heights,inners=inners,blobs=blobs)
+						
+						if self.animation_analyzer is True:
+							if background_free is False:
+								for i in self.animal_centers[animal_name]:
+									for n,f in enumerate(self.temp_frames):
+										if self.animal_contours[animal_name][i][max(0,frame_count_analyze+1-batch_size+batch_count-self.length+1):frame_count_analyze+1-batch_size+batch_count+1][n] is None:
+											blob=np.zeros((self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8')
+										else:
+											blob=extract_blob_background(f,self.animal_contours[i][max(0,frame_count_analyze+1-batch_size+batch_count-self.length+1):frame_count_analyze+1-batch_size+batch_count+1],contour=None,channel=self.channel,background_free=False)
+											blob=cv2.resize(blob,(self.dim_tconv,self.dim_tconv),interpolation=cv2.INTER_AREA)
+										animation.append(img_to_array(blob))
+									self.animations[i][frame_count_analyze+1-batch_size+batch_count]=np.array(animation)
+
+
+	def detect_track_interact(self,frames,batch_size,frame_count_analyze,background_free=True):
+
+		tensor_frames=[torch.as_tensor(frame.astype("float32").transpose(2,0,1)) for frame in frames]
+		inputs=[{"image":tensor_frame} for tensor_frame in tensor_frames]
+
+		with torch.no_grad():
+			outputs=self.detector(inputs)
+
+		for batch_count,output in enumerate(outputs):
+
+			frame=frames[batch_count]
+			instances=outputs[batch_count]['instances'].to('cpu')
+			masks=instances.pred_masks.numpy().astype(np.uint8)
+			classes=instances.pred_classes.numpy()
+			scores=instances.scores.numpy()
+
+			if len(masks)==0:
+
+				self.skipped_frames.append(frame_count_analyze+1-batch_size+batch_count)
+
+				for animal_name in self.animal_kinds:
+					self.animal_present[animal_name]=0
+					for i in self.animal_centers[animal_name]:
+						self.animal_other_contours[animal_name][i].append([None])
+						if self.animation_analyzer is True:
+							self.animal_blobs[animal_name][i].append(np.zeros((self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8'))
+						if self.include_bodyparts is True:
+							self.animal_inners[animal_name][i].append(None)
+							self.animal_other_inners[animal_name][i].append([None])
+
+			else:
+
+				mask_area=np.sum(np.array(masks),axis=(1,2))
+				exclusion_mask=np.zeros(len(masks),dtype=bool)
+				exclusion_mask[np.where((np.sum(np.logical_and(masks[:,None],masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
+				masks=[m for m,exclude in zip(masks,exclusion_mask) if not exclude]
+				classes=[c for c,exclude in zip(classes,exclusion_mask) if not exclude]
+				classes=[self.animal_mapping[str(x)] for x in classes]
+				scores=[s for s,exclude in zip(scores,exclusion_mask) if not exclude]
+
+				all_centers=[]
+				all_masks=[]
+				all_contours=[]
+				all_inners=[]
+				all_heights=[]
+				all_blobs=[]
+				average_area=[]
+
+				for animal_name in self.animal_kinds:
+
+					goodmasks=[]
+					goodcontours=[]
+					animal_number=int(self.animal_number[animal_name])
+					animal_masks=[masks[a] for a,name in enumerate(classes) if name==animal_name]
+					animal_scores=[scores[a] for a,name in enumerate(classes) if name==animal_name]
+
+					if len(animal_masks)==0:
+						self.animal_present[animal_name]=0
+						for i in self.animal_centers[animal_name]:
+							self.animal_other_contours[animal_name][i].append([None])
 							if self.animation_analyzer is True:
-								if background_free is False:
-									if len(temp_frames)==self.length:
-										for i in self.animal_centers[animal_name]:
-											for n,frame in enumerate(temp_frames):
-												if self.animal_contours[animal_name][i][frame_count_analyze+1-batch_size+batch_count-self.length+1:frame_count_analyze+1-batch_size+batch_count+1][n] is None:
-													blob=np.zeros((self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8')
-												else:
-													blob=extract_blob_background(frame,self.animal_contours[i][frame_count_analyze+1-batch_size+batch_count-self.length+1:frame_count_analyze+1-batch_size+batch_count+1],contour=None,channel=self.channel,background_free=False)
-													blob=cv2.resize(blob,(self.dim_tconv,self.dim_tconv),interpolation=cv2.INTER_AREA)
-												animation.append(img_to_array(blob))
-											self.animations[i][frame_count_analyze+1-batch_size+batch_count]=np.array(animation)
+								self.animal_blobs[animal_name][i].append(np.zeros((self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8'))
+							if self.include_bodyparts is True:
+								self.animal_inners[animal_name][i].append(None)
+								self.animal_other_inners[animal_name][i].append([None])
+					else:
+						if len(animal_scores)>animal_number*2:
+							sorted_scores_indices=np.argsort(animal_scores)[-int(animal_number*2):]
+							animal_masks=[animal_masks[x] for x in sorted_scores_indices]
+						for mask in animal_masks:
+							mask=cv2.morphologyEx(mask,cv2.MORPH_CLOSE,np.ones((self.kernel,self.kernel),np.uint8))
+							goodmasks.append(mask)
+							cnts,_=cv2.findContours((mask*255).astype(np.uint8),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
+							goodcontours.append(sorted(cnts,key=cv2.contourArea,reverse=True)[0])
+						areas=[cv2.contourArea(ct) for ct in goodcontours]
+						sorted_area_indices=np.argsort(np.array(areas))[-animal_number:]
+						self.animal_present[animal_name]=len(sorted_area_indices)
+						areas_sorted=sorted(areas)[-animal_number:]
+						area=sum(areas_sorted)/len(areas_sorted)
+						if self.animal_area[animal_name] is None:
+							self.animal_area[animal_name]=area
+						else:
+							self.animal_area[animal_name]=(self.animal_area[animal_name]+area)/2
+						average_area.append(self.animal_area[animal_name])
+						for x in sorted_area_indices:
+							mask=goodmasks[x]
+							all_masks.append(mask)
+							cnt=goodcontours[x]
+							all_contours.append(cnt)
+							all_centers.append((int(cv2.moments(cnt)['m10']/cv2.moments(cnt)['m00']),int(cv2.moments(cnt)['m01']/cv2.moments(cnt)['m00'])))  
+							(_,_),(w,h),_=cv2.minAreaRect(cnt)
+							all_heights.append(max(w,h))
+							if self.include_bodyparts is True:
+								masked_frame=cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)*mask
+								all_inners.append(get_inner(masked_frame,cnt))
+
+				if len(all_centers)>1:
+
+					centers_array=np.array(all_centers)
+					distances_squared=np.sum((centers_array[:,None]-centers_array)**2,axis=2)
+					determine=np.logical_and(distances_squared>0,distances_squared<(math.sqrt(sum(average_area)/len(average_area))*self.social_distance)**2)
+					other_contours=[[all_contours[x] for x,determ in enumerate(determine[y]) if determ] for y,c in enumerate(all_centers)]
+					if self.include_bodyparts is True:
+						other_inners=[[all_inners[x] for x,determ in enumerate(determine[y]) if determ] for y,c in enumerate(all_centers)]
+					else:
+						other_inners=None
+					if self.animation_analyzer is True:
+						other_masks=[np.bitwise_or.reduce(np.stack(np.array(all_masks)[determine[x]])) if len(c)>0 else None for x,c in enumerate(other_contours)]
+						for i,other_mask in enumerate(other_masks):
+							contour=all_contours[i]
+							total_contours=other_contours[i]
+							total_contours.append(contour)
+							(y_bt,y_tp,x_lf,x_rt)=crop_frame(self.background,total_contours)
+							if background_free is True:
+								blob=frame*cv2.cvtColor(all_masks[i],cv2.COLOR_GRAY2BGR)
+								if other_mask is not None:
+									other_blob=cv2.cvtColor(cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)*other_mask,cv2.COLOR_GRAY2BGR)
+									blob=cv2.add(blob,other_blob)
+									blob=np.uint8(exposure.rescale_intensity(blob,out_range=(0,255)))
+							else:
+								blob=np.uint8(exposure.rescale_intensity(frame,out_range=(0,255)))
+							cv2.drawContours(blob,[contour],0,(255,0,255),2)
+							all_blobs.append(blob[y_bt:y_tp,x_lf:x_rt])
+
+					self.track_animal_interact(frame_count_analyze+1-batch_size+batch_count,all_contours,other_contours,all_centers,all_heights,inners=all_inners,other_inners=other_inners,blobs=all_blobs)
+
+				else:
+
+					if len(all_centers)>0:
+						other_contours=[[None]]
+						if self.include_bodyparts is True:
+							other_inners=[[None]]
+						else:
+							other_inners=None
+						if background_free is True:
+							blob=frame*cv2.cvtColor(all_masks[0],cv2.COLOR_GRAY2BGR)
+							blob=np.uint8(exposure.rescale_intensity(blob,out_range=(0,255)))
+						else:
+							blob=np.uint8(exposure.rescale_intensity(frame,out_range=(0,255)))
+						contour=all_contours[0]
+						cv2.drawContours(blob,[contour],0,(255,0,255),2)
+						x,y,w,h=cv2.boundingRect(contour)
+						difference=int(abs(w-h)/2)+1
+						if w>h:
+							y_bt=max(y-difference-1,0)
+							y_tp=min(y+h+difference+1,self.background.shape[0])
+							x_lf=max(x-1,0)
+							x_rt=min(x+w+1,self.background.shape[1])
+						else:
+							y_bt=max(y-1,0)
+							y_tp=min(y+h+1,self.background.shape[0])
+							x_lf=max(x-difference-1,0)
+							x_rt=min(x+w+difference+1,self.background.shape[1])
+						blob=blob[y_bt:y_tp,x_lf:x_rt]
+						all_blobs.append(blob)
+
+						self.track_animal_interact(frame_count_analyze+1-batch_size+batch_count,all_contours,other_contours,all_centers,all_heights,inners=all_inners,other_inners=other_inners,blobs=all_blobs)
 
 
 	def acquire_information(self,batch_size=1,background_free=True):
-
-		# batch_size: used for GPU
 
 		print('Acquiring information in each frame...')
 		print(datetime.datetime.now())
@@ -449,8 +665,6 @@ class AnalyzeAnimalDetector():
 		capture=cv2.VideoCapture(self.path_to_video)
 		batch=[]
 		batch_count=frame_count=frame_count_analyze=0
-		count_to_deregister=self.fps*2
-		temp_frames=deque(maxlen=self.length)
 		animation=deque([np.zeros((self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8')],maxlen=self.length)*self.length
 
 		start_t=round((self.t-self.length/self.fps),2)
@@ -485,7 +699,10 @@ class AnalyzeAnimalDetector():
 
 				if batch_count==batch_size:
 					batch_count=0
-					self.detect_track_individuals(batch,batch_size,frame_count_analyze,count_to_deregister,background_free=background_free,temp_frames=temp_frames,animation=animation)
+					if self.behavior_kind==2:
+						self.detect_track_interact(batch,batch_size,frame_count_analyze,background_free=background_free)
+					else:
+						self.detect_track_individuals(batch,batch_size,frame_count_analyze,background_free=background_free,animation=animation)
 					batch=[]
 
 				frame_count_analyze+=1
@@ -496,6 +713,7 @@ class AnalyzeAnimalDetector():
 
 		for animal_name in self.animal_kinds:
 			print('The area of '+str(animal_name)+' is: '+str(self.animal_area[animal_name])+'.')
+
 		print('Information acquisition completed!')
 
 
@@ -505,6 +723,8 @@ class AnalyzeAnimalDetector():
 		print(datetime.datetime.now())
 
 		name=self.animal_kinds[0]
+		self.register_counts={}
+		self.register_counts[name]=None
 		if self.animation_analyzer is True:
 			self.animations={}
 			self.animations[name]={}
@@ -518,11 +738,9 @@ class AnalyzeAnimalDetector():
 		self.animal_centers[name]={}
 		self.animal_centers[name][0]=[None]*self.total_analysis_framecount
 
-
 		capture=cv2.VideoCapture(self.path_to_video)
 		batch=[]
 		batch_count=frame_count=frame_count_analyze=0
-		temp_frames=deque(maxlen=self.length)
 		temp_contours=deque(maxlen=self.length)
 		temp_inners=deque(maxlen=self.length)
 		animation=deque([np.zeros((self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8')],maxlen=self.length)*self.length
@@ -569,6 +787,8 @@ class AnalyzeAnimalDetector():
 
 					for batch_count,output in enumerate(outputs):
 
+						frame=batch[batch_count]
+						self.temp_frames.append(frame)
 						instances=outputs[batch_count]['instances'].to('cpu')
 						masks=instances.pred_masks.numpy().astype(np.uint8)
 						classes=instances.pred_classes.numpy()
@@ -578,30 +798,21 @@ class AnalyzeAnimalDetector():
 
 							self.skipped_frames.append(frame_count_analyze+1-batch_size+batch_count)
 
+							temp_contours.append(None)
+							temp_inners.append(None)
+							animation.append(np.zeros((self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8'))
+
 						else:
 
-							temp_frames.append(batch[batch_count])
-							length=len(temp_frames)
-							if length==1:
-								self.register_counts[name][0]=frame_count_analyze+1-batch_size+batch_count
+							self.register_counts[name][0]=frame_count_analyze+1-batch_size+batch_count
 
-							mask_area=[np.sum(mask) for mask in masks]
+							mask_area=np.sum(np.array(masks),axis=(1,2))
 							exclusion_mask=np.zeros(len(masks),dtype=bool)
-							for n,mask_n in enumerate(masks):
-								size_n=mask_area[n]
-								for m,mask_m in enumerate(masks):
-									if n==m:
-										continue
-									intersection=np.logical_and(mask_n,mask_m)
-									intersection_area=np.sum(intersection)
-									iou=intersection_area/size_n
-									if iou>0.8 and mask_area[m]>size_n:
-										exclusion_mask[n]=True
-										break
-							masks=[masks[x] for x,exclude in enumerate(exclusion_mask) if not exclude]
-							classes=[classes[x] for x,exclude in enumerate(exclusion_mask) if not exclude]
+							exclusion_mask[np.where((np.sum(np.logical_and(masks[:,None],masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
+							masks=[m for m,exclude in zip(masks,exclusion_mask) if not exclude]
+							classes=[c for c,exclude in zip(classes,exclusion_mask) if not exclude]
 							classes=[self.animal_mapping[str(x)] for x in classes]
-							scores=[scores[x] for x,exclude in enumerate(exclusion_mask) if not exclude]
+							scores=[s for s,exclude in zip(scores,exclusion_mask) if not exclude]
 
 							contours=[]
 							inners=[]
@@ -613,10 +824,10 @@ class AnalyzeAnimalDetector():
 								animal_masks=[masks[a] for a,n in enumerate(classes) if n==animal_name]
 								animal_scores=[scores[a] for a,n in enumerate(classes) if n==animal_name]
 								if len(animal_masks)>0:
-									if len(animal_scores)>animal_number*3:
-										sorted_scores_indices=np.argsort(animal_scores)[-int(animal_number*3):]
+									if len(animal_scores)>animal_number*2:
+										sorted_scores_indices=np.argsort(animal_scores)[-int(animal_number*2):]
 										animal_masks=[animal_masks[x] for x in sorted_scores_indices]
-									for j,mask in enumerate(animal_masks):
+									for mask in animal_masks:
 										mask=cv2.morphologyEx(mask,cv2.MORPH_CLOSE,np.ones((self.kernel,self.kernel),np.uint8))
 										cnts,_=cv2.findContours((mask*255).astype(np.uint8),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
 										goodcontours.append(sorted(cnts,key=cv2.contourArea,reverse=True)[0])
@@ -635,19 +846,19 @@ class AnalyzeAnimalDetector():
 
 							temp_contours.append(contours)
 							temp_inners.append(inners)
-							all_contours=[]
-							for n in range(length):
-								all_contours+=temp_contours[n]
-							(y_bt,y_tp,x_lf,x_rt)=crop_frame(frame,all_contours)
+							(y_bt,y_tp,x_lf,x_rt)=crop_frame(frame,functools.reduce(operator.iconcat,temp_contours,[]))
 
 							self.animal_centers[name][0][frame_count_analyze+1-batch_size+batch_count]=(x_lf+20,y_bt+10)
 
 							pattern_image=generate_patternimage_all(frame,y_bt,y_tp,x_lf,x_rt,temp_contours,temp_inners,std=self.std)
 							self.pattern_images[name][0][frame_count_analyze+1-batch_size+batch_count]=np.array(cv2.resize(pattern_image,(self.dim_conv,self.dim_conv),interpolation=cv2.INTER_AREA))
 							if self.animation_analyzer is True:
-								for i,frame in enumerate(temp_frames):	
-									blob=extract_blob_all(frame,y_bt,y_tp,x_lf,x_rt,contours=temp_contours[i],channel=self.channel,background_free=background_free)
-									blob=cv2.resize(blob,(self.dim_tconv,self.dim_tconv),interpolation=cv2.INTER_AREA)
+								for i,f in enumerate(self.temp_frames):
+									if self.animal_contours[name][0][max(0,frame_count_analyze+1-batch_size+batch_count-self.length+1):frame_count_analyze+1-batch_size+batch_count+1][i] is None:
+										blob=np.zeros((self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8')
+									else:
+										blob=extract_blob_all(f,y_bt,y_tp,x_lf,x_rt,contours=temp_contours[i],channel=self.channel,background_free=background_free)
+										blob=cv2.resize(blob,(self.dim_tconv,self.dim_tconv),interpolation=cv2.INTER_AREA)
 									animation.append(img_to_array(blob))
 									self.animations[name][0][frame_count_analyze+1-batch_size+batch_count]=np.array(animation)
 					
@@ -659,10 +870,11 @@ class AnalyzeAnimalDetector():
 
 		capture.release()
 
-		self.animations[name][0]=self.animations[name][0][:len(self.all_time)]
-		self.pattern_images[name][0]=self.pattern_images[name][0][:len(self.all_time)]
-		self.animal_contours[name][0]=self.animal_contours[name][0][:len(self.all_time)]
-		self.animal_centers[name][0]=self.animal_centers[name][0][:len(self.all_time)]
+		length=len(self.all_time)
+		self.animations[name][0]=self.animations[name][0][:length]
+		self.pattern_images[name][0]=self.pattern_images[name][0][:length]
+		self.animal_contours[name][0]=self.animal_contours[name][0][:length]
+		self.animal_centers[name][0]=self.animal_centers[name][0][:length]
 		
 		print('Information acquisition completed!')
 
@@ -685,29 +897,26 @@ class AnalyzeAnimalDetector():
 					if x is not None:
 						check+=1
 				lengths.append(check)
-				if check<length/2:
+				if self.register_counts[animal_name][i] is None:
 					to_delete.append(i)
 
-			sorted_index=np.argsort(lengths)
-			valid_index=sorted_index[-int(self.animal_number[animal_name]):]
-
-			check=0
-			for i in valid_index:
-				if i in to_delete:
-					check+=1
-			if check>=len(valid_index):
-				to_delete.remove(valid_index[-1])
+			if len(IDs)==len(to_delete):
+				to_delete.remove(np.argsort(lengths)[-1])
 			
 			for i in IDs:
-				if i not in valid_index or i in to_delete:
+				if i in to_delete:
 					del self.to_deregister[animal_name][i]
 					del self.register_counts[animal_name][i]
 					del self.animal_centers[animal_name][i]
 					del self.animal_existingcenters[animal_name][i]
 					del self.animal_contours[animal_name][i]
+					if self.behavior_kind==2:
+						del self.animal_other_contours[animal_name][i]
 					del self.animal_heights[animal_name][i]
 					if self.include_bodyparts is True:
 						del self.animal_inners[animal_name][i]
+						if self.behavior_kind==2:
+							del self.animal_other_inners[animal_name][i]
 					if self.animation_analyzer is True:
 						del self.animal_blobs[animal_name][i]
 						del self.animations[animal_name][i]
@@ -717,8 +926,6 @@ class AnalyzeAnimalDetector():
 				self.animal_centers[animal_name][i]=self.animal_centers[animal_name][i][:length]
 				self.animal_contours[animal_name][i]=self.animal_contours[animal_name][i][:length]
 				self.animal_heights[animal_name][i]=self.animal_heights[animal_name][i][:length]
-				if self.include_bodyparts is True:
-					self.animal_inners[animal_name][i]=self.animal_inners[animal_name][i][:length]
 				if self.animation_analyzer is True:
 					self.animations[animal_name][i]=self.animations[animal_name][i][:length]
 				self.pattern_images[animal_name][i]=self.pattern_images[animal_name][i][:length]
@@ -727,8 +934,6 @@ class AnalyzeAnimalDetector():
 
 
 	def categorize_behaviors(self,path_to_categorizer,uncertain=0):
-
-		# uncertain: the differece between the highest probability and second highest probability to output 'NA' when categorize the behaviors
 
 		print('Categorizing behaviors...')
 		print(datetime.datetime.now())
@@ -800,7 +1005,7 @@ class AnalyzeAnimalDetector():
 							else:
 								if sorted(prediction)[-1]-sorted(prediction)[-2]>uncertain:
 									self.event_probability[animal_name][n][i]=[behavior_names[np.argmax(prediction)],max(prediction)]
-					
+
 					idx+=1
 					i+=1
 
@@ -810,10 +1015,46 @@ class AnalyzeAnimalDetector():
 		print('Behavioral categorization completed!')
 
 
-	def annotate_video(self,behavior_to_annotate=None,show_legend=True):
+	def correct_identity(self,specific_behaviors):
 
-		# behavior_to_annotate: the behaviors selected for annotation; None: just track animals
-		# show_legend: whether to display the legends (all names in colors for behavioral categories) in the annotated video
+		print('Initiating behavior-guided identity correction...')
+		print(datetime.datetime.now())
+
+		for animal_name in self.animal_kinds:
+
+			for i in self.animal_centers[animal_name]:
+				for idx,x in enumerate(self.animal_contours[animal_name][i]):
+					if idx>=self.length-1 and x is not None:
+						behavior_name=self.event_probability[animal_name][i][idx][0]
+						if behavior_name in specific_behaviors[animal_name]:
+							if specific_behaviors[animal_name][behavior_name] is None:
+								specific_behaviors[animal_name][behavior_name]=i
+							else:
+								ID=specific_behaviors[animal_name][behavior_name]
+								if ID!=i:
+									temp=self.register_counts[animal_name][ID]
+									self.register_counts[animal_name][ID]=self.register_counts[animal_name][i]
+									self.register_counts[animal_name][i]=temp
+									temp=self.animal_centers[animal_name][ID][idx]
+									self.animal_centers[animal_name][ID][idx]=self.animal_centers[animal_name][i][idx]
+									self.animal_centers[animal_name][i][idx]=temp
+									temp=self.animal_contours[animal_name][ID][idx]
+									self.animal_contours[animal_name][ID][idx]=self.animal_contours[animal_name][i][idx]
+									self.animal_contours[animal_name][i][idx]=temp
+									temp=self.animal_heights[animal_name][ID][idx]
+									self.animal_heights[animal_name][ID][idx]=self.animal_heights[animal_name][i][idx]
+									self.animal_heights[animal_name][i][idx]=temp
+									temp=self.event_probability[animal_name][ID][idx]
+									self.event_probability[animal_name][ID][idx]=self.event_probability[animal_name][i][idx]
+									self.event_probability[animal_name][i][idx]=temp
+									temp=self.all_behavior_parameters[animal_name][behavior_name]['probability'][ID][idx]
+									self.all_behavior_parameters[animal_name][behavior_name]['probability'][ID][idx]=self.all_behavior_parameters[animal_name][behavior_name]['probability'][i][idx]
+									self.all_behavior_parameters[animal_name][behavior_name]['probability'][i][idx]=temp
+
+		print('Identity correction completed!')
+
+
+	def annotate_video(self,behavior_to_annotate=None,show_legend=True):
 
 		print('Annotating video...')
 		print(datetime.datetime.now())
@@ -936,8 +1177,6 @@ class AnalyzeAnimalDetector():
 
 
 	def analyze_parameters(self,normalize_distance=True,parameter_to_analyze=[]):
-
-		# normalize_distance: whether to normalize the distance (in pixel) to the animal contour area
 
 		all_parameters=[]
 		if '3 length parameters' in parameter_to_analyze:
@@ -1317,12 +1556,9 @@ class AnalyzeAnimalDetector():
 		print('Generating behavior examples...')
 		print(datetime.datetime.now())
 
-		count_to_deregister=self.fps*2
 		capture=cv2.VideoCapture(self.path_to_video)
 		frame_count=frame_count_analyze=0
-		temp_frames=deque(maxlen=self.length)
 		animation=deque(maxlen=self.length)
-		self.animation_analyzer=False
 
 		start_t=round((self.t-self.length/self.fps),2)
 		if start_t<0:
@@ -1345,42 +1581,38 @@ class AnalyzeAnimalDetector():
 				if self.framewidth is not None:
 					frame=cv2.resize(frame,(self.framewidth,self.frameheight),interpolation=cv2.INTER_AREA)
 
-				temp_frames.append(frame)
-
-				self.detect_track_individuals([frame],1,frame_count_analyze,count_to_deregister,background_free=background_free,temp_frames=temp_frames,animation=animation)
+				self.detect_track_individuals([frame],1,frame_count_analyze,background_free=background_free,animation=animation)
 
 				for animal_name in self.animal_kinds:
-
-					for n in self.animal_centers[animal_name]:
-						os.makedirs(os.path.join(self.results_path,str(animal_name),str(n)),exist_ok=True)
 						
-					if frame_count_analyze%skip_redundant==0 and frame_count_analyze not in self.skipped_frames and len(temp_frames)==self.length:
+					if frame_count_analyze>=self.length and frame_count_analyze%skip_redundant==0:
 
 						for n in self.animal_centers[animal_name]:
 
 							h=w=0
-							for i,frame in enumerate(temp_frames):
+
+							for i,f in enumerate(self.temp_frames):
 								contour=self.animal_contours[animal_name][n][frame_count_analyze-self.length+1:frame_count_analyze+1][i]
 								if contour is None:
-									blob=np.zeros_like(frame)
+									blob=np.zeros_like(self.background)
 								else:
-									blob=extract_blob_background(frame,self.animal_contours[animal_name][n][frame_count_analyze-self.length+1:frame_count_analyze+1],contour=contour,channel=3,background_free=background_free)
+									blob=extract_blob_background(f,self.animal_contours[animal_name][n][frame_count_analyze-self.length+1:frame_count_analyze+1],contour=contour,channel=3,background_free=background_free)
 									h,w=blob.shape[:2]
 								animation.append(blob)
 
 							if h>0:
 
 								if self.include_bodyparts is True:
-									animation_name=os.path.splitext(self.basename)[0]+'_'+str(n)+'_'+str(frame_count)+'_std'+str(self.std)+'.avi'
-									pattern_image_name=os.path.splitext(self.basename)[0]+'_'+str(n)+'_'+str(frame_count)+'_std'+str(self.std)+'.jpg'
-									pattern_image=generate_patternimage(self.background,self.animal_contours[animal_name][n][frame_count_analyze-self.length+1:frame_count_analyze+1],inners=self.animal_inners[animal_name][n][frame_count_analyze-self.length+1:frame_count_analyze+1],std=self.std)
+									animation_name=os.path.splitext(self.basename)[0]+'_'+animal_name+'_'+str(n)+'_'+str(frame_count_analyze)+'_len'+str(self.length)+'_std'+str(self.std)+'.avi'
+									pattern_image_name=os.path.splitext(self.basename)[0]+'_'+animal_name+'_'+str(n)+'_'+str(frame_count_analyze)+'_len'+str(self.length)+'_std'+str(self.std)+'.jpg'
+									pattern_image=generate_patternimage(self.background,self.animal_contours[animal_name][n][frame_count_analyze-self.length+1:frame_count_analyze+1],inners=self.animal_inners[animal_name][n],std=self.std)
 								else:
-									animation_name=os.path.splitext(self.basename)[0]+'_'+str(n)+'_'+str(frame_count)+'.avi'
-									pattern_image_name=os.path.splitext(self.basename)[0]+'_'+str(n)+'_'+str(frame_count)+'.jpg'
+									animation_name=os.path.splitext(self.basename)[0]+'_'+animal_name+'_'+str(n)+'_'+str(frame_count_analyze)+'_len'+str(self.length)+'.avi'
+									pattern_image_name=os.path.splitext(self.basename)[0]+'_'+animal_name+'_'+str(n)+'_'+str(frame_count_analyze)+'_len'+str(self.length)+'.jpg'
 									pattern_image=generate_patternimage(self.background,self.animal_contours[animal_name][n][frame_count_analyze-self.length+1:frame_count_analyze+1],inners=None,std=0)
 
-								path_animation=os.path.join(self.results_path,str(animal_name),str(n),animation_name)
-								path_pattern_image=os.path.join(self.results_path,str(animal_name),str(n),pattern_image_name)
+								path_animation=os.path.join(self.results_path,animation_name)
+								path_pattern_image=os.path.join(self.results_path,pattern_image_name)
 
 								writer=cv2.VideoWriter(path_animation,cv2.VideoWriter_fourcc(*'MJPG'),self.fps/5,(w,h),True)
 								for blob in animation:
@@ -1404,7 +1636,6 @@ class AnalyzeAnimalDetector():
 		print(datetime.datetime.now())
 
 		frame_count=frame_count_analyze=0
-		temp_frames=deque(maxlen=self.length)
 		temp_contours=deque(maxlen=self.length)
 		temp_inners=deque(maxlen=self.length)
 		animation=deque(maxlen=self.length)
@@ -1418,7 +1649,147 @@ class AnalyzeAnimalDetector():
 		else:
 			end_t=start_t+self.duration
 
-		os.makedirs(os.path.join(self.results_path,'all'),exist_ok=True)
+		while True:
+
+			retval,frame=capture.read()
+			time=round((frame_count+1)/self.fps,2)
+
+			if time>=end_t or frame is None:
+				break
+
+			if time>=start_t:
+
+				if self.framewidth is not None:
+					frame=cv2.resize(frame,(self.framewidth,self.frameheight),interpolation=cv2.INTER_AREA)
+
+				self.temp_frames.append(frame)
+				tensor_frame=torch.as_tensor(frame.astype("float32").transpose(2,0,1))
+				with torch.no_grad():
+					output=self.detector([{"image":tensor_frame}])
+				instances=output[0]['instances'].to('cpu')
+				masks=instances.pred_masks.numpy().astype(np.uint8)
+				classes=instances.pred_classes.numpy()
+				scores=instances.scores.numpy()
+
+				if len(masks)==0:
+
+					temp_contours.append(None)
+					temp_inners.append(None)
+					animation.append(np.zeros_like(self.background))
+
+				else:
+
+					mask_area=np.sum(np.array(masks),axis=(1,2))
+					exclusion_mask=np.zeros(len(masks),dtype=bool)
+					exclusion_mask[np.where((np.sum(np.logical_and(masks[:,None],masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
+					masks=[m for m,exclude in zip(masks,exclusion_mask) if not exclude]
+					classes=[c for c,exclude in zip(classes,exclusion_mask) if not exclude]
+					classes=[self.animal_mapping[str(x)] for x in classes]
+					scores=[s for s,exclude in zip(scores,exclusion_mask) if not exclude]
+
+					contours=[]
+					inners=[]
+
+					for animal_name in self.animal_kinds:
+						goodcontours=[]
+						goodmasks=[]
+						animal_number=int(self.animal_number[animal_name])
+						animal_masks=[masks[a] for a,name in enumerate(classes) if name==animal_name]
+						animal_scores=[scores[a] for a,name in enumerate(classes) if name==animal_name]
+						if len(animal_masks)>0:
+							if len(animal_scores)>animal_number*2:
+								sorted_scores_indices=np.argsort(animal_scores)[-int(animal_number*2):]
+								animal_masks=[animal_masks[x] for x in sorted_scores_indices]
+							for mask in animal_masks:
+								mask=cv2.morphologyEx(mask,cv2.MORPH_CLOSE,np.ones((self.kernel,self.kernel),np.uint8))
+								cnts,_=cv2.findContours((mask*255).astype(np.uint8),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
+								goodcontours.append(sorted(cnts,key=cv2.contourArea,reverse=True)[0])
+								goodmasks.append(mask)
+							areas=[cv2.contourArea(ct) for ct in goodcontours]
+							sorted_area_indices=np.argsort(np.array(areas))[-animal_number:]
+							for x in sorted_area_indices:
+								cnt=goodcontours[x]
+								mask=goodmasks[x]
+								contours.append(cnt)
+								if self.include_bodyparts is True:
+									masked_frame=cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)*mask
+									inners.append(get_inner(masked_frame,cnt))
+
+					temp_contours.append(contours)
+					temp_inners.append(inners)
+
+					if frame_count_analyze>=self.length and frame_count_analyze%skip_redundant==0:
+
+						(y_bt,y_tp,x_lf,x_rt)=crop_frame(self.background,functools.reduce(operator.iconcat,temp_contours,[]))
+
+						h=w=0
+
+						for i,f in enumerate(self.temp_frames):
+							if temp_contours[i] is None:
+								blob=np.zeros_like(self.background)
+							else:
+								blob=extract_blob_all(f,y_bt,y_tp,x_lf,x_rt,contours=temp_contours[i],channel=3,background_free=background_free)
+								h,w=blob.shape[:2]
+							animation.append(blob)
+
+						if h>0:
+
+							if self.include_bodyparts is True:
+								animation_name=os.path.splitext(self.basename)[0]+'_'+str(frame_count_analyze)+'_len'+str(self.length)+'_std'+str(self.std)+'_itbs.avi'
+								pattern_image_name=os.path.splitext(self.basename)[0]+'_'+str(frame_count_analyze)+'_len'+str(self.length)+'_std'+str(self.std)+'_itbs.jpg'
+								pattern_image=generate_patternimage_all(frame,y_bt,y_tp,x_lf,x_rt,temp_contours,temp_inners,std=self.std)
+							else:
+								animation_name=os.path.splitext(self.basename)[0]+'_'+str(frame_count_analyze)+'_len'+str(self.length)+'_itbs.avi'
+								pattern_image_name=os.path.splitext(self.basename)[0]+'_'+str(frame_count_analyze)+'_len'+str(self.length)+'_itbs.jpg'
+								pattern_image=generate_patternimage_all(frame,y_bt,y_tp,x_lf,x_rt,temp_contours,temp_inners,std=0)
+
+							path_animation=os.path.join(self.results_path,animation_name)
+							path_pattern_image=os.path.join(self.results_path,pattern_image_name)
+
+							writer=cv2.VideoWriter(path_animation,cv2.VideoWriter_fourcc(*'MJPG'),self.fps/5,(w,h),True)
+							for blob in animation:
+								writer.write(cv2.resize(blob,(w,h),interpolation=cv2.INTER_AREA))
+							writer.release()
+
+							cv2.imwrite(path_pattern_image,pattern_image)
+
+				frame_count_analyze+=1
+
+			frame_count+=1
+
+		capture.release()
+
+		print('Behavior example generation completed!')
+
+
+	def generate_data_interact_advance(self,background_free=True,skip_redundant=1):
+
+		print('Generating behavior examples...')
+		print(datetime.datetime.now())
+
+		capture=cv2.VideoCapture(self.path_to_video)
+		frame_count=frame_count_analyze=0
+		animation=deque(maxlen=self.length)
+		for animal_name in self.animal_kinds:
+			self.animal_blobs[animal_name]={}
+			for i in range(self.animal_number[animal_name]):
+				self.to_deregister[animal_name][i]=0
+				self.animal_contours[animal_name][i]=deque(maxlen=self.length)
+				self.animal_other_contours[animal_name][i]=deque(maxlen=self.length)
+				self.animal_centers[animal_name][i]=deque(maxlen=self.length)
+				self.animal_existingcenters[animal_name][i]=(-10000,-10000)
+				self.animal_blobs[animal_name][i]=deque(maxlen=self.length)
+				if self.include_bodyparts is True:
+					self.animal_inners[animal_name][i]=deque(maxlen=self.length)
+					self.animal_other_inners[animal_name][i]=deque(maxlen=self.length)
+
+		start_t=round((self.t-self.length/self.fps),2)
+		if start_t<0:
+			start_t=0.00
+		if self.duration==0:
+			end_t=float('inf')
+		else:
+			end_t=start_t+self.duration
 
 		while True:
 
@@ -1441,89 +1812,229 @@ class AnalyzeAnimalDetector():
 				classes=instances.pred_classes.numpy()
 				scores=instances.scores.numpy()
 
-				if len(masks)>0:
-
-					temp_frames.append(frame)
-
-					mask_area=[np.sum(mask) for mask in masks]
-					exclusion_mask=np.zeros(len(masks),dtype=bool)
-					for n,mask_n in enumerate(masks):
-						size_n=mask_area[n]
-						for m,mask_m in enumerate(masks):
-							if n==m:
-								continue
-							intersection=np.logical_and(mask_n,mask_m)
-							intersection_area=np.sum(intersection)
-							iou=intersection_area/size_n
-							if iou>0.8 and mask_area[m]>size_n:
-								exclusion_mask[n]=True
-								break
-					masks=[masks[x] for x,exclude in enumerate(exclusion_mask) if not exclude]
-					classes=[classes[x] for x,exclude in enumerate(exclusion_mask) if not exclude]
-					classes=[self.animal_mapping[str(x)] for x in classes]
-					scores=[scores[x] for x,exclude in enumerate(exclusion_mask) if not exclude]
-
-					contours=[]
-					inners=[]
+				if len(masks)==0:
 
 					for animal_name in self.animal_kinds:
-						goodcontours=[]
+						self.animal_present[animal_name]=0
+						for i in self.animal_centers[animal_name]:
+							self.animal_contours[animal_name][i].append(None)
+							self.animal_other_contours[animal_name][i].append([None])
+							self.animal_centers[animal_name][i].append(None)
+							self.animal_blobs[animal_name][i].append(None)
+							if self.include_bodyparts is True:
+								self.animal_inners[animal_name][i].append(None)
+								self.animal_other_inners[animal_name][i].append([None])
+
+				else:
+
+					mask_area=np.sum(np.array(masks),axis=(1,2))
+					exclusion_mask=np.zeros(len(masks),dtype=bool)
+					exclusion_mask[np.where((np.sum(np.logical_and(masks[:,None],masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
+					masks=[m for m,exclude in zip(masks,exclusion_mask) if not exclude]
+					classes=[c for c,exclude in zip(classes,exclusion_mask) if not exclude]
+					classes=[self.animal_mapping[str(x)] for x in classes]
+					scores=[s for s,exclude in zip(scores,exclusion_mask) if not exclude]
+
+					all_centers=[]
+					all_masks=[]
+					all_contours=[]
+					all_inners=[]
+					all_blobs=[]
+					average_area=[]
+
+					for animal_name in self.animal_kinds:
+
 						goodmasks=[]
+						goodcontours=[]
 						animal_number=int(self.animal_number[animal_name])
 						animal_masks=[masks[a] for a,name in enumerate(classes) if name==animal_name]
 						animal_scores=[scores[a] for a,name in enumerate(classes) if name==animal_name]
-						if len(animal_masks)>0:
-							if len(animal_scores)>animal_number*3:
-								sorted_scores_indices=np.argsort(animal_scores)[-int(animal_number*3):]
+						
+						if len(animal_masks)==0:
+							self.animal_present[animal_name]=0
+							for i in self.animal_centers[animal_name]:
+								self.animal_contours[animal_name][i].append(None)
+								self.animal_other_contours[animal_name][i].append([None])
+								self.animal_centers[animal_name][i].append(None)
+								self.animal_blobs[animal_name][i].append(None)
+								if self.include_bodyparts is True:
+									self.animal_inners[animal_name][i].append(None)
+									self.animal_other_inners[animal_name][i].append([None])
+						else:
+							if len(animal_scores)>animal_number*2:
+								sorted_scores_indices=np.argsort(animal_scores)[-int(animal_number*2):]
 								animal_masks=[animal_masks[x] for x in sorted_scores_indices]
-							for j,mask in enumerate(animal_masks):
+							for mask in animal_masks:
 								mask=cv2.morphologyEx(mask,cv2.MORPH_CLOSE,np.ones((self.kernel,self.kernel),np.uint8))
+								goodmasks.append(mask)
 								cnts,_=cv2.findContours((mask*255).astype(np.uint8),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
 								goodcontours.append(sorted(cnts,key=cv2.contourArea,reverse=True)[0])
-								goodmasks.append(mask)
 							areas=[cv2.contourArea(ct) for ct in goodcontours]
 							sorted_area_indices=np.argsort(np.array(areas))[-animal_number:]
+							self.animal_present[animal_name]=len(sorted_area_indices)
+							areas_sorted=sorted(areas)[-animal_number:]
+							area=sum(areas_sorted)/len(areas_sorted)
+							if self.animal_area[animal_name] is None:
+								self.animal_area[animal_name]=area
+							else:
+								self.animal_area[animal_name]=(self.animal_area[animal_name]+area)/2
+							average_area.append(self.animal_area[animal_name])
 							for x in sorted_area_indices:
-								cnt=goodcontours[x]
 								mask=goodmasks[x]
-								contours.append(cnt)
+								all_masks.append(mask)
+								cnt=goodcontours[x]
+								all_contours.append(cnt)
+								all_centers.append((int(cv2.moments(cnt)['m10']/cv2.moments(cnt)['m00']),int(cv2.moments(cnt)['m01']/cv2.moments(cnt)['m00'])))
 								if self.include_bodyparts is True:
 									masked_frame=cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)*mask
-									inners.append(get_inner(masked_frame,cnt))
+									all_inners.append(get_inner(masked_frame,cnt))
 
-					temp_contours.append(contours)
-					temp_inners.append(inners)
+					if len(all_centers)>1:
 
-					if len(temp_frames)==self.length and frame_count_analyze%skip_redundant==0:
-
-						all_contours=[]
-						for n in range(len(temp_contours)):
-							all_contours+=temp_contours[n]
-						(y_bt,y_tp,x_lf,x_rt)=crop_frame(frame,all_contours)
-
+						centers_array=np.array(all_centers)
+						distances_squared=np.sum((centers_array[:,None]-centers_array)**2,axis=2)
+						determine=np.logical_and(distances_squared>0,distances_squared<(math.sqrt(sum(average_area)/len(average_area))*self.social_distance)**2)
+						other_contours=[[all_contours[x] for x,determ in enumerate(determine[y]) if determ] for y,c in enumerate(all_centers)]
 						if self.include_bodyparts is True:
-							animation_name=os.path.splitext(self.basename)[0]+'_'+str(frame_count)+'_std'+str(self.std)+'_itbs.avi'
-							pattern_image_name=os.path.splitext(self.basename)[0]+'_'+str(frame_count)+'_std'+str(self.std)+'_itbs.jpg'
-							pattern_image=generate_patternimage_all(frame,y_bt,y_tp,x_lf,x_rt,temp_contours,temp_inners,std=self.std)
-						else:
-							animation_name=os.path.splitext(self.basename)[0]+'_'+str(frame_count)+'_itbs.avi'
-							pattern_image_name=os.path.splitext(self.basename)[0]+'_'+str(frame_count)+'_itbs.jpg'
-							pattern_image=generate_patternimage_all(frame,y_bt,y_tp,x_lf,x_rt,temp_contours,temp_inners,std=0)
+							other_inners=[[all_inners[x] for x,determ in enumerate(determine[y]) if determ] for y,c in enumerate(all_centers)]
+						other_masks=[np.bitwise_or.reduce(np.stack(np.array(all_masks)[determine[x]])) if len(c)>0 else None for x,c in enumerate(other_contours)]
+						for i,other_mask in enumerate(other_masks):
+							if background_free is True:
+								blob=frame*cv2.cvtColor(all_masks[i],cv2.COLOR_GRAY2BGR)
+								if other_mask is not None:
+									other_blob=cv2.cvtColor(cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)*other_mask,cv2.COLOR_GRAY2BGR)
+									blob=cv2.add(blob,other_blob)
+									blob=np.uint8(exposure.rescale_intensity(blob,out_range=(0,255)))
+							else:
+								blob=np.uint8(exposure.rescale_intensity(frame,out_range=(0,255)))
+							cv2.drawContours(blob,[all_contours[i]],0,(255,0,255),2)
+							all_blobs.append(blob)
 
-						path_animation=os.path.join(self.results_path,'all',animation_name)
-						path_pattern_image=os.path.join(self.results_path,'all',pattern_image_name)
+					else:
 
-						for i,frame in enumerate(temp_frames):
-							blob=extract_blob_all(frame,y_bt,y_tp,x_lf,x_rt,contours=temp_contours[i],channel=3,background_free=background_free)
-							h,w=blob.shape[:2]
-							animation.append(blob)
-						
-						writer=cv2.VideoWriter(path_animation,cv2.VideoWriter_fourcc(*'MJPG'),self.fps/5,(w,h),True)
-						for blob in animation:
-							writer.write(cv2.resize(blob,(w,h),interpolation=cv2.INTER_AREA))
-						writer.release()
+						if len(all_centers)>0:
+							other_contours=[[None]]
+							if self.include_bodyparts is True:
+								other_inners=[[None]]
+							if background_free is True:
+								blob=frame*cv2.cvtColor(all_masks[0],cv2.COLOR_GRAY2BGR)
+								blob=np.uint8(exposure.rescale_intensity(blob,out_range=(0,255)))
+							else:
+								blob=np.uint8(exposure.rescale_intensity(frame,out_range=(0,255)))
+							cv2.drawContours(blob,[all_contours[0]],0,(255,0,255),2)
+							all_blobs.append(blob)
 
-						cv2.imwrite(path_pattern_image,pattern_image)
+					n=0
+
+					for animal_name in self.animal_number:
+
+						if self.animal_present[animal_name]>0:
+
+							animal_length=n+self.animal_present[animal_name]
+
+							animal_centers=all_centers[n:animal_length]
+							animal_contours=all_contours[n:animal_length]
+							animal_other_contours=other_contours[n:animal_length]
+							animal_blobs=all_blobs[n:animal_length]
+							if self.include_bodyparts is True:
+								animal_inners=all_inners[n:animal_length]
+								animal_other_inners=other_inners[n:animal_length]
+
+							unused_existing_indices=list(self.animal_existingcenters[animal_name])
+							existing_centers=list(self.animal_existingcenters[animal_name].values())
+							unused_new_indices=list(range(len(animal_centers)))
+							dt_flattened=distance.cdist(existing_centers,animal_centers).flatten()
+							dt_sort_index=dt_flattened.argsort()
+							length=len(animal_centers)
+
+							for idx in dt_sort_index:
+								index_in_existing=int(idx/length)
+								index_in_new=int(idx%length)
+								if index_in_existing in unused_existing_indices:
+									if index_in_new in unused_new_indices:
+										unused_existing_indices.remove(index_in_existing)
+										unused_new_indices.remove(index_in_new)
+										self.to_deregister[animal_name][index_in_existing]=0
+										contour=animal_contours[index_in_new]
+										self.animal_contours[animal_name][index_in_existing].append(contour)
+										center=animal_centers[index_in_new]
+										self.animal_centers[animal_name][index_in_existing].append(center)
+										self.animal_existingcenters[animal_name][index_in_existing]=center
+										self.animal_other_contours[animal_name][index_in_existing].append(animal_other_contours[index_in_new])
+
+										self.animal_blobs[animal_name][index_in_existing].append(animal_blobs[index_in_new])
+										if self.include_bodyparts is True:
+											self.animal_inners[animal_name][index_in_existing].append(animal_inners[index_in_new])
+											self.animal_other_inners[animal_name][index_in_existing].append(animal_other_inners[index_in_new])
+
+							if len(unused_existing_indices)>0:
+								for i in unused_existing_indices:
+									if self.to_deregister[animal_name][i]<=self.count_to_deregister:
+										self.to_deregister[animal_name][i]+=1
+									else:
+										self.animal_existingcenters[animal_name][i]=(-10000,-10000)
+									self.animal_contours[animal_name][i].append(None)
+									self.animal_other_contours[animal_name][i].append([None])
+									self.animal_centers[animal_name][i].append(None)
+									self.animal_blobs[animal_name][i].append(None)
+									if self.include_bodyparts is True:
+										self.animal_inners[animal_name][i].append(None)
+										self.animal_other_inners[animal_name][i].append([None])
+
+							n+=self.animal_present[animal_name]
+
+
+				if frame_count_analyze>=self.length and frame_count_analyze%skip_redundant==0:
+
+					for animal_name in self.animal_kinds:
+
+						if self.animal_present[animal_name]>0:
+
+							for n in self.animal_centers[animal_name]:
+
+								total_contours=functools.reduce(operator.iconcat,self.animal_other_contours[animal_name][n],[])
+								total_contours+=self.animal_contours[animal_name][n]
+								total_contours=[i for i in total_contours if i is not None]
+
+								if len(total_contours)>0:
+
+									(y_bt,y_tp,x_lf,x_rt)=crop_frame(self.background,total_contours)
+
+									h=w=0
+
+									for i,b in enumerate(self.animal_blobs[animal_name][n]):
+										if b is None:
+											blob=np.zeros_like(self.background)
+										else:
+											blob=b[y_bt:y_tp,x_lf:x_rt]
+											h,w=blob.shape[:2]
+										animation.append(blob)
+
+									if h>0:
+
+										if self.social_distance==float('inf'):
+											scdt=str(0)
+										else:
+											scdt=str(self.social_distance)
+
+										if self.include_bodyparts is True:
+											animation_name=os.path.splitext(self.basename)[0]+'_'+animal_name+'_'+str(n)+'_'+str(frame_count_analyze)+'_len'+str(self.length)+'_scdt'+scdt+'_std'+str(self.std)+'_itadv.avi'
+											pattern_image_name=os.path.splitext(self.basename)[0]+'_'+animal_name+'_'+str(n)+'_'+str(frame_count_analyze)+'_len'+str(self.length)+'_scdt'+scdt+'_std'+str(self.std)+'_itadv.jpg'
+											pattern_image=pattern_image=generate_patternimage_interact(self.background,self.animal_contours[animal_name][n],self.animal_other_contours[animal_name][n],inners=self.animal_inners[animal_name][n],other_inners=self.animal_other_inners[animal_name][n],std=self.std)
+										else:
+											animation_name=os.path.splitext(self.basename)[0]+'_'+animal_name+'_'+str(n)+'_'+str(frame_count_analyze)+'_len'+str(self.length)+'_scdt'+scdt+'_itadv.avi'
+											pattern_image_name=os.path.splitext(self.basename)[0]+'_'+animal_name+'_'+str(n)+'_'+str(frame_count_analyze)+'_len'+str(self.length)+'_scdt'+scdt+'_itadv.jpg'
+											pattern_image=pattern_image=generate_patternimage_interact(self.background,self.animal_contours[animal_name][n],self.animal_other_contours[animal_name][n],inners=None,other_inners=None,std=0)
+
+										path_animation=os.path.join(self.results_path,animation_name)
+										path_pattern_image=os.path.join(self.results_path,pattern_image_name)
+
+										writer=cv2.VideoWriter(path_animation,cv2.VideoWriter_fourcc(*'MJPG'),self.fps/5,(w,h),True)
+										for blob in animation:
+											writer.write(cv2.resize(blob,(w,h),interpolation=cv2.INTER_AREA))
+										writer.release()
+
+										cv2.imwrite(path_pattern_image,pattern_image)
 
 				frame_count_analyze+=1
 
@@ -1532,5 +2043,7 @@ class AnalyzeAnimalDetector():
 		capture.release()
 
 		print('Behavior example generation completed!')
+
+
 
 

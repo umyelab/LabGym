@@ -56,12 +56,9 @@ class Categorizers():
 
 	def rename_label(self,file_path,new_path,resize=None,background_free=True):
 
-		# new_path: the path for storing renamed files
-		# resize: resize the animations and pattern_images
-		# background_free: not include background in animations
-
 		folder_list=[i for i in os.listdir(file_path) if os.path.isdir(os.path.join(file_path,i))]
 		print('Behavior names are: '+str(folder_list))
+		previous_lenth=None
 
 		for folder in folder_list:
 
@@ -71,6 +68,7 @@ class Categorizers():
 
 				animation=os.path.join(file_path,folder,i)
 				pattern_image=os.path.join(file_path,folder,os.path.splitext(i)[0]+'.jpg')
+				current_length=0
 
 				new_animation=os.path.join(new_path,str(name_list.index(i))+'_'+folder+'.avi')
 				new_pattern_image=os.path.join(new_path,str(name_list.index(i))+'_'+folder+'.jpg')
@@ -79,6 +77,7 @@ class Categorizers():
 				fps=round(capture.get(cv2.CAP_PROP_FPS))
 				while True:
 					retval,frame=capture.read()
+					current_length+=1
 					if frame is None:
 						break
 					frame_contrast=np.uint8(exposure.rescale_intensity(frame,out_range=(0,255)))
@@ -104,17 +103,17 @@ class Categorizers():
 				if resize is not None:
 					pattern_image=cv2.resize(pattern_image,(resize,resize),interpolation=cv2.INTER_AREA)
 				cv2.imwrite(new_pattern_image,pattern_image)
+				if previous_lenth is None:
+					previous_lenth=current_length
+				else:
+					if previous_lenth!=current_length:
+						previous_lenth=current_length
+						print('Inconsistent duration of animation detected at: '+str(i)+'. Check the duration of animations!')
 
 		print('All prepared training examples stored in: '+str(new_path))
 
 
 	def build_data(self,path_to_animations,dim_tconv=32,dim_conv=64,channel=1,time_step=15,aug_methods=[],background_free=True,behavior_kind=0):
-
-		# dim: the input dimension for Animation Analyzer or Pattern Recognizer
-		# channel: the channel for Animation Analyzer
-		# time_step: the number of input frames
-		# aug_methods: the methods for data augmentation
-		# behavior_kind: 0: non-interactive; 1: interactive basic; 2: interactive advance
 
 		animations=deque()
 		pattern_images=deque()
@@ -241,14 +240,19 @@ class Categorizers():
 				n=0
 
 				while True:
-
 					retval,frame=capture.read()
-
 					if original_frame is None:
 						original_frame=frame
 					if frame is None:
 						break
 					frames.append(frame)
+
+				frames_length=len(frames)
+				if frames_length<time_step:
+					for diff in range(time_step-frames_length):
+						frames.append(np.zeros_like(original_frame))
+					print('Inconsistent duration of animation detected at: '+str(i)+'.')
+					print('Zero padding has been used, which may decrease the training accuracy.')
 
 				for frame in frames:
 
@@ -260,15 +264,19 @@ class Categorizers():
 
 						frame_contrast=np.uint8(exposure.rescale_intensity(frame,out_range=(0,255)))
 
-						if background_free is True and behavior_kind!=1:
+						if background_free is True:
 							frame_gray=cv2.cvtColor(frame_contrast,cv2.COLOR_BGR2GRAY)
 							thred=cv2.threshold(frame_gray,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]
 							cnts,_=cv2.findContours(thred,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
 							if len(cnts)==0:
 								blob=np.zeros_like(frame)
 							else:
-								contour=sorted(cnts,key=cv2.contourArea,reverse=True)[0]
-								blob=extract_blob(frame,contour,channel=3)
+								if behavior_kind==0:
+									contour=sorted(cnts,key=cv2.contourArea,reverse=True)[0]
+									blob=extract_blob(frame,contour,channel=3)
+								else:
+									(y_bt,y_tp,x_lf,x_rt)=crop_frame(frame,cnts)
+									blob=frame_contrast[y_bt:y_tp,x_lf:x_rt]
 						else:
 							blob=frame_contrast
 
@@ -357,10 +365,6 @@ class Categorizers():
 
 
 	def simple_vgg(self,inputs,filters,classes=3,level=2,with_classifier=False):
-
-		# filters: the number of filters (node of neurons), related to input dimension
-		# level: the complex level of the network
-		# with_classifier: whether to return the model with classifier
 
 		if level<2:
 			layers=[2]
@@ -458,9 +462,6 @@ class Categorizers():
 
 
 	def res_block(self,x,filters,strides=2,block=False,basic=True):
-
-		# block: if True, shortcut=x
-		# basic: if True, 2 operations, else 3
 
 		shortcut=x
 
@@ -703,12 +704,7 @@ class Categorizers():
 		return model
 
 
-	def train_pattern_recognizer(self,data_path,model_path,out_path=None,dim=64,channel=3,time_step=15,level=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,behavior_kind=0):
-
-		# out_path: for export the training report
-		# augvalid: also perform augmentation in validation data
-		# include_bodyparts: whether to include body parts in pattern images
-		# std: std for excluding static pixels in inners
+	def train_pattern_recognizer(self,data_path,model_path,out_path=None,dim=64,channel=3,time_step=15,level=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,behavior_kind=0,social_distance=0):
 
 		filters=8
 
@@ -746,7 +742,7 @@ class Categorizers():
 		else:
 			background_code=1
 
-		parameters={'classnames':list(self.classnames),'dim_conv':int(dim),'channel':int(channel),'time_step':int(time_step),'network':0,'level_conv':int(level),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code),'behavior_kind':int(behavior_kind)}
+		parameters={'classnames':list(self.classnames),'dim_conv':int(dim),'channel':int(channel),'time_step':int(time_step),'network':0,'level_conv':int(level),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code),'behavior_kind':int(behavior_kind),'social_distance':int(social_distance)}
 		pd_parameters=pd.DataFrame.from_dict(parameters)
 		pd_parameters.to_csv(os.path.join(model_path,'model_parameters.txt'),index=False)
 
@@ -827,7 +823,7 @@ class Categorizers():
 		plt.close('all')
 
 
-	def train_animation_analyzer(self,data_path,model_path,out_path=None,dim=64,channel=1,time_step=15,level=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,behavior_kind=0):
+	def train_animation_analyzer(self,data_path,model_path,out_path=None,dim=64,channel=1,time_step=15,level=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,behavior_kind=0,social_distance=0):
 
 		filters=8
 
@@ -865,7 +861,7 @@ class Categorizers():
 		else:
 			background_code=1
 
-		parameters={'classnames':list(self.classnames),'dim_tconv':int(dim),'channel':int(channel),'time_step':int(time_step),'network':1,'level_tconv':int(level),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code),'behavior_kind':int(behavior_kind)}
+		parameters={'classnames':list(self.classnames),'dim_tconv':int(dim),'channel':int(channel),'time_step':int(time_step),'network':1,'level_tconv':int(level),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code),'behavior_kind':int(behavior_kind),'social_distance':int(social_distance)}
 		pd_parameters=pd.DataFrame.from_dict(parameters)
 		pd_parameters.to_csv(os.path.join(model_path,'model_parameters.txt'),index=False)
 
@@ -947,7 +943,7 @@ class Categorizers():
 		plt.close('all')
 
 
-	def train_combnet(self,data_path,model_path,out_path=None,dim_tconv=32,dim_conv=64,channel=1,time_step=15,level_tconv=1,level_conv=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,behavior_kind=0):
+	def train_combnet(self,data_path,model_path,out_path=None,dim_tconv=32,dim_conv=64,channel=1,time_step=15,level_tconv=1,level_conv=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,behavior_kind=0,social_distance=0):
 
 		print('Training Categorizer with both Animation Analyzer and Pattern Recognizer using the behavior examples in: '+str(data_path))
 
@@ -978,7 +974,7 @@ class Categorizers():
 		else:
 			background_code=1
 
-		parameters={'classnames':list(self.classnames),'dim_tconv':int(dim_tconv),'dim_conv':int(dim_conv),'channel':int(channel),'time_step':int(time_step),'network':2,'level_tconv':int(level_tconv),'level_conv':int(level_conv),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code),'behavior_kind':int(behavior_kind)}
+		parameters={'classnames':list(self.classnames),'dim_tconv':int(dim_tconv),'dim_conv':int(dim_conv),'channel':int(channel),'time_step':int(time_step),'network':2,'level_tconv':int(level_tconv),'level_conv':int(level_conv),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code),'behavior_kind':int(behavior_kind),'social_distance':int(social_distance)}
 		pd_parameters=pd.DataFrame.from_dict(parameters)
 		pd_parameters.to_csv(os.path.join(model_path,'model_parameters.txt'),index=False)
 

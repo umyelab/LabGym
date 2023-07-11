@@ -30,8 +30,8 @@ from .gui_analyzers import WindowLv2_AnalyzeBehaviors,WindowLv2_MineResults
 
 
 
-current_version=1.9
-current_version_check=19.8
+current_version=2.0
+current_version_check=20.0
 
 try:
 
@@ -74,20 +74,20 @@ class InitialWindow(wx.Frame):
 		
 		links=wx.BoxSizer(wx.HORIZONTAL)
 		homepage=wx.lib.agw.hyperlink.HyperLinkCtrl(panel,0,'Home Page',URL='https://github.com/umyelab/LabGym')
-		userguide=wx.lib.agw.hyperlink.HyperLinkCtrl(panel,0,'User Guide',URL='https://github.com/yujiahu415/LabGym/blob/master/LabGym%20user%20guide_v1.9.pdf')
+		userguide=wx.lib.agw.hyperlink.HyperLinkCtrl(panel,0,'Extended Guide',URL='https://github.com/yujiahu415/LabGym/blob/master/LabGym%20user%20guide_v2.0.pdf')
 		links.Add(homepage,0,wx.LEFT|wx.EXPAND,10)
 		links.Add(userguide,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		boxsizer.Add(links,0,wx.ALIGN_CENTER,50)
 		boxsizer.Add(0,50,0)
 
 		module_modules=wx.BoxSizer(wx.HORIZONTAL)
-		button_preprocess=wx.Button(panel,label='\nPreprocessing Module\n',size=(200,40))
+		button_preprocess=wx.Button(panel,label='Preprocessing Module',size=(200,40))
 		button_preprocess.Bind(wx.EVT_BUTTON,self.window_preprocess)
-		wx.Button.SetToolTip(button_preprocess,'Make the videos fit your analysis goal better, such as enhance contrast / crop frames to exclude unnecessary region / trim videos to only keep necessary time windows.')
-		button_train=wx.Button(panel,label='\nTraining Module\n',size=(200,40))
+		wx.Button.SetToolTip(button_preprocess,'Enhance video contrast / crop frames to exclude unnecessary region / trim videos to only keep necessary time windows.')
+		button_train=wx.Button(panel,label='Training Module',size=(200,40))
 		button_train.Bind(wx.EVT_BUTTON,self.window_train)
 		wx.Button.SetToolTip(button_train,'Teach LabGym to recognize the animals / objects of your interest and identify their behaviors that are defined by you.')
-		button_analyze=wx.Button(panel,label='\nAnalysis Module\n',size=(200,40))
+		button_analyze=wx.Button(panel,label='Analysis Module',size=(200,40))
 		button_analyze.Bind(wx.EVT_BUTTON,self.window_analyze)
 		wx.Button.SetToolTip(button_analyze,'Use LabGym to track the animals / objects of your interest, quantify their behaviors, and let LabGym show you the significant findings.')
 		module_modules.Add(button_preprocess,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -122,7 +122,7 @@ class WindowLv1_ProcessModule(wx.Frame):
 
 	def __init__(self,title):
 
-		super(WindowLv1_ProcessModule,self).__init__(parent=None,title=title,size=(500,170))
+		super(WindowLv1_ProcessModule,self).__init__(parent=None,title=title,size=(500,150))
 		self.dispaly_window()
 
 
@@ -130,13 +130,13 @@ class WindowLv1_ProcessModule(wx.Frame):
 
 		panel=wx.Panel(self)
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
-		boxsizer.Add(0,50,0)
-
-		button_processvideos=wx.Button(panel,label='\nPreprocess Videos\n',size=(300,40))
-		button_processvideos.Bind(wx.EVT_BUTTON,self.process_videos)
-		wx.Button.SetToolTip(button_processvideos,'Make the videos fit your analysis goal better, such as enhance contrast / crop frames to exclude unnecessary region / trim videos to only keep necessary time windows.')
-		boxsizer.Add(button_processvideos,0,wx.ALIGN_CENTER,10)
 		boxsizer.Add(0,40,0)
+
+		button_processvideos=wx.Button(panel,label='Preprocess Videos',size=(300,40))
+		button_processvideos.Bind(wx.EVT_BUTTON,self.process_videos)
+		wx.Button.SetToolTip(button_processvideos,'Enhance video contrast / crop frames to exclude unnecessary region / trim videos to only keep necessary time windows.')
+		boxsizer.Add(button_processvideos,0,wx.ALIGN_CENTER,10)
+		boxsizer.Add(0,30,0)
 
 		panel.SetSizer(boxsizer)
 
@@ -154,7 +154,7 @@ class WindowLv1_TrainingModule(wx.Frame):
 
 	def __init__(self,title):
 
-		super(WindowLv1_TrainingModule,self).__init__(parent=None,title=title,size=(500,450))
+		super(WindowLv1_TrainingModule,self).__init__(parent=None,title=title,size=(500,480))
 		self.dispaly_window()
 
 
@@ -162,11 +162,11 @@ class WindowLv1_TrainingModule(wx.Frame):
 
 		panel=wx.Panel(self)
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
-		boxsizer.Add(0,50,0)
+		boxsizer.Add(0,60,0)
 
-		button_generateimages=wx.Button(panel,label='\nGenerate Image Examples\n',size=(300,40))
+		button_generateimages=wx.Button(panel,label='Generate Image Examples',size=(300,40))
 		button_generateimages.Bind(wx.EVT_BUTTON,self.generate_images)
-		wx.Button.SetToolTip(button_generateimages,'Use this to extract frames from videos for annotating animals / objects in them so that they can be used to train a Detector to detect animals / objects of your interest.')
+		wx.Button.SetToolTip(button_generateimages,'Extract frames from videos for annotating animals / objects in them so that they can be used to train a Detector to detect animals / objects of your interest.')
 		boxsizer.Add(button_generateimages,0,wx.ALIGN_CENTER,10)
 		boxsizer.Add(0,5,0)
 
@@ -174,29 +174,29 @@ class WindowLv1_TrainingModule(wx.Frame):
 		boxsizer.Add(link_annotate,0,wx.ALIGN_CENTER,10)
 		boxsizer.Add(0,5,0)
 
-		button_traindetectors=wx.Button(panel,label='\nTrain Detectors\n',size=(300,40))
+		button_traindetectors=wx.Button(panel,label='Train Detectors',size=(300,40))
 		button_traindetectors.Bind(wx.EVT_BUTTON,self.train_detectors)
 		wx.Button.SetToolTip(button_traindetectors,'There are two detection methods in LabGym, the Detector-based method is more versatile (useful in any recording conditions and complex social behaviors) but slower than the other background subtraction-based method (requires static background and stable illumination in videos).')
 		boxsizer.Add(button_traindetectors,0,wx.ALIGN_CENTER,10)
-		boxsizer.Add(0,40,0)
+		boxsizer.Add(0,50,0)
 
-		button_generatebehaviorexamples=wx.Button(panel,label='\nGenerate Behavior Examples\n',size=(300,40))
+		button_generatebehaviorexamples=wx.Button(panel,label='Generate Behavior Examples',size=(300,40))
 		button_generatebehaviorexamples.Bind(wx.EVT_BUTTON,self.generate_behaviorexamples)
-		wx.Button.SetToolTip(button_generatebehaviorexamples,'Use this to generate behavior examples for sorting them so that they can be used to teach a Categorizer to recognize behaviors defined by you.')
+		wx.Button.SetToolTip(button_generatebehaviorexamples,'Generate behavior examples for sorting them so that they can be used to teach a Categorizer to recognize behaviors defined by you.')
 		boxsizer.Add(button_generatebehaviorexamples,0,wx.ALIGN_CENTER,10)
-		boxsizer.Add(0,10,0)
+		boxsizer.Add(0,5,0)
 
-		button_sortbehaviorexamples=wx.Button(panel,label='\nSort Behavior Examples\n',size=(300,40))
+		button_sortbehaviorexamples=wx.Button(panel,label='Sort Behavior Examples',size=(300,40))
 		button_sortbehaviorexamples.Bind(wx.EVT_BUTTON,self.sort_behaviorexamples)
-		wx.Button.SetToolTip(button_sortbehaviorexamples,'Use this to set shortcut keys for behavior categories to help sorting the behavior examples in an easier way.')
+		wx.Button.SetToolTip(button_sortbehaviorexamples,'Set shortcut keys for behavior categories to help sorting the behavior examples in an easier way.')
 		boxsizer.Add(button_sortbehaviorexamples,0,wx.ALIGN_CENTER,10)
-		boxsizer.Add(0,10,0)
+		boxsizer.Add(0,5,0)
 
-		button_traincategorizers=wx.Button(panel,label='\nTrain Categorizers\n',size=(300,40))
+		button_traincategorizers=wx.Button(panel,label='Train Categorizers',size=(300,40))
 		button_traincategorizers.Bind(wx.EVT_BUTTON,self.train_categorizers)
-		wx.Button.SetToolTip(button_traincategorizers,'Use this to customize a Categorizer and use the sorted behavior examples to train it so that it can recognize the behaviors of your interest during analysis.')
+		wx.Button.SetToolTip(button_traincategorizers,'Customize a Categorizer and use the sorted behavior examples to train it so that it can recognize the behaviors of your interest during analysis.')
 		boxsizer.Add(button_traincategorizers,0,wx.ALIGN_CENTER,10)
-		boxsizer.Add(0,40,0)
+		boxsizer.Add(0,50,0)
 
 		panel.SetSizer(boxsizer)
 
@@ -234,7 +234,7 @@ class WindowLv1_AnalysisModule(wx.Frame):
 
 	def __init__(self,title):
 
-		super(WindowLv1_AnalysisModule,self).__init__(parent=None,title=title,size=(500,250))
+		super(WindowLv1_AnalysisModule,self).__init__(parent=None,title=title,size=(500,220))
 		self.dispaly_window()
 
 
@@ -242,19 +242,19 @@ class WindowLv1_AnalysisModule(wx.Frame):
 
 		panel=wx.Panel(self)
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
-		boxsizer.Add(0,50,0)
+		boxsizer.Add(0,40,0)
 
-		button_analyzebehaviors=wx.Button(panel,label='\nAnalyze Behaviors\n',size=(300,40))
+		button_analyzebehaviors=wx.Button(panel,label='Analyze Behaviors',size=(300,40))
 		button_analyzebehaviors.Bind(wx.EVT_BUTTON,self.analyze_behaviors)
-		wx.Button.SetToolTip(button_analyzebehaviors,'Use this to automatically track animals / objects of your interest, identify and quantify their behaviors in videos.')
+		wx.Button.SetToolTip(button_analyzebehaviors,'Automatically track animals / objects of your interest, identify and quantify their behaviors in videos.')
 		boxsizer.Add(button_analyzebehaviors,0,wx.ALIGN_CENTER,10)
-		boxsizer.Add(0,40,0)
+		boxsizer.Add(0,20,0)
 
-		button_mineresults=wx.Button(panel,label='\nMine Results\n',size=(300,40))
+		button_mineresults=wx.Button(panel,label='Mine Results',size=(300,40))
 		button_mineresults.Bind(wx.EVT_BUTTON,self.mine_results)
-		wx.Button.SetToolTip(button_mineresults,'Use this to automatically mine the analysis results to display the data details that show statistically significant differences among groups of your selection.')
+		wx.Button.SetToolTip(button_mineresults,'Automatically mine the analysis results to display the data details that show statistically significant differences among groups of your selection.')
 		boxsizer.Add(button_mineresults,0,wx.ALIGN_CENTER,10)
-		boxsizer.Add(0,40,0)
+		boxsizer.Add(0,30,0)
 
 		panel.SetSizer(boxsizer)
 

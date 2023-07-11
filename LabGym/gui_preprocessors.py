@@ -44,6 +44,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
 		self.right=0
 		self.top=0
 		self.bottom=0
+		self.decode_t=False
 
 		self.dispaly_window()
 
@@ -77,7 +78,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
 		module_duration=wx.BoxSizer(wx.HORIZONTAL)
 		button_duration=wx.Button(panel,label='Specify whether to enter time windows\nto form a trimmed video',size=(300,40))
 		button_duration.Bind(wx.EVT_BUTTON,self.input_duration)
-		wx.Button.SetToolTip(button_duration,'If "Yes", need to specify time windows (can have multiple), follow the format: starttime1-endtime1,starttime2-endtime2,...These time windows will form the new, trimmed video.')
+		wx.Button.SetToolTip(button_duration,'If "Yes", specify time windows by format: starttime1-endtime1,starttime2-endtime2,...to form the new, trimmed videos. See Extended Guide how to set different time windows for different videos.')
 		self.text_duration=wx.StaticText(panel,label='Default: not to trim a video.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_duration.Add(button_duration,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_duration.Add(self.text_duration,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -148,22 +149,31 @@ class WindowLv2_ProcessVideos(wx.Frame):
 		dialog.Destroy()
 
 		if self.trim_video is True:
-			dialog=wx.TextEntryDialog(self,'Format: starttime1-endtime1,starttime2-endtime2,...','Enter the time windows (in seconds)')
+			methods=['Decode from filenames: "_stt_" and "_edt_"','Enter time points']
+			dialog=wx.SingleChoiceDialog(self,message='Specify the time windows for trimming videos',caption='Time windows for trimming videos',choices=methods)
 			if dialog.ShowModal()==wx.ID_OK:
-				time_windows=dialog.GetValue()
-				self.time_windows=[]
-				try:
-					for i in time_windows.split(','):
-						times=i.split('-')
-						self.time_windows.append([times[0],times[1]])
-					self.text_duration.SetLabel('The time windows to form the new, trimmed video: '+str(self.time_windows)+'.')
-				except:
-					self.trim_video=False
-					self.text_duration.SetLabel('Not to trim the videos.')
-					wx.MessageBox('Please enter the time windows in correct format!','Error',wx.OK|wx.ICON_ERROR)
-			else:
-				self.trim_video=False
-				self.text_duration.SetLabel('Not to trim the videos.')
+				method=dialog.GetStringSelection()
+				if method=='Decode from filenames: "_stt_" and "_edt_"':
+					self.decode_t=True
+				else:
+					self.decode_t=False
+					dialog1=wx.TextEntryDialog(self,'Format: starttime1-endtime1,starttime2-endtime2,...','Enter the time windows (in seconds)')
+					if dialog1.ShowModal()==wx.ID_OK:
+						time_windows=dialog1.GetValue()
+						self.time_windows=[]
+						try:
+							for i in time_windows.split(','):
+								times=i.split('-')
+								self.time_windows.append([times[0],times[1]])
+							self.text_duration.SetLabel('The time windows to form the new, trimmed video: '+str(self.time_windows)+'.')
+						except:
+							self.trim_video=False
+							self.text_duration.SetLabel('Not to trim the videos.')
+							wx.MessageBox('Please enter the time windows in correct format!','Error',wx.OK|wx.ICON_ERROR)
+					else:
+						self.trim_video=False
+						self.text_duration.SetLabel('Not to trim the videos.')
+					dialog1.Destroy()
 			dialog.Destroy()
 
 
@@ -282,10 +292,21 @@ class WindowLv2_ProcessVideos(wx.Frame):
 
 		else:
 
+			print('Start to preprocess video(s)...')
+
 			for i in self.path_to_videos:
 
-				print('Start to preprocess video(s)...')
+				if self.decode_t is True:
+					self.time_windows=[]
+					filename=os.path.splitext(os.path.basename(i))[0].split('_')
+					starttime_windows=[x[2:] for x in filename if len(x)>2 and x[:2]=='st']
+					endtime_windows=[x[2:] for x in filename if len(x)>2 and x[:2]=='ed']
+					for x,startt in enumerate(starttime_windows):
+						self.time_windows.append([startt,endtime_windows[x]])
+
 				preprocess_video(i,self.result_path,trim_video=self.trim_video,time_windows=self.time_windows,enhance_contrast=self.enhance_contrast,contrast=self.contrast,crop_frame=self.crop_frame,left=self.left,right=self.right,top=self.top,bottom=self.bottom)
+
+			print('Preprocessing completed!')
 
 
 
@@ -416,8 +437,14 @@ class WindowLv2_SortBehaviors(wx.Frame):
 			actions=[]
 			index=0
 			stop=False
+			moved=False
 
 			while stop is False:
+
+				if moved is True:
+					moved=False
+					shutil.move(os.path.join(self.input_path,example_name+'.avi'),os.path.join(self.keys_behaviorpaths[shortcutkey],example_name+'.avi'))
+					shutil.move(os.path.join(self.input_path,example_name+'.jpg'),os.path.join(self.keys_behaviorpaths[shortcutkey],example_name+'.jpg'))
 
 				animations=[i for i in os.listdir(self.input_path) if i.endswith('.avi')]
 				animations.sort()
@@ -452,15 +479,12 @@ class WindowLv2_SortBehaviors(wx.Frame):
 						cv2.imshow('Sorting Behavior Examples',combined)
 						cv2.moveWindow('Sorting Behavior Examples',50,0)
 
-						key=cv2.waitKey(int(1000/fps))
-						moved=False
+						key=cv2.waitKey(int(1000/fps)) & 0xFF
 
 						for shortcutkey in self.keys_behaviorpaths:
 							if key==ord(shortcutkey):
 								example_name=animations[index].split('.')[0]
 								actions.append([shortcutkey,example_name])
-								shutil.move(os.path.join(self.input_path,example_name+'.avi'),os.path.join(self.keys_behaviorpaths[shortcutkey],example_name+'.avi'))
-								shutil.move(os.path.join(self.input_path,example_name+'.jpg'),os.path.join(self.keys_behaviorpaths[shortcutkey],example_name+'.jpg'))
 								moved=True
 								break
 						if moved is True:

@@ -38,8 +38,7 @@ class WindowLv2_GenerateExamples(wx.Frame):
 	def __init__(self,title):
 
 		super(WindowLv2_GenerateExamples,self).__init__(parent=None,title=title,size=(1000,510))
-		# 0: non-interactive behavior; 1: interactive of all; 2: interactive between 2; 3: interactive between 2 different kind; 4: 3 body
-		self.behavior_kind=0
+		self.behavior_kind=0 # 0: non-interactive behavior; 1: interact basic; 2: interact advance
 		self.use_detector=False
 		self.detector_path=None
 		self.path_to_detector=None
@@ -58,14 +57,14 @@ class WindowLv2_GenerateExamples(wx.Frame):
 		self.decode_extraction=False
 		self.ex_start=0
 		self.ex_end=None
-		# 0: animals birghter than the background; 1: animals darker than the background; 2: hard to tell
-		self.animal_vs_bg=0
+		self.animal_vs_bg=0 # 0: animals birghter than the background; 1: animals darker than the background; 2: hard to tell
 		self.stable_illumination=True
 		self.length=15
 		self.skip_redundant=1
 		self.include_bodyparts=False
 		self.std=0
 		self.background_free=True
+		self.social_distance=0
 
 		self.dispaly_window()
 
@@ -78,7 +77,7 @@ class WindowLv2_GenerateExamples(wx.Frame):
 		module_specifykind=wx.BoxSizer(wx.HORIZONTAL)
 		button_specifykind=wx.Button(panel,label='Specify the kind of behavior\nexamples to generate',size=(300,40))
 		button_specifykind.Bind(wx.EVT_BUTTON,self.specify_kind)
-		wx.Button.SetToolTip(button_specifykind,'"Non-interactive" is for behaviors of each individual; "Interactive basic" is for identifying interactive behaviors of all animals but not distinguishing each individual; "Interactive advance" is slower in analysis than "basic" but distinguishes individuals during close body contact.')
+		wx.Button.SetToolTip(button_specifykind,'"Non-interactive" is for behaviors of each individual; "Interactive basic" is for interactive behaviors of all animals but not distinguishing each individual; "Interactive advance" is slower in analysis than "basic" but distinguishes individuals during close body contact. See Extended Guide for details.')
 		self.text_specifykind=wx.StaticText(panel,label='Default: Non-interactive: behaviors of each individuals (each example contains one animal / object)',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_specifykind.Add(button_specifykind,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_specifykind.Add(self.text_specifykind,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -109,7 +108,7 @@ class WindowLv2_GenerateExamples(wx.Frame):
 		module_detection=wx.BoxSizer(wx.HORIZONTAL)
 		button_detection=wx.Button(panel,label='Specify the method to\ndetect animals or objects',size=(300,40))
 		button_detection.Bind(wx.EVT_BUTTON,self.select_method)
-		wx.Button.SetToolTip(button_detection,'Background subtraction-based method is accurate and fast but needs static background and stable illumination in videos; Detectors-based method is accurate and versatile in any recording settings but is slow.')
+		wx.Button.SetToolTip(button_detection,'Background subtraction-based method is accurate and fast but needs static background and stable illumination in videos; Detectors-based method is accurate and versatile in any recording settings but is slow. See Extended Guide for details.')
 		self.text_detection=wx.StaticText(panel,label='Default: Background subtraction-based method.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_detection.Add(button_detection,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_detection.Add(self.text_detection,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -119,7 +118,7 @@ class WindowLv2_GenerateExamples(wx.Frame):
 		module_startgenerate=wx.BoxSizer(wx.HORIZONTAL)
 		button_startgenerate=wx.Button(panel,label='Specify when generating behavior examples\nshould begin (unit: second)',size=(300,40))
 		button_startgenerate.Bind(wx.EVT_BUTTON,self.specify_timing)
-		wx.Button.SetToolTip(button_startgenerate,'Enter a beginning time point for all videos or use "Decode from filenames" to let LabGym decode the different beginning time for different videos.')
+		wx.Button.SetToolTip(button_startgenerate,'Enter a beginning time point for all videos or use "Decode from filenames" to let LabGym decode the different beginning time for different videos. See Extended Guide for details.')
 		self.text_startgenerate=wx.StaticText(panel,label='Default: at the beginning of the video(s).',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_startgenerate.Add(button_startgenerate,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_startgenerate.Add(self.text_startgenerate,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -139,7 +138,7 @@ class WindowLv2_GenerateExamples(wx.Frame):
 		module_animalnumber=wx.BoxSizer(wx.HORIZONTAL)
 		button_animalnumber=wx.Button(panel,label='Specify the number of animals\nin a video',size=(300,40))
 		button_animalnumber.Bind(wx.EVT_BUTTON,self.specify_animalnumber)
-		wx.Button.SetToolTip(button_animalnumber,'Enter a number for all videos or use "Decode from filenames" to let LabGym decode the different animal number for different videos.')
+		wx.Button.SetToolTip(button_animalnumber,'Enter a number for all videos or use "Decode from filenames" to let LabGym decode the different animal number for different videos. See Extended Guide for details.')
 		self.text_animalnumber=wx.StaticText(panel,label='Default: 1.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_animalnumber.Add(button_animalnumber,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_animalnumber.Add(self.text_animalnumber,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -149,7 +148,7 @@ class WindowLv2_GenerateExamples(wx.Frame):
 		module_length=wx.BoxSizer(wx.HORIZONTAL)
 		button_length=wx.Button(panel,label='Specify the number of frames for\nan animation / pattern image',size=(300,40))
 		button_length.Bind(wx.EVT_BUTTON,self.input_length)
-		wx.Button.SetToolTip(button_length,'The duration (the number of frames, an integer) of each behavior example, which should approximate the length of a behavior episode. This duration needs to be the same across all the behavior examples for training one Categorizer. If the duration of different behavior is different, use the longest one.')
+		wx.Button.SetToolTip(button_length,'The duration (the number of frames, an integer) of each behavior example, which should approximate the length of a behavior episode. This duration needs to be the same across all the behavior examples for training one Categorizer. See Extended Guide for details.')
 		self.text_length=wx.StaticText(panel,label='Default: 15 frames.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_length.Add(button_length,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_length.Add(self.text_length,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -159,7 +158,7 @@ class WindowLv2_GenerateExamples(wx.Frame):
 		module_skipredundant=wx.BoxSizer(wx.HORIZONTAL)
 		button_skipredundant=wx.Button(panel,label='Specify how many frames to skip when\ngenerating two consecutive behavior examples',size=(300,40))
 		button_skipredundant.Bind(wx.EVT_BUTTON,self.specify_redundant)
-		wx.Button.SetToolTip(button_skipredundant,'If two consecutively generated examples are too close in time, they will have many overlapping frames. Such examples are too similar, which makes sorting laborious and training inefficient. Specifying an interval (skipped frames) between two examples can address this.')
+		wx.Button.SetToolTip(button_skipredundant,'If two consecutively generated examples have many overlapping frames, they look similar, which makes training inefficient and sorting laborious. Specifying an interval (skipped frames) between two examples can address this. See Extended Guide for details.')
 		self.text_skipredundant=wx.StaticText(panel,label='Default: no frame to skip (generate a behavior example every frame).',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_skipredundant.Add(button_skipredundant,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_skipredundant.Add(self.text_skipredundant,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -168,7 +167,7 @@ class WindowLv2_GenerateExamples(wx.Frame):
 
 		button_generate=wx.Button(panel,label='Start to generate behavior examples',size=(300,40))
 		button_generate.Bind(wx.EVT_BUTTON,self.generate_data)
-		wx.Button.SetToolTip(button_generate,'Need to specify whether to include background and body parts in the generated behavior examples.')
+		wx.Button.SetToolTip(button_generate,'Need to specify whether to include background and body parts in the generated behavior examples. See Extended Guide for details.')
 		boxsizer.Add(0,5,0)
 		boxsizer.Add(button_generate,0,wx.RIGHT|wx.ALIGN_RIGHT,90)
 		boxsizer.Add(0,10,0)
@@ -181,7 +180,7 @@ class WindowLv2_GenerateExamples(wx.Frame):
 
 	def specify_kind(self,event):
 
-		behavior_kinds=['Non-interactive: behaviors of each individual (each example contains one animal / object)','Interactive basic: behaviors of all (each example contains all animals / objects)','Interactive advance: behaviors of each individual and social groups (each example contains either one or multiple animals / objects) (not implemented yet)']
+		behavior_kinds=['Non-interactive: behaviors of each individual (each example contains one animal / object)','Interactive basic: behaviors of all (each example contains all animals / objects)','Interactive advance: behaviors of each individual and social groups (each example contains either one or multiple animals / objects)']
 		dialog=wx.SingleChoiceDialog(self,message='Specify the kind of behavior examples to generate',caption='Example kind',choices=behavior_kinds)
 		if dialog.ShowModal()==wx.ID_OK:
 			behavior_kind=dialog.GetStringSelection()
@@ -190,13 +189,23 @@ class WindowLv2_GenerateExamples(wx.Frame):
 			elif behavior_kind=='Interactive basic: behaviors of all (each example contains all animals / objects)':
 				self.behavior_kind=1
 			else:
-				wx.MessageBox('Coming soon!','Error',wx.OK|wx.ICON_ERROR)
+				self.behavior_kind=2
+				dialog1=wx.NumberEntryDialog(self,'Interactions happen within the social distance.','(See Extended Guide for details)\nHow many folds of square root of the animals area\nis the social distance (0=infinity far):','Social distance (Enter an integer)',0,0,100000000000000)
+				if dialog1.ShowModal()==wx.ID_OK:
+					self.social_distance=int(dialog1.GetValue())
+					if self.social_distance==0:
+						self.social_distance=float('inf')
+				else:
+					self.social_distance=float('inf')
+				dialog1.Destroy()
 		else:
 			self.behavior_kind=0
 			behavior_kind='Non-interactive: behaviors of each individual (each example contains one animal / object)'
-		self.text_specifykind.SetLabel('Behavior kind: '+behavior_kind+'.')
-		if self.behavior_kind>1:
+		if self.behavior_kind==2:
+			self.text_specifykind.SetLabel('Behavior kind: '+behavior_kind+' with social distance: '+str(self.social_distance)+' folds of the animal diameter.')
 			self.text_detection.SetLabel('Only Detector-based detection method is available for the selected behavior kind.')
+		else:
+			self.text_specifykind.SetLabel('Behavior kind: '+behavior_kind+'.')
 		dialog.Destroy()
 
 
@@ -531,8 +540,8 @@ class WindowLv2_GenerateExamples(wx.Frame):
 						if self.use_detector is True:
 							self.animal_number={}
 							number=[x[1:] for x in filename if len(x)>1 and x[0]=='n']
-							for i,animal_name in enumerate(self.animal_kinds):
-								self.animal_number[animal_name]=int(number[i])
+							for a,animal_name in enumerate(self.animal_kinds):
+								self.animal_number[animal_name]=int(number[a])
 						else:
 							for x in filename:
 								if len(x)>1:
@@ -568,13 +577,13 @@ class WindowLv2_GenerateExamples(wx.Frame):
 							AA.generate_data_interact_basic(background_free=self.background_free,skip_redundant=self.skip_redundant)
 					else:
 						AAD=AnalyzeAnimalDetector()
-						AAD.prepare_analysis(self.path_to_detector,i,self.result_path,self.animal_number,self.animal_kinds,self.behavior_kind,framewidth=self.framewidth,channel=3,include_bodyparts=self.include_bodyparts,std=self.std,categorize_behavior=False,animation_analyzer=False,t=self.t,duration=self.duration,length=self.length)
+						AAD.prepare_analysis(self.path_to_detector,i,self.result_path,self.animal_number,self.animal_kinds,self.behavior_kind,framewidth=self.framewidth,channel=3,include_bodyparts=self.include_bodyparts,std=self.std,categorize_behavior=False,animation_analyzer=False,t=self.t,duration=self.duration,length=self.length,social_distance=self.social_distance)
 						if self.behavior_kind==0:
 							AAD.generate_data(background_free=self.background_free,skip_redundant=self.skip_redundant)
 						elif self.behavior_kind==1:
 							AAD.generate_data_interact_basic(background_free=self.background_free,skip_redundant=self.skip_redundant)
 						else:
-							pass
+							AAD.generate_data_interact_advance(background_free=self.background_free,skip_redundant=self.skip_redundant)
 
 
 
@@ -583,10 +592,8 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 	def __init__(self,title):
 
 		super(WindowLv2_TrainCategorizers,self).__init__(parent=None,title=title,size=(1000,530))
-		# the file path storing orginal examples
-		self.file_path=None
-		# the new path for renamed, labeled examples
-		self.new_path=None
+		self.file_path=None # the file path storing orginal examples
+		self.new_path=None # the new path for renamed, labeled examples
 		self.behavior_kind=0
 		self.animation_analyzer=True
 		self.level_tconv=2
@@ -596,19 +603,16 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 		self.channel=1
 		self.length=15
 		self.aug_methods=[]
-		# also perform augmentation for validation data
-		self.augvalid=True
-		# the path to all prepared training examples
-		self.data_path=None
+		self.augvalid=True # also perform augmentation for validation data
+		self.data_path=None # the path to all prepared training examples
 		self.model_path=os.path.join(the_absolute_current_path,'models')
 		self.path_to_categorizer=os.path.join(the_absolute_current_path,'models','New_model')
-		# for storing training reports
-		self.out_path=None
+		self.out_path=None # for storing training reports
 		self.include_bodyparts=False
 		self.std=0
-		# resize the frames and pattern images before data augmentation
-		self.resize=None
+		self.resize=None # resize the frames and pattern images before data augmentation
 		self.background_free=True
+		self.social_distance=0
 
 		self.dispaly_window()
 
@@ -648,7 +652,7 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 		module_categorizertype=wx.BoxSizer(wx.HORIZONTAL)
 		button_categorizertype=wx.Button(panel,label='Specify the type / complexity of\nthe Categorizer to train',size=(300,40))
 		button_categorizertype.Bind(wx.EVT_BUTTON,self.specify_categorizer)
-		wx.Button.SetToolTip(button_categorizertype,'Categorizer with both Animation Analyzer and Pattern Recognizer is slower but a little more accurate than that with Pattern Recognizer only. Higher complexity level means deeper and more complex network architecture.')
+		wx.Button.SetToolTip(button_categorizertype,'Categorizer with both Animation Analyzer and Pattern Recognizer is slower but a little more accurate than that with Pattern Recognizer only. Higher complexity level means deeper and more complex network architecture. See Extended Guide for details.')
 		self.text_categorizertype=wx.StaticText(panel,label='Default: Categorizer (Animation Analyzer LV2 + Pattern Recognizer LV2). Behavior kind: Non-interact (identify behavior for each individual).',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_categorizertype.Add(button_categorizertype,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_categorizertype.Add(self.text_categorizertype,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -659,7 +663,7 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 		module_categorizershape=wx.BoxSizer(wx.HORIZONTAL)
 		button_categorizershape=wx.Button(panel,label='Specify the input shape for\nAnimation Analyzer / Pattern Recognizer',size=(300,40))
 		button_categorizershape.Bind(wx.EVT_BUTTON,self.set_categorizer)
-		wx.Button.SetToolTip(button_categorizershape,'The input frame / image size should be an even integer and larger than 8. The larger size, the wider of network architecture. Use large size only when there are detailed features in frames / images that are important for identifying behaviors.')
+		wx.Button.SetToolTip(button_categorizershape,'The input frame / image size should be an even integer and larger than 8. The larger size, the wider of network architecture. Use large size only when there are detailed features in frames / images that are important for identifying behaviors. See Extended Guide for details.')
 		self.text_categorizershape=wx.StaticText(panel,label='Default: (width,height,channel) is (32,32,1) / (32,32,3).',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_categorizershape.Add(button_categorizershape,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_categorizershape.Add(self.text_categorizershape,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -669,7 +673,7 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 		module_length=wx.BoxSizer(wx.HORIZONTAL)
 		button_length=wx.Button(panel,label='Specify the number of frames for\nan animation / pattern image',size=(300,40))
 		button_length.Bind(wx.EVT_BUTTON,self.input_timesteps)
-		wx.Button.SetToolTip(button_length,'The duration (how many frames) of a behavior example. This should be the same number as that when generating the behavior examples that will be used in training.')
+		wx.Button.SetToolTip(button_length,'The duration (how many frames) of a behavior example. This info can be found in the filenames of the generated behavior examples, "_lenXX_" where "XX" is the number you need to enter here.')
 		self.text_length=wx.StaticText(panel,label='Default: 15.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_length.Add(button_length,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_length.Add(self.text_length,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -679,7 +683,7 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 		module_trainingfolder=wx.BoxSizer(wx.HORIZONTAL)
 		button_trainingfolder=wx.Button(panel,label='Select the folder that stores\nall the prepared training examples',size=(300,40))
 		button_trainingfolder.Bind(wx.EVT_BUTTON,self.select_datapath)
-		wx.Button.SetToolTip(button_trainingfolder,'This is the folder storing all the prepared behavior examples. Need to specify whether background or body parts are included in the examples. If body parts are included, the STD value can be found in the filenames of generated behavior examples.')
+		wx.Button.SetToolTip(button_trainingfolder,'The folder that stores all the prepared behavior examples. If body parts are included, the STD value can be found in the filenames of the generated behavior examples with "_stdXX_" where "XX" is the number you need to enter here.')
 		self.text_trainingfolder=wx.StaticText(panel,label='None',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_trainingfolder.Add(button_trainingfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_trainingfolder.Add(self.text_trainingfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -689,7 +693,7 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 		module_augmentation=wx.BoxSizer(wx.HORIZONTAL)
 		button_augmentation=wx.Button(panel,label='Specify the methods to\naugment training examples',size=(300,40))
 		button_augmentation.Bind(wx.EVT_BUTTON,self.specify_augmentation)
-		wx.Button.SetToolTip(button_augmentation,'Randomly change or add noise into the training examples to increase their amount and diversity, which can benefit the training. If dont know how to select, just use default. If the amount of examples less than 1,000 before augmentation, choose "Also augment the validation data".')
+		wx.Button.SetToolTip(button_augmentation,'Randomly change or add noise into the training examples to increase their amount and diversity, which can benefit the training. If the amount of examples less than 1,000 before augmentation, choose "Also augment the validation data". See Extended Guide for details.')
 		self.text_augmentation=wx.StaticText(panel,label='None.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_augmentation.Add(button_augmentation,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_augmentation.Add(self.text_augmentation,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -796,9 +800,12 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 					self.level_conv=int(dialog1.GetValue())
 				dialog1.Destroy()
 				level=[self.level_tconv,self.level_conv]
+		else:
+			categorizer_tp=''
+			level=''
 		dialog.Destroy()
 
-		behavior_kinds=['Non-interact (identify behavior for each individual)','Interact basic (identify behavior for the interactive pair / group)','Interact advance (identify behavior for both each individual and each interactive pair / group) (not implemented yet)']
+		behavior_kinds=['Non-interact (identify behavior for each individual)','Interact basic (identify behavior for the interactive pair / group)','Interact advance (identify behavior for both each individual and each interactive pair / group)']
 		dialog=wx.SingleChoiceDialog(self,message='Specify the kind of behavior for the Categorizer to identify',caption='Behavior kind',choices=behavior_kinds)
 		if dialog.ShowModal()==wx.ID_OK:
 			behavior_kind=dialog.GetStringSelection()
@@ -809,7 +816,17 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 				self.behavior_kind=1
 				self.text_categorizertype.SetLabel(categorizer_tp+' (LV '+str(level)+') to identify behaviors of the interactive group.')
 			else:
-				wx.MessageBox('Coming soon!','Error',wx.OK|wx.ICON_ERROR)
+				self.behavior_kind=2
+				self.channel=3
+				dialog1=wx.NumberEntryDialog(self,'Interactions happen within the social distance.',"How many folds of the animals's diameter\nis the social distance (0=inf):",'Social distance (Enter an integer)',0,0,100000000000000)
+				if dialog1.ShowModal()==wx.ID_OK:
+					self.social_distance=int(dialog1.GetValue())
+					if self.social_distance==0:
+						self.social_distance=float('inf')
+				else:
+					self.social_distance=float('inf')
+				self.text_categorizertype.SetLabel(categorizer_tp+' (LV '+str(level)+') to identify behaviors of the interactive individuals and groups. Social distance: '+str(self.social_distance)+' folds of the animal diameter.')
+				dialog1.Destroy()
 		dialog.Destroy()
 
 
@@ -820,12 +837,15 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 			if dialog.ShowModal()==wx.ID_OK:
 				self.dim_tconv=int(dialog.GetValue())
 			dialog.Destroy()
-			dialog=wx.MessageDialog(self,'Grayscale input of Animation Analyzer?\nSelect "Yes" if the color of animals is behavior irrelevant.','Grayscale Animation Analyzer?',wx.YES_NO|wx.ICON_QUESTION)
-			if dialog.ShowModal()==wx.ID_YES:
-				self.channel=1
-			else:
+			if self.behavior_kind==2:
 				self.channel=3
-			dialog.Destroy()
+			else:
+				dialog=wx.MessageDialog(self,'Grayscale input of Animation Analyzer?\nSelect "Yes" if the color of animals is behavior irrelevant.','Grayscale Animation Analyzer?',wx.YES_NO|wx.ICON_QUESTION)
+				if dialog.ShowModal()==wx.ID_YES:
+					self.channel=1
+				else:
+					self.channel=3
+				dialog.Destroy()
 
 		dialog=wx.NumberEntryDialog(self,'Input dimension of Pattern Recognizer\nlarger dimension = wider network','Enter a number:','Input the dimension',32,1,300)
 		if dialog.ShowModal()==wx.ID_OK:
@@ -969,10 +989,12 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 			if do_nothing is False:
 				if self.animation_analyzer is False:
 					CA=Categorizers()
-					CA.train_pattern_recognizer(self.data_path,self.path_to_categorizer,self.out_path,dim=self.dim_conv,channel=3,time_step=self.length,level=self.level_conv,aug_methods=self.aug_methods,augvalid=self.augvalid,include_bodyparts=self.include_bodyparts,std=self.std,background_free=self.background_free,behavior_kind=self.behavior_kind)
+					CA.train_pattern_recognizer(self.data_path,self.path_to_categorizer,self.out_path,dim=self.dim_conv,channel=3,time_step=self.length,level=self.level_conv,aug_methods=self.aug_methods,augvalid=self.augvalid,include_bodyparts=self.include_bodyparts,std=self.std,background_free=self.background_free,behavior_kind=self.behavior_kind,social_distance=self.social_distance)
 				else:
+					if self.behavior_kind==2:
+						self.channel=3
 					CA=Categorizers()
-					CA.train_combnet(self.data_path,self.path_to_categorizer,self.out_path,dim_tconv=self.dim_tconv,dim_conv=self.dim_conv,channel=self.channel,time_step=self.length,level_tconv=self.level_tconv,level_conv=self.level_conv,aug_methods=self.aug_methods,augvalid=self.augvalid,include_bodyparts=self.include_bodyparts,std=self.std,background_free=self.background_free,behavior_kind=self.behavior_kind)	
+					CA.train_combnet(self.data_path,self.path_to_categorizer,self.out_path,dim_tconv=self.dim_tconv,dim_conv=self.dim_conv,channel=self.channel,time_step=self.length,level_tconv=self.level_tconv,level_conv=self.level_conv,aug_methods=self.aug_methods,augvalid=self.augvalid,include_bodyparts=self.include_bodyparts,std=self.std,background_free=self.background_free,behavior_kind=self.behavior_kind,social_distance=self.social_distance)	
 
 
 	def remove_categorizer(self,event):
