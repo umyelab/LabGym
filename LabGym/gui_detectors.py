@@ -215,10 +215,10 @@ class WindowLv2_GenerateImages(wx.Frame):
 			dialog.Destroy()
 
 			if do_nothing is False:
-				print('Generating animal / object image examples...')
+				print('Generating image examples...')
 				for i in self.path_to_videos:
 					extract_frames(i,self.result_path,framewidth=self.framewidth,start_t=self.t,duration=self.duration,skip_redundant=self.skip_redundant)
-				print('Animal / object image generation completed!')                        
+				print('Image example generation completed!')
 
 
 
@@ -266,7 +266,7 @@ class WindowLv2_TrainDetectors(wx.Frame):
 		module_inferencingsize=wx.BoxSizer(wx.HORIZONTAL)
 		button_inferencingsize=wx.Button(panel,label='Specify the inferencing framesize\nfor the Detector to train',size=(300,40))
 		button_inferencingsize.Bind(wx.EVT_BUTTON,self.input_inferencingsize)
-		wx.Button.SetToolTip(button_inferencingsize,'This number should be divisible by 32. It determines the speed-accuracy trade-off of Detector performance. Larger size means higher accuracy but slower speed. Size < 192 or > 1024 is not recommended for a general scenario.')
+		wx.Button.SetToolTip(button_inferencingsize,'This number should be divisible by 32. It determines the speed-accuracy trade-off of Detector performance. Larger size means higher accuracy but slower speed. See Extended Guide for recommendation.')
 		self.text_inferencingsize=wx.StaticText(panel,label='Default: 320.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_inferencingsize.Add(button_inferencingsize,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_inferencingsize.Add(self.text_inferencingsize,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -439,7 +439,7 @@ class WindowLv2_TrainDetectors(wx.Frame):
 				with open(config,'w') as f:
 					f.write(cfg.dump())
 
-				print("Detector training completed!")
+				print('Detector training completed!')
 
 
 	def remove_detector(self,event):

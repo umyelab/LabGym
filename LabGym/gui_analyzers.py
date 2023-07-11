@@ -73,10 +73,8 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 		self.path_to_detector=None
 		self.detector_batch=1
 		self.animal_kinds=[]
-		# if not None, will load background images from path
-		self.background_path=None
-		# the parent path of the Categorizers
-		self.model_path=None
+		self.background_path=None # if not None, will load background images from path
+		self.model_path=None # the parent path of the Categorizers
 		self.path_to_categorizer=None
 		self.path_to_videos=None
 		self.result_path=None
@@ -96,20 +94,20 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 		self.dim_conv=8
 		self.channel=1
 		self.length=15
-		# 0: animals birghter than the background; 1: animals darker than the background; 2: hard to tell
-		self.animal_vs_bg=0
+		self.animal_vs_bg=0 # 0: animals birghter than the background; 1: animals darker than the background; 2: hard to tell
 		self.stable_illumination=True
 		self.animation_analyzer=True
-		# behaviors for annotation and plots
-		self.behavior_to_annotate=['all']
+		self.behavior_to_annotate=['all'] # behaviors for annotation and plots
 		self.parameter_to_analyze=[]
 		self.include_bodyparts=False
 		self.std=0
 		self.uncertain=0
 		self.show_legend=True
 		self.background_free=True
-		# whether to normalize the distance (in pixel) to the animal contour area
-		self.normalize_distance=True
+		self.normalize_distance=True # whether to normalize the distance (in pixel) to the animal contour area
+		self.social_distance=0
+		self.specific_behaviors={}
+		self.correct_ID=False
 
 		self.dispaly_window()
 
@@ -122,7 +120,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 		module_selectcategorizer=wx.BoxSizer(wx.HORIZONTAL)
 		button_selectcategorizer=wx.Button(panel,label='Select a Categorizer for\nbehavior classification',size=(300,40))
 		button_selectcategorizer.Bind(wx.EVT_BUTTON,self.select_categorizer)
-		wx.Button.SetToolTip(button_selectcategorizer,'The fps of the videos to analyze should match that of the selected Categorizer. Uncertain level determines the threshold for the Categorizer to output an ‘NA’ for behavioral classification.')
+		wx.Button.SetToolTip(button_selectcategorizer,'The fps of the videos to analyze should match that of the selected Categorizer. Uncertain level determines the threshold for the Categorizer to output an ‘NA’ for behavioral classification. See Extended Guide for details.')
 		self.text_selectcategorizer=wx.StaticText(panel,label='Default: no behavior classification, just track animals and quantify motion kinematcis.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_selectcategorizer.Add(button_selectcategorizer,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_selectcategorizer.Add(self.text_selectcategorizer,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -133,7 +131,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 		module_inputvideos=wx.BoxSizer(wx.HORIZONTAL)
 		button_inputvideos=wx.Button(panel,label='Select the video(s)\nfor behavior analysis',size=(300,40))
 		button_inputvideos.Bind(wx.EVT_BUTTON,self.select_videos)
-		wx.Button.SetToolTip(button_inputvideos,'Select one or more videos for a behavior analysis batch. One analysis batch will yield one raster plot showing the behavior events of all the animals in all selected videos. Common video formats (mp4, mov, avi, m4v, mkv, mpg, mpeg) are supported except wmv format.')
+		wx.Button.SetToolTip(button_inputvideos,'Select one or more videos for a behavior analysis batch. One analysis batch will yield one raster plot showing the behavior events of all the animals in all selected videos. See Extended Guide for details.')
 		self.text_inputvideos=wx.StaticText(panel,label='None.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_inputvideos.Add(button_inputvideos,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_inputvideos.Add(self.text_inputvideos,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -153,7 +151,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 		module_detection=wx.BoxSizer(wx.HORIZONTAL)
 		button_detection=wx.Button(panel,label='Specify the method to\ndetect animals or objects',size=(300,40))
 		button_detection.Bind(wx.EVT_BUTTON,self.select_method)
-		wx.Button.SetToolTip(button_detection,'Background subtraction-based method is accurate and fast but needs static background and stable illumination in videos; Detectors-based method is accurate and versatile in any recording settings but is slow.')
+		wx.Button.SetToolTip(button_detection,'Background subtraction-based method is accurate and fast but needs static background and stable illumination in videos; Detectors-based method is accurate and versatile in any recording settings but is slow. See Extended Guide for details.')
 		self.text_detection=wx.StaticText(panel,label='Default: Background subtraction-based method.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_detection.Add(button_detection,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_detection.Add(self.text_detection,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -163,7 +161,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 		module_startanalyze=wx.BoxSizer(wx.HORIZONTAL)
 		button_startanalyze=wx.Button(panel,label='Specify when the analysis\nshould begin (unit: second)',size=(300,40))
 		button_startanalyze.Bind(wx.EVT_BUTTON,self.specify_timing)
-		wx.Button.SetToolTip(button_startanalyze,'Enter a beginning time point for all videos in one analysis batch or use "Decode from filenames" to let LabGym decode the different beginning time for different videos.')
+		wx.Button.SetToolTip(button_startanalyze,'Enter a beginning time point for all videos in one analysis batch or use "Decode from filenames" to let LabGym decode the different beginning time for different videos. See Extended Guide for details.')
 		self.text_startanalyze=wx.StaticText(panel,label='Default: at the beginning of the video(s).',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_startanalyze.Add(button_startanalyze,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_startanalyze.Add(self.text_startanalyze,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -183,7 +181,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 		module_animalnumber=wx.BoxSizer(wx.HORIZONTAL)
 		button_animalnumber=wx.Button(panel,label='Specify the number of animals\nin a video',size=(300,40))
 		button_animalnumber.Bind(wx.EVT_BUTTON,self.specify_animalnumber)
-		wx.Button.SetToolTip(button_animalnumber,'Enter a number for all videos in one analysis batch or use "Decode from filenames" to let LabGym decode the different animal number for different videos.')
+		wx.Button.SetToolTip(button_animalnumber,'Enter a number for all videos in one analysis batch or use "Decode from filenames" to let LabGym decode the different animal number for different videos. See Extended Guide for details.')
 		self.text_animalnumber=wx.StaticText(panel,label='Default: 1.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_animalnumber.Add(button_animalnumber,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_animalnumber.Add(self.text_animalnumber,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -193,8 +191,8 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 		module_selectbehaviors=wx.BoxSizer(wx.HORIZONTAL)
 		button_selectbehaviors=wx.Button(panel,label='Select the behaviors for\nannotations and plots',size=(300,40))
 		button_selectbehaviors.Bind(wx.EVT_BUTTON,self.select_behaviors)
-		wx.Button.SetToolTip(button_selectbehaviors,'The behavior categories are determined by the selected Categorizer. Select which behaviors to show in the annotated videos and the raster plot.')
-		self.text_selectbehaviors=wx.StaticText(panel,label='Default: all the behaviors in the selected Categorizer.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
+		wx.Button.SetToolTip(button_selectbehaviors,'The behavior categories are determined by the selected Categorizer. Select which behaviors to show in the annotated videos and the raster plot. See Extended Guide for details.')
+		self.text_selectbehaviors=wx.StaticText(panel,label='Default: No Categorizer selected, no behavior selected.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_selectbehaviors.Add(button_selectbehaviors,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_selectbehaviors.Add(self.text_selectbehaviors,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		boxsizer.Add(module_selectbehaviors,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -203,7 +201,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 		module_selectparameters=wx.BoxSizer(wx.HORIZONTAL)
 		button_selectparameters=wx.Button(panel,label='Select the quantitative measurements\nfor each behavior',size=(300,40))
 		button_selectparameters.Bind(wx.EVT_BUTTON,self.select_parameters)
-		wx.Button.SetToolTip(button_selectparameters,'If select "not to normalize distances", all distances will be output in pixels. If select "normalize distances", all distances will be normalized to the animal size so that quantification results can be compared among different videos if the animal size is consistent across different videos.')
+		wx.Button.SetToolTip(button_selectparameters,'If select "not to normalize distances", all distances will be output in pixels. If select "normalize distances", all distances will be normalized to the animal size. See Extended Guide for details.')
 		self.text_selectparameters=wx.StaticText(panel,label='Default: none.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_selectparameters.Add(button_selectparameters,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_selectparameters.Add(self.text_selectparameters,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -250,7 +248,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 				if dialog1.ShowModal()==wx.ID_OK:
 					self.path_to_categorizer=dialog1.GetPaths()
 				dialog1.Destroy()
-				dialog1=wx.NumberEntryDialog(self,"Enter the Categorizer's uncertainty level (0~100%)","If probability difference between\n1st- and 2nd-likely behaviors\nis less than uncertainty,\nclassfication outputs an 'NA'.",'Uncertainty level',0,0,100)
+				dialog1=wx.NumberEntryDialog(self,"Enter the Categorizer's uncertainty level (0~100%)","If probability difference between\n1st- and 2nd-likely behaviors\nis less than uncertainty,\nclassfication outputs an 'NA' Enter 0 if don't know how to set.",'Uncertainty level',0,0,100)
 				if dialog1.ShowModal()==wx.ID_OK:
 					uncertain=dialog1.GetValue()
 					self.uncertain=uncertain/100
@@ -272,7 +270,8 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 				if dialog1.ShowModal()==wx.ID_OK:
 					uncertain=dialog1.GetValue()
 					self.uncertain=uncertain/100
-					self.text_selectcategorizer.SetLabel('Categorizer: '+categorizer+' with uncertainty of '+str(uncertain)+'%.')	
+					self.text_selectcategorizer.SetLabel('Categorizer: '+categorizer+' with uncertainty of '+str(uncertain)+'%.')
+			self.text_selectbehaviors.SetLabel('All the behaviors in the selected Categorizer with default colors.')
 
 			if self.path_to_categorizer is not None:
 
@@ -316,7 +315,10 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 					self.behavior_kind=int(parameters['behavior_kind'][0])
 				else:
 					self.behavior_kind=0
-				if self.behavior_kind>1:
+				if self.behavior_kind==2:
+					self.social_distance=int(parameters['social_distance'][0])
+					if self.social_distance==0:
+						self.social_distance=float('inf')
 					self.text_detection.SetLabel('Only Detector-based detection method is available for the selected Categorizer.')
 
 		dialog.Destroy()
@@ -331,7 +333,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 			self.path_to_videos=dialog.GetPaths()
 			self.path_to_videos.sort()
 			path=os.path.dirname(self.path_to_videos[0])
-			dialog1=wx.MessageDialog(self,'Proportional resize the video frames?\nSelect "No" if dont know what it is.','(Optional) resize the frames?',wx.YES_NO|wx.ICON_QUESTION)
+			dialog1=wx.MessageDialog(self,'Proportional resize the video frames? Reducing frame size\nis highly recommended. But select "No" if dont know what it is.','(Optional) resize the frames?',wx.YES_NO|wx.ICON_QUESTION)
 			if dialog1.ShowModal()==wx.ID_YES:
 				dialog2=wx.NumberEntryDialog(self,'Enter the desired frame width','The unit is pixel:','Desired frame width',480,1,10000)
 				if dialog2.ShowModal()==wx.ID_OK:
@@ -347,7 +349,6 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 				self.framewidth=None
 				self.text_inputvideos.SetLabel('Selected '+str(len(self.path_to_videos))+' video(s) in: '+path+' (original framesize).')
 			dialog1.Destroy()
-
 		dialog.Destroy()
 
 
@@ -616,6 +617,22 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 			if self.behavior_to_annotate[0]=='all':
 				self.behavior_to_annotate=list(self.behaviornames_and_colors.keys())
 
+			if self.behavior_kind==2:
+				dialog=wx.MessageDialog(self,'Specify individual-specific behaviors? e.g., sex-specific behaviors only occur in a specific sex and\ncan be used to maintain the correct ID of this individual during the entire analysis.','Individual-specific behaviors?',wx.YES_NO|wx.ICON_QUESTION)
+				if dialog.ShowModal()==wx.ID_YES:
+					for animal_name in self.animal_kinds:
+						dialog1=wx.MultiChoiceDialog(self,message='Select individual-specific behaviors for '+str(animal_name),caption='Individual-specific behaviors for '+str(animal_name),choices=list(self.behaviornames_and_colors.keys()))
+						if dialog1.ShowModal()==wx.ID_OK:
+							self.specific_behaviors[animal_name]={}
+							self.correct_ID=True
+							specific_behaviors=[list(self.behaviornames_and_colors.keys())[i] for i in dialog1.GetSelections()]
+							for specific_behavior in specific_behaviors:
+								self.specific_behaviors[animal_name][specific_behavior]=None
+						dialog1.Destroy()
+				else:
+					self.correct_ID=False
+				dialog.Destroy()
+
 			complete_colors=list(mpl.colors.cnames.values())
 			colors=[]
 			for c in complete_colors:
@@ -638,14 +655,20 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 							self.behaviornames_and_colors[self.behavior_to_annotate[n]]=colors[n]
 					dialog2.Destroy()
 					n+=1
-				self.text_selectbehaviors.SetLabel('Selected: '+str(names_colors)+'.')
+				if self.correct_ID is True:
+					self.text_selectbehaviors.SetLabel('Selected: '+str(list(names_colors.keys()))+'. Specific behaviors: '+str(self.specific_behaviors)+'.')
+				else:
+					self.text_selectbehaviors.SetLabel('Selected: '+str(list(names_colors.keys()))+'.')
 			else:
 				for color in colors:
 					index=colors.index(color)
 					if index<len(self.behavior_to_annotate):
 						behavior_name=list(self.behaviornames_and_colors.keys())[index]
 						self.behaviornames_and_colors[behavior_name]=color
-				self.text_selectbehaviors.SetLabel('Selected: '+str(self.behavior_to_annotate)+' with default colors.')
+				if self.correct_ID is True:
+					self.text_selectbehaviors.SetLabel('Selected: '+str(self.behavior_to_annotate)+' with default colors. Specific behaviors:'+str(self.specific_behaviors)+'.')
+				else:
+					self.text_selectbehaviors.SetLabel('Selected: '+str(self.behavior_to_annotate)+' with default colors.')
 			dialog.Destroy()
 
 			dialog=wx.MessageDialog(self,'Show legend of behavior names in the annotated video?','Legend in video?',wx.YES_NO|wx.ICON_QUESTION)
@@ -721,8 +744,8 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 					if self.use_detector is True:
 						self.animal_number={}
 						number=[x[1:] for x in filename if len(x)>1 and x[0]=='n']
-						for i,animal_name in enumerate(self.animal_kinds):
-							self.animal_number[animal_name]=int(number[i])
+						for a,animal_name in enumerate(self.animal_kinds):
+							self.animal_number[animal_name]=int(number[a])
 					else:
 						for x in filename:
 							if len(x)>1:
@@ -779,16 +802,14 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 				else:
 
 					AAD=AnalyzeAnimalDetector()
-					AAD.prepare_analysis(self.path_to_detector,i,self.result_path,self.animal_number,self.animal_kinds,self.behavior_kind,names_and_colors=self.behaviornames_and_colors,framewidth=self.framewidth,dim_tconv=self.dim_tconv,dim_conv=self.dim_conv,channel=self.channel,include_bodyparts=self.include_bodyparts,std=self.std,categorize_behavior=categorize_behavior,animation_analyzer=self.animation_analyzer,t=self.t,duration=self.duration,length=self.length)
-					if self.behavior_kind==0:
-						AAD.acquire_information(batch_size=self.detector_batch,background_free=self.background_free)
+					AAD.prepare_analysis(self.path_to_detector,i,self.result_path,self.animal_number,self.animal_kinds,self.behavior_kind,names_and_colors=self.behaviornames_and_colors,framewidth=self.framewidth,dim_tconv=self.dim_tconv,dim_conv=self.dim_conv,channel=self.channel,include_bodyparts=self.include_bodyparts,std=self.std,categorize_behavior=categorize_behavior,animation_analyzer=self.animation_analyzer,t=self.t,duration=self.duration,length=self.length,social_distance=self.social_distance)
+					AAD.acquire_information(batch_size=self.detector_batch,background_free=self.background_free)
+					if self.behavior_kind!=1:
 						AAD.craft_data()
-					elif self.behavior_kind==1:
-						AAD.acquire_information_interact_basic(batch_size=self.detector_batch,background_free=self.background_free)
-					else:
-						pass
 					if self.path_to_categorizer is not None:
 						AAD.categorize_behaviors(self.path_to_categorizer,uncertain=self.uncertain)
+					if self.correct_ID is True:
+						AAD.correct_identity(self.specific_behaviors)
 					AAD.annotate_video(self.behavior_to_annotate,show_legend=self.show_legend)
 					AAD.export_results(normalize_distance=self.normalize_distance,parameter_to_analyze=self.parameter_to_analyze)
 
@@ -908,7 +929,7 @@ class WindowLv2_MineResults(wx.Frame):
 
 		button_minedata=wx.Button(panel,label='Start to mine data',size=(300,40))
 		button_minedata.Bind(wx.EVT_BUTTON,self.mine_data)
-		wx.Button.SetToolTip(button_minedata,'Parametric / non-parametric tests will be automatically selected according to the data distribution, to compare the mean / median of different groups and display the data details that show statistically significant difference.')
+		wx.Button.SetToolTip(button_minedata,'Parametric / non-parametric tests will be automatically selected according to the data distribution, to compare the mean / median of different groups. See Extended Guide for details.')
 		boxsizer.Add(0,5,0)
 		boxsizer.Add(button_minedata,0,wx.RIGHT|wx.ALIGN_RIGHT,90)
 		boxsizer.Add(0,10,0)
@@ -968,7 +989,7 @@ class WindowLv2_MineResults(wx.Frame):
 		df={}
 		for i in os.listdir(folder):
 			if (i.endswith('_summary.xlsx') or i.endswith('_summary.xls') or i.endswith('_summary.XLS')):
-				behavior_name=i.split('_')[0]
+				behavior_name=i.split('_')[-2]
 				filelist[behavior_name]=os.path.join(folder,i)
 		if len(filelist)==0:
 			print('No "_summary.xlsx" excel file found!')

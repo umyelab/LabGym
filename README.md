@@ -65,7 +65,7 @@ Extended user guide: (https://github.com/yujiahu415/LabGym/blob/master/LabGym%20
 
 <p>&nbsp;</p>
 
-## 'Training Module' (teach LabGym detect obejcts & recognize behaviors)
+## 'Training Module' (teach LabGym detect objects & recognize behaviors)
 
 To let LabGym detect animals / objects of your interest, you have two ways:
 
@@ -127,7 +127,7 @@ To let LabGym recognize behaviors of your interest, you need to train a **Catego
 
         py -m pip install LabGym
 
-3. For >= v1.9, after LabGym is installed, install Detectron2 seperately (https://detectron2.readthedocs.io/en/latest/tutorials/install.html):
+3. For >= v1.9, after LabGym is installed, install Detectron2 separately (https://detectron2.readthedocs.io/en/latest/tutorials/install.html):
 
         python3 -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
 
@@ -146,7 +146,7 @@ To let LabGym recognize behaviors of your interest, you need to train a **Catego
 
 # If you encounter any issues when using LabGym:
 
-Refer to the issue page (https://github.com/umyelab/LabGym/issues?q=) or contact the author: Yujia Hu (henryhu@umich.edu).
+Refer to the open or closed issues or contact the author: Yujia Hu (henryhu@umich.edu).
 
 <p>&nbsp;</p>
 

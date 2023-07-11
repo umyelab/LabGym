@@ -32,14 +32,12 @@ from matplotlib.colors import LinearSegmentedColormap,Normalize
 from matplotlib.colorbar import ColorbarBase
 import pandas as pd
 import seaborn as sb
+import functools
+import operator
 
 
 
 def extract_background(frames,stable_illumination=True,animal_vs_bg=0):
-
-	# frame_initial: the first frame
-	# stable_illumination: whether the illumination in videos is stable
-	# animal_vs_bg: 0: animals brighter than the background; 1: animals darker than the background; 2: use absdiff
 
 	len_frames=len(frames)
 	
@@ -106,15 +104,6 @@ def extract_background(frames,stable_illumination=True,animal_vs_bg=0):
 
 
 def estimate_constants(path_to_video,delta,animal_number,framewidth=None,frameheight=None,stable_illumination=True,ex_start=0,ex_end=None,t=None,duration=10,animal_vs_bg=0,path_background=None,kernel=3):
-
-	# delta: an estimated fold change of the light intensity (normally about 1.2)
-	# framewidth: width dimension to resize
-	# frameheight: height dimension to resize
-	# ex_start: the start time point for background extraction
-	# ex_end: the end time point for background extraction, if None, use the entire video
-	# t: analysis start time
-	# path_background: if not None, load backgrounds (need to put the background images under the name 'background.jpg', 'background_low.jpg' and 'background_high.jpg' in the 'path_background' path)
-	# kernel: for morphological changes in image processing
 
 	capture=cv2.VideoCapture(path_to_video)
 	fps=round(capture.get(cv2.CAP_PROP_FPS))
@@ -221,7 +210,6 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,framehe
 			background=extract_background(frames,stable_illumination=stable_illumination,animal_vs_bg=animal_vs_bg)
 			del frames
 			gc.collect()
-		
 
 		if len(backgrounds_low)>0:
 			if frame_low_count>600:
@@ -451,8 +439,6 @@ def crop_frame(frame,contours):
 
 def extract_blob(frame,contour,channel=1):
 
-	# channel: 1: gray scale
-
 	mask=np.zeros_like(frame)
 
 	cv2.drawContours(mask,[contour],0,(255,255,255),-1)
@@ -536,11 +522,6 @@ def get_inner(masked_frame_gray,contour):
 
 def contour_frame(frame,animal_number,background,background_low,background_high,delta,contour_area,animal_vs_bg=0,include_bodyparts=False,animation_analyzer=False,channel=1,kernel=5):
 
-	# delta: the light intensity increase when apply optogenetic stimulation
-	# contour_area: estimated area of an individual contour	
-	# include_bodyparts: whether to include inner contours of animal body parts in pattern images
-	# kernel: the kernel size for morphological changes
-	
 	if animal_vs_bg==1:
 		frame=np.uint8(255-frame)
 
@@ -559,6 +540,7 @@ def contour_frame(frame,animal_number,background,background_low,background_high,
 			foreground=cv2.absdiff(frame,background)
 		else:
 			foreground=cv2.subtract(frame,background)
+			
 	foreground=cv2.cvtColor(foreground,cv2.COLOR_BGR2GRAY)
 	thred=cv2.threshold(foreground,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]
 	thred=cv2.morphologyEx(thred,cv2.MORPH_CLOSE,np.ones((kernel,kernel),np.uint8))
@@ -572,38 +554,29 @@ def contour_frame(frame,animal_number,background,background_low,background_high,
 	heights=[]
 	inners=[]
 	blobs=[]
-	
+
 	if animal_number>1:
 		for i in cnts:
 			if contour_area*0.2<cv2.contourArea(i)<contour_area*1.5:
 				contours.append(i)
-				centers.append((int(cv2.moments(i)['m10']/cv2.moments(i)['m00']),int(cv2.moments(i)['m01']/cv2.moments(i)['m00'])))
-				(_,_),(w,h),_=cv2.minAreaRect(i)
-				heights.append(max(w,h))
-				if include_bodyparts is True:
-					mask=np.zeros_like(frame)
-					cv2.drawContours(mask,[i],0,(255,255,255),-1)
-					mask=cv2.dilate(mask,np.ones((5,5),np.uint8))
-					masked_frame=frame*(mask/255)
-					gray=cv2.cvtColor(np.uint8(masked_frame),cv2.COLOR_BGR2GRAY)
-					inners.append(get_inner(gray,i))
-				if animation_analyzer is True:
-					blobs.append(extract_blob(frame,i,channel=channel))
+		contours=sorted(contours,key=cv2.contourArea)[-animal_number:]
 	else:
-		contour=sorted(cnts,key=cv2.contourArea,reverse=True)[0]
-		contours=[contour]
-		centers=[(int(cv2.moments(contour)['m10']/cv2.moments(contour)['m00']),int(cv2.moments(contour)['m01']/cv2.moments(contour)['m00']))]
-		(_,_),(w,h),_=cv2.minAreaRect(contour)
-		heights=[max(w,h)]
-		if include_bodyparts is True:
-			mask=np.zeros_like(frame)
-			cv2.drawContours(mask,[contour],0,(255,255,255),-1)
-			mask=cv2.dilate(mask,np.ones((5,5),np.uint8))
-			masked_frame=frame*(mask/255)
-			gray=cv2.cvtColor(np.uint8(masked_frame),cv2.COLOR_BGR2GRAY)
-			inners=[get_inner(gray,contour)]
-		if animation_analyzer is True:
-			blobs=[extract_blob(frame,contour,channel=channel)]
+		contours=[sorted(cnts,key=cv2.contourArea,reverse=True)[0]]
+
+	if len(contours)>0:
+		for i in contours:
+			centers.append((int(cv2.moments(i)['m10']/cv2.moments(i)['m00']),int(cv2.moments(i)['m01']/cv2.moments(i)['m00'])))
+			(_,_),(w,h),_=cv2.minAreaRect(i)
+			heights.append(max(w,h))
+			if include_bodyparts is True:
+				mask=np.zeros_like(frame)
+				cv2.drawContours(mask,[i],0,(255,255,255),-1)
+				mask=cv2.dilate(mask,np.ones((5,5),np.uint8))
+				masked_frame=frame*(mask/255)
+				gray=cv2.cvtColor(np.uint8(masked_frame),cv2.COLOR_BGR2GRAY)
+				inners.append(get_inner(gray,i))
+			if animation_analyzer is True:
+				blobs.append(extract_blob(frame,i,channel=channel))
 
 	return (contours,centers,heights,inners,blobs)
 
@@ -755,11 +728,97 @@ def generate_patternimage_all(frame,y_bt,y_tp,x_lf,x_rt,outlines_list,inners_lis
 	return pattern_image
 
 
-def plot_evnets(result_path,event_probability,time_points,names_and_colors,behavior_to_annotate,width=0,height=0):
+def generate_patternimage_interact(frame,outlines,other_outlines,inners=None,other_inners=None,std=0):
 
-	# names_and_colors: the behavior names and their representing colors
-	# behavior_to_annotate: the behaviors selected for annotation
-	# width/height: size for the raster plot figure
+	total_outlines=functools.reduce(operator.iconcat,other_outlines,[])
+	total_outlines+=outlines
+	(y_bt,y_tp,x_lf,x_rt)=crop_frame(frame,total_outlines)
+
+	if inners is not None:
+		background_inners=np.zeros_like(frame)
+		background_outers=np.zeros_like(frame)
+
+	background_outlines=np.zeros_like(frame)
+
+	if std>0:
+		backgrounds_std=[]
+
+	length=len(outlines)
+	p_size=int(max(abs(y_bt-y_tp),abs(x_lf-x_rt))/150+1)
+
+	for n,outline in enumerate(outlines):
+
+		other_outline=other_outlines[n]
+		if len(other_outline)>0:
+			if other_outline[0] is not None:
+				cv2.drawContours(background_outlines,other_outline,-1,(150,150,150),p_size)
+
+		if outline is not None:
+
+			if inners is not None:
+				inner=inners[n]
+				other_inner=functools.reduce(operator.iconcat,other_inners[n],[])
+				if other_inner is not None:
+					cv2.drawContours(background_inners,other_inner,-1,(150,150,150),p_size)
+				if std>0:
+					background_std=np.zeros_like(frame)
+					if inner is not None:
+						cv2.drawContours(background_std,inner,-1,(255,255,255),-1)
+					if other_inner is not None:
+						cv2.drawContours(background_std,other_inner,-1,(255,255,255),-1)
+					backgrounds_std.append(background_std)
+			else:
+				inner=None
+
+			if n<length/4:
+				d=n*int((255*4/length))
+				cv2.drawContours(background_outlines,[outline],0,(255,d,0),p_size)
+				if inner is not None:
+					cv2.drawContours(background_inners,inner,-1,(255,d,0),p_size)
+			elif n<length/2:
+				d=int((n-length/4)*(255*4/length))
+				cv2.drawContours(background_outlines,[outline],0,(255,255,d),p_size)
+				if inner is not None:
+					cv2.drawContours(background_inners,inner,-1,(255,255,d),p_size)
+			elif n<3*length/4:
+				d=int((n-length/2)*(255*4/length))
+				cv2.drawContours(background_outlines,[outline],0,(255,255-d,255),p_size)
+				if inner is not None:
+					cv2.drawContours(background_inners,inner,-1,(255,255-d,255),p_size)
+			else:
+				d=int((n-3*length/4)*(255*4/length))
+				cv2.drawContours(background_outlines,[outline],0,(255-d,0,255),p_size)
+				if inner is not None:
+					cv2.drawContours(background_inners,inner,-1,(255-d,0,255),p_size)
+
+			if inners is not None:
+				cv2.drawContours(background_outers,[outline],0,(255,255,255),int(2*p_size))
+				if other_outline[0] is not None:
+					cv2.drawContours(background_outers,other_outline,-1,(150,150,150),int(2*p_size))
+
+	outlines_image=background_outlines[y_bt:y_tp,x_lf:x_rt]
+
+	if inners is not None:
+		inners_image=background_inners[y_bt:y_tp,x_lf:x_rt]
+		outers_image=background_outers[y_bt:y_tp,x_lf:x_rt]
+		inners_image=cv2.subtract(inners_image,outers_image)
+
+	if std>0:
+		backgrounds_std=np.array(backgrounds_std,dtype='float32')
+		std_images=backgrounds_std[:,y_bt:y_tp,x_lf:x_rt]
+		std_image=std_images.std(0)
+
+		inners_image[std_image<std]=0
+
+	if inners is not None:
+		pattern_image=cv2.add(inners_image,outlines_image)
+	else:
+		pattern_image=outlines_image
+
+	return pattern_image
+
+
+def plot_evnets(result_path,event_probability,time_points,names_and_colors,behavior_to_annotate,width=0,height=0):
 
 	print('Exporting the raster plot for this analysis batch...')
 	print(datetime.datetime.now())
@@ -832,7 +891,6 @@ def extract_frames(path_to_video,out_path,framewidth=None,start_t=0,duration=0,s
 	fps=round(capture.get(cv2.CAP_PROP_FPS))
 	full_duration=capture.get(cv2.CAP_PROP_FRAME_COUNT)/fps
 	video_name=os.path.splitext(os.path.basename(path_to_video))[0]
-	os.makedirs(os.path.join(out_path,video_name),exist_ok=True)
 
 	if start_t>=full_duration:
 		print('The beginning time is later than the end of the video!')
@@ -862,13 +920,15 @@ def extract_frames(path_to_video,out_path,framewidth=None,start_t=0,duration=0,s
 					frameheight=int(frame.shape[0]*framewidth/frame.shape[1])
 					frame=cv2.resize(frame,(framewidth,frameheight),interpolation=cv2.INTER_AREA)
 
-				cv2.imwrite(os.path.join(os.path.join(out_path,video_name),video_name+'_'+str(frame_count_generate)+'.jpg'),frame)
+				cv2.imwrite(os.path.join(out_path,video_name+'_'+str(frame_count_generate)+'.jpg'),frame)
 
 			frame_count_generate+=1
 
 		frame_count+=1
 
 	capture.release()
+
+	print('The image examples stored in: '+out_path)
 
 
 def preprocess_video(path_to_video,out_folder,trim_video=False,time_windows=[[0,10]],enhance_contrast=True,contrast=1.0,crop_frame=True,left=0,right=0,top=0,bottom=0):
@@ -878,7 +938,6 @@ def preprocess_video(path_to_video,out_folder,trim_video=False,time_windows=[[0,
 	writer=None
 	fps=round(capture.get(cv2.CAP_PROP_FPS))
 	frame_count=1
-	os.makedirs(os.path.join(out_folder,name),exist_ok=True)
 
 	while True:
 
@@ -903,13 +962,13 @@ def preprocess_video(path_to_video,out_folder,trim_video=False,time_windows=[[0,
 			for i in time_windows:
 				added_name+='_'+str(i[0])+'-'+str(i[1])
 			if writer is None:
-				writer=cv2.VideoWriter(os.path.join(out_folder,name,name+added_name+'_processed.avi'),cv2.VideoWriter_fourcc(*'MJPG'),fps,(w,h),True)
+				writer=cv2.VideoWriter(os.path.join(out_folder,name+added_name+'_processed.avi'),cv2.VideoWriter_fourcc(*'MJPG'),fps,(w,h),True)
 			for i in time_windows:
 				if float(i[0])<=t<=float(i[1]):
 					writer.write(np.uint8(frame))
 		else:
 			if writer is None:
-				writer=cv2.VideoWriter(os.path.join(out_folder,name,name+'_processed.avi'),cv2.VideoWriter_fourcc(*'MJPG'),fps,(w,h),True)
+				writer=cv2.VideoWriter(os.path.join(out_folder,name+'_processed.avi'),cv2.VideoWriter_fourcc(*'MJPG'),fps,(w,h),True)
 			writer.write(np.uint8(frame))
 
 		frame_count+=1
@@ -917,6 +976,6 @@ def preprocess_video(path_to_video,out_folder,trim_video=False,time_windows=[[0,
 	writer.release()
 	capture.release()
 
-	print('The processed video(s) stored in: '+str(os.path.join(out_folder,name)))
+	print('The processed video(s) stored in: '+out_folder)
 
 
