@@ -1,4 +1,4 @@
-# LabGym is a platform for analyzing behaviors of your interest
+# LabGym: a platform for analyzing user-defined behaviors
 
 1. **IDENTIFY** behaviors without restrictions on the **behavior types** / **animal species** / **recording environments**.
 
