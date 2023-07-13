@@ -64,15 +64,15 @@ Extended user guide: (https://github.com/yujiahu415/LabGym/blob/master/LabGym%20
 
 To **QUANTIFY** behaviors, LabGym first needs to **IDENTIFY** them. To teach LabGym to recognize behaviors defined by you, use **'Generate Behavior Examples'** functional unit to generate stand-alone behavior examples and sort them based on their types. Then input the sorted examples into **'Train Categorizers'** functional unit to train a **Categorizer**. Each behavior example is a pair of a short **Animation** and its paired **Pattern Image**, which spans a duration (a behavior episode) defined by you. There are three types of behavior examples:
 
-1. **'Interactive advance'** for complex interactive behaviors. Each 'spotlight' **Animation** / **Pattern Image** contains all 'characters' in an interactive group with a 'spotlight' on the main character. Sort them based on the behavior type of the main character. The below 4 examples have 4 different main characters: a chipmunk taking the offer; a peanut being taken; another peanut being held; a finger offering peanut.
+1. **'Interactive advance'** tells which individual does what in complex interactive behaviors. Each 'spotlight' **Animation** / **Pattern Image** contains all 'characters' in an interactive group with a 'spotlight' on the main character. Sort them based on the behavior type of the main character. The below 4 examples have 4 different main characters: a chipmunk taking the offer; a peanut being taken; another peanut being held; a finger offering peanut.
 
     ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Chipmunks.gif?raw=true)
 
-2. **'Interactive basic'** if you only care about the behavior events rather than individual identities. Each **Animation** / **Pattern Image** contains all the animals / objects of your interest in a video. The sorting is easier, and the analysis speed is faster than **'Interactive advance'**. Sort them as one, for example, the below 3 are: fly orientating; fly singing while licking; fly attempted copulation.
+2. **'Interactive basic'** tells the behaviors of the whole interactive group. If you don't care about which individual does what in an interaction, select this for faster processing speed. Each **Animation** / **Pattern Image** contains all the animals / objects of your interest in a video. Sort them as one. For example, if you only care about what the male does in a courtship interaction, the below 3 can be sorted as: male fly orientating; male fly singing while licking; male fly attempted copulation.
 
     ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Flies.gif?raw=true)
 
-3. **'Non-interactive'** for behaviors of individuals. Each **Animation** / **Pattern Image** is a 'monodrama' of each animal / object in a video.
+3. **'Non-interactive'** tells the behaviors of individuals. Each **Animation** / **Pattern Image** is a 'monodrama' of each animal / object in a video.
 
     ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Mice.gif?raw=true)
 
