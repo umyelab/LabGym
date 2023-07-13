@@ -15,7 +15,8 @@ Email: bingye@umich.edu
 
 
 
-import scipy.stats as stats
+import scipy
+from scipy import stats
 import scikit_posthocs as sp
 import pandas as pd
 import os
@@ -143,9 +144,10 @@ class data_mining():
 							posthoc_name = "Tukey"
 							posthoc = pd.DataFrame(tukey)
 						else:
-							dunnett = stats.dunnett(dataset, self.control)
-							dunnett.columns = self.file_names
-							dunnett.index = self.file_names
+							dataset_exp=dataset[1:]
+							dunnett = stats.dunnett(*dataset_exp,control=self.control)
+							dunnett.columns = self.file_names[1:]
+							dunnett.index = self.file_names[1:]
 							print('\t'*2, "Dunnett's post-hoc results:")
 							print("\t"*2+dunnett.to_string().replace("\n","\n\t\t"))
 

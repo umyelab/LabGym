@@ -492,10 +492,10 @@ class AnalyzeAnimalDetector():
 										if self.animal_contours[animal_name][i][max(0,frame_count_analyze+1-batch_size+batch_count-self.length+1):frame_count_analyze+1-batch_size+batch_count+1][n] is None:
 											blob=np.zeros((self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8')
 										else:
-											blob=extract_blob_background(f,self.animal_contours[i][max(0,frame_count_analyze+1-batch_size+batch_count-self.length+1):frame_count_analyze+1-batch_size+batch_count+1],contour=None,channel=self.channel,background_free=False)
+											blob=extract_blob_background(f,self.animal_contours[animal_name][i][max(0,frame_count_analyze+1-batch_size+batch_count-self.length+1):frame_count_analyze+1-batch_size+batch_count+1],contour=None,channel=self.channel,background_free=False)
 											blob=cv2.resize(blob,(self.dim_tconv,self.dim_tconv),interpolation=cv2.INTER_AREA)
 										animation.append(img_to_array(blob))
-									self.animations[i][frame_count_analyze+1-batch_size+batch_count]=np.array(animation)
+									self.animations[animal_name][i][frame_count_analyze+1-batch_size+batch_count]=np.array(animation)
 
 
 	def detect_track_interact(self,frames,batch_size,frame_count_analyze,background_free=True):
