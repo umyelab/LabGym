@@ -1,12 +1,12 @@
 # LabGym: a platform for analyzing user-defined behaviors
 
-1. **IDENTIFY** behaviors without restrictions on the **behavior types** / **animal species** / **recording environments**.
+1. **IDENTIFY** behaviors without restrictions on **behavior types** / **animal species** / **recording environments**. Such as:
 
-    * Complex interactive behaviors like finger 'holding peanuts' / 'offering peanuts', chipmunk 'taking the offer' / 'loading peanuts', and peanut 'being held' / 'being taken' / 'being loaded'. Or, in a courtship interactive group, which fly sings a love song and which fly is being courted.
+    * Which individual does what in complex interactive behaviors, like a finger 'holds peanut' / 'offers peanut', a chipmunk 'takes the offer' / 'loads peanut', and a peanut 'being held' / 'being taken' / 'being loaded'. Or, which fly sings a love song and which fly is being courted in a courtship interactive group.
 
         ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_chipmunks_1.gif?raw=true)    ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_flies_1.gif?raw=true)
 
-    * And if you only care about the behavior events rather than individual identities, the whole interactive group can be analyzed as one for faster processing speed.
+    * Behaviors of the whole interactive group can be analyzed as one for faster processing speed, if you don't care about which individual does what.
 
         ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_chipmunks_2.gif?raw=true)    ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_flies_2.gif?raw=true)
 
@@ -106,7 +106,7 @@ To **GENERATE** behavior examples or to **IDENTIFY** behaviors, LabGym needs to 
 
 1. Install Python3 (version >= 3.9.7)
 
-    Not to install the latest version of Python3 since it might not be compatible yet.
+    Do not install the latest version of Python3 since it might not be compatible yet.
 
 2. In your terminal / cmd prompt, type:
 
