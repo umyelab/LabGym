@@ -793,8 +793,9 @@ def generate_patternimage_interact(frame,outlines,other_outlines,inners=None,oth
 
 			if inners is not None:
 				cv2.drawContours(background_outers,[outline],0,(255,255,255),int(2*p_size))
-				if other_outline[0] is not None:
-					cv2.drawContours(background_outers,other_outline,-1,(150,150,150),int(2*p_size))
+				if len(other_outline)>0:
+					if other_outline[0] is not None:
+						cv2.drawContours(background_outers,other_outline,-1,(150,150,150),int(2*p_size))
 
 	outlines_image=background_outlines[y_bt:y_tp,x_lf:x_rt]
 
