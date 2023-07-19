@@ -2020,11 +2020,11 @@ class AnalyzeAnimalDetector():
 										if self.include_bodyparts is True:
 											animation_name=os.path.splitext(self.basename)[0]+'_'+animal_name+'_'+str(n)+'_'+str(frame_count_analyze)+'_len'+str(self.length)+'_scdt'+scdt+'_std'+str(self.std)+'_itadv.avi'
 											pattern_image_name=os.path.splitext(self.basename)[0]+'_'+animal_name+'_'+str(n)+'_'+str(frame_count_analyze)+'_len'+str(self.length)+'_scdt'+scdt+'_std'+str(self.std)+'_itadv.jpg'
-											pattern_image=pattern_image=generate_patternimage_interact(self.background,self.animal_contours[animal_name][n],self.animal_other_contours[animal_name][n],inners=self.animal_inners[animal_name][n],other_inners=self.animal_other_inners[animal_name][n],std=self.std)
+											pattern_image=generate_patternimage_interact(self.background,self.animal_contours[animal_name][n],self.animal_other_contours[animal_name][n],inners=self.animal_inners[animal_name][n],other_inners=self.animal_other_inners[animal_name][n],std=self.std)
 										else:
 											animation_name=os.path.splitext(self.basename)[0]+'_'+animal_name+'_'+str(n)+'_'+str(frame_count_analyze)+'_len'+str(self.length)+'_scdt'+scdt+'_itadv.avi'
 											pattern_image_name=os.path.splitext(self.basename)[0]+'_'+animal_name+'_'+str(n)+'_'+str(frame_count_analyze)+'_len'+str(self.length)+'_scdt'+scdt+'_itadv.jpg'
-											pattern_image=pattern_image=generate_patternimage_interact(self.background,self.animal_contours[animal_name][n],self.animal_other_contours[animal_name][n],inners=None,other_inners=None,std=0)
+											pattern_image=generate_patternimage_interact(self.background,self.animal_contours[animal_name][n],self.animal_other_contours[animal_name][n],inners=None,other_inners=None,std=0)
 
 										path_animation=os.path.join(self.results_path,animation_name)
 										path_pattern_image=os.path.join(self.results_path,pattern_image_name)
