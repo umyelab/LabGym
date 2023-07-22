@@ -122,7 +122,7 @@ To **GENERATE** behavior examples or to **IDENTIFY** behaviors, LabGym needs to 
 
 <p>&nbsp;</p>
 
-# For each use
+# Initiate user interface for each use
 
 1. Activate Python3 by typing 'python3' or 'py' in the terminal / cmd prompt. Then type:
 
@@ -132,7 +132,7 @@ To **GENERATE** behavior examples or to **IDENTIFY** behaviors, LabGym needs to 
 
         gui.gui()
 
-    Now the GUI is initiated and ready to use.
+    Now the user interface is initiated and ready to use.
 
 <p>&nbsp;</p>
 
