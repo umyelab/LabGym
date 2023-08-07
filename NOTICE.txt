@@ -1,1 +1,2 @@
-Detectron2 is a product of Meta, details on the project can be found here: https://detectron2.readthedocs.io/en/latest/index.html.
+Detectron2 is a product of Meta. 
+Details on the project can be found here: https://detectron2.readthedocs.io/en/latest/index.html.

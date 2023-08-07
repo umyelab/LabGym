@@ -30,8 +30,8 @@ from .gui_analyzers import WindowLv2_AnalyzeBehaviors,WindowLv2_MineResults
 
 
 
-current_version=2.0
-current_version_check=20.2
+current_version=2.1
+current_version_check=21.0
 
 try:
 
@@ -74,7 +74,7 @@ class InitialWindow(wx.Frame):
 		
 		links=wx.BoxSizer(wx.HORIZONTAL)
 		homepage=wx.lib.agw.hyperlink.HyperLinkCtrl(panel,0,'Home Page',URL='https://github.com/umyelab/LabGym')
-		userguide=wx.lib.agw.hyperlink.HyperLinkCtrl(panel,0,'Extended Guide',URL='https://github.com/yujiahu415/LabGym/blob/master/LabGym%20user%20guide_v2.0.pdf')
+		userguide=wx.lib.agw.hyperlink.HyperLinkCtrl(panel,0,'Extended Guide',URL='https://github.com/yujiahu415/LabGym/blob/master/LabGym%20user%20guide_v2.1.pdf')
 		links.Add(homepage,0,wx.LEFT|wx.EXPAND,10)
 		links.Add(userguide,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		boxsizer.Add(links,0,wx.ALIGN_CENTER,50)
@@ -89,7 +89,7 @@ class InitialWindow(wx.Frame):
 		wx.Button.SetToolTip(button_train,'Teach LabGym to recognize the animals / objects of your interest and identify their behaviors that are defined by you.')
 		button_analyze=wx.Button(panel,label='Analysis Module',size=(200,40))
 		button_analyze.Bind(wx.EVT_BUTTON,self.window_analyze)
-		wx.Button.SetToolTip(button_analyze,'Use LabGym to track the animals / objects of your interest, quantify their behaviors, and let LabGym show you the significant findings.')
+		wx.Button.SetToolTip(button_analyze,'Use LabGym to track the animals / objects of your interest, identify and quantify their behaviors, and display the statistically significant findings.')
 		module_modules.Add(button_preprocess,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_modules.Add(button_train,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_modules.Add(button_analyze,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -176,7 +176,7 @@ class WindowLv1_TrainingModule(wx.Frame):
 
 		button_traindetectors=wx.Button(panel,label='Train Detectors',size=(300,40))
 		button_traindetectors.Bind(wx.EVT_BUTTON,self.train_detectors)
-		wx.Button.SetToolTip(button_traindetectors,'There are two detection methods in LabGym, the Detector-based method is more versatile (useful in any recording conditions and complex social behaviors) but slower than the other background subtraction-based method (requires static background and stable illumination in videos).')
+		wx.Button.SetToolTip(button_traindetectors,'There are two detection methods in LabGym, the Detector-based method is more versatile (useful in any recording conditions and complex interactive behaviors) but slower than the other background subtraction-based method (requires static background and stable illumination in videos).')
 		boxsizer.Add(button_traindetectors,0,wx.ALIGN_CENTER,10)
 		boxsizer.Add(0,50,0)
 

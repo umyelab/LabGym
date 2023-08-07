@@ -50,7 +50,7 @@ class AnalyzeAnimalDetector():
 
 	def __init__(self):
 
-		self.behavior_kind=0
+		self.behavior_mode=0
 		self.detector=None
 		self.animal_mapping=None
 		self.path_to_video=None
@@ -103,7 +103,7 @@ class AnalyzeAnimalDetector():
 		results_path,
 		animal_number,
 		animal_kinds, # the catgories of animals / objects to be analyzed
-		behavior_kind, # 0: non-interactive; 1: interactive basic; 2: interactive advance
+		behavior_mode, # 0: non-interactive; 1: interactive basic; 2: interactive advanced
 		names_and_colors=None, # the behavior names and their representing colors
 		framewidth=None, # the width of the frame to resize
 		dim_tconv=8, # input dim of Animation Analyzer
@@ -146,7 +146,7 @@ class AnalyzeAnimalDetector():
 		self.results_path=os.path.join(results_path,os.path.splitext(self.basename)[0])
 		self.animal_number=animal_number
 		self.animal_kinds=animal_kinds
-		self.behavior_kind=behavior_kind
+		self.behavior_mode=behavior_mode
 		self.dim_tconv=dim_tconv
 		self.dim_conv=dim_conv
 		self.channel=channel
@@ -208,7 +208,7 @@ class AnalyzeAnimalDetector():
 			self.to_deregister[animal_name]={}
 			self.register_counts[animal_name]={}
 			self.animal_contours[animal_name]={}
-			if self.behavior_kind==2:
+			if self.behavior_mode==2:
 				self.animal_other_contours[animal_name]={}
 			self.animal_centers[animal_name]={}
 			self.animal_existingcenters[animal_name]={}
@@ -216,7 +216,7 @@ class AnalyzeAnimalDetector():
 			self.pattern_images[animal_name]={}
 			if self.include_bodyparts is True:
 				self.animal_inners[animal_name]={}
-				if self.behavior_kind==2:
+				if self.behavior_mode==2:
 					self.animal_other_inners[animal_name]={}
 			if self.animation_analyzer is True:
 				self.animal_blobs[animal_name]={}
@@ -225,14 +225,14 @@ class AnalyzeAnimalDetector():
 				self.to_deregister[animal_name][i]=0
 				self.register_counts[animal_name][i]=None
 				self.animal_contours[animal_name][i]=[None]*self.total_analysis_framecount
-				if self.behavior_kind==2:
+				if self.behavior_mode==2:
 					self.animal_other_contours[animal_name][i]=deque(maxlen=self.length)
 				self.animal_centers[animal_name][i]=[None]*self.total_analysis_framecount
 				self.animal_existingcenters[animal_name][i]=(-10000,-10000)
 				self.animal_heights[animal_name][i]=[None]*self.total_analysis_framecount
 				if self.include_bodyparts is True:
 					self.animal_inners[animal_name][i]=deque(maxlen=self.length)
-					if self.behavior_kind==2:
+					if self.behavior_mode==2:
 						self.animal_other_inners[animal_name][i]=deque(maxlen=self.length)
 				if self.animation_analyzer is True:
 					self.animal_blobs[animal_name][i]=deque([np.zeros((self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8')],maxlen=self.length)*self.length
@@ -699,7 +699,7 @@ class AnalyzeAnimalDetector():
 
 				if batch_count==batch_size:
 					batch_count=0
-					if self.behavior_kind==2:
+					if self.behavior_mode==2:
 						self.detect_track_interact(batch,batch_size,frame_count_analyze,background_free=background_free)
 					else:
 						self.detect_track_individuals(batch,batch_size,frame_count_analyze,background_free=background_free,animation=animation)
@@ -910,12 +910,12 @@ class AnalyzeAnimalDetector():
 					del self.animal_centers[animal_name][i]
 					del self.animal_existingcenters[animal_name][i]
 					del self.animal_contours[animal_name][i]
-					if self.behavior_kind==2:
+					if self.behavior_mode==2:
 						del self.animal_other_contours[animal_name][i]
 					del self.animal_heights[animal_name][i]
 					if self.include_bodyparts is True:
 						del self.animal_inners[animal_name][i]
-						if self.behavior_kind==2:
+						if self.behavior_mode==2:
 							del self.animal_other_inners[animal_name][i]
 					if self.animation_analyzer is True:
 						del self.animal_blobs[animal_name][i]
@@ -940,7 +940,7 @@ class AnalyzeAnimalDetector():
 
 		categorizer=load_model(path_to_categorizer)
 
-		if self.behavior_kind==1:
+		if self.behavior_mode==1:
 			self.animal_kinds=[self.animal_kinds[0]]
 
 		for animal_name in self.animal_kinds:
@@ -1128,14 +1128,14 @@ class AnalyzeAnimalDetector():
 									cx=self.animal_centers[animal_name][i][frame_count_analyze][0]
 									cy=self.animal_centers[animal_name][i][frame_count_analyze][1]
 
-									if self.behavior_kind!=1:
+									if self.behavior_mode!=1:
 										cv2.circle(frame,(cx,cy),int(text_tk*3),(255,0,0),-1)
 
 									if self.categorize_behavior is True:
-										if self.behavior_kind!=1:
+										if self.behavior_mode!=1:
 											cv2.putText(frame,animal_name+' '+str(i),(cx-10,cy-25),cv2.FONT_HERSHEY_SIMPLEX,text_scl,(255,255,255),text_tk)	
 										if self.event_probability[animal_name][i][frame_count_analyze][0]=='NA':
-											if self.behavior_kind==1:
+											if self.behavior_mode==1:
 												cv2.drawContours(frame,self.animal_contours[animal_name][i][frame_count_analyze],-1,(255,255,255),1)
 											else:
 												cv2.drawContours(frame,[self.animal_contours[animal_name][i][frame_count_analyze]],0,(255,255,255),1)
@@ -1145,13 +1145,13 @@ class AnalyzeAnimalDetector():
 											probability=str(round(self.event_probability[animal_name][i][frame_count_analyze][1]*100))+'%'
 											if name in colors:
 												color=colors[self.event_probability[animal_name][i][frame_count_analyze][0]]
-												if self.behavior_kind==1:
+												if self.behavior_mode==1:
 													cv2.drawContours(frame,self.animal_contours[animal_name][i][frame_count_analyze],-1,color,1)
 												else:
 													cv2.drawContours(frame,[self.animal_contours[animal_name][i][frame_count_analyze]],0,color,1)
 												cv2.putText(frame,name+' '+probability,(cx-10,cy-10),cv2.FONT_HERSHEY_SIMPLEX,text_scl,color,text_tk)
 											else:
-												if self.behavior_kind==1:
+												if self.behavior_mode==1:
 													cv2.drawContours(frame,self.animal_contours[animal_name][i][frame_count_analyze],-1,(255,255,255),1)
 												else:
 													cv2.drawContours(frame,[self.animal_contours[animal_name][i][frame_count_analyze]],0,(255,255,255),1)
