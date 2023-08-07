@@ -93,7 +93,7 @@ Three different modes of behavior examples:
 
 1. **'Interactive advanced'**
 
-   Each 'spotlight' **Animation** / **Pattern Image** contains all characters in an interactive group with a 'spotlight' on the main character. Sort them based on the behavior type of the main character. For example, the below 4 are: (chipmunk) 'taking the offer'; (peanut) 'being taken'; (another peanut) 'being held'; (finger) 'offering peanut'.
+   Each 'spotlight' **Animation** / **Pattern Image** contains all characters in an interactive group with a 'spotlight' on the main character. Sort them based on the behavior type of the main character. For example, the below 4 are: 'taking the offer'; 'being taken'; 'being held'; 'offering peanut'.
 
    ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Chipmunks.gif?raw=true)
 
