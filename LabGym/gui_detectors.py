@@ -266,8 +266,8 @@ class WindowLv2_TrainDetectors(wx.Frame):
 		module_inferencingsize=wx.BoxSizer(wx.HORIZONTAL)
 		button_inferencingsize=wx.Button(panel,label='Specify the inferencing framesize\nfor the Detector to train',size=(300,40))
 		button_inferencingsize.Bind(wx.EVT_BUTTON,self.input_inferencingsize)
-		wx.Button.SetToolTip(button_inferencingsize,'This number should be divisible by 32. It determines the speed-accuracy trade-off of Detector performance. Larger size means higher accuracy but slower speed. See Extended Guide for recommendation.')
-		self.text_inferencingsize=wx.StaticText(panel,label='Default: 320.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
+		wx.Button.SetToolTip(button_inferencingsize,'This number should be divisible by 32. It determines the speed-accuracy trade-off of Detector performance. Larger size means higher accuracy but slower speed. See Extended Guide for details.')
+		self.text_inferencingsize=wx.StaticText(panel,label='Default: 480.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_inferencingsize.Add(button_inferencingsize,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_inferencingsize.Add(self.text_inferencingsize,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		boxsizer.Add(module_inferencingsize,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -332,7 +332,7 @@ class WindowLv2_TrainDetectors(wx.Frame):
 		dialog=wx.NumberEntryDialog(self,'Input the inferencing frame size\nof the Detector to train','Enter a number:','Divisible by 32',480,1,2048)
 		if dialog.ShowModal()==wx.ID_OK:
 			self.inference_size=int(dialog.GetValue())
-			self.text_inferencingsize.SetLabel('Input inferencing frame size: '+str(self.inference_size)+'.')
+			self.text_inferencingsize.SetLabel('Inferencing frame size: '+str(self.inference_size)+'.')
 		dialog.Destroy()
 		
 
@@ -341,7 +341,7 @@ class WindowLv2_TrainDetectors(wx.Frame):
 		dialog=wx.NumberEntryDialog(self,'Input the iteration number\nfor the Detector training','Enter a number:','Iterations',200,1,2000)
 		if dialog.ShowModal()==wx.ID_OK:
 			self.iteration_num=int(dialog.GetValue())
-			self.text_iterations.SetLabel('Input iteration number: '+str(self.iteration_num)+'.')
+			self.text_iterations.SetLabel('Training iteration number: '+str(self.iteration_num)+'.')
 		dialog.Destroy()
 
 

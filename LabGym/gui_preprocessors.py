@@ -88,7 +88,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
 		module_cropframe=wx.BoxSizer(wx.HORIZONTAL)
 		button_cropframe=wx.Button(panel,label='Specify whether to crop\nthe video frames',size=(300,40))
 		button_cropframe.Bind(wx.EVT_BUTTON,self.crop_frames)
-		wx.Button.SetToolTip(button_cropframe,'Cropping frames to exclude irrelevant areas can increase the analysis efficiency. You need to specify the 4 corner points of the cropping window. This cropping window will be applied for all videos selected.')
+		wx.Button.SetToolTip(button_cropframe,'Cropping frames to exclude unnecessary areas can increase the analysis efficiency. You need to specify the 4 corner points of the cropping window. This cropping window will be applied for all videos selected.')
 		self.text_cropframe=wx.StaticText(panel,label='Default: not to crop frames.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_cropframe.Add(button_cropframe,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_cropframe.Add(self.text_cropframe,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)

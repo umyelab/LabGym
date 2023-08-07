@@ -38,7 +38,7 @@ class WindowLv2_GenerateExamples(wx.Frame):
 	def __init__(self,title):
 
 		super(WindowLv2_GenerateExamples,self).__init__(parent=None,title=title,size=(1000,510))
-		self.behavior_kind=0 # 0: non-interactive behavior; 1: interact basic; 2: interact advance
+		self.behavior_mode=0 # 0: non-interactive behavior; 1: interact basic; 2: interact advanced
 		self.use_detector=False
 		self.detector_path=None
 		self.path_to_detector=None
@@ -74,15 +74,15 @@ class WindowLv2_GenerateExamples(wx.Frame):
 		panel=wx.Panel(self)
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
 
-		module_specifykind=wx.BoxSizer(wx.HORIZONTAL)
-		button_specifykind=wx.Button(panel,label='Specify the kind of behavior\nexamples to generate',size=(300,40))
-		button_specifykind.Bind(wx.EVT_BUTTON,self.specify_kind)
-		wx.Button.SetToolTip(button_specifykind,'"Non-interactive" is for behaviors of each individual; "Interactive basic" is for interactive behaviors of all animals but not distinguishing each individual; "Interactive advance" is slower in analysis than "basic" but distinguishes individuals during close body contact. See Extended Guide for details.')
-		self.text_specifykind=wx.StaticText(panel,label='Default: Non-interactive: behaviors of each individuals (each example contains one animal / object)',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
-		module_specifykind.Add(button_specifykind,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
-		module_specifykind.Add(self.text_specifykind,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		module_specifymode=wx.BoxSizer(wx.HORIZONTAL)
+		button_specifymode=wx.Button(panel,label='Specify the mode of behavior\nexamples to generate',size=(300,40))
+		button_specifymode.Bind(wx.EVT_BUTTON,self.specify_mode)
+		wx.Button.SetToolTip(button_specifymode,'"Non-interactive" is for behaviors of each individual; "Interactive basic" is for interactive behaviors of all animals but not distinguishing each individual; "Interactive advanced" is slower in analysis than "basic" but distinguishes individuals during close body contact. See Extended Guide for details.')
+		self.text_specifymode=wx.StaticText(panel,label='Default: Non-interactive: behaviors of each individuals (each example contains one animal / object)',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
+		module_specifymode.Add(button_specifymode,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		module_specifymode.Add(self.text_specifymode,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		boxsizer.Add(0,10,0)
-		boxsizer.Add(module_specifykind,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(module_specifymode,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		boxsizer.Add(0,5,0)
 
 		module_inputvideos=wx.BoxSizer(wx.HORIZONTAL)
@@ -178,18 +178,18 @@ class WindowLv2_GenerateExamples(wx.Frame):
 		self.Show(True)
 
 
-	def specify_kind(self,event):
+	def specify_mode(self,event):
 
-		behavior_kinds=['Non-interactive: behaviors of each individual (each example contains one animal / object)','Interactive basic: behaviors of all (each example contains all animals / objects)','Interactive advance: behaviors of each individual and social groups (each example contains either one or multiple animals / objects)']
-		dialog=wx.SingleChoiceDialog(self,message='Specify the kind of behavior examples to generate',caption='Example kind',choices=behavior_kinds)
+		behavior_modes=['Non-interactive: behaviors of each individual (each example contains one animal / object)','Interactive basic: behaviors of all (each example contains all animals / objects)','Interactive advanced: behaviors of each individual and social groups (each example contains either one or multiple animals / objects)']
+		dialog=wx.SingleChoiceDialog(self,message='Specify the mode of behavior examples to generate',caption='Behavior-example mode',choices=behavior_modes)
 		if dialog.ShowModal()==wx.ID_OK:
-			behavior_kind=dialog.GetStringSelection()
-			if behavior_kind=='Non-interactive: behaviors of each individual (each example contains one animal / object)':
-				self.behavior_kind=0
-			elif behavior_kind=='Interactive basic: behaviors of all (each example contains all animals / objects)':
-				self.behavior_kind=1
+			behavior_mode=dialog.GetStringSelection()
+			if behavior_mode=='Non-interactive: behaviors of each individual (each example contains one animal / object)':
+				self.behavior_mode=0
+			elif behavior_mode=='Interactive basic: behaviors of all (each example contains all animals / objects)':
+				self.behavior_mode=1
 			else:
-				self.behavior_kind=2
+				self.behavior_mode=2
 				dialog1=wx.NumberEntryDialog(self,'Interactions happen within the social distance.','(See Extended Guide for details)\nHow many folds of square root of the animals area\nis the social distance (0=infinity far):','Social distance (Enter an integer)',0,0,100000000000000)
 				if dialog1.ShowModal()==wx.ID_OK:
 					self.social_distance=int(dialog1.GetValue())
@@ -199,13 +199,13 @@ class WindowLv2_GenerateExamples(wx.Frame):
 					self.social_distance=float('inf')
 				dialog1.Destroy()
 		else:
-			self.behavior_kind=0
-			behavior_kind='Non-interactive: behaviors of each individual (each example contains one animal / object)'
-		if self.behavior_kind==2:
-			self.text_specifykind.SetLabel('Behavior kind: '+behavior_kind+' with social distance: '+str(self.social_distance)+' folds of the animal diameter.')
-			self.text_detection.SetLabel('Only Detector-based detection method is available for the selected behavior kind.')
+			self.behavior_mode=0
+			behavior_mode='Non-interactive: behaviors of each individual (each example contains one animal / object)'
+		if self.behavior_mode==2:
+			self.text_specifymode.SetLabel('Behavior mode: '+behavior_mode+' with social distance: '+str(self.social_distance)+' folds of the animal diameter.')
+			self.text_detection.SetLabel('Only Detector-based detection method is available for the selected behavior mode.')
 		else:
-			self.text_specifykind.SetLabel('Behavior kind: '+behavior_kind+'.')
+			self.text_specifymode.SetLabel('Behavior mode: '+behavior_mode+'.')
 		dialog.Destroy()
 
 
@@ -249,7 +249,7 @@ class WindowLv2_GenerateExamples(wx.Frame):
 
 	def select_method(self,event):
 
-		if self.behavior_kind<=1:
+		if self.behavior_mode<=1:
 			methods=['Subtract background (fast but requires static background & stable illumination)','Use trained Detectors (versatile but slow)']
 		else:
 			methods=['Use trained Detectors (versatile but slow)']
@@ -571,16 +571,16 @@ class WindowLv2_GenerateExamples(wx.Frame):
 					if self.use_detector is False:
 						AA=AnalyzeAnimal()
 						AA.prepare_analysis(i,self.result_path,self.animal_number,delta=self.delta,framewidth=self.framewidth,stable_illumination=self.stable_illumination,channel=3,include_bodyparts=self.include_bodyparts,std=self.std,categorize_behavior=False,animation_analyzer=False,path_background=self.background_path,autofind_t=self.autofind_t,t=self.t,duration=self.duration,ex_start=self.ex_start,ex_end=self.ex_end,length=self.length,animal_vs_bg=self.animal_vs_bg)
-						if self.behavior_kind==0:
+						if self.behavior_mode==0:
 							AA.generate_data(background_free=self.background_free,skip_redundant=self.skip_redundant)
 						else:
 							AA.generate_data_interact_basic(background_free=self.background_free,skip_redundant=self.skip_redundant)
 					else:
 						AAD=AnalyzeAnimalDetector()
-						AAD.prepare_analysis(self.path_to_detector,i,self.result_path,self.animal_number,self.animal_kinds,self.behavior_kind,framewidth=self.framewidth,channel=3,include_bodyparts=self.include_bodyparts,std=self.std,categorize_behavior=False,animation_analyzer=False,t=self.t,duration=self.duration,length=self.length,social_distance=self.social_distance)
-						if self.behavior_kind==0:
+						AAD.prepare_analysis(self.path_to_detector,i,self.result_path,self.animal_number,self.animal_kinds,self.behavior_mode,framewidth=self.framewidth,channel=3,include_bodyparts=self.include_bodyparts,std=self.std,categorize_behavior=False,animation_analyzer=False,t=self.t,duration=self.duration,length=self.length,social_distance=self.social_distance)
+						if self.behavior_mode==0:
 							AAD.generate_data(background_free=self.background_free,skip_redundant=self.skip_redundant)
-						elif self.behavior_kind==1:
+						elif self.behavior_mode==1:
 							AAD.generate_data_interact_basic(background_free=self.background_free,skip_redundant=self.skip_redundant)
 						else:
 							AAD.generate_data_interact_advance(background_free=self.background_free,skip_redundant=self.skip_redundant)
@@ -594,7 +594,7 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 		super(WindowLv2_TrainCategorizers,self).__init__(parent=None,title=title,size=(1000,530))
 		self.file_path=None # the file path storing orginal examples
 		self.new_path=None # the new path for renamed, labeled examples
-		self.behavior_kind=0
+		self.behavior_mode=0
 		self.animation_analyzer=True
 		self.level_tconv=2
 		self.level_conv=2
@@ -653,7 +653,7 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 		button_categorizertype=wx.Button(panel,label='Specify the type / complexity of\nthe Categorizer to train',size=(300,40))
 		button_categorizertype.Bind(wx.EVT_BUTTON,self.specify_categorizer)
 		wx.Button.SetToolTip(button_categorizertype,'Categorizer with both Animation Analyzer and Pattern Recognizer is slower but a little more accurate than that with Pattern Recognizer only. Higher complexity level means deeper and more complex network architecture. See Extended Guide for details.')
-		self.text_categorizertype=wx.StaticText(panel,label='Default: Categorizer (Animation Analyzer LV2 + Pattern Recognizer LV2). Behavior kind: Non-interact (identify behavior for each individual).',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
+		self.text_categorizertype=wx.StaticText(panel,label='Default: Categorizer (Animation Analyzer LV2 + Pattern Recognizer LV2). Behavior mode: Non-interact (identify behavior for each individual).',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_categorizertype.Add(button_categorizertype,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_categorizertype.Add(self.text_categorizertype,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		boxsizer.Add(0,10,0)
@@ -805,18 +805,18 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 			level=''
 		dialog.Destroy()
 
-		behavior_kinds=['Non-interact (identify behavior for each individual)','Interact basic (identify behavior for the interactive pair / group)','Interact advance (identify behavior for both each individual and each interactive pair / group)']
-		dialog=wx.SingleChoiceDialog(self,message='Specify the kind of behavior for the Categorizer to identify',caption='Behavior kind',choices=behavior_kinds)
+		behavior_modes=['Non-interact (identify behavior for each individual)','Interact basic (identify behavior for the interactive pair / group)','Interact advanced (identify behavior for both each individual and each interactive pair / group)']
+		dialog=wx.SingleChoiceDialog(self,message='Specify the mode of behavior for the Categorizer to identify',caption='Behavior mode',choices=behavior_modes)
 		if dialog.ShowModal()==wx.ID_OK:
-			behavior_kind=dialog.GetStringSelection()
-			if behavior_kind=='Non-interact (identify behavior for each individual)':
-				self.behavior_kind=0
+			behavior_mode=dialog.GetStringSelection()
+			if behavior_mode=='Non-interact (identify behavior for each individual)':
+				self.behavior_mode=0
 				self.text_categorizertype.SetLabel(categorizer_tp+' (LV '+str(level)+') to identify behaviors of each non-interactive individual.')
-			elif behavior_kind=='Interact basic (identify behavior for the interactive pair / group)':
-				self.behavior_kind=1
+			elif behavior_mode=='Interact basic (identify behavior for the interactive pair / group)':
+				self.behavior_mode=1
 				self.text_categorizertype.SetLabel(categorizer_tp+' (LV '+str(level)+') to identify behaviors of the interactive group.')
 			else:
-				self.behavior_kind=2
+				self.behavior_mode=2
 				self.channel=3
 				dialog1=wx.NumberEntryDialog(self,'Interactions happen within the social distance.',"How many folds of the animals's diameter\nis the social distance (0=inf):",'Social distance (Enter an integer)',0,0,100000000000000)
 				if dialog1.ShowModal()==wx.ID_OK:
@@ -837,7 +837,7 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 			if dialog.ShowModal()==wx.ID_OK:
 				self.dim_tconv=int(dialog.GetValue())
 			dialog.Destroy()
-			if self.behavior_kind==2:
+			if self.behavior_mode==2:
 				self.channel=3
 			else:
 				dialog=wx.MessageDialog(self,'Grayscale input of Animation Analyzer?\nSelect "Yes" if the color of animals is behavior irrelevant.','Grayscale Animation Analyzer?',wx.YES_NO|wx.ICON_QUESTION)
@@ -989,12 +989,12 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 			if do_nothing is False:
 				if self.animation_analyzer is False:
 					CA=Categorizers()
-					CA.train_pattern_recognizer(self.data_path,self.path_to_categorizer,self.out_path,dim=self.dim_conv,channel=3,time_step=self.length,level=self.level_conv,aug_methods=self.aug_methods,augvalid=self.augvalid,include_bodyparts=self.include_bodyparts,std=self.std,background_free=self.background_free,behavior_kind=self.behavior_kind,social_distance=self.social_distance)
+					CA.train_pattern_recognizer(self.data_path,self.path_to_categorizer,self.out_path,dim=self.dim_conv,channel=3,time_step=self.length,level=self.level_conv,aug_methods=self.aug_methods,augvalid=self.augvalid,include_bodyparts=self.include_bodyparts,std=self.std,background_free=self.background_free,behavior_mode=self.behavior_mode,social_distance=self.social_distance)
 				else:
-					if self.behavior_kind==2:
+					if self.behavior_mode==2:
 						self.channel=3
 					CA=Categorizers()
-					CA.train_combnet(self.data_path,self.path_to_categorizer,self.out_path,dim_tconv=self.dim_tconv,dim_conv=self.dim_conv,channel=self.channel,time_step=self.length,level_tconv=self.level_tconv,level_conv=self.level_conv,aug_methods=self.aug_methods,augvalid=self.augvalid,include_bodyparts=self.include_bodyparts,std=self.std,background_free=self.background_free,behavior_kind=self.behavior_kind,social_distance=self.social_distance)	
+					CA.train_combnet(self.data_path,self.path_to_categorizer,self.out_path,dim_tconv=self.dim_tconv,dim_conv=self.dim_conv,channel=self.channel,time_step=self.length,level_tconv=self.level_tconv,level_conv=self.level_conv,aug_methods=self.aug_methods,augvalid=self.augvalid,include_bodyparts=self.include_bodyparts,std=self.std,background_free=self.background_free,behavior_mode=self.behavior_mode,social_distance=self.social_distance)	
 
 
 	def remove_categorizer(self,event):

@@ -67,7 +67,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 	def __init__(self,title):
 
 		super(WindowLv2_AnalyzeBehaviors,self).__init__(parent=None,title=title,size=(1000,520))
-		self.behavior_kind=0
+		self.behavior_mode=0
 		self.use_detector=False
 		self.detector_path=None
 		self.path_to_detector=None
@@ -151,7 +151,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 		module_detection=wx.BoxSizer(wx.HORIZONTAL)
 		button_detection=wx.Button(panel,label='Specify the method to\ndetect animals or objects',size=(300,40))
 		button_detection.Bind(wx.EVT_BUTTON,self.select_method)
-		wx.Button.SetToolTip(button_detection,'Background subtraction-based method is accurate and fast but needs static background and stable illumination in videos; Detectors-based method is accurate and versatile in any recording settings but is slow. See Extended Guide for details.')
+		wx.Button.SetToolTip(button_detection,'Background subtraction-based method is accurate and fast but requires static background and stable illumination in videos; Detectors-based method is accurate and versatile in any recording settings but is slow. See Extended Guide for details.')
 		self.text_detection=wx.StaticText(panel,label='Default: Background subtraction-based method.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_detection.Add(button_detection,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_detection.Add(self.text_detection,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -210,7 +210,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 
 		button_analyze=wx.Button(panel,label='Start to analyze the behaviors',size=(300,40))
 		button_analyze.Bind(wx.EVT_BUTTON,self.analyze_behaviors)
-		wx.Button.SetToolTip(button_analyze,'Will output a raster plot for all behavior events for all videos, an annotated video copy for each video, various spreadsheets storing quantification results for each selected behavior parameter.')
+		wx.Button.SetToolTip(button_analyze,'Will output a raster plot for all behavior events in all videos, an annotated video copy for each video, various spreadsheets storing quantification results for each selected behavior parameter.')
 		boxsizer.Add(0,5,0)
 		boxsizer.Add(button_analyze,0,wx.RIGHT|wx.ALIGN_RIGHT,90)
 		boxsizer.Add(0,10,0)
@@ -312,10 +312,10 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 				else:
 					self.background_free=False
 				if 'behavior_kind' in parameters:
-					self.behavior_kind=int(parameters['behavior_kind'][0])
+					self.behavior_mode=int(parameters['behavior_kind'][0])
 				else:
-					self.behavior_kind=0
-				if self.behavior_kind==2:
+					self.behavior_mode=0
+				if self.behavior_mode==2:
 					self.social_distance=int(parameters['social_distance'][0])
 					if self.social_distance==0:
 						self.social_distance=float('inf')
@@ -363,7 +363,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 
 	def select_method(self,event):
 
-		if self.behavior_kind<=1:
+		if self.behavior_mode<=1:
 			methods=['Subtract background (fast but requires static background & stable illumination)','Use trained Detectors (versatile but slow)']
 		else:
 			methods=['Use trained Detectors (versatile but slow)']
@@ -617,7 +617,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 			if self.behavior_to_annotate[0]=='all':
 				self.behavior_to_annotate=list(self.behaviornames_and_colors.keys())
 
-			if self.behavior_kind==2:
+			if self.behavior_mode==2:
 				dialog=wx.MessageDialog(self,'Specify individual-specific behaviors? e.g., sex-specific behaviors only occur in a specific sex and\ncan be used to maintain the correct ID of this individual during the entire analysis.','Individual-specific behaviors?',wx.YES_NO|wx.ICON_QUESTION)
 				if dialog.ShowModal()==wx.ID_YES:
 					for animal_name in self.animal_kinds:
@@ -684,7 +684,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 		if self.path_to_categorizer is None:
 			parameters=['3 areal parameters','3 length parameters','4 locomotion parameters']
 		else:
-			if self.behavior_kind==1:
+			if self.behavior_mode==1:
 				parameters=['count','duration','latency']
 			else:
 				parameters=['count','duration','latency','3 areal parameters','3 length parameters','4 locomotion parameters']
@@ -773,7 +773,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 						self.animal_number=1
 			
 				if self.path_to_categorizer is None:
-					self.behavior_kind=0
+					self.behavior_mode=0
 					categorize_behavior=False
 				else:
 					categorize_behavior=True
@@ -782,7 +782,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 
 					AA=AnalyzeAnimal()
 					AA.prepare_analysis(i,self.result_path,self.animal_number,delta=self.delta,names_and_colors=self.behaviornames_and_colors,framewidth=self.framewidth,stable_illumination=self.stable_illumination,dim_tconv=self.dim_tconv,dim_conv=self.dim_conv,channel=self.channel,include_bodyparts=self.include_bodyparts,std=self.std,categorize_behavior=categorize_behavior,animation_analyzer=self.animation_analyzer,path_background=self.background_path,autofind_t=self.autofind_t,t=self.t,duration=self.duration,ex_start=self.ex_start,ex_end=self.ex_end,length=self.length,animal_vs_bg=self.animal_vs_bg)
-					if self.behavior_kind==0:
+					if self.behavior_mode==0:
 						AA.acquire_information(background_free=self.background_free)
 						AA.craft_data()
 						interact_all=False
@@ -802,9 +802,9 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 				else:
 
 					AAD=AnalyzeAnimalDetector()
-					AAD.prepare_analysis(self.path_to_detector,i,self.result_path,self.animal_number,self.animal_kinds,self.behavior_kind,names_and_colors=self.behaviornames_and_colors,framewidth=self.framewidth,dim_tconv=self.dim_tconv,dim_conv=self.dim_conv,channel=self.channel,include_bodyparts=self.include_bodyparts,std=self.std,categorize_behavior=categorize_behavior,animation_analyzer=self.animation_analyzer,t=self.t,duration=self.duration,length=self.length,social_distance=self.social_distance)
+					AAD.prepare_analysis(self.path_to_detector,i,self.result_path,self.animal_number,self.animal_kinds,self.behavior_mode,names_and_colors=self.behaviornames_and_colors,framewidth=self.framewidth,dim_tconv=self.dim_tconv,dim_conv=self.dim_conv,channel=self.channel,include_bodyparts=self.include_bodyparts,std=self.std,categorize_behavior=categorize_behavior,animation_analyzer=self.animation_analyzer,t=self.t,duration=self.duration,length=self.length,social_distance=self.social_distance)
 					AAD.acquire_information(batch_size=self.detector_batch,background_free=self.background_free)
-					if self.behavior_kind!=1:
+					if self.behavior_mode!=1:
 						AAD.craft_data()
 					if self.path_to_categorizer is not None:
 						AAD.categorize_behaviors(self.path_to_categorizer,uncertain=self.uncertain)
