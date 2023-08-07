@@ -9,7 +9,7 @@ LabGym can:
 
 A tutorial video for a high-level understanding of what LabGym can do, how it works, and how to use it:
 
-coming soon!
+Will upload soon!
 
 Cite LabGym: https://www.cell.com/cell-reports-methods/fulltext/S2667-2375(23)00026-7.
 
