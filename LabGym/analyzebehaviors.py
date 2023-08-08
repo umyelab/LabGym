@@ -27,6 +27,7 @@ import numpy as np
 import math
 from scipy.spatial import distance
 from collections import deque
+import tensorflow as tf
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array
 import pandas as pd
@@ -520,10 +521,15 @@ class AnalyzeAnimal():
 		del self.pattern_images
 		gc.collect()
 
+		with tf.device('CPU'):
+			if self.animation_analyzer is True:
+				animations=tf.convert_to_tensor(np.array(animations,dtype='float32')/255.0)
+			pattern_images=tf.convert_to_tensor(np.array(pattern_images,dtype='float32')/255.0)
+
 		if self.animation_analyzer is True:
-			inputs=[np.array(animations,dtype='float32')/255.0,np.array(pattern_images,dtype='float32')/255.0]
+			inputs=[animations,pattern_images]
 		else:
-			inputs=np.array(pattern_images,dtype='float32')/255.0
+			inputs=pattern_images
 
 		categorizer=load_model(path_to_categorizer)
 		predictions=categorizer.predict(inputs,batch_size=32)
