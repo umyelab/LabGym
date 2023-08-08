@@ -31,6 +31,7 @@ from collections import deque
 from skimage import exposure,transform
 from skimage.transform import AffineTransform
 import scipy.ndimage as ndimage
+import tensorflow as tf
 from tensorflow.keras.preprocessing.image import img_to_array,load_img
 from tensorflow.keras.layers import Input,TimeDistributed,BatchNormalization,MaxPooling2D,Activation,ZeroPadding2D,Add
 from tensorflow.keras.layers import Conv2D,Dropout,Flatten,Dense,LSTM,concatenate,AveragePooling2D,GlobalMaxPooling2D
@@ -592,7 +593,6 @@ class Categorizers():
 				x=Dense(classes,activation='softmax')(x)
 
 			model=Model(inputs=inputs,outputs=x)
-			#plot_model(model,'model.png',show_shapes=True)
 
 			return model
 
@@ -656,7 +656,6 @@ class Categorizers():
 				x=Dense(classes,activation='softmax')(x)
 
 			model=Model(inputs=inputs,outputs=x)
-			#plot_model(model,'model.png',show_shapes=True)
 
 			return model
 
@@ -699,7 +698,6 @@ class Categorizers():
 			predictions=Dense(classes,activation='softmax')(outputs)
 
 		model=Model(inputs=[animation_inputs,pattern_image_inputs],outputs=predictions)
-    	#plot_model(model,'model.png',show_shapes=True)
 
 		return model
 
@@ -762,6 +760,12 @@ class Categorizers():
 			_,testX,testY=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free,behavior_mode=behavior_mode)
 		testY=lb.fit_transform(testY)
 
+		with tf.device('CPU'):
+			trainX=tf.convert_to_tensor(trainX)
+			trainY=tf.convert_to_tensor(trainY)
+			testX_tensor=tf.convert_to_tensor(testX)
+			testY_tensor=tf.convert_to_tensor(testY)
+
 		print('Training example shape : '+str(trainX.shape))
 		print('Training label shape : '+str(trainY.shape))
 		print('Validation example shape : '+str(testX.shape))
@@ -788,39 +792,45 @@ class Categorizers():
 		es=EarlyStopping(monitor='val_loss',min_delta=0.001,mode='min',verbose=1,patience=4,restore_best_weights=True)
 		rl=ReduceLROnPlateau(monitor='val_loss',min_delta=0.001,factor=0.2,patience=2,verbose=1,mode='min',min_learning_rate=1e-7)
 
-		H=model.fit(trainX,trainY,batch_size=batch_size,validation_data=(testX,testY),epochs=1000000,callbacks=[cp,es,rl])
-		
-		predictions=model.predict(testX,batch_size=batch_size)
+		H=model.fit(trainX,trainY,batch_size=batch_size,validation_data=(testX_tensor,testY_tensor),epochs=1000000,callbacks=[cp,es,rl])
 
-		if len(self.classnames)==2:
-			print(classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=[self.classnames[0]]))
-			report=classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=[self.classnames[0]],output_dict=True)
-		else:
-			print(classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=self.classnames))
-			report=classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=self.classnames,output_dict=True)
-
-		pd.DataFrame(report).transpose().to_csv(os.path.join(model_path,'training_metrics.csv'),float_format='%.2f')
-		if out_path is not None:
-			pd.DataFrame(report).transpose().to_excel(os.path.join(out_path,'training_metrics.xlsx'),float_format='%.2f')
-		
 		model.save(model_path)
 		print('Trained Categorizer saved in: '+str(model_path))
 
-		plt.style.use('seaborn-bright')
-		plt.figure()
-		plt.plot(H.history['loss'],label='train_loss')
-		plt.plot(H.history['val_loss'],label='val_loss')
-		plt.plot(H.history['accuracy'],label='train_accuracy')
-		plt.plot(H.history['val_accuracy'],label='val_accuracy')
-		plt.title('Loss and Accuracy')
-		plt.xlabel('Epoch')
-		plt.ylabel('Loss/Accuracy')
-		plt.legend(loc='center right')
-		plt.savefig(os.path.join(model_path,'training_history.png'))
-		if out_path is not None:
-			plt.savefig(os.path.join(out_path,'training_history.png'))
-			print('Training reports saved in: '+str(out_path))
-		plt.close('all')
+		try:
+		
+			predictions=model.predict(testX,batch_size=batch_size)
+
+			if len(self.classnames)==2:
+				print(classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=[self.classnames[0]]))
+				report=classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=[self.classnames[0]],output_dict=True)
+			else:
+				print(classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=self.classnames))
+				report=classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=self.classnames,output_dict=True)
+
+			pd.DataFrame(report).transpose().to_csv(os.path.join(model_path,'training_metrics.csv'),float_format='%.2f')
+			if out_path is not None:
+				pd.DataFrame(report).transpose().to_excel(os.path.join(out_path,'training_metrics.xlsx'),float_format='%.2f')
+			
+			plt.style.use('seaborn-bright')
+			plt.figure()
+			plt.plot(H.history['loss'],label='train_loss')
+			plt.plot(H.history['val_loss'],label='val_loss')
+			plt.plot(H.history['accuracy'],label='train_accuracy')
+			plt.plot(H.history['val_accuracy'],label='val_accuracy')
+			plt.title('Loss and Accuracy')
+			plt.xlabel('Epoch')
+			plt.ylabel('Loss/Accuracy')
+			plt.legend(loc='center right')
+			plt.savefig(os.path.join(model_path,'training_history.png'))
+			if out_path is not None:
+				plt.savefig(os.path.join(out_path,'training_history.png'))
+				print('Training reports saved in: '+str(out_path))
+			plt.close('all')
+
+		except:
+
+			pass
 
 
 	def train_animation_analyzer(self,data_path,model_path,out_path=None,dim=64,channel=1,time_step=15,level=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,behavior_mode=0,social_distance=0):
@@ -881,6 +891,12 @@ class Categorizers():
 			testX,_,testY=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free,behavior_mode=behavior_mode)
 		testY=lb.fit_transform(testY)
 
+		with tf.device('CPU'):
+			trainX=tf.convert_to_tensor(trainX)
+			trainY=tf.convert_to_tensor(trainY)
+			testX_tensor=tf.convert_to_tensor(testX)
+			testY_tensor=tf.convert_to_tensor(testY)
+
 		print('Training example shape : '+str(trainX.shape))
 		print('Training label shape : '+str(trainY.shape))
 		print('Validation example shape : '+str(testX.shape))
@@ -908,39 +924,45 @@ class Categorizers():
 		es=EarlyStopping(monitor='val_loss',min_delta=0.001,mode='min',verbose=1,patience=4,restore_best_weights=True)
 		rl=ReduceLROnPlateau(monitor='val_loss',min_delta=0.001,factor=0.2,patience=2,verbose=1,mode='min',min_learning_rate=1e-7)
 
-		H=model.fit(trainX,trainY,batch_size=batch_size,validation_data=(testX,testY),epochs=1000000,callbacks=[cp,es,rl])
-		
-		predictions=model.predict(testX,batch_size=batch_size)
+		H=model.fit(trainX,trainY,batch_size=batch_size,validation_data=(testX_tensor,testY_tensor),epochs=1000000,callbacks=[cp,es,rl])
 
-		if len(self.classnames)==2:
-			print(classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=[self.classnames[0]]))
-			report=classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=[self.classnames[0]],output_dict=True)
-		else:
-			print(classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=self.classnames))
-			report=classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=self.classnames,output_dict=True)
-
-		pd.DataFrame(report).transpose().to_csv(os.path.join(model_path,'training_metrics.csv'),float_format='%.2f')
-		if out_path is not None:
-			pd.DataFrame(report).transpose().to_excel(os.path.join(out_path,'training_metrics.xlsx'),float_format='%.2f')
-		
 		model.save(model_path)
 		print('Trained Categorizer saved in: '+str(model_path))
 
-		plt.style.use('seaborn-bright')
-		plt.figure()
-		plt.plot(H.history['loss'],label='train_loss')
-		plt.plot(H.history['val_loss'],label='val_loss')
-		plt.plot(H.history['accuracy'],label='train_accuracy')
-		plt.plot(H.history['val_accuracy'],label='val_accuracy')
-		plt.title('Loss and Accuracy')
-		plt.xlabel('Epoch')
-		plt.ylabel('Loss/Accuracy')
-		plt.legend(loc='center right')
-		plt.savefig(os.path.join(model_path,'training_history.png'))
-		if out_path is not None:
-			plt.savefig(os.path.join(out_path,'training_history.png'))
-			print('Training reports saved in: '+str(out_path))
-		plt.close('all')
+		try:
+		
+			predictions=model.predict(testX,batch_size=batch_size)
+
+			if len(self.classnames)==2:
+				print(classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=[self.classnames[0]]))
+				report=classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=[self.classnames[0]],output_dict=True)
+			else:
+				print(classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=self.classnames))
+				report=classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=self.classnames,output_dict=True)
+
+			pd.DataFrame(report).transpose().to_csv(os.path.join(model_path,'training_metrics.csv'),float_format='%.2f')
+			if out_path is not None:
+				pd.DataFrame(report).transpose().to_excel(os.path.join(out_path,'training_metrics.xlsx'),float_format='%.2f')
+
+			plt.style.use('seaborn-bright')
+			plt.figure()
+			plt.plot(H.history['loss'],label='train_loss')
+			plt.plot(H.history['val_loss'],label='val_loss')
+			plt.plot(H.history['accuracy'],label='train_accuracy')
+			plt.plot(H.history['val_accuracy'],label='val_accuracy')
+			plt.title('Loss and Accuracy')
+			plt.xlabel('Epoch')
+			plt.ylabel('Loss/Accuracy')
+			plt.legend(loc='center right')
+			plt.savefig(os.path.join(model_path,'training_history.png'))
+			if out_path is not None:
+				plt.savefig(os.path.join(out_path,'training_history.png'))
+				print('Training reports saved in: '+str(out_path))
+			plt.close('all')
+
+		except:
+
+			pass
 
 
 	def train_combnet(self,data_path,model_path,out_path=None,dim_tconv=32,dim_conv=64,channel=1,time_step=15,level_tconv=1,level_conv=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,behavior_mode=0,social_distance=0):
@@ -994,6 +1016,14 @@ class Categorizers():
 			test_animations,test_pattern_images,testY=self.build_data(test_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free,behavior_mode=behavior_mode)
 		testY=lb.fit_transform(testY)
 
+		with tf.device('CPU'):
+			train_animations=tf.convert_to_tensor(train_animations)
+			train_pattern_images=tf.convert_to_tensor(train_pattern_images)
+			trainY=tf.convert_to_tensor(trainY)
+			test_animations_tensor=tf.convert_to_tensor(test_animations)
+			test_pattern_images_tensor=tf.convert_to_tensor(test_pattern_images)
+			testY_tensor=tf.convert_to_tensor(testY)
+
 		print('Training example shape : '+str(train_animations.shape)+', '+str(train_pattern_images.shape))
 		print('Training label shape : '+str(trainY.shape))
 		print('Validation example shape : '+str(test_animations.shape)+', '+str(test_pattern_images.shape))
@@ -1017,38 +1047,44 @@ class Categorizers():
 		es=EarlyStopping(monitor='val_loss',min_delta=0.001,mode='min',verbose=1,patience=4,restore_best_weights=True)
 		rl=ReduceLROnPlateau(monitor='val_loss',min_delta=0.001,factor=0.2,patience=2,verbose=1,mode='min',min_learning_rate=1e-7)
 
-		H=model.fit([train_animations,train_pattern_images],trainY,batch_size=batch_size,validation_data=([test_animations,test_pattern_images],testY),epochs=1000000,callbacks=[cp,es,rl])
-		
-		predictions=model.predict([test_animations,test_pattern_images],batch_size=batch_size)
+		H=model.fit([train_animations,train_pattern_images],trainY,batch_size=batch_size,validation_data=([test_animations_tensor,test_pattern_images_tensor],testY_tensor),epochs=1000000,callbacks=[cp,es,rl])
 
-		if len(self.classnames)==2:
-			print(classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=[self.classnames[0]]))
-			report=classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=[self.classnames[0]],output_dict=True)
-		else:
-			print(classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=self.classnames))
-			report=classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=self.classnames,output_dict=True)
-
-		pd.DataFrame(report).transpose().to_csv(os.path.join(model_path,'training_metrics.csv'),float_format='%.2f')
-		if out_path is not None:
-			pd.DataFrame(report).transpose().to_excel(os.path.join(out_path,'training_metrics.xlsx'),float_format='%.2f')
-		
 		model.save(model_path)
 		print('Trained Categorizer saved in: '+str(model_path))
 
-		plt.style.use('seaborn-bright')
-		plt.figure()
-		plt.plot(H.history['loss'],label='train_loss')
-		plt.plot(H.history['val_loss'],label='val_loss')
-		plt.plot(H.history['accuracy'],label='train_accuracy')
-		plt.plot(H.history['val_accuracy'],label='val_accuracy')
-		plt.title('Loss and Accuracy')
-		plt.xlabel('Epoch')
-		plt.ylabel('Loss/Accuracy')
-		plt.legend(loc='center right')
-		plt.savefig(os.path.join(model_path,'training_history.png'))
-		if out_path is not None:
-			plt.savefig(os.path.join(out_path,'training_history.png'))
-			print('Training reports saved in: '+str(out_path))
-		plt.close('all')
+		try:
+
+			predictions=model.predict([test_animations,test_pattern_images],batch_size=batch_size)
+
+			if len(self.classnames)==2:
+				print(classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=[self.classnames[0]]))
+				report=classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=[self.classnames[0]],output_dict=True)
+			else:
+				print(classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=self.classnames))
+				report=classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=self.classnames,output_dict=True)
+
+			pd.DataFrame(report).transpose().to_csv(os.path.join(model_path,'training_metrics.csv'),float_format='%.2f')
+			if out_path is not None:
+				pd.DataFrame(report).transpose().to_excel(os.path.join(out_path,'training_metrics.xlsx'),float_format='%.2f')
+
+			plt.style.use('seaborn-bright')
+			plt.figure()
+			plt.plot(H.history['loss'],label='train_loss')
+			plt.plot(H.history['val_loss'],label='val_loss')
+			plt.plot(H.history['accuracy'],label='train_accuracy')
+			plt.plot(H.history['val_accuracy'],label='val_accuracy')
+			plt.title('Loss and Accuracy')
+			plt.xlabel('Epoch')
+			plt.ylabel('Loss/Accuracy')
+			plt.legend(loc='center right')
+			plt.savefig(os.path.join(model_path,'training_history.png'))
+			if out_path is not None:
+				plt.savefig(os.path.join(out_path,'training_history.png'))
+				print('Training reports saved in: '+str(out_path))
+			plt.close('all')
+
+		except:
+
+			pass
 
 
