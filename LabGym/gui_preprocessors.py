@@ -447,7 +447,7 @@ class WindowLv2_SortBehaviors(wx.Frame):
 					shutil.move(os.path.join(self.input_path,example_name+'.jpg'),os.path.join(self.keys_behaviorpaths[shortcutkey],example_name+'.jpg'))
 
 				animations=[i for i in os.listdir(self.input_path) if i.endswith('.avi')]
-				animations.sort()
+				animations=sorted(animations,key=lambda name:int(name.split('_len')[0].split('_')[-1]))
 
 				if len(animations)>0 and index<len(animations):
 

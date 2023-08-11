@@ -958,7 +958,8 @@ class AnalyzeAnimalDetector():
 						animations+=self.animations[animal_name][n]
 					pattern_images+=self.pattern_images[animal_name][n]
 
-			del self.animations[animal_name]
+			if self.animation_analyzer is True:
+				del self.animations[animal_name]
 			del self.pattern_images[animal_name]
 			gc.collect()
 
@@ -1565,6 +1566,9 @@ class AnalyzeAnimalDetector():
 		capture=cv2.VideoCapture(self.path_to_video)
 		frame_count=frame_count_analyze=0
 		animation=deque(maxlen=self.length)
+		for animal_name in self.animal_kinds:
+			for i in range(self.animal_number[animal_name]):
+				os.makedirs(os.path.join(self.results_path,str(animal_name)+'_'+str(i)),exist_ok=True)
 
 		start_t=round((self.t-self.length/self.fps),2)
 		if start_t<0:
@@ -1617,8 +1621,8 @@ class AnalyzeAnimalDetector():
 									pattern_image_name=os.path.splitext(self.basename)[0]+'_'+animal_name+'_'+str(n)+'_'+str(frame_count_analyze)+'_len'+str(self.length)+'.jpg'
 									pattern_image=generate_patternimage(self.background,self.animal_contours[animal_name][n][frame_count_analyze-self.length+1:frame_count_analyze+1],inners=None,std=0)
 
-								path_animation=os.path.join(self.results_path,animation_name)
-								path_pattern_image=os.path.join(self.results_path,pattern_image_name)
+								path_animation=os.path.join(self.results_path,str(animal_name)+'_'+str(n),animation_name)
+								path_pattern_image=os.path.join(self.results_path,str(animal_name)+'_'+str(n),pattern_image_name)
 
 								writer=cv2.VideoWriter(path_animation,cv2.VideoWriter_fourcc(*'MJPG'),self.fps/5,(w,h),True)
 								for blob in animation:
@@ -1646,6 +1650,7 @@ class AnalyzeAnimalDetector():
 		temp_inners=deque(maxlen=self.length)
 		animation=deque(maxlen=self.length)
 		capture=cv2.VideoCapture(self.path_to_video)
+		os.makedirs(os.path.join(self.results_path,'0'),exist_ok=True)
 
 		start_t=round((self.t-self.length/self.fps),2)
 		if start_t<0:
@@ -1749,8 +1754,8 @@ class AnalyzeAnimalDetector():
 								pattern_image_name=os.path.splitext(self.basename)[0]+'_'+str(frame_count_analyze)+'_len'+str(self.length)+'_itbs.jpg'
 								pattern_image=generate_patternimage_all(frame,y_bt,y_tp,x_lf,x_rt,temp_contours,temp_inners,std=0)
 
-							path_animation=os.path.join(self.results_path,animation_name)
-							path_pattern_image=os.path.join(self.results_path,pattern_image_name)
+							path_animation=os.path.join(self.results_path,'0',animation_name)
+							path_pattern_image=os.path.join(self.results_path,'0',pattern_image_name)
 
 							writer=cv2.VideoWriter(path_animation,cv2.VideoWriter_fourcc(*'MJPG'),self.fps/5,(w,h),True)
 							for blob in animation:
@@ -1788,6 +1793,7 @@ class AnalyzeAnimalDetector():
 				if self.include_bodyparts is True:
 					self.animal_inners[animal_name][i]=deque(maxlen=self.length)
 					self.animal_other_inners[animal_name][i]=deque(maxlen=self.length)
+				os.makedirs(os.path.join(self.results_path,str(animal_name)+'_'+str(i)),exist_ok=True)
 
 		start_t=round((self.t-self.length/self.fps),2)
 		if start_t<0:
@@ -2032,8 +2038,8 @@ class AnalyzeAnimalDetector():
 											pattern_image_name=os.path.splitext(self.basename)[0]+'_'+animal_name+'_'+str(n)+'_'+str(frame_count_analyze)+'_len'+str(self.length)+'_scdt'+scdt+'_itadv.jpg'
 											pattern_image=generate_patternimage_interact(self.background,self.animal_contours[animal_name][n],self.animal_other_contours[animal_name][n],inners=None,other_inners=None,std=0)
 
-										path_animation=os.path.join(self.results_path,animation_name)
-										path_pattern_image=os.path.join(self.results_path,pattern_image_name)
+										path_animation=os.path.join(self.results_path,str(animal_name)+'_'+str(n),animation_name)
+										path_pattern_image=os.path.join(self.results_path,str(animal_name)+'_'+str(n),pattern_image_name)
 
 										writer=cv2.VideoWriter(path_animation,cv2.VideoWriter_fourcc(*'MJPG'),self.fps/5,(w,h),True)
 										for blob in animation:

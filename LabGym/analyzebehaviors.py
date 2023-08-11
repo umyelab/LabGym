@@ -1091,7 +1091,9 @@ class AnalyzeAnimal():
 		capture=cv2.VideoCapture(self.path_to_video)
 		frame_count=frame_count_analyze=0
 		temp_frames=deque(maxlen=self.length)
-		os.makedirs(os.path.join(self.results_path,'examples'),exist_ok=True)
+
+		for i in range(self.animal_number):
+			os.makedirs(os.path.join(self.results_path,'examples',str(i)),exist_ok=True)
 
 		start_t=round((self.t-self.length/self.fps),2)
 		if start_t<0:
@@ -1148,8 +1150,8 @@ class AnalyzeAnimal():
 									pattern_image_name=os.path.splitext(self.basename)[0]+'_'+str(n)+'_'+str(frame_count_analyze)+'_len'+str(self.length)+'.jpg'
 									pattern_image=generate_patternimage(self.background,self.animal_contours[n][frame_count_analyze-self.length+1:frame_count_analyze+1],inners=None,std=0)
 
-								path_animation=os.path.join(self.results_path,'examples',animation_name)
-								path_pattern_image=os.path.join(self.results_path,'examples',pattern_image_name)
+								path_animation=os.path.join(self.results_path,'examples',str(n),animation_name)
+								path_pattern_image=os.path.join(self.results_path,'examples',str(n),pattern_image_name)
 
 								writer=cv2.VideoWriter(path_animation,cv2.VideoWriter_fourcc(*'MJPG'),self.fps/5,(w,h),True)
 								for blob in animation:
@@ -1186,7 +1188,7 @@ class AnalyzeAnimal():
 		temp_contours=deque(maxlen=self.length)
 		temp_inners=deque(maxlen=self.length)
 		animation=deque(maxlen=self.length)
-		os.makedirs(os.path.join(self.results_path,'examples'),exist_ok=True)
+		os.makedirs(os.path.join(self.results_path,'examples','0'),exist_ok=True)
 		
 		start_t=round((self.t-self.length/self.fps),2)
 		if start_t<0:
@@ -1248,8 +1250,8 @@ class AnalyzeAnimal():
 								pattern_image_name=os.path.splitext(self.basename)[0]+'_'+str(frame_count_analyze)+'_len'+str(self.length)+'_itbs.jpg'
 								pattern_image=generate_patternimage_all(frame,y_bt,y_tp,x_lf,x_rt,temp_contours,temp_inners,std=0)
 
-							path_animation=os.path.join(self.results_path,'examples',animation_name)
-							path_pattern_image=os.path.join(self.results_path,'examples',pattern_image_name)
+							path_animation=os.path.join(self.results_path,'examples','0',animation_name)
+							path_pattern_image=os.path.join(self.results_path,'examples','0',pattern_image_name)
 						
 							writer=cv2.VideoWriter(path_animation,cv2.VideoWriter_fourcc(*'MJPG'),self.fps/5,(w,h),True)
 							for blob in animation:
