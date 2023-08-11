@@ -234,95 +234,97 @@ class Categorizers():
 				else:
 					to_delete=None
 
-				capture=cv2.VideoCapture(i)
-				animation=deque()
-				frames=deque(maxlen=time_step)
-				original_frame=None
-				n=0
+				if dim_tconv!=0:
 
-				while True:
-					retval,frame=capture.read()
-					if original_frame is None:
-						original_frame=frame
-					if frame is None:
-						break
-					frames.append(frame)
+					capture=cv2.VideoCapture(i)
+					animation=deque()
+					frames=deque(maxlen=time_step)
+					original_frame=None
+					n=0
 
-				frames_length=len(frames)
-				if frames_length<time_step:
-					for diff in range(time_step-frames_length):
-						frames.append(np.zeros_like(original_frame))
-					print('Inconsistent duration of animation detected at: '+str(i)+'.')
-					print('Zero padding has been used, which may decrease the training accuracy.')
+					while True:
+						retval,frame=capture.read()
+						if original_frame is None:
+							original_frame=frame
+						if frame is None:
+							break
+						frames.append(frame)
 
-				for frame in frames:
+					frames_length=len(frames)
+					if frames_length<time_step:
+						for diff in range(time_step-frames_length):
+							frames.append(np.zeros_like(original_frame))
+						print('Inconsistent duration of animation detected at: '+str(i)+'.')
+						print('Zero padding has been used, which may decrease the training accuracy.')
 
-					if to_delete is not None and n in to_delete:
+					for frame in frames:
 
-						blob=np.zeros_like(original_frame)
+						if to_delete is not None and n in to_delete:
 
-					else:
+							blob=np.zeros_like(original_frame)
 
-						frame_contrast=np.uint8(exposure.rescale_intensity(frame,out_range=(0,255)))
-
-						if background_free is True:
-							frame_gray=cv2.cvtColor(frame_contrast,cv2.COLOR_BGR2GRAY)
-							thred=cv2.threshold(frame_gray,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]
-							cnts,_=cv2.findContours(thred,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
-							if len(cnts)==0:
-								blob=np.zeros_like(frame)
-							else:
-								if behavior_mode==0:
-									contour=sorted(cnts,key=cv2.contourArea,reverse=True)[0]
-									blob=extract_blob(frame,contour,channel=3)
-								else:
-									(y_bt,y_tp,x_lf,x_rt)=crop_frame(frame,cnts)
-									blob=frame_contrast[y_bt:y_tp,x_lf:x_rt]
 						else:
-							blob=frame_contrast
 
-						if code is not None:
-							blob=cv2.flip(blob,code)
+							frame_contrast=np.uint8(exposure.rescale_intensity(frame,out_range=(0,255)))
 
-						if beta is not None:
-							blob=blob.astype('float')
 							if background_free is True:
-								blob[blob>30]+=beta
+								frame_gray=cv2.cvtColor(frame_contrast,cv2.COLOR_BGR2GRAY)
+								thred=cv2.threshold(frame_gray,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]
+								cnts,_=cv2.findContours(thred,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
+								if len(cnts)==0:
+									blob=np.zeros_like(frame)
+								else:
+									if behavior_mode==0:
+										contour=sorted(cnts,key=cv2.contourArea,reverse=True)[0]
+										blob=extract_blob(frame,contour,channel=3)
+									else:
+										(y_bt,y_tp,x_lf,x_rt)=crop_frame(frame,cnts)
+										blob=frame_contrast[y_bt:y_tp,x_lf:x_rt]
 							else:
-								blob+=beta
-							blob=np.uint8(np.clip(blob,0,255))
+								blob=frame_contrast
 
-						if angle is not None:
-							blob=ndimage.rotate(blob,angle,reshape=False,prefilter=False)
+							if code is not None:
+								blob=cv2.flip(blob,code)
 
-						if shear is not None:
-							tf=AffineTransform(shear=shear)
-							blob=transform.warp(blob,tf,order=1,preserve_range=True,mode='constant')
+							if beta is not None:
+								blob=blob.astype('float')
+								if background_free is True:
+									blob[blob>30]+=beta
+								else:
+									blob+=beta
+								blob=np.uint8(np.clip(blob,0,255))
 
-						if scale is not None:
-							blob_black=np.zeros_like(blob)
-							if width==0:
-								blob_scl=cv2.resize(blob,(blob.shape[1],int(blob.shape[0]*scale)),interpolation=cv2.INTER_AREA)
-							else:
-								blob_scl=cv2.resize(blob,(int(blob.shape[1]*scale),blob.shape[0]),interpolation=cv2.INTER_AREA)
-							blob_scl=img_to_array(blob_scl)
-							x=(blob_black.shape[1]-blob_scl.shape[1])//2
-							y=(blob_black.shape[0]-blob_scl.shape[0])//2
-							blob_black[y:y+blob_scl.shape[0],x:x+blob_scl.shape[1]]=blob_scl
-							blob=blob_black
+							if angle is not None:
+								blob=ndimage.rotate(blob,angle,reshape=False,prefilter=False)
 
-					if channel==1:
-						blob=cv2.cvtColor(np.uint8(blob),cv2.COLOR_BGR2GRAY)
+							if shear is not None:
+								tf=AffineTransform(shear=shear)
+								blob=transform.warp(blob,tf,order=1,preserve_range=True,mode='constant')
 
-					blob=cv2.resize(blob,(dim_tconv,dim_tconv),interpolation=cv2.INTER_AREA)
-					blob=img_to_array(blob)
-					animation.append(blob)
+							if scale is not None:
+								blob_black=np.zeros_like(blob)
+								if width==0:
+									blob_scl=cv2.resize(blob,(blob.shape[1],int(blob.shape[0]*scale)),interpolation=cv2.INTER_AREA)
+								else:
+									blob_scl=cv2.resize(blob,(int(blob.shape[1]*scale),blob.shape[0]),interpolation=cv2.INTER_AREA)
+								blob_scl=img_to_array(blob_scl)
+								x=(blob_black.shape[1]-blob_scl.shape[1])//2
+								y=(blob_black.shape[0]-blob_scl.shape[0])//2
+								blob_black[y:y+blob_scl.shape[0],x:x+blob_scl.shape[1]]=blob_scl
+								blob=blob_black
 
-					n+=1
+						if channel==1:
+							blob=cv2.cvtColor(np.uint8(blob),cv2.COLOR_BGR2GRAY)
 
-				capture.release()
+						blob=cv2.resize(blob,(dim_tconv,dim_tconv),interpolation=cv2.INTER_AREA)
+						blob=img_to_array(blob)
+						animation.append(blob)
 
-				animations.append(np.array(animation))
+						n+=1
+
+					capture.release()
+
+					animations.append(np.array(animation))
 
 				pattern_image=cv2.imread(path_to_pattern_image)
 
@@ -357,8 +359,9 @@ class Categorizers():
 				if amount%10000==0:
 					print('The augmented example amount: '+str(amount))
 					print(datetime.datetime.now())
-			
-		animations=np.array(animations,dtype='float32')/255.0
+
+		if dim_tconv!=0:
+			animations=np.array(animations,dtype='float32')/255.0
 		pattern_images=np.array(pattern_images,dtype='float32')/255.0
 		labels=np.array(labels)
 
@@ -751,13 +754,13 @@ class Categorizers():
 		print(datetime.datetime.now())
 
 		print('Start to augment training examples...')
-		_,trainX,trainY=self.build_data(train_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,behavior_mode=behavior_mode)
+		_,trainX,trainY=self.build_data(train_files,dim_tconv=0,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,behavior_mode=behavior_mode)
 		trainY=lb.fit_transform(trainY)
 		print('Start to augment validation examples...')
 		if augvalid is True:
-			_,testX,testY=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,behavior_mode=behavior_mode)
+			_,testX,testY=self.build_data(test_files,dim_tconv=0,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,behavior_mode=behavior_mode)
 		else:
-			_,testX,testY=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free,behavior_mode=behavior_mode)
+			_,testX,testY=self.build_data(test_files,dim_tconv=0,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free,behavior_mode=behavior_mode)
 		testY=lb.fit_transform(testY)
 
 		with tf.device('CPU'):
