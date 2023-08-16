@@ -452,6 +452,7 @@ class WindowLv2_SortBehaviors(wx.Frame):
 				if len(animations)>0 and index<len(animations):
 
 					example_name=animations[index].split('.')[0]
+					frame_count=example_name.split('_len')[0].split('_')[-1]
 
 					animation=cv2.VideoCapture(os.path.join(self.input_path,example_name+'.avi'))
 					fps=round(animation.get(cv2.CAP_PROP_FPS))
@@ -466,6 +467,7 @@ class WindowLv2_SortBehaviors(wx.Frame):
 
 						frame=cv2.resize(frame,(600,600),interpolation=cv2.INTER_AREA)
 						combined=np.hstack((frame,pattern_image))
+						cv2.putText(combined,'frame count: '+frame_count,(10,15),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,255),1)
 
 						n=1
 						for i in ['o: Prev','p: Next','q: Quit','u: Undo']:
@@ -522,6 +524,7 @@ class WindowLv2_SortBehaviors(wx.Frame):
 						wx.MessageBox('Behavior example sorting completed!','Completed!',wx.OK|wx.ICON_INFORMATION)
 						stop=True
 					else:
+						wx.MessageBox('This is the last behavior example!','To the end.',wx.OK|wx.ICON_INFORMATION)
 						index=0
 
 			cv2.destroyAllWindows()

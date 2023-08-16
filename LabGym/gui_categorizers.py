@@ -645,7 +645,7 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 
 		button_prepare=wx.Button(panel,label='Start to prepare the training examples',size=(300,40))
 		button_prepare.Bind(wx.EVT_BUTTON,self.rename_files)
-		wx.Button.SetToolTip(button_prepare,'Need to specify whether the behavior examples used for training include the background.')
+		wx.Button.SetToolTip(button_prepare,'All prepared behavior examples will be stored in the same folder and ready to be input for training.')
 		boxsizer.Add(button_prepare,0,wx.RIGHT|wx.ALIGN_RIGHT,90)
 		boxsizer.Add(0,10,0)
 
@@ -759,13 +759,6 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 			self.resize=None
 		dialog.Destroy()
 
-		dialog=wx.MessageDialog(self,'Are the animations (if any) in\ntraining examples background free?','Background-free animations?',wx.YES_NO|wx.ICON_QUESTION)
-		if dialog.ShowModal()==wx.ID_YES:
-			self.background_free=True
-		else:
-			self.background_free=False
-		dialog.Destroy()
-
 
 	def rename_files(self,event):
 
@@ -773,7 +766,7 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 			wx.MessageBox('Please select a folder that stores the sorted examples /\na new folder to store prepared training examples!','Error',wx.OK|wx.ICON_ERROR)
 		else:
 			CA=Categorizers()
-			CA.rename_label(self.file_path,self.new_path,resize=self.resize,background_free=self.background_free)
+			CA.rename_label(self.file_path,self.new_path,resize=self.resize)
 
 
 	def specify_categorizer(self,event):

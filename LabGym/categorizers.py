@@ -55,7 +55,7 @@ class Categorizers():
 		self.classnames=None
 
 
-	def rename_label(self,file_path,new_path,resize=None,background_free=True):
+	def rename_label(self,file_path,new_path,resize=None):
 
 		folder_list=[i for i in os.listdir(file_path) if os.path.isdir(os.path.join(file_path,i))]
 		print('Behavior names are: '+str(folder_list))
@@ -81,23 +81,12 @@ class Categorizers():
 					current_length+=1
 					if frame is None:
 						break
-					frame_contrast=np.uint8(exposure.rescale_intensity(frame,out_range=(0,255)))
 					if resize is not None:
-						frame_contrast=cv2.resize(frame_contrast,(resize,resize),interpolation=cv2.INTER_AREA)
-					if background_free is True:
-						frame_gray=cv2.cvtColor(frame_contrast,cv2.COLOR_BGR2GRAY)
-						mask=np.zeros_like(frame_contrast)
-						thred=cv2.threshold(frame_gray,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]
-						cnts,_=cv2.findContours(thred,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
-						cnts=sorted(cnts,key=cv2.contourArea,reverse=True)
-						if len(cnts)!=0:
-							cv2.drawContours(mask,cnts,-1,(255,255,255),-1)
-							mask=cv2.dilate(mask,np.ones((5,5),np.uint8))
-							frame_contrast=np.uint8(frame_contrast*(mask/255))
+						frame=cv2.resize(frame,(resize,resize),interpolation=cv2.INTER_AREA)
 					if writer is None:
-						(h,w)=frame_contrast.shape[:2]
+						(h,w)=frame.shape[:2]
 						writer=cv2.VideoWriter(new_animation,cv2.VideoWriter_fourcc(*'MJPG'),fps,(w,h),True)
-					writer.write(frame_contrast)
+					writer.write(frame)
 				capture.release()
 				writer.release()
 				pattern_image=cv2.imread(pattern_image)
