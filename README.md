@@ -7,7 +7,10 @@ LabGym can:
 3. **QUANTIFY** user-defined behaviors by providing quantitative measures for each behavior
 4. **MINE** the analysis results to show statistically significant findings
 
-A tutorial video for a high-level understanding of what LabGym can do, how it works, and how to use it: see home page.
+A tutorial video for a high-level understanding of what LabGym can do, how it works, and how to use it:
+
+[![Watch the video](https://img.youtube.com/vi/YoYhHMPbf_o/hqdefault.jpg)](https://youtu.be/YoYhHMPbf_o)
+
 
 Cite LabGym: https://www.cell.com/cell-reports-methods/fulltext/S2667-2375(23)00026-7.
 
