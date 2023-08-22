@@ -34,6 +34,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
 
 		super(WindowLv2_ProcessVideos,self).__init__(parent=None,title=title,size=(1000,330))
 		self.path_to_videos=None
+		self.framewidth=None
 		self.result_path=None
 		self.trim_video=False
 		self.time_windows=[]
@@ -122,11 +123,29 @@ class WindowLv2_ProcessVideos(wx.Frame):
 
 		wildcard='Video files(*.avi;*.mpg;*.mpeg;*.wmv;*.mp4;*.mkv;*.m4v;*.mov)|*.avi;*.mpg;*.mpeg;*.wmv;*.mp4;*.mkv;*.m4v;*.mov'
 		dialog=wx.FileDialog(self,'Select video(s)','','',wildcard,style=wx.FD_MULTIPLE)
+
 		if dialog.ShowModal()==wx.ID_OK:
+
 			self.path_to_videos=dialog.GetPaths()
 			self.path_to_videos.sort()
 			path=os.path.dirname(self.path_to_videos[0])
-			self.text_inputvideos.SetLabel('Selected '+str(len(self.path_to_videos))+' video(s) in: '+path+'.')
+			dialog1=wx.MessageDialog(self,'Proportional resize the video frames?','(Optional) resize the frames?',wx.YES_NO|wx.ICON_QUESTION)
+			if dialog1.ShowModal()==wx.ID_YES:
+				dialog2=wx.NumberEntryDialog(self,'Enter the desired frame width','The unit is pixel:','Desired frame width',480,1,10000)
+				if dialog2.ShowModal()==wx.ID_OK:
+					self.framewidth=int(dialog2.GetValue())
+					if self.framewidth<10:
+						self.framewidth=10
+					self.text_inputvideos.SetLabel('Selected '+str(len(self.path_to_videos))+' video(s) in: '+path+' (proportionally resize framewidth to '+str(self.framewidth)+').')
+				else:
+					self.framewidth=None
+					self.text_inputvideos.SetLabel('Selected '+str(len(self.path_to_videos))+' video(s) in: '+path+' (original framesize).')
+				dialog2.Destroy()
+			else:
+				self.framewidth=None
+				self.text_inputvideos.SetLabel('Selected '+str(len(self.path_to_videos))+' video(s) in: '+path+' (original framesize).')
+			dialog1.Destroy()
+
 		dialog.Destroy()
 
 
@@ -190,6 +209,9 @@ class WindowLv2_ProcessVideos(wx.Frame):
 				retval,frame=capture.read()
 				break
 			capture.release()
+
+			if self.framewidth is not None:
+				frame=cv2.resize(frame,(self.framewidth,int(frame.shape[0]*self.framewidth/frame.shape[1])),interpolation=cv2.INTER_AREA)
 			
 			canvas=np.copy(frame)
 			h,w=frame.shape[:2]
@@ -246,6 +268,9 @@ class WindowLv2_ProcessVideos(wx.Frame):
 				retval,frame=capture.read()
 				break
 			capture.release()
+
+			if self.framewidth is not None:
+				frame=cv2.resize(frame,(self.framewidth,int(frame.shape[0]*self.framewidth/frame.shape[1])),interpolation=cv2.INTER_AREA)
 
 			stop=False
 			while stop is False:
@@ -304,7 +329,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
 					for x,startt in enumerate(starttime_windows):
 						self.time_windows.append([startt,endtime_windows[x]])
 
-				preprocess_video(i,self.result_path,trim_video=self.trim_video,time_windows=self.time_windows,enhance_contrast=self.enhance_contrast,contrast=self.contrast,crop_frame=self.crop_frame,left=self.left,right=self.right,top=self.top,bottom=self.bottom)
+				preprocess_video(i,self.result_path,self.framewidth,trim_video=self.trim_video,time_windows=self.time_windows,enhance_contrast=self.enhance_contrast,contrast=self.contrast,crop_frame=self.crop_frame,left=self.left,right=self.right,top=self.top,bottom=self.bottom)
 
 			print('Preprocessing completed!')
 
