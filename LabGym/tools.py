@@ -819,7 +819,7 @@ def generate_patternimage_interact(frame,outlines,other_outlines,inners=None,oth
 	return pattern_image
 
 
-def plot_evnets(result_path,event_probability,time_points,names_and_colors,behavior_to_annotate,width=0,height=0):
+def plot_evnets(result_path,event_probability,time_points,names_and_colors,behavior_to_include,width=0,height=0):
 
 	print('Exporting the raster plot for this analysis batch...')
 	print(datetime.datetime.now())
@@ -842,7 +842,7 @@ def plot_evnets(result_path,event_probability,time_points,names_and_colors,behav
 		if height<=5:
 			figure.subplots_adjust(bottom=0.25)
 	
-	for behavior_name in behavior_to_annotate:
+	for behavior_name in behavior_to_include:
 
 		all_data=[]
 		masks=[]
@@ -871,7 +871,7 @@ def plot_evnets(result_path,event_probability,time_points,names_and_colors,behav
 	
 	plt.savefig(os.path.join(result_path,'behaviors_plot.png'))
 
-	for behavior_name in behavior_to_annotate: 
+	for behavior_name in behavior_to_include: 
 
 		colorbar_fig=plt.figure(figsize=(5,1))
 		ax=colorbar_fig.add_axes([0,1,1,1])
@@ -932,7 +932,7 @@ def extract_frames(path_to_video,out_path,framewidth=None,start_t=0,duration=0,s
 	print('The image examples stored in: '+out_path)
 
 
-def preprocess_video(path_to_video,out_folder,trim_video=False,time_windows=[[0,10]],enhance_contrast=True,contrast=1.0,crop_frame=True,left=0,right=0,top=0,bottom=0):
+def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_windows=[[0,10]],enhance_contrast=True,contrast=1.0,crop_frame=True,left=0,right=0,top=0,bottom=0):
 
 	capture=cv2.VideoCapture(path_to_video)
 	name=os.path.basename(path_to_video).split('.')[0]
@@ -945,6 +945,9 @@ def preprocess_video(path_to_video,out_folder,trim_video=False,time_windows=[[0,
 		ret,frame=capture.read()
 		if frame is None:
 			break
+
+		if framewidth is not None:
+			frame=cv2.resize(frame,(framewidth,int(frame.shape[0]*framewidth/frame.shape[1])),interpolation=cv2.INTER_AREA)
 
 		t=frame_count/fps
 

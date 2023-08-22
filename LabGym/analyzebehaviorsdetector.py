@@ -1061,7 +1061,7 @@ class AnalyzeAnimalDetector():
 		print('Identity correction completed!')
 
 
-	def annotate_video(self,behavior_to_annotate=None,show_legend=True):
+	def annotate_video(self,animal_to_include,behavior_to_include,show_legend=True):
 
 		print('Annotating video...')
 		print(datetime.datetime.now())
@@ -1079,9 +1079,9 @@ class AnalyzeAnimalDetector():
 					color=tuple(int(hex_color[i:i+2],16) for i in (0,2,4))
 					colors[behavior_name]=color[::-1]
 			
-			if len(behavior_to_annotate)!=len(self.all_behavior_parameters[self.animal_kinds[0]]):
+			if len(behavior_to_include)!=len(self.all_behavior_parameters[self.animal_kinds[0]]):
 				for behavior_name in self.all_behavior_parameters[self.animal_kinds[0]]:
-					if behavior_name not in behavior_to_annotate:
+					if behavior_name not in behavior_to_include:
 						del colors[behavior_name]
 			
 			if show_legend is True:	
@@ -1124,7 +1124,7 @@ class AnalyzeAnimalDetector():
 
 				if frame_count_analyze not in self.skipped_frames:
 
-					for animal_name in self.animal_kinds:
+					for animal_name in animal_to_include:
 
 						for i in self.animal_contours[animal_name]:
 
@@ -1489,7 +1489,7 @@ class AnalyzeAnimalDetector():
 				if len(self.all_time)<16000:
 					events_df.to_excel(os.path.join(self.results_path,animal_name+'_all_event_probability.xlsx'),float_format='%.2f')
 				else:
-					events_df.to_csv(os.path.join(self.results_path,animal_name+'all_event_probability.csv'),float_format='%.2f')
+					events_df.to_csv(os.path.join(self.results_path,animal_name+'_all_event_probability.csv'),float_format='%.2f')
 
 			all_parameters=[]
 

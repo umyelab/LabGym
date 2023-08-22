@@ -97,7 +97,8 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 		self.animal_vs_bg=0 # 0: animals birghter than the background; 1: animals darker than the background; 2: hard to tell
 		self.stable_illumination=True
 		self.animation_analyzer=True
-		self.behavior_to_annotate=['all'] # behaviors for annotation and plots
+		self.animal_to_include=[]
+		self.behavior_to_include=['all'] # behaviors for annotation and analyze
 		self.parameter_to_analyze=[]
 		self.include_bodyparts=False
 		self.std=0
@@ -605,17 +606,27 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 
 		else:
 
+			if len(self.animal_kinds)>1:
+				dialog=wx.MultiChoiceDialog(self,message='Specify which animals/objects to annotate',caption='Animal/Object to annotate',choices=self.animal_kinds)
+				if dialog.ShowModal()==wx.ID_OK:
+					self.animal_to_include=[self.animal_kinds[i] for i in dialog.GetSelections()]
+				else:
+					self.animal_to_include=self.animal_kinds
+				dialog.Destroy()
+			else:
+				self.animal_to_include=self.animal_kinds
+
 			dialog=wx.MultiChoiceDialog(self,message='Select behaviors',caption='Behaviors to annotate',choices=list(self.behaviornames_and_colors.keys()))
 			if dialog.ShowModal()==wx.ID_OK:
-				self.behavior_to_annotate=[list(self.behaviornames_and_colors.keys())[i] for i in dialog.GetSelections()]
+				self.behavior_to_include=[list(self.behaviornames_and_colors.keys())[i] for i in dialog.GetSelections()]
 			else:
-				self.behavior_to_annotate=list(self.behaviornames_and_colors.keys())
+				self.behavior_to_include=list(self.behaviornames_and_colors.keys())
 			dialog.Destroy()
 
-			if len(self.behavior_to_annotate)==0:
-				self.behavior_to_annotate=list(self.behaviornames_and_colors.keys())
-			if self.behavior_to_annotate[0]=='all':
-				self.behavior_to_annotate=list(self.behaviornames_and_colors.keys())
+			if len(self.behavior_to_include)==0:
+				self.behavior_to_include=list(self.behaviornames_and_colors.keys())
+			if self.behavior_to_include[0]=='all':
+				self.behavior_to_include=list(self.behaviornames_and_colors.keys())
 
 			if self.behavior_mode==2:
 				dialog=wx.MessageDialog(self,'Specify individual-specific behaviors? e.g., sex-specific behaviors only occur in a specific sex and\ncan be used to maintain the correct ID of this individual during the entire analysis.','Individual-specific behaviors?',wx.YES_NO|wx.ICON_QUESTION)
@@ -642,17 +653,17 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 			if dialog.ShowModal()==wx.ID_YES:
 				names_colors={}
 				n=0
-				while n<len(self.behavior_to_annotate):
-					dialog2=ColorPicker(self,'Color for '+self.behavior_to_annotate[n],[self.behavior_to_annotate[n],colors[n]])
+				while n<len(self.behavior_to_include):
+					dialog2=ColorPicker(self,'Color for '+self.behavior_to_include[n],[self.behavior_to_include[n],colors[n]])
 					if dialog2.ShowModal()==wx.ID_OK:
 						(r,b,g,_)=dialog2.color_picker.GetColour()
 						new_color='#%02x%02x%02x'%(r,b,g)
-						self.behaviornames_and_colors[self.behavior_to_annotate[n]]=['#ffffff',new_color]
-						names_colors[self.behavior_to_annotate[n]]=new_color
+						self.behaviornames_and_colors[self.behavior_to_include[n]]=['#ffffff',new_color]
+						names_colors[self.behavior_to_include[n]]=new_color
 					else:
 						if n<len(colors):
-							names_colors[self.behavior_to_annotate[n]]=colors[n][1]
-							self.behaviornames_and_colors[self.behavior_to_annotate[n]]=colors[n]
+							names_colors[self.behavior_to_include[n]]=colors[n][1]
+							self.behaviornames_and_colors[self.behavior_to_include[n]]=colors[n]
 					dialog2.Destroy()
 					n+=1
 				if self.correct_ID is True:
@@ -662,13 +673,13 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 			else:
 				for color in colors:
 					index=colors.index(color)
-					if index<len(self.behavior_to_annotate):
+					if index<len(self.behavior_to_include):
 						behavior_name=list(self.behaviornames_and_colors.keys())[index]
 						self.behaviornames_and_colors[behavior_name]=color
 				if self.correct_ID is True:
-					self.text_selectbehaviors.SetLabel('Selected: '+str(self.behavior_to_annotate)+' with default colors. Specific behaviors:'+str(self.specific_behaviors)+'.')
+					self.text_selectbehaviors.SetLabel('Selected: '+str(self.behavior_to_include)+' with default colors. Specific behaviors:'+str(self.specific_behaviors)+'.')
 				else:
-					self.text_selectbehaviors.SetLabel('Selected: '+str(self.behavior_to_annotate)+' with default colors.')
+					self.text_selectbehaviors.SetLabel('Selected: '+str(self.behavior_to_include)+' with default colors.')
 			dialog.Destroy()
 
 			dialog=wx.MessageDialog(self,'Show legend of behavior names in the annotated video?','Legend in video?',wx.YES_NO|wx.ICON_QUESTION)
@@ -730,12 +741,14 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 			if self.use_detector is True:
 				for animal_name in self.animal_kinds:
 					all_events[animal_name]={}
+				if len(self.animal_to_include)==0:
+					self.animal_to_include=self.animal_kinds
 
 			if self.path_to_categorizer is None:
-				self.behavior_to_annotate=[]
+				self.behavior_to_include=[]
 			else:
-				if self.behavior_to_annotate[0]=='all':
-					self.behavior_to_annotate=list(self.behaviornames_and_colors.keys())
+				if self.behavior_to_include[0]=='all':
+					self.behavior_to_include=list(self.behaviornames_and_colors.keys())
 
 			for i in self.path_to_videos:
 
@@ -791,7 +804,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 						interact_all=True
 					if self.path_to_categorizer is not None:
 						AA.categorize_behaviors(self.path_to_categorizer,uncertain=self.uncertain)
-					AA.annotate_video(self.behavior_to_annotate,show_legend=self.show_legend,interact_all=interact_all)
+					AA.annotate_video(self.behavior_to_include,show_legend=self.show_legend,interact_all=interact_all)
 					AA.export_results(normalize_distance=self.normalize_distance,parameter_to_analyze=self.parameter_to_analyze)
 
 					if self.path_to_categorizer is not None:
@@ -810,7 +823,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 						AAD.categorize_behaviors(self.path_to_categorizer,uncertain=self.uncertain)
 					if self.correct_ID is True:
 						AAD.correct_identity(self.specific_behaviors)
-					AAD.annotate_video(self.behavior_to_annotate,show_legend=self.show_legend)
+					AAD.annotate_video(self.animal_to_include,self.behavior_to_include,show_legend=self.show_legend)
 					AAD.export_results(normalize_distance=self.normalize_distance,parameter_to_analyze=self.parameter_to_analyze)
 
 					if self.path_to_categorizer is not None:
@@ -831,7 +844,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 						all_events_df.to_excel(os.path.join(self.result_path,'all_events.xlsx'),float_format='%.2f')
 					else:
 						all_events_df.to_csv(os.path.join(self.result_path,'all_events.csv'),float_format='%.2f')
-					plot_evnets(self.result_path,event_data,time_points,self.behaviornames_and_colors,self.behavior_to_annotate,width=0,height=0)
+					plot_evnets(self.result_path,event_data,time_points,self.behaviornames_and_colors,self.behavior_to_include,width=0,height=0)
 					folders=[i for i in os.listdir(self.result_path) if os.path.isdir(os.path.join(self.result_path,i))]
 					folders.sort()
 					for behavior_name in self.behaviornames_and_colors:
@@ -846,7 +859,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 
 				else:
 
-					for animal_name in self.animal_kinds:
+					for animal_name in self.animal_to_include:
 						for n in all_events[animal_name]:
 							event_data[len(event_data)]=all_events[animal_name][n][:min(all_lengths)]
 						event_data[len(event_data)]=[['NA',-1]]*min(all_lengths)
@@ -857,7 +870,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 						all_events_df.to_excel(os.path.join(self.result_path,'all_events.xlsx'),float_format='%.2f')
 					else:
 						all_events_df.to_csv(os.path.join(self.result_path,'all_events.csv'),float_format='%.2f')
-					plot_evnets(self.result_path,event_data,time_points,self.behaviornames_and_colors,self.behavior_to_annotate,width=0,height=0)
+					plot_evnets(self.result_path,event_data,time_points,self.behaviornames_and_colors,self.behavior_to_include,width=0,height=0)
 					folders=[i for i in os.listdir(self.result_path) if os.path.isdir(os.path.join(self.result_path,i))]
 					folders.sort()
 					for animal_name in self.animal_kinds:

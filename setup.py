@@ -31,7 +31,7 @@ except Exception:
     long_description=''
 
 
-setup(name='LabGym',version='2.1.5',author='Yujia Hu, Kelly Goss, Isabelle Baker',
+setup(name='LabGym',version='2.1.6',author='Yujia Hu, Kelly Goss, Isabelle Baker',
     author_email='henryhu@umich.edu',
     description='Quantify user-defined behaviors',
     long_description=long_description,

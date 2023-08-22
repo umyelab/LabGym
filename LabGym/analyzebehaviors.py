@@ -581,7 +581,7 @@ class AnalyzeAnimal():
 		print('Behavioral categorization completed!')
 
 
-	def annotate_video(self,behavior_to_annotate=None,show_legend=True,interact_all=False):
+	def annotate_video(self,behavior_to_include,show_legend=True,interact_all=False):
 
 		print('Annotating video...')
 		print(datetime.datetime.now())
@@ -599,9 +599,9 @@ class AnalyzeAnimal():
 					color=tuple(int(hex_color[i:i+2],16) for i in (0,2,4))
 					colors[behavior_name]=color[::-1]
 			
-			if len(behavior_to_annotate)!=len(self.all_behavior_parameters):
+			if len(behavior_to_include)!=len(self.all_behavior_parameters):
 				for behavior_name in self.all_behavior_parameters:
-					if behavior_name not in behavior_to_annotate:
+					if behavior_name not in behavior_to_include:
 						del colors[behavior_name]
 			
 			if show_legend is True:	
