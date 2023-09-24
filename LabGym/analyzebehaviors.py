@@ -209,7 +209,7 @@ class AnalyzeAnimal():
 				self.animations[i]=[np.zeros((self.length,self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8')]*self.total_analysis_framecount
 			self.pattern_images[i]=[np.zeros((self.dim_conv,self.dim_conv,3),dtype='uint8')]*self.total_analysis_framecount
 
-		print('Prepration completed!')
+		print('Preparation completed!')
 
 
 	def track_animal(self,frame_count_analyze,contours,centers,heights,inners=None,blobs=None):
