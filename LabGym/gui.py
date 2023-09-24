@@ -23,15 +23,15 @@ import wx.lib.agw.hyperlink as hl
 import json
 from urllib import request
 from pathlib import Path
-from .gui_categorizers import WindowLv2_GenerateExamples,WindowLv2_TrainCategorizers
-from .gui_detectors import WindowLv2_GenerateImages,WindowLv2_TrainDetectors
+from .gui_categorizers import WindowLv2_GenerateExamples,WindowLv2_TrainCategorizers,WindowLv2_TestCategorizers
+from .gui_detectors import WindowLv2_GenerateImages,WindowLv2_TrainDetectors,WindowLv2_TestDetectors
 from .gui_preprocessors import WindowLv2_ProcessVideos,WindowLv2_SortBehaviors
 from .gui_analyzers import WindowLv2_AnalyzeBehaviors,WindowLv2_MineResults
 
 
 
-current_version=2.1
-current_version_check=21.6
+current_version=2.2
+current_version_check=22.0
 
 try:
 
@@ -74,7 +74,7 @@ class InitialWindow(wx.Frame):
 		
 		links=wx.BoxSizer(wx.HORIZONTAL)
 		homepage=wx.lib.agw.hyperlink.HyperLinkCtrl(panel,0,'Home Page',URL='https://github.com/umyelab/LabGym')
-		userguide=wx.lib.agw.hyperlink.HyperLinkCtrl(panel,0,'Extended Guide',URL='https://github.com/yujiahu415/LabGym/blob/master/LabGym%20user%20guide_v2.1.pdf')
+		userguide=wx.lib.agw.hyperlink.HyperLinkCtrl(panel,0,'Extended Guide',URL='https://github.com/yujiahu415/LabGym/blob/master/LabGym%20user%20guide_v2.2.pdf')
 		links.Add(homepage,0,wx.LEFT|wx.EXPAND,10)
 		links.Add(userguide,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		boxsizer.Add(links,0,wx.ALIGN_CENTER,50)
@@ -154,7 +154,7 @@ class WindowLv1_TrainingModule(wx.Frame):
 
 	def __init__(self,title):
 
-		super(WindowLv1_TrainingModule,self).__init__(parent=None,title=title,size=(500,480))
+		super(WindowLv1_TrainingModule,self).__init__(parent=None,title=title,size=(500,560))
 		self.dispaly_window()
 
 
@@ -166,7 +166,7 @@ class WindowLv1_TrainingModule(wx.Frame):
 
 		button_generateimages=wx.Button(panel,label='Generate Image Examples',size=(300,40))
 		button_generateimages.Bind(wx.EVT_BUTTON,self.generate_images)
-		wx.Button.SetToolTip(button_generateimages,'Extract frames from videos for annotating animals / objects in them so that they can be used to train a Detector to detect animals / objects of your interest.')
+		wx.Button.SetToolTip(button_generateimages,'Extract frames from videos for annotating animals / objects in them so that they can be used to train a Detector to detect animals / objects of your interest. See Extended Guide for how to select images to annotate.')
 		boxsizer.Add(button_generateimages,0,wx.ALIGN_CENTER,10)
 		boxsizer.Add(0,5,0)
 
@@ -178,6 +178,12 @@ class WindowLv1_TrainingModule(wx.Frame):
 		button_traindetectors.Bind(wx.EVT_BUTTON,self.train_detectors)
 		wx.Button.SetToolTip(button_traindetectors,'There are two detection methods in LabGym, the Detector-based method is more versatile (useful in any recording conditions and complex interactive behaviors) but slower than the other background subtraction-based method (requires static background and stable illumination in videos).')
 		boxsizer.Add(button_traindetectors,0,wx.ALIGN_CENTER,10)
+		boxsizer.Add(0,5,0)
+
+		button_testdetectors=wx.Button(panel,label='Test Detectors',size=(300,40))
+		button_testdetectors.Bind(wx.EVT_BUTTON,self.test_detectors)
+		wx.Button.SetToolTip(button_testdetectors,'Test trained Detectors on the annotated ground-truth image dataset (similar to the image dataset used for training a Detector).')
+		boxsizer.Add(button_testdetectors,0,wx.ALIGN_CENTER,10)
 		boxsizer.Add(0,50,0)
 
 		button_generatebehaviorexamples=wx.Button(panel,label='Generate Behavior Examples',size=(300,40))
@@ -188,7 +194,7 @@ class WindowLv1_TrainingModule(wx.Frame):
 
 		button_sortbehaviorexamples=wx.Button(panel,label='Sort Behavior Examples',size=(300,40))
 		button_sortbehaviorexamples.Bind(wx.EVT_BUTTON,self.sort_behaviorexamples)
-		wx.Button.SetToolTip(button_sortbehaviorexamples,'Set shortcut keys for behavior categories to help sorting the behavior examples in an easier way.')
+		wx.Button.SetToolTip(button_sortbehaviorexamples,'Set shortcut keys for behavior categories to help sorting the behavior examples in an easier way. See Extended Guide for how to select and sort the behavior examples.')
 		boxsizer.Add(button_sortbehaviorexamples,0,wx.ALIGN_CENTER,10)
 		boxsizer.Add(0,5,0)
 
@@ -196,6 +202,12 @@ class WindowLv1_TrainingModule(wx.Frame):
 		button_traincategorizers.Bind(wx.EVT_BUTTON,self.train_categorizers)
 		wx.Button.SetToolTip(button_traincategorizers,'Customize a Categorizer and use the sorted behavior examples to train it so that it can recognize the behaviors of your interest during analysis.')
 		boxsizer.Add(button_traincategorizers,0,wx.ALIGN_CENTER,10)
+		boxsizer.Add(0,5,0)
+
+		button_testcategorizers=wx.Button(panel,label='Test Categorizers',size=(300,40))
+		button_testcategorizers.Bind(wx.EVT_BUTTON,self.test_categorizers)
+		wx.Button.SetToolTip(button_testcategorizers,'Test trained Categorizers on the sorted ground-truth behavior examples (similar to the behavior examples used for training a Categorizer).')
+		boxsizer.Add(button_testcategorizers,0,wx.ALIGN_CENTER,10)
 		boxsizer.Add(0,50,0)
 
 		panel.SetSizer(boxsizer)
@@ -214,6 +226,11 @@ class WindowLv1_TrainingModule(wx.Frame):
 		WindowLv2_TrainDetectors('Train Detectors')
 
 
+	def test_detectors(self,event):
+
+		WindowLv2_TestDetectors('Test Detectors')
+
+
 	def generate_behaviorexamples(self,event):
 
 		WindowLv2_GenerateExamples('Generate Behavior Examples')
@@ -227,6 +244,11 @@ class WindowLv1_TrainingModule(wx.Frame):
 	def train_categorizers(self,event):
 
 		WindowLv2_TrainCategorizers('Train Categorizers')
+
+
+	def test_categorizers(self,event):
+
+		WindowLv2_TestCategorizers('Test Categorizers')
 
 
 

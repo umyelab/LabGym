@@ -252,7 +252,7 @@ class AnalyzeAnimalDetector():
 		else:
 			self.kernel=11
 
-		print('Prepration completed!')
+		print('Preparation completed!')
 
 
 	def track_animal(self,frame_count_analyze,animal_name,contours,centers,heights,inners=None,blobs=None):
