@@ -68,7 +68,7 @@ Displays significant findings, such as the behavioral parameters that show stati
 
 # How to use LabGym?
 
-Extended user guide: (https://github.com/yujiahu415/LabGym/blob/master/LabGym%20user%20guide_v2.1.pdf).
+Extended user guide: (https://github.com/yujiahu415/LabGym/blob/master/LabGym%20user%20guide_v2.2.pdf).
 
 ***Put your mouse cursor above each button in the user interface to see a detailed description for it***.
 
