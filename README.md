@@ -178,6 +178,11 @@ Refer to the open / closed issues or contact the author: Yujia Hu (henryhu@umich
 
 # Changelog:
 
+**v2.2**:
+
+1. Added functions of testing Detectors / Categorizers so that the accuracy of a trained Detector / Categorizer can be tested and reported. 
+2. Other minor optimizations.
+
 **v2.1**:
 
 1. Improved the user interface and the Extended User Guide. 
