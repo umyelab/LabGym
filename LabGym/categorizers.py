@@ -50,7 +50,7 @@ class Categorizers():
 
 	def __init__(self):
 
-		self.extension_image=('.png','.jpeg','.jpg','.tiff','.gif','.bmp')
+		self.extension_image=('.png','.PNG','.jpeg','.JPEG','.jpg','.JPG','.tiff','.TIFF','.bmp','.BMP')
 		self.extension_video=('.avi','.mpg','.wmv','.mp4','.mkv','.m4v','.mov')
 		self.classnames=None
 
@@ -60,50 +60,66 @@ class Categorizers():
 		folder_list=[i for i in os.listdir(file_path) if os.path.isdir(os.path.join(file_path,i))]
 		print('Behavior names are: '+str(folder_list))
 		previous_lenth=None
+		imagedata=False
 
 		for folder in folder_list:
 
 			name_list=[i for i in os.listdir(os.path.join(file_path,folder)) if i.endswith('.avi')]
+
+			if len(name_list)==0:
+				name_list=[i for i in os.listdir(os.path.join(file_path,folder)) if i.endswith('.jpg')]
+				imagedata=True
 		
 			for i in name_list:
 
-				animation=os.path.join(file_path,folder,i)
-				pattern_image=os.path.join(file_path,folder,os.path.splitext(i)[0]+'.jpg')
-				current_length=0
+				if imagedata is True:
 
-				new_animation=os.path.join(new_path,str(name_list.index(i))+'_'+folder+'.avi')
-				new_pattern_image=os.path.join(new_path,str(name_list.index(i))+'_'+folder+'.jpg')
-				writer=None
-				capture=cv2.VideoCapture(animation)
-				fps=round(capture.get(cv2.CAP_PROP_FPS))
-				while True:
-					retval,frame=capture.read()
-					current_length+=1
-					if frame is None:
-						break
+					image=os.path.join(file_path,folder,i)
+					new_image=os.path.join(new_path,str(name_list.index(i))+'_'+folder+'.jpg')
+					image=cv2.imread(image)
 					if resize is not None:
-						frame=cv2.resize(frame,(resize,resize),interpolation=cv2.INTER_AREA)
-					if writer is None:
-						(h,w)=frame.shape[:2]
-						writer=cv2.VideoWriter(new_animation,cv2.VideoWriter_fourcc(*'MJPG'),fps,(w,h),True)
-					writer.write(frame)
-				capture.release()
-				writer.release()
-				pattern_image=cv2.imread(pattern_image)
-				if resize is not None:
-					pattern_image=cv2.resize(pattern_image,(resize,resize),interpolation=cv2.INTER_AREA)
-				cv2.imwrite(new_pattern_image,pattern_image)
-				if previous_lenth is None:
-					previous_lenth=current_length
+						image=cv2.resize(image,(resize,resize),interpolation=cv2.INTER_AREA)
+					cv2.imwrite(new_image,image)
+
 				else:
-					if previous_lenth!=current_length:
+
+					animation=os.path.join(file_path,folder,i)
+					pattern_image=os.path.join(file_path,folder,os.path.splitext(i)[0]+'.jpg')
+					current_length=0
+
+					new_animation=os.path.join(new_path,str(name_list.index(i))+'_'+folder+'.avi')
+					new_pattern_image=os.path.join(new_path,str(name_list.index(i))+'_'+folder+'.jpg')
+					writer=None
+					capture=cv2.VideoCapture(animation)
+					fps=round(capture.get(cv2.CAP_PROP_FPS))
+					while True:
+						retval,frame=capture.read()
+						current_length+=1
+						if frame is None:
+							break
+						if resize is not None:
+							frame=cv2.resize(frame,(resize,resize),interpolation=cv2.INTER_AREA)
+						if writer is None:
+							(h,w)=frame.shape[:2]
+							writer=cv2.VideoWriter(new_animation,cv2.VideoWriter_fourcc(*'MJPG'),fps,(w,h),True)
+						writer.write(frame)
+					capture.release()
+					writer.release()
+					pattern_image=cv2.imread(pattern_image)
+					if resize is not None:
+						pattern_image=cv2.resize(pattern_image,(resize,resize),interpolation=cv2.INTER_AREA)
+					cv2.imwrite(new_pattern_image,pattern_image)
+					if previous_lenth is None:
 						previous_lenth=current_length
-						print('Inconsistent duration of animation detected at: '+str(i)+'. Check the duration of animations!')
+					else:
+						if previous_lenth!=current_length:
+							previous_lenth=current_length
+							print('Inconsistent duration of animation detected at: '+str(i)+'. Check the duration of animations!')
 
 		print('All prepared training examples stored in: '+str(new_path))
 
 
-	def build_data(self,path_to_animations,dim_tconv=32,dim_conv=64,channel=1,time_step=15,aug_methods=[],background_free=True,behavior_mode=0):
+	def build_data(self,path_to_animations,dim_tconv=0,dim_conv=64,channel=1,time_step=15,aug_methods=[],background_free=True,behavior_mode=0):
 
 		animations=deque()
 		pattern_images=deque()
@@ -320,6 +336,23 @@ class Categorizers():
 				if code is not None:
 					pattern_image=cv2.flip(pattern_image,code)
 
+				if behavior_mode>=3:
+					if beta is not None:
+						if background_free is True:
+							pattern_image_gray=cv2.cvtColor(pattern_image,cv2.COLOR_BGR2GRAY)
+							thred=cv2.threshold(pattern_image_gray,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]
+							cnts,_=cv2.findContours(thred,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
+							if len(cnts)==0:
+								pattern_image=np.zeros_like(pattern_image)
+							else:
+								contour=sorted(cnts,key=cv2.contourArea,reverse=True)[0]
+								pattern_image=extract_blob(pattern_image,contour,channel=3)
+							pattern_image=pattern_image.astype('float')
+							pattern_image[pattern_image>30]+=beta
+						else:
+							pattern_image+=beta
+						pattern_image=np.uint8(np.clip(pattern_image,0,255))
+
 				if angle is not None:
 					pattern_image=ndimage.rotate(pattern_image,angle,reshape=False,prefilter=False)
 
@@ -338,6 +371,10 @@ class Categorizers():
 					pattern_image_black[y:y+pattern_image_scl.shape[0],
 					x:x+pattern_image_scl.shape[1],:]=pattern_image_scl
 					pattern_image=pattern_image_black
+
+				if behavior_mode>=3:
+					if channel==1:
+						pattern_image=cv2.cvtColor(np.uint8(pattern_image),cv2.COLOR_BGR2GRAY)
 
 				pattern_image=cv2.resize(pattern_image,(dim_conv,dim_conv),interpolation=cv2.INTER_AREA)
 				pattern_images.append(img_to_array(pattern_image))
@@ -705,7 +742,7 @@ class Categorizers():
 
 		print('Training the Categorizer w/ only Pattern Recognizer using the behavior examples in: '+str(data_path))
 
-		files=[i for i in os.listdir(data_path) if i.endswith(self.extension_video)]
+		files=[i for i in os.listdir(data_path) if i.endswith(self.extension_image)]
 
 		path_files=[]
 		labels=[]
@@ -731,6 +768,10 @@ class Categorizers():
 			background_code=0
 		else:
 			background_code=1
+
+		if behavior_mode>=3:
+			time_step=std=0
+			inner_code=1
 
 		parameters={'classnames':list(self.classnames),'dim_conv':int(dim),'channel':int(channel),'time_step':int(time_step),'network':0,'level_conv':int(level),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code),'behavior_kind':int(behavior_mode),'social_distance':int(social_distance)}
 		pd_parameters=pd.DataFrame.from_dict(parameters)
@@ -1113,8 +1154,10 @@ class Categorizers():
 			print('The behavior mode of the Categorizer: Non-interactive.')
 		elif behavior_mode==1:
 			print('The behavior mode of the Categorizer: Interactive basic.')
-		else:
+		elif behavior_mode==2:
 			print('The behavior mode of the Categorizer: Interactive advanced (Social distance '+str(parameters['social_distance'][0])+').')
+		else:
+			print('The behavior mode of the Categorizer: Static images (non-interactive).')
 		length=int(parameters['time_step'][0])
 		print('The length of a behavior example in the Categorizer: '+str(length)+' frames.')
 		if int(parameters['inner_code'][0])==0:
@@ -1181,7 +1224,8 @@ class Categorizers():
 
 					labels.append(classnames.index(behavior))
 
-			animations=np.array(animations,dtype='float32')/255.0
+			if network!=0:
+				animations=np.array(animations,dtype='float32')/255.0
 			pattern_images=np.array(pattern_images,dtype='float32')/255.0
 
 			labels=np.array(labels)
@@ -1195,12 +1239,8 @@ class Categorizers():
 			else:
 				predictions=model.predict([animations,pattern_images],batch_size=32)
 
-			if len(classnames)==2:
-				print(classification_report(labels,predictions.argmax(axis=1),target_names=[classnames[0]]))
-				report=classification_report(labels,predictions.argmax(axis=1),target_names=[classnames[0]],output_dict=True)
-			else:
-				print(classification_report(labels,predictions.argmax(axis=1),target_names=classnames))
-				report=classification_report(labels,predictions.argmax(axis=1),target_names=classnames,output_dict=True)
+			print(classification_report(labels,predictions.argmax(axis=1),target_names=classnames))
+			report=classification_report(labels,predictions.argmax(axis=1),target_names=classnames,output_dict=True)
 
 			if result_path is not None:
 				pd.DataFrame(report).transpose().to_excel(os.path.join(result_path,'testing_reports.xlsx'),float_format='%.2f')

@@ -1002,11 +1002,8 @@ class AnalyzeAnimal():
 		print(datetime.datetime.now())
 
 		if self.categorize_behavior is True:
-			events_df=pd.DataFrame.from_dict(self.event_probability,orient='index',columns=self.all_time)
-			if len(self.all_time)<16000:
-				events_df.to_excel(os.path.join(self.results_path,'all_event_probability.xlsx'),float_format='%.2f')
-			else:
-				events_df.to_csv(os.path.join(self.results_path,'all_event_probability.csv'),float_format='%.2f')
+			events_df=pd.DataFrame(self.event_probability,index=self.all_time)
+			events_df.to_excel(os.path.join(self.results_path,'all_event_probability.xlsx'),float_format='%.2f',index_label='time/ID')
 
 		all_parameters=[]
 
@@ -1042,13 +1039,11 @@ class AnalyzeAnimal():
 							summary.append(individual_df.mean(axis=1,skipna=True).to_frame().reset_index(drop=True).rename(columns={0:parameter_name+'_mean'}))
 							summary.append(individual_df.max(axis=1,skipna=True).to_frame().reset_index(drop=True).rename(columns={0:parameter_name+'_max'}))
 							summary.append(individual_df.min(axis=1,skipna=True).to_frame().reset_index(drop=True).rename(columns={0:parameter_name+'_min'}))
-						if len(self.all_time)<16000:
-							individual_df.to_excel(os.path.join(self.results_path,behavior_name,parameter_name+'.xlsx'),float_format='%.2f')
-						else:
-							individual_df.to_csv(os.path.join(self.results_path,behavior_name,parameter_name+'.csv'),float_format='%.2f')
+						individual_df=pd.DataFrame(self.all_behavior_parameters[behavior_name][parameter_name],index=self.all_time)
+						individual_df.to_excel(os.path.join(self.results_path,behavior_name,parameter_name+'.xlsx'),float_format='%.2f',index_label='time/ID')
 
 				if len(summary)>=1:
-					pd.concat(summary,axis=1).to_excel(os.path.join(self.results_path,behavior_name,'all_summary.xlsx'),float_format='%.2f')
+					pd.concat(summary,axis=1).to_excel(os.path.join(self.results_path,behavior_name,'all_summary.xlsx'),float_format='%.2f',index_label='ID/parameter')
 
 		else:
 
@@ -1059,18 +1054,14 @@ class AnalyzeAnimal():
 					summary.append(pd.DataFrame.from_dict(self.all_behavior_parameters[parameter_name],orient='index',columns=['distance']).reset_index(drop=True))
 				else:
 					individual_df=pd.DataFrame.from_dict(self.all_behavior_parameters[parameter_name],orient='index',columns=self.all_time)
-
 					summary.append(individual_df.mean(axis=1,skipna=True).to_frame().reset_index(drop=True).rename(columns={0:parameter_name+'_mean'}))
 					summary.append(individual_df.max(axis=1,skipna=True).to_frame().reset_index(drop=True).rename(columns={0:parameter_name+'_max'}))
 					summary.append(individual_df.min(axis=1,skipna=True).to_frame().reset_index(drop=True).rename(columns={0:parameter_name+'_min'}))
-
-					if len(self.all_time)<16000:
-						individual_df.to_excel(os.path.join(self.results_path,parameter_name+'.xlsx'),float_format='%.2f')
-					else:
-						individual_df.to_csv(os.path.join(self.results_path,parameter_name+'.csv'),float_format='%.2f')
+					individual_df=pd.DataFrame(self.all_behavior_parameters[parameter_name],index=self.all_time)
+					individual_df.to_excel(os.path.join(self.results_path,parameter_name+'.xlsx'),float_format='%.2f',index_label='time/ID')
 
 			if len(summary)>=1:
-				pd.concat(summary,axis=1).to_excel(os.path.join(self.results_path,'all_summary.xlsx'),float_format='%.2f')			
+				pd.concat(summary,axis=1).to_excel(os.path.join(self.results_path,'all_summary.xlsx'),float_format='%.2f',index_label='ID/parameter')			
 
 		print('All results exported in: '+str(self.results_path))
 
