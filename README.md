@@ -172,7 +172,7 @@ Two detection methods to fit different scenarios:
 
 # If you encounter any issues when using LabGym:
 
-Refer to the open / closed issues or contact the author: Yujia Hu (henryhu@umich.edu).
+Refer to the open / closed issues or open a new issue or contact the author: Yujia Hu (henryhu@umich.edu).
 
 <p>&nbsp;</p>
 
@@ -180,8 +180,10 @@ Refer to the open / closed issues or contact the author: Yujia Hu (henryhu@umich
 
 **v2.2**:
 
-1. Added functions of testing Detectors / Categorizers so that the accuracy of a trained Detector / Categorizer can be tested and reported. 
-2. Other minor optimizations.
+1. Added functions of testing Detectors / Categorizers so that the accuracy of a trained Detector / Categorizer can be tested and reported.
+2. Added behavior mode 'Static image' so that LabGym can now analyze behaviors in static images.
+3. Made the spreadsheets for storing behavioral metrics transposed so that they can be more compatible with other platforms.
+4. Other minor optimizations.
 
 **v2.1**:
 
