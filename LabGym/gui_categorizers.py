@@ -38,10 +38,11 @@ class WindowLv2_GenerateExamples(wx.Frame):
 	def __init__(self,title):
 
 		super(WindowLv2_GenerateExamples,self).__init__(parent=None,title=title,size=(1000,510))
-		self.behavior_mode=0 # 0: non-interactive behavior; 1: interact basic; 2: interact advanced
+		self.behavior_mode=0 # 0: non-interactive behavior; 1: interact basic; 2: interact advanced; 3: static images
 		self.use_detector=False
 		self.detector_path=None
 		self.path_to_detector=None
+		self.detection_threshold=0
 		self.animal_kinds=[]
 		self.background_path=None
 		self.path_to_videos=None
@@ -77,7 +78,7 @@ class WindowLv2_GenerateExamples(wx.Frame):
 		module_specifymode=wx.BoxSizer(wx.HORIZONTAL)
 		button_specifymode=wx.Button(panel,label='Specify the mode of behavior\nexamples to generate',size=(300,40))
 		button_specifymode.Bind(wx.EVT_BUTTON,self.specify_mode)
-		wx.Button.SetToolTip(button_specifymode,'"Non-interactive" is for behaviors of each individual; "Interactive basic" is for interactive behaviors of all animals but not distinguishing each individual; "Interactive advanced" is slower in analysis than "basic" but distinguishes individuals during close body contact. See Extended Guide for details.')
+		wx.Button.SetToolTip(button_specifymode,'"Non-interactive" is for behaviors of each individual; "Interactive basic" is for interactive behaviors of all animals but not distinguishing each individual; "Interactive advanced" is slower in analysis than "basic" but distinguishes individuals during close body contact. "Static images" is for analyzing images not videos. See Extended Guide for details.')
 		self.text_specifymode=wx.StaticText(panel,label='Default: Non-interactive: behaviors of each individuals (each example contains one animal / object)',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_specifymode.Add(button_specifymode,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_specifymode.Add(self.text_specifymode,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -86,9 +87,9 @@ class WindowLv2_GenerateExamples(wx.Frame):
 		boxsizer.Add(0,5,0)
 
 		module_inputvideos=wx.BoxSizer(wx.HORIZONTAL)
-		button_inputvideos=wx.Button(panel,label='Select the video(s) to\ngenerate behavior examples',size=(300,40))
+		button_inputvideos=wx.Button(panel,label='Select the video(s) / image(s) to\ngenerate behavior examples',size=(300,40))
 		button_inputvideos.Bind(wx.EVT_BUTTON,self.select_videos)
-		wx.Button.SetToolTip(button_inputvideos,'Select one or more videos. Common video formats (mp4, mov, avi, m4v, mkv, mpg, mpeg) are supported except wmv format.')
+		wx.Button.SetToolTip(button_inputvideos,'Select one or more videos / images. Common video formats (mp4, mov, avi, m4v, mkv, mpg, mpeg) or image formats (jpg, jpeg, png, tiff, bmp) are supported except wmv format.')
 		self.text_inputvideos=wx.StaticText(panel,label='None.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_inputvideos.Add(button_inputvideos,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_inputvideos.Add(self.text_inputvideos,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -98,7 +99,7 @@ class WindowLv2_GenerateExamples(wx.Frame):
 		module_outputfolder=wx.BoxSizer(wx.HORIZONTAL)
 		button_outputfolder=wx.Button(panel,label='Select a folder to store the\ngenerated behavior examples',size=(300,40))
 		button_outputfolder.Bind(wx.EVT_BUTTON,self.select_outpath)
-		wx.Button.SetToolTip(button_outputfolder,'Will create a subfolder for each video in the selected folder. Each subfolder is named after the file name of the video and stores the generated behavior examples.')
+		wx.Button.SetToolTip(button_outputfolder,'Will create a subfolder for each video in the selected folder. Each subfolder is named after the file name of the video and stores the generated behavior examples. For "Static images" mode, all generated behavior examples will be in this folder.')
 		self.text_outputfolder=wx.StaticText(panel,label='None.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_outputfolder.Add(button_outputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_outputfolder.Add(self.text_outputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -180,7 +181,7 @@ class WindowLv2_GenerateExamples(wx.Frame):
 
 	def specify_mode(self,event):
 
-		behavior_modes=['Non-interactive: behaviors of each individual (each example contains one animal / object)','Interactive basic: behaviors of all (each example contains all animals / objects)','Interactive advanced: behaviors of each individual and social groups (each example contains either one or multiple animals / objects)']
+		behavior_modes=['Non-interactive: behaviors of each individual (each example contains one animal / object)','Interactive basic: behaviors of all (each example contains all animals / objects)','Interactive advanced: behaviors of each individual and social groups (each example contains either one or multiple animals / objects)','Static images (non-interactive): behaviors of each individual in static images(each image contains one animal / object)']
 		dialog=wx.SingleChoiceDialog(self,message='Specify the mode of behavior examples to generate',caption='Behavior-example mode',choices=behavior_modes)
 		if dialog.ShowModal()==wx.ID_OK:
 			behavior_mode=dialog.GetStringSelection()
@@ -188,7 +189,7 @@ class WindowLv2_GenerateExamples(wx.Frame):
 				self.behavior_mode=0
 			elif behavior_mode=='Interactive basic: behaviors of all (each example contains all animals / objects)':
 				self.behavior_mode=1
-			else:
+			elif behavior_mode=='Interactive advanced: behaviors of each individual and social groups (each example contains either one or multiple animals / objects)':
 				self.behavior_mode=2
 				dialog1=wx.NumberEntryDialog(self,'Interactions happen within the social distance.','(See Extended Guide for details)\nHow many folds of square root of the animals area\nis the social distance (0=infinity far):','Social distance (Enter an integer)',0,0,100000000000000)
 				if dialog1.ShowModal()==wx.ID_OK:
@@ -198,12 +199,20 @@ class WindowLv2_GenerateExamples(wx.Frame):
 				else:
 					self.social_distance=float('inf')
 				dialog1.Destroy()
+				self.text_detection.SetLabel('Only Detector-based detection method is available for the selected behavior mode.')
+			else:
+				self.behavior_mode=3
+				self.text_detection.SetLabel('Only Detector-based detection method is available for the selected behavior mode.')
+				self.text_startgenerate.SetLabel('No need to specify this since the selected behavior mode is "Static images".')
+				self.text_duration.SetLabel('No need to specify this since the selected behavior mode is "Static images".')
+				self.text_animalnumber.SetLabel('No need to specify this since the selected behavior mode is "Static images".')
+				self.text_length.SetLabel('No need to specify this since the selected behavior mode is "Static images".')
+				self.text_skipredundant.SetLabel('No need to specify this since the selected behavior mode is "Static images".')
 		else:
 			self.behavior_mode=0
 			behavior_mode='Non-interactive: behaviors of each individual (each example contains one animal / object)'
 		if self.behavior_mode==2:
 			self.text_specifymode.SetLabel('Behavior mode: '+behavior_mode+' with social distance: '+str(self.social_distance)+' folds of the animal diameter.')
-			self.text_detection.SetLabel('Only Detector-based detection method is available for the selected behavior mode.')
 		else:
 			self.text_specifymode.SetLabel('Behavior mode: '+behavior_mode+'.')
 		dialog.Destroy()
@@ -211,28 +220,31 @@ class WindowLv2_GenerateExamples(wx.Frame):
 
 	def select_videos(self,event):
 
-		wildcard='Video files(*.avi;*.mpg;*.mpeg;*.wmv;*.mp4;*.mkv;*.m4v;*.mov)|*.avi;*.mpg;*.mpeg;*.wmv;*.mp4;*.mkv;*.m4v;*.mov'
-		dialog=wx.FileDialog(self,'Select video(s)','','',wildcard,style=wx.FD_MULTIPLE)
+		if self.behavior_mode>=3:
+			wildcard='Image files(*.jpg;*.jpeg;*.png;*.tiff;*.bmp)|*.jpg;*.JPG;*.jpeg;*.JPEG;*.png;*.PNG;*.tiff;*.TIFF;*.bmp;*.BMP'
+		else:
+			wildcard='Video files(*.avi;*.mpg;*.mpeg;*.wmv;*.mp4;*.mkv;*.m4v;*.mov)|*.avi;*.mpg;*.mpeg;*.wmv;*.mp4;*.mkv;*.m4v;*.mov'
 
+		dialog=wx.FileDialog(self,'Select video(s) / image(s)','','',wildcard,style=wx.FD_MULTIPLE)
 		if dialog.ShowModal()==wx.ID_OK:
 			self.path_to_videos=dialog.GetPaths()
 			self.path_to_videos.sort()
 			path=os.path.dirname(self.path_to_videos[0])
-			dialog1=wx.MessageDialog(self,'Proportional resize the video frames?\nSelect "No" if dont know what it is.','(Optional) resize the frames?',wx.YES_NO|wx.ICON_QUESTION)
+			dialog1=wx.MessageDialog(self,'Proportional resize the video frames / images?\nSelect "No" if dont know what it is.','(Optional) resize the frames / images?',wx.YES_NO|wx.ICON_QUESTION)
 			if dialog1.ShowModal()==wx.ID_YES:
-				dialog2=wx.NumberEntryDialog(self,'Enter the desired frame width','The unit is pixel:','Desired frame width',480,1,10000)
+				dialog2=wx.NumberEntryDialog(self,'Enter the desired frame / image width','The unit is pixel:','Desired frame / image width',480,1,10000)
 				if dialog2.ShowModal()==wx.ID_OK:
 					self.framewidth=int(dialog2.GetValue())
 					if self.framewidth<10:
 						self.framewidth=10
-					self.text_inputvideos.SetLabel('Selected '+str(len(self.path_to_videos))+' video(s) in: '+path+' (proportionally resize framewidth to '+str(self.framewidth)+').')
+					self.text_inputvideos.SetLabel('Selected '+str(len(self.path_to_videos))+' file(s) in: '+path+' (proportionally resize frame / image width to '+str(self.framewidth)+').')
 				else:
 					self.framewidth=None
-					self.text_inputvideos.SetLabel('Selected '+str(len(self.path_to_videos))+' video(s) in: '+path+' (original framesize).')
+					self.text_inputvideos.SetLabel('Selected '+str(len(self.path_to_videos))+' file(s) in: '+path+' (original frame / image size).')
 				dialog2.Destroy()
 			else:
 				self.framewidth=None
-				self.text_inputvideos.SetLabel('Selected '+str(len(self.path_to_videos))+' video(s) in: '+path+' (original framesize).')
+				self.text_inputvideos.SetLabel('Selected '+str(len(self.path_to_videos))+' file(s) in: '+path+' (original frame / image size).')
 			dialog1.Destroy()
 
 		dialog.Destroy()
@@ -378,10 +390,18 @@ class WindowLv2_GenerateExamples(wx.Frame):
 						dialog2.Destroy()
 					else:
 						self.animal_kinds=animal_names
-					for animal_name in self.animal_kinds:
-						self.animal_number[animal_name]=1
-					self.text_animalnumber.SetLabel('The number of '+str(self.animal_kinds)+' is: '+str(list(self.animal_number.values()))+'.')
-					self.text_detection.SetLabel('Detector: '+detector+'; '+'The animals/objects: '+str(self.animal_kinds)+'.')
+					if self.behavior_mode>=3:
+						dialog2=wx.NumberEntryDialog(self,"Enter the Detector's detection threshold (0~100%)","The higher detection threshold,\nthe higher detection accuracy,\nbut the lower detection sensitivity.\nEnter 0 if don't know how to set.",'Detection threshold',0,0,100)
+						if dialog2.ShowModal()==wx.ID_OK:
+							detection_threshold=dialog2.GetValue()
+							self.detection_threshold=detection_threshold/100
+						self.text_detection.SetLabel('Detector: '+detector+' (detection threshold: '+str(detection_threshold)+'%); The animals/objects: '+str(self.animal_kinds)+'.')
+						dialog2.Destroy()
+					else:
+						for animal_name in self.animal_kinds:
+							self.animal_number[animal_name]=1
+						self.text_animalnumber.SetLabel('The number of '+str(self.animal_kinds)+' is: '+str(list(self.animal_number.values()))+'.')
+						self.text_detection.SetLabel('Detector: '+detector+'; '+'The animals/objects: '+str(self.animal_kinds)+'.')
 				dialog1.Destroy()
 
 		dialog.Destroy()
@@ -389,109 +409,139 @@ class WindowLv2_GenerateExamples(wx.Frame):
 
 	def specify_timing(self,event):
 
-		if self.use_detector is False:
-			dialog=wx.MessageDialog(self,'light on and off in videos?','Illumination shifts?',wx.YES_NO|wx.ICON_QUESTION)
-			if dialog.ShowModal()==wx.ID_YES:
-				self.delta=1.2
-			else:
-				self.delta=10000
-			dialog.Destroy()
+		if self.behavior_mode>=3:
 
-		if self.delta==1.2 and self.use_detector is False:
-			methods=['Automatic (for light on and off)','Decode from filenames: "_bt_"','Enter a time point']
+			wx.MessageBox('No need to specify this since the selected behavior mode is "Static images".','Error',wx.OK|wx.ICON_ERROR)
+
 		else:
-			methods=['Decode from filenames: "_bt_"','Enter a time point']
 
-		dialog=wx.SingleChoiceDialog(self,message='Specify beginning time to generate behavior examples',caption='Beginning time for generator',choices=methods)
-		if dialog.ShowModal()==wx.ID_OK:
-			method=dialog.GetStringSelection()
-			if method=='Automatic (for light on and off)':
-				self.autofind_t=True
-				self.decode_t=False
-				self.text_startgenerate.SetLabel('Automatically find the onset of the 1st time when light on / off as the beginning time.')
-			elif method=='Decode from filenames: "_bt_"':
-				self.autofind_t=False
-				self.decode_t=True
-				self.text_startgenerate.SetLabel('Decode from the filenames: the "t" immediately after the letter "b"" in "_bt_".')
+			if self.use_detector is False:
+				dialog=wx.MessageDialog(self,'light on and off in videos?','Illumination shifts?',wx.YES_NO|wx.ICON_QUESTION)
+				if dialog.ShowModal()==wx.ID_YES:
+					self.delta=1.2
+				else:
+					self.delta=10000
+				dialog.Destroy()
+
+			if self.delta==1.2 and self.use_detector is False:
+				methods=['Automatic (for light on and off)','Decode from filenames: "_bt_"','Enter a time point']
 			else:
-				self.autofind_t=False
-				self.decode_t=False
-				dialog2=wx.NumberEntryDialog(self,'Enter beginning time to generate examples','The unit is second:','Beginning time to generate examples',0,0,100000000000000)
-				if dialog2.ShowModal()==wx.ID_OK:
-					self.t=float(dialog2.GetValue())
-					if self.t<0:
-						self.t=0
-					self.text_startgenerate.SetLabel('Start to generate behavior examples at the: '+str(self.t)+' second.')
-				dialog2.Destroy()
-		dialog.Destroy()
+				methods=['Decode from filenames: "_bt_"','Enter a time point']
+
+			dialog=wx.SingleChoiceDialog(self,message='Specify beginning time to generate behavior examples',caption='Beginning time for generator',choices=methods)
+			if dialog.ShowModal()==wx.ID_OK:
+				method=dialog.GetStringSelection()
+				if method=='Automatic (for light on and off)':
+					self.autofind_t=True
+					self.decode_t=False
+					self.text_startgenerate.SetLabel('Automatically find the onset of the 1st time when light on / off as the beginning time.')
+				elif method=='Decode from filenames: "_bt_"':
+					self.autofind_t=False
+					self.decode_t=True
+					self.text_startgenerate.SetLabel('Decode from the filenames: the "t" immediately after the letter "b"" in "_bt_".')
+				else:
+					self.autofind_t=False
+					self.decode_t=False
+					dialog2=wx.NumberEntryDialog(self,'Enter beginning time to generate examples','The unit is second:','Beginning time to generate examples',0,0,100000000000000)
+					if dialog2.ShowModal()==wx.ID_OK:
+						self.t=float(dialog2.GetValue())
+						if self.t<0:
+							self.t=0
+						self.text_startgenerate.SetLabel('Start to generate behavior examples at the: '+str(self.t)+' second.')
+					dialog2.Destroy()
+			dialog.Destroy()
 
 
 	def input_duration(self,event):
 
-		dialog=wx.NumberEntryDialog(self,'Enter the duration for generating examples','The unit is second:','Duration for generating examples',0,0,100000000000000)
-		if dialog.ShowModal()==wx.ID_OK:
-			self.duration=int(dialog.GetValue())
-			if self.duration!=0:
-				self.text_duration.SetLabel('The generation of behavior examples lasts for '+str(self.duration)+' seconds.')
-			else:
-				self.text_duration.SetLabel('The generation of behavior examples lasts for the entire duration of a video.')
-		dialog.Destroy()
+		if self.behavior_mode>=3:
+
+			wx.MessageBox("No need to specify this since the selected behavior mode is 'Static images'.",'Error',wx.OK|wx.ICON_ERROR)
+
+		else:
+
+			dialog=wx.NumberEntryDialog(self,'Enter the duration for generating examples','The unit is second:','Duration for generating examples',0,0,100000000000000)
+			if dialog.ShowModal()==wx.ID_OK:
+				self.duration=int(dialog.GetValue())
+				if self.duration!=0:
+					self.text_duration.SetLabel('The generation of behavior examples lasts for '+str(self.duration)+' seconds.')
+				else:
+					self.text_duration.SetLabel('The generation of behavior examples lasts for the entire duration of a video.')
+			dialog.Destroy()
 
 
 	def specify_animalnumber(self,event):
 
-		methods=['Decode from filenames: "_nn_"','Enter the number of animals']
+		if self.behavior_mode>=3:
 
-		dialog=wx.SingleChoiceDialog(self,message='Specify the number of animals in a video',caption='The number of animals in a video',choices=methods)
-		if dialog.ShowModal()==wx.ID_OK:
-			method=dialog.GetStringSelection()
-			if method=='Enter the number of animals':
-				self.decode_animalnumber=False
-				if self.use_detector is True:
-					self.animal_number={}
-					for animal_name in self.animal_kinds:
-						dialog1=wx.NumberEntryDialog(self,'','The number of '+str(animal_name)+': ',str(animal_name)+' number',1,1,100)
-						if dialog1.ShowModal()==wx.ID_OK:
-							self.animal_number[animal_name]=int(dialog1.GetValue())
-						else:
-							self.animal_number[animal_name]=1
-						dialog1.Destroy()
-					self.text_animalnumber.SetLabel('The number of '+str(self.animal_kinds)+' is: '+str(list(self.animal_number.values()))+'.')
-				else:
-					dialog1=wx.NumberEntryDialog(self,'','The number of animals:','Animal number',1,1,100)
-					if dialog1.ShowModal()==wx.ID_OK:
-						self.animal_number=int(dialog1.GetValue())
+			wx.MessageBox('No need to specify this since the selected behavior mode is "Static images".','Error',wx.OK|wx.ICON_ERROR)
+
+		else:
+
+			methods=['Decode from filenames: "_nn_"','Enter the number of animals']
+
+			dialog=wx.SingleChoiceDialog(self,message='Specify the number of animals in a video',caption='The number of animals in a video',choices=methods)
+			if dialog.ShowModal()==wx.ID_OK:
+				method=dialog.GetStringSelection()
+				if method=='Enter the number of animals':
+					self.decode_animalnumber=False
+					if self.use_detector is True:
+						self.animal_number={}
+						for animal_name in self.animal_kinds:
+							dialog1=wx.NumberEntryDialog(self,'','The number of '+str(animal_name)+': ',str(animal_name)+' number',1,1,100)
+							if dialog1.ShowModal()==wx.ID_OK:
+								self.animal_number[animal_name]=int(dialog1.GetValue())
+							else:
+								self.animal_number[animal_name]=1
+							dialog1.Destroy()
+						self.text_animalnumber.SetLabel('The number of '+str(self.animal_kinds)+' is: '+str(list(self.animal_number.values()))+'.')
 					else:
-						self.animal_number=1
-					self.text_animalnumber.SetLabel('The total number of animals in a video is '+str(self.animal_number)+'.')
-					dialog1.Destroy()
-			else:
-				self.decode_animalnumber=True
-				self.text_animalnumber.SetLabel('Decode from the filenames: the "n" immediately after the letter "n" in _"nn"_.')
-		dialog.Destroy()
+						dialog1=wx.NumberEntryDialog(self,'','The number of animals:','Animal number',1,1,100)
+						if dialog1.ShowModal()==wx.ID_OK:
+							self.animal_number=int(dialog1.GetValue())
+						else:
+							self.animal_number=1
+						self.text_animalnumber.SetLabel('The total number of animals in a video is '+str(self.animal_number)+'.')
+						dialog1.Destroy()
+				else:
+					self.decode_animalnumber=True
+					self.text_animalnumber.SetLabel('Decode from the filenames: the "n" immediately after the letter "n" in _"nn"_.')
+			dialog.Destroy()
 
 
 	def input_length(self,event):
 
-		dialog=wx.NumberEntryDialog(self,'Enter the number of frames\nfor a behavior example','Enter a number\n(minimum=3):','Behavior episode duration',15,1,1000)
-		if dialog.ShowModal()==wx.ID_OK:
-			self.length=int(dialog.GetValue())
-			if self.length<3:
-				self.length=3
-			self.text_length.SetLabel('The duration of a behavior example is: '+str(self.length)+' frames.')
-		dialog.Destroy()
+		if self.behavior_mode>=3:
+
+			wx.MessageBox('No need to specify this since the selected behavior mode is "Static images".','Error',wx.OK|wx.ICON_ERROR)
+
+		else:
+
+			dialog=wx.NumberEntryDialog(self,'Enter the number of frames\nfor a behavior example','Enter a number\n(minimum=3):','Behavior episode duration',15,1,1000)
+			if dialog.ShowModal()==wx.ID_OK:
+				self.length=int(dialog.GetValue())
+				if self.length<3:
+					self.length=3
+				self.text_length.SetLabel('The duration of a behavior example is: '+str(self.length)+' frames.')
+			dialog.Destroy()
 
 
 	def specify_redundant(self,event):
 
-		dialog=wx.NumberEntryDialog(self,'How many frames to skip?','Enter a number:','Interval for generating examples',15,0,100000000000000)
-		if dialog.ShowModal()==wx.ID_OK:
-			self.skip_redundant=int(dialog.GetValue())
-			self.text_skipredundant.SetLabel('Generate a pair of example every '+str(self.skip_redundant)+' frames.')
+		if self.behavior_mode>=3:
+
+			wx.MessageBox('No need to specify this since the selected behavior mode is "Static images".','Error',wx.OK|wx.ICON_ERROR)
+
 		else:
-			self.skip_redundant=1
-			self.text_skipredundant.SetLabel('Generate a pair of example at every frame.')
-		dialog.Destroy()
+
+			dialog=wx.NumberEntryDialog(self,'How many frames to skip?','Enter a number:','Interval for generating examples',15,0,100000000000000)
+			if dialog.ShowModal()==wx.ID_OK:
+				self.skip_redundant=int(dialog.GetValue())
+				self.text_skipredundant.SetLabel('Generate a pair of example every '+str(self.skip_redundant)+' frames.')
+			else:
+				self.skip_redundant=1
+				self.text_skipredundant.SetLabel('Generate a pair of example at every frame.')
+			dialog.Destroy()
 
 
 	def generate_data(self,event):
@@ -511,79 +561,89 @@ class WindowLv2_GenerateExamples(wx.Frame):
 				self.background_free=True
 			dialog.Destroy()
 
-			dialog=wx.MessageDialog(self,'Include body parts in pattern images?\nSelect "No" if limb movement is neglectable.','Including body parts?',wx.YES_NO|wx.ICON_QUESTION)
-			if dialog.ShowModal()==wx.ID_YES:
-				self.include_bodyparts=True
-				dialog2=wx.NumberEntryDialog(self,'Leave it as it is if dont know what it is.','Enter a number between 0 and 255:','STD for motionless pixels',0,0,255)
-				if dialog2.ShowModal()==wx.ID_OK:
-					self.std=int(dialog2.GetValue())
+			if self.behavior_mode>=3:
+
+				if self.path_to_detector is None:
+					wx.MessageBox('You need to select a Detector.','Error',wx.OK|wx.ICON_ERROR)
 				else:
-					self.std=0
-				dialog2.Destroy()
-			else:
-				self.include_bodyparts=False
-			dialog.Destroy()
+					AAD=AnalyzeAnimalDetector()
+					AAD.analyze_images_individuals(self.path_to_detector,self.path_to_videos,self.result_path,self.animal_kinds,generate=True,imagewidth=self.framewidth,detection_threshold=self.detection_threshold,background_free=self.background_free)
 
-			dialog=wx.MessageDialog(self,'Start to generate behavior examples?','Start to generate examples?',wx.YES_NO|wx.ICON_QUESTION)
-			if dialog.ShowModal()==wx.ID_YES:
-				do_nothing=False
 			else:
-				do_nothing=True
-			dialog.Destroy()
 
-			if do_nothing is False:
-	
-				for i in self.path_to_videos:
-				
-					filename=os.path.splitext(os.path.basename(i))[0].split('_')
-					if self.decode_animalnumber is True:
-						if self.use_detector is True:
-							self.animal_number={}
-							number=[x[1:] for x in filename if len(x)>1 and x[0]=='n']
-							for a,animal_name in enumerate(self.animal_kinds):
-								self.animal_number[animal_name]=int(number[a])
-						else:
+				dialog=wx.MessageDialog(self,'Include body parts in pattern images?\nSelect "No" if limb movement is neglectable.','Including body parts?',wx.YES_NO|wx.ICON_QUESTION)
+				if dialog.ShowModal()==wx.ID_YES:
+					self.include_bodyparts=True
+					dialog2=wx.NumberEntryDialog(self,'Leave it as it is if dont know what it is.','Enter a number between 0 and 255:','STD for motionless pixels',0,0,255)
+					if dialog2.ShowModal()==wx.ID_OK:
+						self.std=int(dialog2.GetValue())
+					else:
+						self.std=0
+					dialog2.Destroy()
+				else:
+					self.include_bodyparts=False
+				dialog.Destroy()
+
+				dialog=wx.MessageDialog(self,'Start to generate behavior examples?','Start to generate examples?',wx.YES_NO|wx.ICON_QUESTION)
+				if dialog.ShowModal()==wx.ID_YES:
+					do_nothing=False
+				else:
+					do_nothing=True
+				dialog.Destroy()
+
+				if do_nothing is False:
+		
+					for i in self.path_to_videos:
+					
+						filename=os.path.splitext(os.path.basename(i))[0].split('_')
+						if self.decode_animalnumber is True:
+							if self.use_detector is True:
+								self.animal_number={}
+								number=[x[1:] for x in filename if len(x)>1 and x[0]=='n']
+								for a,animal_name in enumerate(self.animal_kinds):
+									self.animal_number[animal_name]=int(number[a])
+							else:
+								for x in filename:
+									if len(x)>1:
+										if x[0]=='n':
+											self.animal_number=int(x[1:])
+						if self.decode_t is True:
 							for x in filename:
 								if len(x)>1:
-									if x[0]=='n':
-										self.animal_number=int(x[1:])
-					if self.decode_t is True:
-						for x in filename:
-							if len(x)>1:
-								if x[0]=='b':
-									self.t=float(x[1:])
-					if self.decode_extraction is True:
-						for x in filename:
-							if len(x)>2:
-								if x[:2]=='xs':
-									self.ex_start=int(x[2:])
-								if x[:2]=='xe':
-									self.ex_end=int(x[2:])
+									if x[0]=='b':
+										self.t=float(x[1:])
+						if self.decode_extraction is True:
+							for x in filename:
+								if len(x)>2:
+									if x[:2]=='xs':
+										self.ex_start=int(x[2:])
+									if x[:2]=='xe':
+										self.ex_end=int(x[2:])
 
-					if self.animal_number is None:
-						if self.use_detector is True:
-							self.animal_number={}
-							for animal_name in self.animal_kinds:
-								self.animal_number[animal_name]=1
-						else:
-							self.animal_number=1
+						if self.animal_number is None:
+							if self.use_detector is True:
+								self.animal_number={}
+								for animal_name in self.animal_kinds:
+									self.animal_number[animal_name]=1
+							else:
+								self.animal_number=1
 
-					if self.use_detector is False:
-						AA=AnalyzeAnimal()
-						AA.prepare_analysis(i,self.result_path,self.animal_number,delta=self.delta,framewidth=self.framewidth,stable_illumination=self.stable_illumination,channel=3,include_bodyparts=self.include_bodyparts,std=self.std,categorize_behavior=False,animation_analyzer=False,path_background=self.background_path,autofind_t=self.autofind_t,t=self.t,duration=self.duration,ex_start=self.ex_start,ex_end=self.ex_end,length=self.length,animal_vs_bg=self.animal_vs_bg)
-						if self.behavior_mode==0:
-							AA.generate_data(background_free=self.background_free,skip_redundant=self.skip_redundant)
+						if self.use_detector is False:
+							AA=AnalyzeAnimal()
+							AA.prepare_analysis(i,self.result_path,self.animal_number,delta=self.delta,framewidth=self.framewidth,stable_illumination=self.stable_illumination,channel=3,include_bodyparts=self.include_bodyparts,std=self.std,categorize_behavior=False,animation_analyzer=False,path_background=self.background_path,autofind_t=self.autofind_t,t=self.t,duration=self.duration,ex_start=self.ex_start,ex_end=self.ex_end,length=self.length,animal_vs_bg=self.animal_vs_bg)
+							if self.behavior_mode==0:
+								AA.generate_data(background_free=self.background_free,skip_redundant=self.skip_redundant)
+							else:
+								AA.generate_data_interact_basic(background_free=self.background_free,skip_redundant=self.skip_redundant)
 						else:
-							AA.generate_data_interact_basic(background_free=self.background_free,skip_redundant=self.skip_redundant)
-					else:
-						AAD=AnalyzeAnimalDetector()
-						AAD.prepare_analysis(self.path_to_detector,i,self.result_path,self.animal_number,self.animal_kinds,self.behavior_mode,framewidth=self.framewidth,channel=3,include_bodyparts=self.include_bodyparts,std=self.std,categorize_behavior=False,animation_analyzer=False,t=self.t,duration=self.duration,length=self.length,social_distance=self.social_distance)
-						if self.behavior_mode==0:
-							AAD.generate_data(background_free=self.background_free,skip_redundant=self.skip_redundant)
-						elif self.behavior_mode==1:
-							AAD.generate_data_interact_basic(background_free=self.background_free,skip_redundant=self.skip_redundant)
-						else:
-							AAD.generate_data_interact_advance(background_free=self.background_free,skip_redundant=self.skip_redundant)
+							AAD=AnalyzeAnimalDetector()
+							AAD.prepare_analysis(self.path_to_detector,i,self.result_path,self.animal_number,self.animal_kinds,self.behavior_mode,framewidth=self.framewidth,channel=3,include_bodyparts=self.include_bodyparts,std=self.std,categorize_behavior=False,animation_analyzer=False,t=self.t,duration=self.duration,length=self.length,social_distance=self.social_distance)
+							if self.behavior_mode==0:
+								AAD.generate_data(background_free=self.background_free,skip_redundant=self.skip_redundant)
+							elif self.behavior_mode==1:
+								AAD.generate_data_interact_basic(background_free=self.background_free,skip_redundant=self.skip_redundant)
+							else:
+								AAD.generate_data_interact_advance(background_free=self.background_free,skip_redundant=self.skip_redundant)
 
 
 
@@ -739,9 +799,9 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 			self.text_renameexample.SetLabel('Will copy and rename the examples to: '+self.new_path+'.')
 		dialog.Destroy()
 
-		dialog=wx.MessageDialog(self,'Reducing frame size can speed up training\nSelect "No" if dont know what it is.','Resize the frames?',wx.YES_NO|wx.ICON_QUESTION)
+		dialog=wx.MessageDialog(self,'Reducing frame / image size can speed up training\nSelect "No" if dont know what it is.','Resize the frames / images?',wx.YES_NO|wx.ICON_QUESTION)
 		if dialog.ShowModal()==wx.ID_YES:
-			dialog1=wx.NumberEntryDialog(self,'Enter the desired width dimension','No smaller than the\ndesired input dimension of the Categorizer:','Frame dimension',32,1,300)
+			dialog1=wx.NumberEntryDialog(self,'Enter the desired width dimension','No smaller than the\ndesired input dimension of the Categorizer:','Frame / image dimension',32,1,300)
 			if dialog1.ShowModal()==wx.ID_OK:
 				self.resize=int(dialog1.GetValue())
 			if self.resize<16:
@@ -764,7 +824,34 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 
 	def specify_categorizer(self,event):
 
-		categorizer_types=['Categorizer (Animation Analyzer + Pattern Recognizer)','Categorizer (Pattern Recognizer only) (faster / a little less accurate)']
+		behavior_modes=['Non-interact (identify behavior for each individual)','Interact basic (identify behavior for the interactive pair / group)','Interact advanced (identify behavior for both each individual and each interactive pair / group)','Static images (non-interactive): behaviors of each individual in static images(each image contains one animal / object)']
+		dialog=wx.SingleChoiceDialog(self,message='Specify the mode of behavior for the Categorizer to identify',caption='Behavior mode',choices=behavior_modes)
+		if dialog.ShowModal()==wx.ID_OK:
+			behavior_mode=dialog.GetStringSelection()
+			if behavior_mode=='Non-interact (identify behavior for each individual)':
+				self.behavior_mode=0
+			elif behavior_mode=='Interact basic (identify behavior for the interactive pair / group)':
+				self.behavior_mode=1
+			elif behavior_mode=='Interact advanced (identify behavior for both each individual and each interactive pair / group)':
+				self.behavior_mode=2
+				self.channel=3
+				dialog1=wx.NumberEntryDialog(self,'Interactions happen within the social distance.',"How many folds of the animals's diameter\nis the social distance (0=inf):",'Social distance (Enter an integer)',0,0,100000000000000)
+				if dialog1.ShowModal()==wx.ID_OK:
+					self.social_distance=int(dialog1.GetValue())
+					if self.social_distance==0:
+						self.social_distance=float('inf')
+				else:
+					self.social_distance=float('inf')
+				dialog1.Destroy()
+			else:
+				self.behavior_mode=3
+				self.text_length.SetLabel('No need to specify this since the selected behavior mode is "Static images".')
+		dialog.Destroy()
+
+		if self.behavior_mode>=3:
+			categorizer_types=['Categorizer (Pattern Recognizer only) (faster / a little less accurate)']
+		else:
+			categorizer_types=['Categorizer (Animation Analyzer + Pattern Recognizer)','Categorizer (Pattern Recognizer only) (faster / a little less accurate)']
 		dialog=wx.SingleChoiceDialog(self,message='Select the Categorizer type',caption='Categorizer types',choices=categorizer_types)
 		if dialog.ShowModal()==wx.ID_OK:
 			categorizer_tp=dialog.GetStringSelection()
@@ -791,29 +878,14 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 			level=''
 		dialog.Destroy()
 
-		behavior_modes=['Non-interact (identify behavior for each individual)','Interact basic (identify behavior for the interactive pair / group)','Interact advanced (identify behavior for both each individual and each interactive pair / group)']
-		dialog=wx.SingleChoiceDialog(self,message='Specify the mode of behavior for the Categorizer to identify',caption='Behavior mode',choices=behavior_modes)
-		if dialog.ShowModal()==wx.ID_OK:
-			behavior_mode=dialog.GetStringSelection()
-			if behavior_mode=='Non-interact (identify behavior for each individual)':
-				self.behavior_mode=0
-				self.text_categorizertype.SetLabel(categorizer_tp+' (LV '+str(level)+') to identify behaviors of each non-interactive individual.')
-			elif behavior_mode=='Interact basic (identify behavior for the interactive pair / group)':
-				self.behavior_mode=1
-				self.text_categorizertype.SetLabel(categorizer_tp+' (LV '+str(level)+') to identify behaviors of the interactive group.')
-			else:
-				self.behavior_mode=2
-				self.channel=3
-				dialog1=wx.NumberEntryDialog(self,'Interactions happen within the social distance.',"How many folds of the animals's diameter\nis the social distance (0=inf):",'Social distance (Enter an integer)',0,0,100000000000000)
-				if dialog1.ShowModal()==wx.ID_OK:
-					self.social_distance=int(dialog1.GetValue())
-					if self.social_distance==0:
-						self.social_distance=float('inf')
-				else:
-					self.social_distance=float('inf')
-				self.text_categorizertype.SetLabel(categorizer_tp+' (LV '+str(level)+') to identify behaviors of the interactive individuals and groups. Social distance: '+str(self.social_distance)+' folds of the animal diameter.')
-				dialog1.Destroy()
-		dialog.Destroy()
+		if behavior_mode==0:
+			self.text_categorizertype.SetLabel(categorizer_tp+' (LV '+str(level)+') to identify behaviors of each non-interactive individual.')
+		elif behavior_mode==1:
+			self.text_categorizertype.SetLabel(categorizer_tp+' (LV '+str(level)+') to identify behaviors of the interactive group.')
+		elif behavior_mode==2:
+			self.text_categorizertype.SetLabel(categorizer_tp+' (LV '+str(level)+') to identify behaviors of the interactive individuals and groups. Social distance: '+str(self.social_distance)+' folds of the animal diameter.')
+		else:
+			self.text_categorizertype.SetLabel(categorizer_tp+' (LV '+str(level)+') to identify behaviors of each non-interactive individual in static images.')
 
 
 	def set_categorizer(self,event):
@@ -836,10 +908,20 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 		dialog=wx.NumberEntryDialog(self,'Input dimension of Pattern Recognizer\nlarger dimension = wider network','Enter a number:','Input the dimension',32,1,300)
 		if dialog.ShowModal()==wx.ID_OK:
 			self.dim_conv=int(dialog.GetValue())
+			if self.behavior_mode>=3:
+				dialog1=wx.MessageDialog(self,'Grayscale input?\nSelect "Yes" if the color of animals is behavior irrelevant.','Grayscale inputs?',wx.YES_NO|wx.ICON_QUESTION)
+				if dialog1.ShowModal()==wx.ID_YES:
+					self.channel=1
+				else:
+					self.channel=3
+				dialog.Destroy()
 		dialog.Destroy()
 
 		shape_tconv='('+str(self.dim_tconv)+','+str(self.dim_tconv)+','+str(self.channel)+')'
-		shape_conv='('+str(self.dim_conv)+','+str(self.dim_conv)+','+'3)'
+		if self.behavior_mode>=3:
+			shape_conv='('+str(self.dim_conv)+','+str(self.dim_conv)+','+str(self.channel)+')'
+		else:
+			shape_conv='('+str(self.dim_conv)+','+str(self.dim_conv)+','+'3)'
 		if self.animation_analyzer is False:
 			self.text_categorizershape.SetLabel('Input shapes: Pattern Recognizer'+shape_conv+'.')
 		else:
@@ -848,13 +930,19 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 
 	def input_timesteps(self,event):
 
-		dialog=wx.NumberEntryDialog(self,'The number of frames of\na behavior example','Enter a number (minimum=3):','Behavior episode duration',15,1,1000)
-		if dialog.ShowModal()==wx.ID_OK:
-			self.length=int(dialog.GetValue())
-			if self.length<3:
-				self.length=3
-			self.text_length.SetLabel('The duration of a behavior example is :'+str(self.length)+'.')
-		dialog.Destroy()
+		if self.behavior_mode>=3:
+
+			wx.MessageBox('No need to specify this since the selected behavior mode is "Static images".','Error',wx.OK|wx.ICON_ERROR)
+
+		else:
+
+			dialog=wx.NumberEntryDialog(self,'The number of frames of\na behavior example','Enter a number (minimum=3):','Behavior episode duration',15,1,1000)
+			if dialog.ShowModal()==wx.ID_OK:
+				self.length=int(dialog.GetValue())
+				if self.length<3:
+					self.length=3
+				self.text_length.SetLabel('The duration of a behavior example is :'+str(self.length)+'.')
+			dialog.Destroy()
 
 
 	def select_datapath(self,event):
@@ -866,18 +954,21 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 			self.background_free=False
 		dialog.Destroy()
 
-		dialog=wx.MessageDialog(self,'Do the pattern images in training examples\ninclude body parts?','Body parts in pattern images?',wx.YES_NO|wx.ICON_QUESTION)
-		if dialog.ShowModal()==wx.ID_YES:
-			self.include_bodyparts=True
-			dialog2=wx.NumberEntryDialog(self,'Should match the STD of the pattern images in training examples.','Enter a number between 0 and 255:','STD for motionless pixels',0,0,255)
-			if dialog2.ShowModal()==wx.ID_OK:
-				self.std=int(dialog2.GetValue())
-			else:
-				self.std=0
-			dialog2.Destroy()
-		else:
+		if self.behavior_mode>=3:
 			self.include_bodyparts=False
-		dialog.Destroy()
+		else:
+			dialog=wx.MessageDialog(self,'Do the pattern images in training examples\ninclude body parts?','Body parts in pattern images?',wx.YES_NO|wx.ICON_QUESTION)
+			if dialog.ShowModal()==wx.ID_YES:
+				self.include_bodyparts=True
+				dialog2=wx.NumberEntryDialog(self,'Should match the STD of the pattern images in training examples.','Enter a number between 0 and 255:','STD for motionless pixels',0,0,255)
+				if dialog2.ShowModal()==wx.ID_OK:
+					self.std=int(dialog2.GetValue())
+				else:
+					self.std=0
+				dialog2.Destroy()
+			else:
+				self.include_bodyparts=False
+			dialog.Destroy()
 
 		dialog=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
 		if dialog.ShowModal()==wx.ID_OK:
@@ -975,33 +1066,17 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 			if do_nothing is False:
 				if self.animation_analyzer is False:
 					CA=Categorizers()
-					CA.train_pattern_recognizer(self.data_path,self.path_to_categorizer,self.out_path,dim=self.dim_conv,channel=3,time_step=self.length,level=self.level_conv,aug_methods=self.aug_methods,augvalid=self.augvalid,include_bodyparts=self.include_bodyparts,std=self.std,background_free=self.background_free,behavior_mode=self.behavior_mode,social_distance=self.social_distance)
+					if self.behavior_mode>=3:
+						self.length=self.std=0
+						self.include_bodyparts=False
+					else:
+						self.channel=3
+					CA.train_pattern_recognizer(self.data_path,self.path_to_categorizer,self.out_path,dim=self.dim_conv,channel=self.channel,time_step=self.length,level=self.level_conv,aug_methods=self.aug_methods,augvalid=self.augvalid,include_bodyparts=self.include_bodyparts,std=self.std,background_free=self.background_free,behavior_mode=self.behavior_mode,social_distance=self.social_distance)
 				else:
 					if self.behavior_mode==2:
 						self.channel=3
 					CA=Categorizers()
-					CA.train_combnet(self.data_path,self.path_to_categorizer,self.out_path,dim_tconv=self.dim_tconv,dim_conv=self.dim_conv,channel=self.channel,time_step=self.length,level_tconv=self.level_tconv,level_conv=self.level_conv,aug_methods=self.aug_methods,augvalid=self.augvalid,include_bodyparts=self.include_bodyparts,std=self.std,background_free=self.background_free,behavior_mode=self.behavior_mode,social_distance=self.social_distance)	
-
-
-	def remove_categorizer(self,event):
-
-		categorizers=[i for i in os.listdir(self.model_path) if os.path.isdir(os.path.join(self.model_path,i))]
-		if '__pycache__' in categorizers:
-			categorizers.remove('__pycache__')
-		if '__init__' in categorizers:
-			categorizers.remove('__init__')
-		if '__init__.py' in categorizers:
-			categorizers.remove('__init__.py')
-		categorizers.sort()
-
-		dialog=wx.SingleChoiceDialog(self,message='Select a Categorizer to delete',caption='Delete a Categorizer',choices=categorizers)
-		if dialog.ShowModal()==wx.ID_OK:
-			categorizer=dialog.GetStringSelection()
-			dialog2=wx.MessageDialog(self,'Delete '+str(categorizer)+'?','CANNOT be restored!',wx.YES_NO|wx.ICON_QUESTION)
-			if dialog2.ShowModal()==wx.ID_YES:
-				shutil.rmtree(os.path.join(self.model_path,categorizer))
-			dialog2.Destroy()
-		dialog.Destroy()
+					CA.train_combnet(self.data_path,self.path_to_categorizer,self.out_path,dim_tconv=self.dim_tconv,dim_conv=self.dim_conv,channel=self.channel,time_step=self.length,level_tconv=self.level_tconv,level_conv=self.level_conv,aug_methods=self.aug_methods,augvalid=self.augvalid,include_bodyparts=self.include_bodyparts,std=self.std,background_free=self.background_free,behavior_mode=self.behavior_mode,social_distance=self.social_distance)
 
 
 

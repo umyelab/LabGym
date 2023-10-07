@@ -66,12 +66,13 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 
 	def __init__(self,title):
 
-		super(WindowLv2_AnalyzeBehaviors,self).__init__(parent=None,title=title,size=(1000,520))
+		super(WindowLv2_AnalyzeBehaviors,self).__init__(parent=None,title=title,size=(1000,510))
 		self.behavior_mode=0
 		self.use_detector=False
 		self.detector_path=None
 		self.path_to_detector=None
 		self.detector_batch=1
+		self.detection_threshold=0
 		self.animal_kinds=[]
 		self.background_path=None # if not None, will load background images from path
 		self.model_path=None # the parent path of the Categorizers
@@ -130,9 +131,9 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 		boxsizer.Add(0,5,0)
 
 		module_inputvideos=wx.BoxSizer(wx.HORIZONTAL)
-		button_inputvideos=wx.Button(panel,label='Select the video(s)\nfor behavior analysis',size=(300,40))
+		button_inputvideos=wx.Button(panel,label='Select the video(s) / image(s)\nfor behavior analysis',size=(300,40))
 		button_inputvideos.Bind(wx.EVT_BUTTON,self.select_videos)
-		wx.Button.SetToolTip(button_inputvideos,'Select one or more videos for a behavior analysis batch. One analysis batch will yield one raster plot showing the behavior events of all the animals in all selected videos. See Extended Guide for details.')
+		wx.Button.SetToolTip(button_inputvideos,'Select one or more videos / images for a behavior analysis batch. If analyzing videos, one analysis batch will yield one raster plot showing the behavior events of all the animals in all selected videos. For "Static images" mode, each annotated images will be in this folder. See Extended Guide for details.')
 		self.text_inputvideos=wx.StaticText(panel,label='None.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_inputvideos.Add(button_inputvideos,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_inputvideos.Add(self.text_inputvideos,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -142,7 +143,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 		module_outputfolder=wx.BoxSizer(wx.HORIZONTAL)
 		button_outputfolder=wx.Button(panel,label='Select a folder to store\nthe analysis results',size=(300,40))
 		button_outputfolder.Bind(wx.EVT_BUTTON,self.select_outpath)
-		wx.Button.SetToolTip(button_outputfolder,'Will create a subfolder for each video in the selected folder. Each subfolder is named after the file name of the video and stores the detailed analysis results for this video.')
+		wx.Button.SetToolTip(button_outputfolder,'If analyzing videos, will create a subfolder for each video in the selected folder. Each subfolder is named after the file name of the video and stores the detailed analysis results for this video. For "Static images" mode, all results will be in this folder. See Extended Guide for details.')
 		self.text_outputfolder=wx.StaticText(panel,label='None.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_outputfolder.Add(button_outputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_outputfolder.Add(self.text_outputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -192,7 +193,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 		module_selectbehaviors=wx.BoxSizer(wx.HORIZONTAL)
 		button_selectbehaviors=wx.Button(panel,label='Select the behaviors for\nannotations and plots',size=(300,40))
 		button_selectbehaviors.Bind(wx.EVT_BUTTON,self.select_behaviors)
-		wx.Button.SetToolTip(button_selectbehaviors,'The behavior categories are determined by the selected Categorizer. Select which behaviors to show in the annotated videos and the raster plot. See Extended Guide for details.')
+		wx.Button.SetToolTip(button_selectbehaviors,'The behavior categories are determined by the selected Categorizer. Select which behaviors to show in the annotated videos / images and the raster plot (only for videos). See Extended Guide for details.')
 		self.text_selectbehaviors=wx.StaticText(panel,label='Default: No Categorizer selected, no behavior selected.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_selectbehaviors.Add(button_selectbehaviors,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_selectbehaviors.Add(self.text_selectbehaviors,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -211,7 +212,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 
 		button_analyze=wx.Button(panel,label='Start to analyze the behaviors',size=(300,40))
 		button_analyze.Bind(wx.EVT_BUTTON,self.analyze_behaviors)
-		wx.Button.SetToolTip(button_analyze,'Will output a raster plot for all behavior events in all videos, an annotated video copy for each video, various spreadsheets storing quantification results for each selected behavior parameter.')
+		wx.Button.SetToolTip(button_analyze,'If analyzing videos, will output a raster plot for all behavior events in all videos, an annotated video copy for each video, various spreadsheets storing quantification results for each selected behavior parameter. For "Static images" mode, will output annotated image copies and spreadsheet storing behavior count and probability.')
 		boxsizer.Add(0,5,0)
 		boxsizer.Add(button_analyze,0,wx.RIGHT|wx.ALIGN_RIGHT,90)
 		boxsizer.Add(0,10,0)
@@ -249,7 +250,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 				if dialog1.ShowModal()==wx.ID_OK:
 					self.path_to_categorizer=dialog1.GetPaths()
 				dialog1.Destroy()
-				dialog1=wx.NumberEntryDialog(self,"Enter the Categorizer's uncertainty level (0~100%)","If probability difference between\n1st- and 2nd-likely behaviors\nis less than uncertainty,\nclassfication outputs an 'NA' Enter 0 if don't know how to set.",'Uncertainty level',0,0,100)
+				dialog1=wx.NumberEntryDialog(self,"Enter the Categorizer's uncertainty level (0~100%)","If probability difference between\n1st- and 2nd-likely behaviors\nis less than uncertainty,\nclassfication outputs an 'NA'. Enter 0 if don't know how to set.",'Uncertainty level',0,0,100)
 				if dialog1.ShowModal()==wx.ID_OK:
 					uncertain=dialog1.GetValue()
 					self.uncertain=uncertain/100
@@ -321,34 +322,43 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 					if self.social_distance==0:
 						self.social_distance=float('inf')
 					self.text_detection.SetLabel('Only Detector-based detection method is available for the selected Categorizer.')
+				if self.behavior_mode==3:
+					self.text_detection.SetLabel('Only Detector-based detection method is available for the selected Categorizer.')
+					self.text_startanalyze.SetLabel('No need to specify this since the selected behavior mode is "Static images".')
+					self.text_duration.SetLabel('No need to specify this since the selected behavior mode is "Static images".')
+					self.text_animalnumber.SetLabel('No need to specify this since the selected behavior mode is "Static images".')
+					self.text_selectparameters.SetLabel('No need to specify this since the selected behavior mode is "Static images".')
 
 		dialog.Destroy()
 
 
 	def select_videos(self,event):
 
-		wildcard='Video files(*.avi;*.mpg;*.mpeg;*.wmv;*.mp4;*.mkv;*.m4v;*.mov)|*.avi;*.mpg;*.mpeg;*.wmv;*.mp4;*.mkv;*.m4v;*.mov'
-		dialog=wx.FileDialog(self,'Select video(s)','','',wildcard,style=wx.FD_MULTIPLE)
+		if self.behavior_mode==3:
+			wildcard='Image files(*.jpg;*.jpeg;*.png;*.tiff;*.bmp)|*.jpg;*.JPG;*.jpeg;*.JPEG;*.png;*.PNG;*.tiff;*.TIFF;*.bmp;*.BMP'
+		else:
+			wildcard='Video files(*.avi;*.mpg;*.mpeg;*.wmv;*.mp4;*.mkv;*.m4v;*.mov)|*.avi;*.mpg;*.mpeg;*.wmv;*.mp4;*.mkv;*.m4v;*.mov'
 
+		dialog=wx.FileDialog(self,'Select video(s) / image(s)','','',wildcard,style=wx.FD_MULTIPLE)
 		if dialog.ShowModal()==wx.ID_OK:
 			self.path_to_videos=dialog.GetPaths()
 			self.path_to_videos.sort()
 			path=os.path.dirname(self.path_to_videos[0])
-			dialog1=wx.MessageDialog(self,'Proportional resize the video frames? Reducing frame size\nis highly recommended. But select "No" if dont know what it is.','(Optional) resize the frames?',wx.YES_NO|wx.ICON_QUESTION)
+			dialog1=wx.MessageDialog(self,'Proportional resize the video frames / images? Reducing frame / image size\nis highly recommended. But select "No" if dont know what it is.','(Optional) resize the frames / images?',wx.YES_NO|wx.ICON_QUESTION)
 			if dialog1.ShowModal()==wx.ID_YES:
-				dialog2=wx.NumberEntryDialog(self,'Enter the desired frame width','The unit is pixel:','Desired frame width',480,1,10000)
+				dialog2=wx.NumberEntryDialog(self,'Enter the desired frame / image width','The unit is pixel:','Desired frame / image width',480,1,10000)
 				if dialog2.ShowModal()==wx.ID_OK:
 					self.framewidth=int(dialog2.GetValue())
 					if self.framewidth<10:
 						self.framewidth=10
-					self.text_inputvideos.SetLabel('Selected '+str(len(self.path_to_videos))+' video(s) in: '+path+' (proportionally resize framewidth to '+str(self.framewidth)+').')
+					self.text_inputvideos.SetLabel('Selected '+str(len(self.path_to_videos))+' file(s) in: '+path+' (proportionally resize frame / image width to '+str(self.framewidth)+').')
 				else:
 					self.framewidth=None
-					self.text_inputvideos.SetLabel('Selected '+str(len(self.path_to_videos))+' video(s) in: '+path+' (original framesize).')
+					self.text_inputvideos.SetLabel('Selected '+str(len(self.path_to_videos))+' file(s) in: '+path+' (original frame / image size).')
 				dialog2.Destroy()
 			else:
 				self.framewidth=None
-				self.text_inputvideos.SetLabel('Selected '+str(len(self.path_to_videos))+' video(s) in: '+path+' (original framesize).')
+				self.text_inputvideos.SetLabel('Selected '+str(len(self.path_to_videos))+' file(s) in: '+path+' (original frame / image size).')
 			dialog1.Destroy()
 		dialog.Destroy()
 
@@ -497,105 +507,132 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 						dialog2.Destroy()
 					else:
 						self.animal_kinds=animal_names
-					for animal_name in self.animal_kinds:
-						self.animal_number[animal_name]=1
-					self.text_animalnumber.SetLabel('The number of '+str(self.animal_kinds)+' is: '+str(list(self.animal_number.values()))+'.')
-					self.text_detection.SetLabel('Detector: '+detector+'; '+'The animals/objects: '+str(self.animal_kinds)+'.')
+					if self.behavior_mode>=3:
+						dialog2=wx.NumberEntryDialog(self,"Enter the Detector's detection threshold (0~100%)","The higher detection threshold,\nthe higher detection accuracy,\nbut the lower detection sensitivity.\nEnter 0 if don't know how to set.",'Detection threshold',0,0,100)
+						if dialog2.ShowModal()==wx.ID_OK:
+							detection_threshold=dialog2.GetValue()
+							self.detection_threshold=detection_threshold/100
+						self.text_detection.SetLabel('Detector: '+detector+' (detection threshold: '+str(detection_threshold)+'%); The animals/objects: '+str(self.animal_kinds)+'.')
+						dialog2.Destroy()
+					else:
+						for animal_name in self.animal_kinds:
+							self.animal_number[animal_name]=1
+						self.text_animalnumber.SetLabel('The number of '+str(self.animal_kinds)+' is: '+str(list(self.animal_number.values()))+'.')
+						self.text_detection.SetLabel('Detector: '+detector+'; '+'The animals/objects: '+str(self.animal_kinds)+'.')
 				dialog1.Destroy()
 
-				if torch.cuda.is_available():
-					dialog1=wx.NumberEntryDialog(self,"Enter the batch size for faster processing","GPU is available in this device for Detectors.\nYou may use batch processing for faster speed.",'Batch size',0,0,500)
-					if dialog1.ShowModal()==wx.ID_OK:
-						self.detector_batch=int(dialog1.GetValue())
-					else:
-						self.detector_batch=1
-					dialog1.Destroy()
+				if self.behavior_mode<3:
+					if torch.cuda.is_available():
+						dialog1=wx.NumberEntryDialog(self,"Enter the batch size for faster processing","GPU is available in this device for Detectors.\nYou may use batch processing for faster speed.",'Batch size',0,0,500)
+						if dialog1.ShowModal()==wx.ID_OK:
+							self.detector_batch=int(dialog1.GetValue())
+						else:
+							self.detector_batch=1
+						dialog1.Destroy()
 
 		dialog.Destroy()
 
 
 	def specify_timing(self,event):
 
-		if self.use_detector is False:
-			dialog=wx.MessageDialog(self,'light on and off in videos?','Illumination shifts?',wx.YES_NO|wx.ICON_QUESTION)
-			if dialog.ShowModal()==wx.ID_YES:
-				self.delta=1.2
-			else:
-				self.delta=10000
-			dialog.Destroy()
+		if self.behavior_mode>=3:
 
-		if self.delta==1.2 and self.use_detector is False:
-			methods=['Automatic (for light on and off)','Decode from filenames: "_bt_"','Enter a time point']
+			wx.MessageBox('No need to specify this since the selected behavior mode is "Static images".','Error',wx.OK|wx.ICON_ERROR)
+
 		else:
-			methods=['Decode from filenames: "_bt_"','Enter a time point']
 
-		dialog=wx.SingleChoiceDialog(self,message='Specify beginning time of analysis',caption='Beginning time of analysis',choices=methods)
-		if dialog.ShowModal()==wx.ID_OK:
-			method=dialog.GetStringSelection()
-			if method=='Automatic (for light on and off)':
-				self.autofind_t=True
-				self.decode_t=False
-				self.text_startanalyze.SetLabel('Automatically find the onset of the 1st time when light on / off as the beginning time.')
-			elif method=='Decode from filenames: "_bt_"':
-				self.autofind_t=False
-				self.decode_t=True
-				self.text_startanalyze.SetLabel('Decode the beginning time from the filenames: the "t" immediately after the letter "b"" in "_bt_".')
+			if self.use_detector is False:
+				dialog=wx.MessageDialog(self,'light on and off in videos?','Illumination shifts?',wx.YES_NO|wx.ICON_QUESTION)
+				if dialog.ShowModal()==wx.ID_YES:
+					self.delta=1.2
+				else:
+					self.delta=10000
+				dialog.Destroy()
+
+			if self.delta==1.2 and self.use_detector is False:
+				methods=['Automatic (for light on and off)','Decode from filenames: "_bt_"','Enter a time point']
 			else:
-				self.autofind_t=False
-				self.decode_t=False
-				dialog2=wx.NumberEntryDialog(self,'Enter the beginning time of analysis','The unit is second:','Beginning time of analysis',0,0,100000000000000)
-				if dialog2.ShowModal()==wx.ID_OK:
-					self.t=float(dialog2.GetValue())
-					if self.t<0:
-						self.t=0
-					self.text_startanalyze.SetLabel('Analysis will begin at the: '+str(self.t)+' second.')
-				dialog2.Destroy()
-		dialog.Destroy()
+				methods=['Decode from filenames: "_bt_"','Enter a time point']
+
+			dialog=wx.SingleChoiceDialog(self,message='Specify beginning time of analysis',caption='Beginning time of analysis',choices=methods)
+			if dialog.ShowModal()==wx.ID_OK:
+				method=dialog.GetStringSelection()
+				if method=='Automatic (for light on and off)':
+					self.autofind_t=True
+					self.decode_t=False
+					self.text_startanalyze.SetLabel('Automatically find the onset of the 1st time when light on / off as the beginning time.')
+				elif method=='Decode from filenames: "_bt_"':
+					self.autofind_t=False
+					self.decode_t=True
+					self.text_startanalyze.SetLabel('Decode the beginning time from the filenames: the "t" immediately after the letter "b"" in "_bt_".')
+				else:
+					self.autofind_t=False
+					self.decode_t=False
+					dialog2=wx.NumberEntryDialog(self,'Enter the beginning time of analysis','The unit is second:','Beginning time of analysis',0,0,100000000000000)
+					if dialog2.ShowModal()==wx.ID_OK:
+						self.t=float(dialog2.GetValue())
+						if self.t<0:
+							self.t=0
+						self.text_startanalyze.SetLabel('Analysis will begin at the: '+str(self.t)+' second.')
+					dialog2.Destroy()
+			dialog.Destroy()
 
 
 	def input_duration(self,event):
 
-		dialog=wx.NumberEntryDialog(self,'Enter the duration of the analysis','The unit is second:','Analysis duration',0,0,100000000000000)
-		if dialog.ShowModal()==wx.ID_OK:
-			self.duration=int(dialog.GetValue())
-			if self.duration!=0:
-				self.text_duration.SetLabel('The analysis duration is '+str(self.duration)+' seconds.')
-			else:
-				self.text_duration.SetLabel('The analysis duration is from the specified beginning time to the end of a video.')
-		dialog.Destroy()
+		if self.behavior_mode>=3:
+
+			wx.MessageBox('No need to specify this since the selected behavior mode is "Static images".','Error',wx.OK|wx.ICON_ERROR)
+
+		else:
+
+			dialog=wx.NumberEntryDialog(self,'Enter the duration of the analysis','The unit is second:','Analysis duration',0,0,100000000000000)
+			if dialog.ShowModal()==wx.ID_OK:
+				self.duration=int(dialog.GetValue())
+				if self.duration!=0:
+					self.text_duration.SetLabel('The analysis duration is '+str(self.duration)+' seconds.')
+				else:
+					self.text_duration.SetLabel('The analysis duration is from the specified beginning time to the end of a video.')
+			dialog.Destroy()
 
 
 	def specify_animalnumber(self,event):
 
-		methods=['Decode from filenames: "_nn_"','Enter the number of animals']
+		if self.behavior_mode>=3:
 
-		dialog=wx.SingleChoiceDialog(self,message='Specify the number of animals in a video',caption='The number of animals in a video',choices=methods)
-		if dialog.ShowModal()==wx.ID_OK:
-			method=dialog.GetStringSelection()
-			if method=='Enter the number of animals':
-				self.decode_animalnumber=False
-				if self.use_detector is True:
-					self.animal_number={}
-					for animal_name in self.animal_kinds:
-						dialog1=wx.NumberEntryDialog(self,'','The number of '+str(animal_name)+': ',str(animal_name)+' number',1,1,100)
-						if dialog1.ShowModal()==wx.ID_OK:
-							self.animal_number[animal_name]=int(dialog1.GetValue())
-						else:
-							self.animal_number[animal_name]=1
-						dialog1.Destroy()
-					self.text_animalnumber.SetLabel('The number of '+str(self.animal_kinds)+' is: '+str(list(self.animal_number.values()))+'.')
-				else:
-					dialog1=wx.NumberEntryDialog(self,'','The number of animals:','Animal number',1,1,100)
-					if dialog1.ShowModal()==wx.ID_OK:
-						self.animal_number=int(dialog1.GetValue())
+			wx.MessageBox('No need to specify this since the selected behavior mode is "Static images".','Error',wx.OK|wx.ICON_ERROR)
+
+		else:
+
+			methods=['Decode from filenames: "_nn_"','Enter the number of animals']
+
+			dialog=wx.SingleChoiceDialog(self,message='Specify the number of animals in a video',caption='The number of animals in a video',choices=methods)
+			if dialog.ShowModal()==wx.ID_OK:
+				method=dialog.GetStringSelection()
+				if method=='Enter the number of animals':
+					self.decode_animalnumber=False
+					if self.use_detector is True:
+						self.animal_number={}
+						for animal_name in self.animal_kinds:
+							dialog1=wx.NumberEntryDialog(self,'','The number of '+str(animal_name)+': ',str(animal_name)+' number',1,1,100)
+							if dialog1.ShowModal()==wx.ID_OK:
+								self.animal_number[animal_name]=int(dialog1.GetValue())
+							else:
+								self.animal_number[animal_name]=1
+							dialog1.Destroy()
+						self.text_animalnumber.SetLabel('The number of '+str(self.animal_kinds)+' is: '+str(list(self.animal_number.values()))+'.')
 					else:
-						self.animal_number=1
-					self.text_animalnumber.SetLabel('The total number of animals in a video is '+str(self.animal_number)+'.')
-					dialog1.Destroy()
-			else:
-				self.decode_animalnumber=True
-				self.text_animalnumber.SetLabel('Decode from the filenames: the "n" immediately after the letter "n" in _"nn"_.')
-		dialog.Destroy()
+						dialog1=wx.NumberEntryDialog(self,'','The number of animals:','Animal number',1,1,100)
+						if dialog1.ShowModal()==wx.ID_OK:
+							self.animal_number=int(dialog1.GetValue())
+						else:
+							self.animal_number=1
+						self.text_animalnumber.SetLabel('The total number of animals in a video is '+str(self.animal_number)+'.')
+						dialog1.Destroy()
+				else:
+					self.decode_animalnumber=True
+					self.text_animalnumber.SetLabel('Decode from the filenames: the "n" immediately after the letter "n" in _"nn"_.')
+			dialog.Destroy()
 
 
 	def select_behaviors(self,event):
@@ -632,11 +669,11 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 				dialog=wx.MessageDialog(self,'Specify individual-specific behaviors? e.g., sex-specific behaviors only occur in a specific sex and\ncan be used to maintain the correct ID of this individual during the entire analysis.','Individual-specific behaviors?',wx.YES_NO|wx.ICON_QUESTION)
 				if dialog.ShowModal()==wx.ID_YES:
 					for animal_name in self.animal_kinds:
-						dialog1=wx.MultiChoiceDialog(self,message='Select individual-specific behaviors for '+str(animal_name),caption='Individual-specific behaviors for '+str(animal_name),choices=list(self.behaviornames_and_colors.keys()))
+						dialog1=wx.MultiChoiceDialog(self,message='Select individual-specific behaviors for '+str(animal_name),caption='Individual-specific behaviors for '+str(animal_name),choices=self.behavior_to_include)
 						if dialog1.ShowModal()==wx.ID_OK:
 							self.specific_behaviors[animal_name]={}
 							self.correct_ID=True
-							specific_behaviors=[list(self.behaviornames_and_colors.keys())[i] for i in dialog1.GetSelections()]
+							specific_behaviors=[self.behavior_to_include[i] for i in dialog1.GetSelections()]
 							for specific_behavior in specific_behaviors:
 								self.specific_behaviors[animal_name][specific_behavior]=None
 						dialog1.Destroy()
@@ -682,48 +719,55 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 					self.text_selectbehaviors.SetLabel('Selected: '+str(self.behavior_to_include)+' with default colors.')
 			dialog.Destroy()
 
-			dialog=wx.MessageDialog(self,'Show legend of behavior names in the annotated video?','Legend in video?',wx.YES_NO|wx.ICON_QUESTION)
-			if dialog.ShowModal()==wx.ID_YES:
-				self.show_legend=True
-			else:
-				self.show_legend=False
-			dialog.Destroy()
+			if self.behavior_mode!=3:
+				dialog=wx.MessageDialog(self,'Show legend of behavior names in the annotated video?','Legend in video?',wx.YES_NO|wx.ICON_QUESTION)
+				if dialog.ShowModal()==wx.ID_YES:
+					self.show_legend=True
+				else:
+					self.show_legend=False
+				dialog.Destroy()
 
 
 	def select_parameters(self,event):
 
-		if self.path_to_categorizer is None:
-			parameters=['3 areal parameters','3 length parameters','4 locomotion parameters']
+		if self.behavior_mode>=3:
+
+			wx.MessageBox('No need to specify this since the selected behavior mode is "Static images".','Error',wx.OK|wx.ICON_ERROR)
+
 		else:
-			if self.behavior_mode==1:
-				parameters=['count','duration','latency']
+
+			if self.path_to_categorizer is None:
+				parameters=['3 areal parameters','3 length parameters','4 locomotion parameters']
 			else:
-				parameters=['count','duration','latency','3 areal parameters','3 length parameters','4 locomotion parameters']
+				if self.behavior_mode==1:
+					parameters=['count','duration','latency']
+				else:
+					parameters=['count','duration','latency','3 areal parameters','3 length parameters','4 locomotion parameters']
 
-		dialog=wx.MultiChoiceDialog(self,message='Select quantitative measurements',caption='Quantitative measurements',choices=parameters)
-		if dialog.ShowModal()==wx.ID_OK:
-			self.parameter_to_analyze=[parameters[i] for i in dialog.GetSelections()]
-		else:
-			self.parameter_to_analyze=[]
-		dialog.Destroy()
+			dialog=wx.MultiChoiceDialog(self,message='Select quantitative measurements',caption='Quantitative measurements',choices=parameters)
+			if dialog.ShowModal()==wx.ID_OK:
+				self.parameter_to_analyze=[parameters[i] for i in dialog.GetSelections()]
+			else:
+				self.parameter_to_analyze=[]
+			dialog.Destroy()
 
-		if len(self.parameter_to_analyze)<=0:
-			self.parameter_to_analyze=[]
-			self.normalize_distance=False
-			self.text_selectparameters.SetLabel('NO parameter selected.')
-		else:
-			if '4 locomotion parameters' in self.parameter_to_analyze:
-				dialog=wx.MessageDialog(self,'Normalize the distances by the size of an animal? If no, all distances will be output in pixels.','Normalize the distances?',wx.YES_NO|wx.ICON_QUESTION)
-				if dialog.ShowModal()==wx.ID_YES:
-					self.normalize_distance=True
-					self.text_selectparameters.SetLabel('Selected: '+str(self.parameter_to_analyze)+'; with normalization of distance.')
+			if len(self.parameter_to_analyze)<=0:
+				self.parameter_to_analyze=[]
+				self.normalize_distance=False
+				self.text_selectparameters.SetLabel('NO parameter selected.')
+			else:
+				if '4 locomotion parameters' in self.parameter_to_analyze:
+					dialog=wx.MessageDialog(self,'Normalize the distances by the size of an animal? If no, all distances will be output in pixels.','Normalize the distances?',wx.YES_NO|wx.ICON_QUESTION)
+					if dialog.ShowModal()==wx.ID_YES:
+						self.normalize_distance=True
+						self.text_selectparameters.SetLabel('Selected: '+str(self.parameter_to_analyze)+'; with normalization of distance.')
+					else:
+						self.normalize_distance=False
+						self.text_selectparameters.SetLabel('Selected: '+str(self.parameter_to_analyze)+'; NO normalization of distance.')
+					dialog.Destroy()
 				else:
 					self.normalize_distance=False
-					self.text_selectparameters.SetLabel('Selected: '+str(self.parameter_to_analyze)+'; NO normalization of distance.')
-				dialog.Destroy()
-			else:
-				self.normalize_distance=False
-				self.text_selectparameters.SetLabel('Selected: '+str(self.parameter_to_analyze)+'.')
+					self.text_selectparameters.SetLabel('Selected: '+str(self.parameter_to_analyze)+'.')
 
 
 	def analyze_behaviors(self,event):
@@ -734,155 +778,159 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 
 		else:
 
-			all_events={}
-			event_data={}
-			all_lengths=[]
+			if self.behavior_mode>=3:
 
-			if self.use_detector is True:
-				for animal_name in self.animal_kinds:
-					all_events[animal_name]={}
-				if len(self.animal_to_include)==0:
-					self.animal_to_include=self.animal_kinds
+				if self.path_to_categorizer is None or self.path_to_detector is None:
+					wx.MessageBox('You need to select a Categorizer / Detector.','Error',wx.OK|wx.ICON_ERROR)
+				else:
+					AAD=AnalyzeAnimalDetector()
+					AAD.analyze_images_individuals(self.path_to_detector,self.path_to_videos,self.result_path,self.animal_kinds,path_to_categorizer=self.path_to_categorizer,generate=False,animal_to_include=self.animal_to_include,behavior_to_include=self.behavior_to_include,names_and_colors=self.behaviornames_and_colors,imagewidth=self.framewidth,dim_conv=self.dim_conv,channel=self.channel,detection_threshold=self.detection_threshold,uncertain=self.uncertain,background_free=self.background_free,social_distance=0)
 
-			if self.path_to_categorizer is None:
-				self.behavior_to_include=[]
 			else:
-				if self.behavior_to_include[0]=='all':
-					self.behavior_to_include=list(self.behaviornames_and_colors.keys())
 
-			for i in self.path_to_videos:
+				all_events={}
+				event_data={}
+				all_lengths=[]
 
-				filename=os.path.splitext(os.path.basename(i))[0].split('_')
-				if self.decode_animalnumber is True:
-					if self.use_detector is True:
-						self.animal_number={}
-						number=[x[1:] for x in filename if len(x)>1 and x[0]=='n']
-						for a,animal_name in enumerate(self.animal_kinds):
-							self.animal_number[animal_name]=int(number[a])
-					else:
+				if self.use_detector is True:
+					for animal_name in self.animal_kinds:
+						all_events[animal_name]={}
+					if len(self.animal_to_include)==0:
+						self.animal_to_include=self.animal_kinds
+
+				if self.path_to_categorizer is None:
+					self.behavior_to_include=[]
+				else:
+					if self.behavior_to_include[0]=='all':
+						self.behavior_to_include=list(self.behaviornames_and_colors.keys())
+
+				for i in self.path_to_videos:
+
+					filename=os.path.splitext(os.path.basename(i))[0].split('_')
+					if self.decode_animalnumber is True:
+						if self.use_detector is True:
+							self.animal_number={}
+							number=[x[1:] for x in filename if len(x)>1 and x[0]=='n']
+							for a,animal_name in enumerate(self.animal_kinds):
+								self.animal_number[animal_name]=int(number[a])
+						else:
+							for x in filename:
+								if len(x)>1:
+									if x[0]=='n':
+										self.animal_number=int(x[1:])
+					if self.decode_t is True:
 						for x in filename:
 							if len(x)>1:
-								if x[0]=='n':
-									self.animal_number=int(x[1:])
-				if self.decode_t is True:
-					for x in filename:
-						if len(x)>1:
-							if x[0]=='b':
-								self.t=float(x[1:])
-				if self.decode_extraction is True:
-					for x in filename:
-						if len(x)>2:
-							if x[:2]=='xs':
-								self.ex_start=int(x[2:])
-							if x[:2]=='xe':
-								self.ex_end=int(x[2:])
+								if x[0]=='b':
+									self.t=float(x[1:])
+					if self.decode_extraction is True:
+						for x in filename:
+							if len(x)>2:
+								if x[:2]=='xs':
+									self.ex_start=int(x[2:])
+								if x[:2]=='xe':
+									self.ex_end=int(x[2:])
 
-				if self.animal_number is None:
-					if self.use_detector is True:
-						self.animal_number={}
-						for animal_name in self.animal_kinds:
-							self.animal_number[animal_name]=1
-					else:
-						self.animal_number=1
-			
-				if self.path_to_categorizer is None:
-					self.behavior_mode=0
-					categorize_behavior=False
-				else:
-					categorize_behavior=True
-
-				if self.use_detector is False:
-
-					AA=AnalyzeAnimal()
-					AA.prepare_analysis(i,self.result_path,self.animal_number,delta=self.delta,names_and_colors=self.behaviornames_and_colors,framewidth=self.framewidth,stable_illumination=self.stable_illumination,dim_tconv=self.dim_tconv,dim_conv=self.dim_conv,channel=self.channel,include_bodyparts=self.include_bodyparts,std=self.std,categorize_behavior=categorize_behavior,animation_analyzer=self.animation_analyzer,path_background=self.background_path,autofind_t=self.autofind_t,t=self.t,duration=self.duration,ex_start=self.ex_start,ex_end=self.ex_end,length=self.length,animal_vs_bg=self.animal_vs_bg)
-					if self.behavior_mode==0:
-						AA.acquire_information(background_free=self.background_free)
-						AA.craft_data()
-						interact_all=False
-					else:
-						AA.acquire_information_interact_basic(background_free=self.background_free)
-						interact_all=True
-					if self.path_to_categorizer is not None:
-						AA.categorize_behaviors(self.path_to_categorizer,uncertain=self.uncertain)
-					AA.annotate_video(self.behavior_to_include,show_legend=self.show_legend,interact_all=interact_all)
-					AA.export_results(normalize_distance=self.normalize_distance,parameter_to_analyze=self.parameter_to_analyze)
-
-					if self.path_to_categorizer is not None:
-						for n in AA.event_probability:
-							all_events[len(all_events)]=AA.event_probability[n]
-							all_lengths.append(len(AA.event_probability[n]))
-
-				else:
-
-					AAD=AnalyzeAnimalDetector()
-					AAD.prepare_analysis(self.path_to_detector,i,self.result_path,self.animal_number,self.animal_kinds,self.behavior_mode,names_and_colors=self.behaviornames_and_colors,framewidth=self.framewidth,dim_tconv=self.dim_tconv,dim_conv=self.dim_conv,channel=self.channel,include_bodyparts=self.include_bodyparts,std=self.std,categorize_behavior=categorize_behavior,animation_analyzer=self.animation_analyzer,t=self.t,duration=self.duration,length=self.length,social_distance=self.social_distance)
-					AAD.acquire_information(batch_size=self.detector_batch,background_free=self.background_free)
-					if self.behavior_mode!=1:
-						AAD.craft_data()
-					if self.path_to_categorizer is not None:
-						AAD.categorize_behaviors(self.path_to_categorizer,uncertain=self.uncertain)
-					if self.correct_ID is True:
-						AAD.correct_identity(self.specific_behaviors)
-					AAD.annotate_video(self.animal_to_include,self.behavior_to_include,show_legend=self.show_legend)
-					AAD.export_results(normalize_distance=self.normalize_distance,parameter_to_analyze=self.parameter_to_analyze)
-
-					if self.path_to_categorizer is not None:
-						for animal_name in self.animal_kinds:
-							for n in AAD.event_probability[animal_name]:
-								all_events[animal_name][len(all_events[animal_name])]=AAD.event_probability[animal_name][n]
-								all_lengths.append(len(AAD.event_probability[animal_name][n]))
+					if self.animal_number is None:
+						if self.use_detector is True:
+							self.animal_number={}
+							for animal_name in self.animal_kinds:
+								self.animal_number[animal_name]=1
+						else:
+							self.animal_number=1
 				
-			if self.path_to_categorizer is not None:
-
-				if self.use_detector is False:
-
-					for n in all_events:
-						event_data[len(event_data)]=all_events[n][:min(all_lengths)]
-					time_points=AA.all_time[:min(all_lengths)]
-					all_events_df=pd.DataFrame.from_dict(event_data,orient='index',columns=time_points)
-					if min(all_lengths)<16000:
-						all_events_df.to_excel(os.path.join(self.result_path,'all_events.xlsx'),float_format='%.2f')
+					if self.path_to_categorizer is None:
+						self.behavior_mode=0
+						categorize_behavior=False
 					else:
-						all_events_df.to_csv(os.path.join(self.result_path,'all_events.csv'),float_format='%.2f')
-					plot_evnets(self.result_path,event_data,time_points,self.behaviornames_and_colors,self.behavior_to_include,width=0,height=0)
-					folders=[i for i in os.listdir(self.result_path) if os.path.isdir(os.path.join(self.result_path,i))]
-					folders.sort()
-					for behavior_name in self.behaviornames_and_colors:
-						all_summary=[]
-						for folder in folders:
-							individual_summary=os.path.join(self.result_path,folder,behavior_name,'all_summary.xlsx')
-							if os.path.exists(individual_summary) is True:
-								all_summary.append(pd.read_excel(individual_summary))
-						if len(all_summary)>=1:
-							all_summary=pd.concat(all_summary,ignore_index=True)
-							all_summary.to_excel(os.path.join(self.result_path,behavior_name+'_summary.xlsx'),float_format='%.2f')
+						categorize_behavior=True
 
-				else:
+					if self.use_detector is False:
 
-					for animal_name in self.animal_to_include:
-						for n in all_events[animal_name]:
-							event_data[len(event_data)]=all_events[animal_name][n][:min(all_lengths)]
-						event_data[len(event_data)]=[['NA',-1]]*min(all_lengths)
-					del event_data[len(event_data)-1]
-					time_points=AAD.all_time[:min(all_lengths)]
-					all_events_df=pd.DataFrame.from_dict(event_data,orient='index',columns=time_points)
-					if min(all_lengths)<16000:
-						all_events_df.to_excel(os.path.join(self.result_path,'all_events.xlsx'),float_format='%.2f')
+						AA=AnalyzeAnimal()
+						AA.prepare_analysis(i,self.result_path,self.animal_number,delta=self.delta,names_and_colors=self.behaviornames_and_colors,framewidth=self.framewidth,stable_illumination=self.stable_illumination,dim_tconv=self.dim_tconv,dim_conv=self.dim_conv,channel=self.channel,include_bodyparts=self.include_bodyparts,std=self.std,categorize_behavior=categorize_behavior,animation_analyzer=self.animation_analyzer,path_background=self.background_path,autofind_t=self.autofind_t,t=self.t,duration=self.duration,ex_start=self.ex_start,ex_end=self.ex_end,length=self.length,animal_vs_bg=self.animal_vs_bg)
+						if self.behavior_mode==0:
+							AA.acquire_information(background_free=self.background_free)
+							AA.craft_data()
+							interact_all=False
+						else:
+							AA.acquire_information_interact_basic(background_free=self.background_free)
+							interact_all=True
+						if self.path_to_categorizer is not None:
+							AA.categorize_behaviors(self.path_to_categorizer,uncertain=self.uncertain)
+						AA.annotate_video(self.behavior_to_include,show_legend=self.show_legend,interact_all=interact_all)
+						AA.export_results(normalize_distance=self.normalize_distance,parameter_to_analyze=self.parameter_to_analyze)
+
+						if self.path_to_categorizer is not None:
+							for n in AA.event_probability:
+								all_events[len(all_events)]=AA.event_probability[n]
+								all_lengths.append(len(AA.event_probability[n]))
+
 					else:
-						all_events_df.to_csv(os.path.join(self.result_path,'all_events.csv'),float_format='%.2f')
-					plot_evnets(self.result_path,event_data,time_points,self.behaviornames_and_colors,self.behavior_to_include,width=0,height=0)
-					folders=[i for i in os.listdir(self.result_path) if os.path.isdir(os.path.join(self.result_path,i))]
-					folders.sort()
-					for animal_name in self.animal_kinds:
+
+						AAD=AnalyzeAnimalDetector()
+						AAD.prepare_analysis(self.path_to_detector,i,self.result_path,self.animal_number,self.animal_kinds,self.behavior_mode,names_and_colors=self.behaviornames_and_colors,framewidth=self.framewidth,dim_tconv=self.dim_tconv,dim_conv=self.dim_conv,channel=self.channel,include_bodyparts=self.include_bodyparts,std=self.std,categorize_behavior=categorize_behavior,animation_analyzer=self.animation_analyzer,t=self.t,duration=self.duration,length=self.length,social_distance=self.social_distance)
+						AAD.acquire_information(batch_size=self.detector_batch,background_free=self.background_free)
+						if self.behavior_mode!=1:
+							AAD.craft_data()
+						if self.path_to_categorizer is not None:
+							AAD.categorize_behaviors(self.path_to_categorizer,uncertain=self.uncertain)
+						if self.correct_ID is True:
+							AAD.correct_identity(self.specific_behaviors)
+						AAD.annotate_video(self.animal_to_include,self.behavior_to_include,show_legend=self.show_legend)
+						AAD.export_results(normalize_distance=self.normalize_distance,parameter_to_analyze=self.parameter_to_analyze)
+
+						if self.path_to_categorizer is not None:
+							for animal_name in self.animal_kinds:
+								for n in AAD.event_probability[animal_name]:
+									all_events[animal_name][len(all_events[animal_name])]=AAD.event_probability[animal_name][n]
+									all_lengths.append(len(AAD.event_probability[animal_name][n]))
+					
+				if self.path_to_categorizer is not None:
+
+					if self.use_detector is False:
+
+						for n in all_events:
+							event_data[len(event_data)]=all_events[n][:min(all_lengths)]
+						time_points=AA.all_time[:min(all_lengths)]
+						all_events_df=pd.DataFrame(event_data,index=time_points)
+						all_events_df.to_excel(os.path.join(self.result_path,'all_events.xlsx'),float_format='%.2f',index_label='time/ID')
+						plot_evnets(self.result_path,event_data,time_points,self.behaviornames_and_colors,self.behavior_to_include,width=0,height=0)
+						folders=[i for i in os.listdir(self.result_path) if os.path.isdir(os.path.join(self.result_path,i))]
+						folders.sort()
 						for behavior_name in self.behaviornames_and_colors:
 							all_summary=[]
 							for folder in folders:
-								individual_summary=os.path.join(self.result_path,folder,behavior_name,animal_name+'_all_summary.xlsx')
+								individual_summary=os.path.join(self.result_path,folder,behavior_name,'all_summary.xlsx')
 								if os.path.exists(individual_summary) is True:
 									all_summary.append(pd.read_excel(individual_summary))
 							if len(all_summary)>=1:
 								all_summary=pd.concat(all_summary,ignore_index=True)
-								all_summary.to_excel(os.path.join(self.result_path,animal_name+'_'+behavior_name+'_summary.xlsx'),float_format='%.2f')
+								all_summary.to_excel(os.path.join(self.result_path,behavior_name+'_summary.xlsx'),float_format='%.2f',index_label='ID/parameter')
+
+					else:
+
+						for animal_name in self.animal_to_include:
+							for n in all_events[animal_name]:
+								event_data[len(event_data)]=all_events[animal_name][n][:min(all_lengths)]
+							event_data[len(event_data)]=[['NA',-1]]*min(all_lengths)
+						del event_data[len(event_data)-1]
+						time_points=AAD.all_time[:min(all_lengths)]
+						all_events_df=pd.DataFrame(event_data,index=time_points)
+						all_events_df.to_excel(os.path.join(self.result_path,'all_events.xlsx'),float_format='%.2f',index_label='time/ID')
+						plot_evnets(self.result_path,event_data,time_points,self.behaviornames_and_colors,self.behavior_to_include,width=0,height=0)
+						folders=[i for i in os.listdir(self.result_path) if os.path.isdir(os.path.join(self.result_path,i))]
+						folders.sort()
+						for animal_name in self.animal_kinds:
+							for behavior_name in self.behaviornames_and_colors:
+								all_summary=[]
+								for folder in folders:
+									individual_summary=os.path.join(self.result_path,folder,behavior_name,animal_name+'_all_summary.xlsx')
+									if os.path.exists(individual_summary) is True:
+										all_summary.append(pd.read_excel(individual_summary))
+								if len(all_summary)>=1:
+									all_summary=pd.concat(all_summary,ignore_index=True)
+									all_summary.to_excel(os.path.join(self.result_path,animal_name+'_'+behavior_name+'_summary.xlsx'),float_format='%.2f',index_label='ID/parameter')
 
 
 

@@ -464,6 +464,11 @@ class WindowLv2_SortBehaviors(wx.Frame):
 			stop=False
 			moved=False
 
+			check_animations=[i for i in os.listdir(self.input_path) if i.endswith('.avi')]
+			if len(check_animations)==0:
+				wx.MessageBox('No animation in the behavior examples. You dont need to use this sorting GUI for sorting.','Error',wx.OK|wx.ICON_ERROR)
+				stop=True
+
 			while stop is False:
 
 				if moved is True:

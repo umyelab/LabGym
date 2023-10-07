@@ -104,7 +104,7 @@ class AnalyzeAnimalDetector():
 		results_path,
 		animal_number,
 		animal_kinds, # the catgories of animals / objects to be analyzed
-		behavior_mode, # 0: non-interactive; 1: interactive basic; 2: interactive advanced
+		behavior_mode, # 0: non-interactive; 1: interactive basic; 2: interactive advanced; 3: static image (non-interactive)
 		names_and_colors=None, # the behavior names and their representing colors
 		framewidth=None, # the width of the frame to resize
 		dim_tconv=8, # input dim of Animation Analyzer
@@ -1485,11 +1485,8 @@ class AnalyzeAnimalDetector():
 		for animal_name in self.animal_kinds:
 
 			if self.categorize_behavior is True:
-				events_df=pd.DataFrame.from_dict(self.event_probability[animal_name],orient='index',columns=self.all_time)
-				if len(self.all_time)<16000:
-					events_df.to_excel(os.path.join(self.results_path,animal_name+'_all_event_probability.xlsx'),float_format='%.2f')
-				else:
-					events_df.to_csv(os.path.join(self.results_path,animal_name+'_all_event_probability.csv'),float_format='%.2f')
+				events_df=pd.DataFrame(self.event_probability[animal_name],index=self.all_time)
+				events_df.to_excel(os.path.join(self.results_path,animal_name+'_all_event_probability.xlsx'),float_format='%.2f',index_label='time/ID')
 
 			all_parameters=[]
 
@@ -1525,13 +1522,11 @@ class AnalyzeAnimalDetector():
 								summary.append(individual_df.mean(axis=1,skipna=True).to_frame().reset_index(drop=True).rename(columns={0:parameter_name+'_mean'}))
 								summary.append(individual_df.max(axis=1,skipna=True).to_frame().reset_index(drop=True).rename(columns={0:parameter_name+'_max'}))
 								summary.append(individual_df.min(axis=1,skipna=True).to_frame().reset_index(drop=True).rename(columns={0:parameter_name+'_min'}))
-							if len(self.all_time)<16000:
-								individual_df.to_excel(os.path.join(self.results_path,behavior_name,animal_name+'_'+parameter_name+'.xlsx'),float_format='%.2f')
-							else:
-								individual_df.to_csv(os.path.join(self.results_path,behavior_name,animal_name+'_'+parameter_name+'.csv'),float_format='%.2f')
+							individual_df=pd.DataFrame(self.all_behavior_parameters[animal_name][behavior_name][parameter_name],index=self.all_time)
+							individual_df.to_excel(os.path.join(self.results_path,behavior_name,animal_name+'_'+parameter_name+'.xlsx'),float_format='%.2f',index_label='time/ID')
 
 					if len(summary)>=1:
-						pd.concat(summary,axis=1).to_excel(os.path.join(self.results_path,behavior_name,animal_name+'_all_summary.xlsx'),float_format='%.2f')
+						pd.concat(summary,axis=1).to_excel(os.path.join(self.results_path,behavior_name,animal_name+'_all_summary.xlsx'),float_format='%.2f',index_label='ID/parameter')
 
 			else:
 
@@ -1542,18 +1537,14 @@ class AnalyzeAnimalDetector():
 						summary.append(pd.DataFrame.from_dict(self.all_behavior_parameters[animal_name][parameter_name],orient='index',columns=['distance']).reset_index(drop=True))
 					else:
 						individual_df=pd.DataFrame.from_dict(self.all_behavior_parameters[animal_name][parameter_name],orient='index',columns=self.all_time)
-
 						summary.append(individual_df.mean(axis=1,skipna=True).to_frame().reset_index(drop=True).rename(columns={0:parameter_name+'_mean'}))
 						summary.append(individual_df.max(axis=1,skipna=True).to_frame().reset_index(drop=True).rename(columns={0:parameter_name+'_max'}))
 						summary.append(individual_df.min(axis=1,skipna=True).to_frame().reset_index(drop=True).rename(columns={0:parameter_name+'_min'}))
-
-						if len(self.all_time)<16000:
-							individual_df.to_excel(os.path.join(self.results_path,animal_name+'_'+parameter_name+'.xlsx'),float_format='%.2f')
-						else:
-							individual_df.to_csv(os.path.join(self.results_path,animal_name+'_'+parameter_name+'.csv'),float_format='%.2f')
+						individual_df=pd.DataFrame(self.all_behavior_parameters[animal_name][parameter_name],index=self.all_time)
+						individual_df.to_excel(os.path.join(self.results_path,animal_name+'_'+parameter_name+'.xlsx'),float_format='%.2f',index_label='time/ID')
 
 				if len(summary)>=1:
-					pd.concat(summary,axis=1).to_excel(os.path.join(self.results_path,animal_name+'_all_summary.xlsx'),float_format='%.2f')			
+					pd.concat(summary,axis=1).to_excel(os.path.join(self.results_path,animal_name+'_all_summary.xlsx'),float_format='%.2f',index_label='ID/parameter')			
 
 		print('All results exported in: '+str(self.results_path))
 
@@ -2057,5 +2048,230 @@ class AnalyzeAnimalDetector():
 		print('Behavior example generation completed!')
 
 
+	def analyze_images_individuals(self,
+		path_to_detector,
+		path_to_images,
+		results_path,
+		animal_kinds,
+		path_to_categorizer=None,
+		generate=False,
+		animal_to_include=[],
+		behavior_to_include=[],
+		names_and_colors=None,
+		imagewidth=None,
+		dim_conv=8,
+		channel=1,
+		detection_threshold=0.5,
+		uncertain=0,
+		background_free=True,
+		social_distance=0):
+
+		print('Preparation started...')
+		print(datetime.datetime.now())
+
+		config=os.path.join(path_to_detector,'config.yaml')
+		animalmapping=os.path.join(path_to_detector,'model_parameters.txt')
+		with open(animalmapping) as f:
+			model_parameters=f.read()
+		animal_mapping=json.loads(model_parameters)['animal_mapping']
+		animal_names=json.loads(model_parameters)['animal_names']
+		dt_infersize=int(json.loads(model_parameters)['inferencing_framesize'])
+		print('The total categories of animals / objects in this Detector: '+str(animal_names))
+		print('The animals / objects of interest in this Detector: '+str(animal_kinds))
+		print('The inferencing framesize of this Detector: '+str(dt_infersize))
+		cfg=get_cfg()
+		cfg.merge_from_file(config)
+		cfg.MODEL.DEVICE='cuda' if torch.cuda.is_available() else 'cpu'
+		detector=build_model(cfg)
+		DetectionCheckpointer(detector).load(os.path.join(path_to_detector,'model_final.pth'))
+		detector.eval()
+
+		if social_distance==0:
+			social_distance=float('inf')
+
+		print('Preparation completed!')
+
+		if generate is True:
+			print('Generating behavior examples...')
+		else:
+			categorizer=load_model(path_to_categorizer)
+			animal_information={}
+			colors={}
+			for behavior_name in names_and_colors:
+				if behavior_name not in behavior_to_include:
+					del names_and_colors[behavior_name]
+				else:
+					animal_information[behavior_name]={}
+					if names_and_colors[behavior_name][1][0]!='#':
+						colors[behavior_name]=(255,255,255)
+					else:
+						hex_color=names_and_colors[behavior_name][1].lstrip('#')
+						color=tuple(int(hex_color[i:i+2],16) for i in (0,2,4))
+						colors[behavior_name]=color[::-1]
+					for animal_name in animal_kinds:
+						if animal_name in animal_to_include:
+							animal_information[behavior_name][animal_name]={}
+							animal_information[behavior_name][animal_name]['probability']={}
+							animal_information[behavior_name][animal_name]['count']={}
+			print('Analyzing images...')
+		print(datetime.datetime.now())
+
+		for path_to_image in list(path_to_images):
+
+			blobs=[]
+			image=cv2.imread(path_to_image)
+			image_name=os.path.splitext(os.path.basename(path_to_image))[0]
+
+			if generate is False:
+				for behavior_name in names_and_colors:
+					for animal_name in animal_kinds:
+						if animal_name in animal_to_include:
+							animal_information[behavior_name][animal_name]['probability'][image_name]=[[]]
+							animal_information[behavior_name][animal_name]['count'][image_name]=0
+
+			if imagewidth is not None:
+				imageheight=int(image.shape[0]*imagewidth/image.shape[1])
+				image=cv2.resize(image,(imagewidth,imageheight),interpolation=cv2.INTER_AREA)
+				kernel=min(imagewidth,imageheight)
+			else:
+				kernel=min(image.shape[0],image.shape[1])
+
+			if generate is False:
+				text_scl=max(kernel/960,0.5)
+				text_tk=max(1,int(kernel/960))
+				scl=image.shape[0]/1024
+				if 25*(len(behavior_to_include)+1)<image.shape[0]:
+					intvl=25
+				else:
+					intvl=int(image.shape[0]/(len(behavior_to_include)+1))
+
+			if kernel<500:
+				kernel=3
+			elif kernel<1000:
+				kernel=5
+			elif kernel<1500:
+				kernel=7
+			else:
+				kernel=9
+
+			tensor_image=torch.as_tensor(image.astype("float32").transpose(2,0,1))
+			with torch.no_grad():
+				output=detector([{"image":tensor_image}])
+			instances=output[0]['instances'].to('cpu')
+			masks=instances.pred_masks.numpy().astype(np.uint8)
+			classes=instances.pred_classes.numpy()
+			scores=instances.scores.numpy()
+
+			if len(masks)>0:
+
+				mask_area=np.sum(np.array(masks),axis=(1,2))
+				exclusion_mask=np.zeros(len(masks),dtype=bool)
+				exclusion_mask[np.where((np.sum(np.logical_and(masks[:,None],masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
+				masks=[m for m,exclude in zip(masks,exclusion_mask) if not exclude]
+				classes=[c for c,exclude in zip(classes,exclusion_mask) if not exclude]
+				classes=[animal_mapping[str(x)] for x in classes]
+				scores=[s for s,exclude in zip(scores,exclusion_mask) if not exclude]
+
+				contours=[]
+				blobs=[]
+				blobclasses=[]
+				blobscores=[]
+
+				for n,mask in enumerate(masks):
+					score=scores[n]
+					if score>detection_threshold:
+						mask=cv2.morphologyEx(mask,cv2.MORPH_CLOSE,np.ones((kernel,kernel),np.uint8))
+						cnts,_=cv2.findContours((mask*255).astype(np.uint8),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
+						cnt=sorted(cnts,key=cv2.contourArea,reverse=True)[0]
+						contours.append(cnt)
+						if background_free is True:
+							masked_image=image*cv2.cvtColor(mask,cv2.COLOR_GRAY2BGR)
+						else:
+							masked_image=image
+						x,y,w,h=cv2.boundingRect(cnt)
+						difference=int(abs(w-h)/2)+1
+						if w>h:
+							y_bt=max(y-difference-1,0)
+							y_tp=min(y+h+difference+1,image.shape[0])
+							x_lf=max(x-1,0)
+							x_rt=min(x+w+1,image.shape[1])
+						else:
+							y_bt=max(y-1,0)
+							y_tp=min(y+h+1,image.shape[0])
+							x_lf=max(x-difference-1,0)
+							x_rt=min(x+w+difference+1,image.shape[1])
+						blob=masked_image[y_bt:y_tp,x_lf:x_rt]
+						blob=np.uint8(exposure.rescale_intensity(blob,out_range=(0,255)))
+						if generate is True:
+							cv2.imwrite(os.path.join(results_path,image_name+'_'+str(n)+'.jpg'),blob)
+						else:
+							blob=cv2.resize(blob,(dim_conv,dim_conv),interpolation=cv2.INTER_AREA)
+							if channel==1:
+								blob=cv2.cvtColor(blob,cv2.COLOR_BGR2GRAY)
+							blobs.append(img_to_array(blob))
+							blobclasses.append(classes[n])
+							blobscores.append(score)
+
+				if generate is False:
+
+					with tf.device('CPU'):
+						blobs=tf.convert_to_tensor(np.array(blobs,dtype='float32')/255.0)
+					predictions=categorizer.predict(blobs,batch_size=32)
+
+					for idx,animal_name in enumerate(blobclasses):
+						if animal_name in animal_to_include:
+							prediction=predictions[idx]
+							for name_index,behavior_name in enumerate(names_and_colors):
+								if len(names_and_colors)==2:
+									if name_index==0:
+										probability=1-prediction[0]
+									else:
+										probability=prediction[0]
+								else:
+									probability=prediction[name_index]
+								animal_information[behavior_name][animal_name]['probability'][image_name][0].append(probability)
+							behavior_names=list(names_and_colors.keys())
+							if len(behavior_names)==2:
+								if prediction[0]>0.5:
+									if prediction[0]-(1-prediction[0])>uncertain:
+										animal_information[behavior_names[1]][animal_name]['count'][image_name]+=1
+										if behavior_names[1] in colors:
+											cv2.drawContours(image,[contours[idx]],0,colors[behavior_names[1]],1)
+								if prediction[0]<0.5:
+									if (1-prediction[0])-prediction[0]>uncertain:
+										animal_information[behavior_names[0]][animal_name]['count'][image_name]+=1
+										if behavior_names[0] in colors:
+											cv2.drawContours(image,[contours[idx]],0,colors[behavior_names[0]],1)
+							else:
+								if sorted(prediction)[-1]-sorted(prediction)[-2]>uncertain:
+									animal_information[behavior_names[np.argmax(prediction)]][animal_name]['count'][image_name]+=1
+									cv2.drawContours(image,[contours[idx]],0,colors[behavior_names[np.argmax(prediction)]],1)
+
+					del predictions
+					gc.collect()
+
+					n=1
+					for i in colors:
+						cv2.putText(image,i,(10,intvl*n),cv2.FONT_HERSHEY_SIMPLEX,scl,colors[i],text_tk)
+						n+=1
+
+			if generate is False:
+				cv2.imwrite(os.path.join(results_path,'Annotated_'+image_name+'.jpg'),image)
+				print('Finished analyzing '+image_name+'!')
+				print(datetime.datetime.now())
+
+		if generate is True:
+
+			print('Behavior example generation completed!')
+
+		else:
+
+			for behavior_name in names_and_colors:
+				for animal_name in animal_to_include:
+					names=np.array(list(animal_information[behavior_name][animal_name]['count'].keys()))
+					results_df=pd.DataFrame.from_dict(animal_information[behavior_name][animal_name]['count'],orient='index',columns=['count']).reset_index(drop=True)
+					results_df.set_index(names).join(pd.DataFrame.from_dict(animal_information[behavior_name][animal_name]['probability'],orient='index',columns=['probability']).reset_index(drop=True).set_index(names)).to_excel(os.path.join(results_path,behavior_name+'_'+animal_name+'.xlsx'),index_label='imagename/parameter')
+
+			print('All results exported in: '+str(results_path))
 
 

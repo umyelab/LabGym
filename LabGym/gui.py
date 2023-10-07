@@ -31,7 +31,7 @@ from .gui_analyzers import WindowLv2_AnalyzeBehaviors,WindowLv2_MineResults
 
 
 current_version=2.2
-current_version_check=22.0
+current_version_check=22.1
 
 try:
 
