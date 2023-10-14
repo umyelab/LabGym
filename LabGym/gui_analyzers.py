@@ -1057,7 +1057,7 @@ class WindowLv2_MineResults(wx.Frame):
 		else:
 			for behavior_name in filelist:
 				dataset=pd.read_excel(r''+filelist[behavior_name])
-				dataset=dataset.drop(columns=['Unnamed: 0'])
+				dataset=dataset.drop(columns=['ID/parameter'])
 				df[behavior_name]=dataset
 		return df
 
