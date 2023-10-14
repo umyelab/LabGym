@@ -463,55 +463,72 @@ class WindowLv2_SortBehaviors(wx.Frame):
 			index=0
 			stop=False
 			moved=False
+			only_image=False
 
 			check_animations=[i for i in os.listdir(self.input_path) if i.endswith('.avi')]
 			if len(check_animations)==0:
-				wx.MessageBox('No animation in the behavior examples. You dont need to use this sorting GUI for sorting.','Error',wx.OK|wx.ICON_ERROR)
-				stop=True
+				check_images=[i for i in os.listdir(self.input_path) if i.endswith('.jpg')]
+				if len(check_images)==0:
+					wx.MessageBox('No examples!','Error',wx.OK|wx.ICON_ERROR)
+					stop=True
+				else:
+					only_image=True
 
 			while stop is False:
 
 				if moved is True:
 					moved=False
-					shutil.move(os.path.join(self.input_path,example_name+'.avi'),os.path.join(self.keys_behaviorpaths[shortcutkey],example_name+'.avi'))
+					if only_image is False:
+						shutil.move(os.path.join(self.input_path,example_name+'.avi'),os.path.join(self.keys_behaviorpaths[shortcutkey],example_name+'.avi'))
 					shutil.move(os.path.join(self.input_path,example_name+'.jpg'),os.path.join(self.keys_behaviorpaths[shortcutkey],example_name+'.jpg'))
 
-				animations=[i for i in os.listdir(self.input_path) if i.endswith('.avi')]
-				animations=sorted(animations,key=lambda name:int(name.split('_len')[0].split('_')[-1]))
+				if only_image is False:
+					animations=[i for i in os.listdir(self.input_path) if i.endswith('.avi')]
+					animations=sorted(animations,key=lambda name:int(name.split('_len')[0].split('_')[-1]))
+				else:
+					animations=[i for i in os.listdir(self.input_path) if i.endswith('.jpg')]
 
 				if len(animations)>0 and index<len(animations):
 
 					example_name=animations[index].split('.')[0]
-					frame_count=example_name.split('_len')[0].split('_')[-1]
-
-					animation=cv2.VideoCapture(os.path.join(self.input_path,example_name+'.avi'))
-					fps=round(animation.get(cv2.CAP_PROP_FPS))
 					pattern_image=cv2.resize(cv2.imread(os.path.join(self.input_path,example_name+'.jpg')),(600,600),interpolation=cv2.INTER_AREA)
+
+					if only_image is False:
+						frame_count=example_name.split('_len')[0].split('_')[-1]
+						animation=cv2.VideoCapture(os.path.join(self.input_path,example_name+'.avi'))
+						fps=round(animation.get(cv2.CAP_PROP_FPS))
 
 					while True:
 
-						ret,frame=animation.read()
-						if not ret:
-							animation.set(cv2.CAP_PROP_POS_FRAMES,0)
-							continue
-
-						frame=cv2.resize(frame,(600,600),interpolation=cv2.INTER_AREA)
-						combined=np.hstack((frame,pattern_image))
-						cv2.putText(combined,'frame count: '+frame_count,(10,15),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,255),1)
+						if only_image is False:
+							ret,frame=animation.read()
+							if not ret:
+								animation.set(cv2.CAP_PROP_POS_FRAMES,0)
+								continue
+							frame=cv2.resize(frame,(600,600),interpolation=cv2.INTER_AREA)
+							combined=np.hstack((frame,pattern_image))
+							cv2.putText(combined,'frame count: '+frame_count,(10,15),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,255),1)
+							x_begin=550
+						else:
+							combined=pattern_image
+							x_begin=5
 
 						n=1
 						for i in ['o: Prev','p: Next','q: Quit','u: Undo']:
-							cv2.putText(combined,i,(550,15*n),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,255),1)
+							cv2.putText(combined,i,(x_begin,15*n),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,255),1)
 							n+=1
 						n+=1
 						for i in self.keys_behaviors:
-							cv2.putText(combined,i+': '+self.keys_behaviors[i],(550,15*n),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,255),1)
+							cv2.putText(combined,i+': '+self.keys_behaviors[i],(x_begin,15*n),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,255),1)
 							n+=1
 
 						cv2.imshow('Sorting Behavior Examples',combined)
 						cv2.moveWindow('Sorting Behavior Examples',50,0)
 
-						key=cv2.waitKey(int(1000/fps)) & 0xFF
+						if only_image is False:
+							key=cv2.waitKey(int(1000/fps)) & 0xFF
+						else:
+							key=cv2.waitKey(1) & 0xFF
 
 						for shortcutkey in self.keys_behaviorpaths:
 							if key==ord(shortcutkey):
@@ -527,7 +544,8 @@ class WindowLv2_SortBehaviors(wx.Frame):
 								last=actions.pop()
 								shortcutkey=last[0]
 								example_name=last[1]
-								shutil.move(os.path.join(self.keys_behaviorpaths[shortcutkey],example_name+'.avi'),os.path.join(self.input_path,example_name+'.avi'))
+								if only_image is False:
+									shutil.move(os.path.join(self.keys_behaviorpaths[shortcutkey],example_name+'.avi'),os.path.join(self.input_path,example_name+'.avi'))
 								shutil.move(os.path.join(self.keys_behaviorpaths[shortcutkey],example_name+'.jpg'),os.path.join(self.input_path,example_name+'.jpg'))
 								break
 							else:
@@ -547,7 +565,8 @@ class WindowLv2_SortBehaviors(wx.Frame):
 							stop=True
 							break
 
-					animation.release()
+					if only_image is False:
+						animation.release()
 
 				else:
 					if len(animations)==0:
