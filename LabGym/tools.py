@@ -1123,61 +1123,63 @@ def preprocess_video(
     top=0,
     bottom=0,
 ):
+    """Preprocess the given video for faster model training."""
+
+    # Get video and metadata
     capture = cv2.VideoCapture(path_to_video)
     name = os.path.basename(path_to_video).split(".")[0]
-    writer = None
     fps = round(capture.get(cv2.CAP_PROP_FPS))
-    frame_count = 1
+    width = capture.get(cv2.CAP_PROP_FRAME_WIDTH)
+    height = capture.get(cv2.CAP_PROP_FRAME_HEIGHT)
 
+    # Calculate width and height if necessary
+    if framewidth is not None:
+        height = framewidth * height / width
+        width = framewidth
+
+    # Add video windows to filename if necessary
+    added_name = ""
+    if trim_video is True:
+        for start, end in time_windows:
+            added_name += "_" + str(start) + "-" + str(end)
+
+    # Create VideoWriter with given parameters
+    writer = cv2.VideoWriter(
+        filename=os.path.join(out_folder, name + added_name + "_processed.avi"),
+        fourcc=cv2.VideoWriter_fourcc(*"MJPG"),
+        fps=fps,
+        frameSize=(int(width), int(height)),
+        isColor=True,
+    )
+
+    frame_count = 1
     while True:
         ret, frame = capture.read()
         if frame is None:
             break
 
+        # Apply preprocessing to the frame
         if framewidth is not None:
             frame = cv2.resize(
                 frame,
-                (framewidth, int(frame.shape[0] * framewidth / frame.shape[1])),
+                (int(width), int(height)),
                 interpolation=cv2.INTER_AREA,
             )
-
-        t = frame_count / fps
-
         if crop_frame is True:
             frame = frame[top:bottom, left:right, :]
-
         if enhance_contrast is True:
             frame = frame * contrast
             frame[frame > 255] = 255
-            frame = np.uint8(frame)
 
-        (h, w) = frame.shape[:2]
-
+        # Add frame to video file
+        frame = np.uint8(frame)
         if trim_video is True:
-            added_name = ""
-            for i in time_windows:
-                added_name += "_" + str(i[0]) + "-" + str(i[1])
-            if writer is None:
-                writer = cv2.VideoWriter(
-                    os.path.join(out_folder, name + added_name + "_processed.avi"),
-                    cv2.VideoWriter_fourcc(*"MJPG"),
-                    fps,
-                    (w, h),
-                    True,
-                )
-            for i in time_windows:
-                if float(i[0]) <= t <= float(i[1]):
-                    writer.write(np.uint8(frame))
+            t = frame_count / fps
+            for start, end in time_windows:
+                if float(start) <= t <= float(end):
+                    writer.write(frame)
         else:
-            if writer is None:
-                writer = cv2.VideoWriter(
-                    os.path.join(out_folder, name + "_processed.avi"),
-                    cv2.VideoWriter_fourcc(*"MJPG"),
-                    fps,
-                    (w, h),
-                    True,
-                )
-            writer.write(np.uint8(frame))
+            writer.write(frame)
 
         frame_count += 1
 
