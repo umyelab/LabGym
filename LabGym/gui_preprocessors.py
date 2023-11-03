@@ -23,7 +23,6 @@ import os
 import cv2
 import shutil
 import numpy as np
-import time
 
 
 class WindowLv2_ProcessVideos(wx.Frame):
