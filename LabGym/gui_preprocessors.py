@@ -45,9 +45,9 @@ class WindowLv2_ProcessVideos(wx.Frame):
         self.bottom = 0
         self.decode_t = False
 
-        self.dispaly_window()
+        self.display_window()
 
-    def dispaly_window(self):
+    def display_window(self):
         panel = wx.Panel(self)
         boxsizer = wx.BoxSizer(wx.VERTICAL)
 
