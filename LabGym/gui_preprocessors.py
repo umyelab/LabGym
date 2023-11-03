@@ -29,7 +29,7 @@ import time
 class WindowLv2_ProcessVideos(wx.Frame):
     def __init__(self, title):
         super(WindowLv2_ProcessVideos, self).__init__(
-            parent=None, title=title, size=(1000, 330)
+            parent=None, title=title, size=(1000, 370)
         )
         self.path_to_videos = None
         self.framewidth = None
@@ -51,6 +51,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
         panel = wx.Panel(self)
         boxsizer = wx.BoxSizer(wx.VERTICAL)
 
+        # Video selection module
         module_inputvideos = wx.BoxSizer(wx.HORIZONTAL)
         button_inputvideos = wx.Button(
             panel, label="Select the video(s)\nfor preprocessing", size=(300, 40)
@@ -73,6 +74,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
         boxsizer.Add(module_inputvideos, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
         boxsizer.Add(0, 5, 0)
 
+        # Output folder selection module
         module_outputfolder = wx.BoxSizer(wx.HORIZONTAL)
         button_outputfolder = wx.Button(
             panel,
@@ -96,6 +98,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
         boxsizer.Add(module_outputfolder, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
         boxsizer.Add(0, 5, 0)
 
+        # Video trimming module
         module_duration = wx.BoxSizer(wx.HORIZONTAL)
         button_duration = wx.Button(
             panel,
@@ -117,6 +120,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
         boxsizer.Add(module_duration, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
         boxsizer.Add(0, 5, 0)
 
+        # Frame crop module
         module_cropframe = wx.BoxSizer(wx.HORIZONTAL)
         button_cropframe = wx.Button(
             panel, label="Specify whether to crop\nthe video frames", size=(300, 40)
@@ -136,6 +140,8 @@ class WindowLv2_ProcessVideos(wx.Frame):
         boxsizer.Add(module_cropframe, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
         boxsizer.Add(0, 5, 0)
 
+        # Contrast module
+        # TODO: This feature increases brightness, not contrast (see tools.preprocess_video())
         module_enhancecontrast = wx.BoxSizer(wx.HORIZONTAL)
         button_enhancecontrast = wx.Button(
             panel,
@@ -161,6 +167,28 @@ class WindowLv2_ProcessVideos(wx.Frame):
         boxsizer.Add(module_enhancecontrast, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
         boxsizer.Add(0, 5, 0)
 
+        # FPS reduction module
+        module_fps = wx.BoxSizer(wx.HORIZONTAL)
+        button_fps = wx.Button(
+            panel,
+            label="Specify whether to reduce\nthe video FPS",
+            size=(300, 40),
+        )
+        button_fps.Bind(wx.EVT_BUTTON, self.reduce_fps)
+        wx.Button.SetToolTip(
+            button_fps, "Reducing video FPS will decrease model training time"
+        )
+        self.text_fps = wx.StaticText(
+            panel,
+            label="Default: original FPS",
+            style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END,
+        )
+        module_fps.Add(button_fps, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
+        module_fps.Add(self.text_fps, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
+        boxsizer.Add(module_fps, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
+        boxsizer.Add(0, 5, 0)
+
+        # Start button
         button_preprocessvideos = wx.Button(
             panel, label="Start to preprocess the videos", size=(300, 40)
         )
@@ -484,6 +512,10 @@ class WindowLv2_ProcessVideos(wx.Frame):
                     self.text_enhancecontrast.SetLabel("Not to enhance contrast.")
                 dialog.Destroy()
             cv2.destroyAllWindows()
+
+    def reduce_fps(self, event):
+        """Let user enter FPS reduction factor."""
+        print("Reduce FPS callback")
 
     def preprocess_videos(self, event):
         if self.path_to_videos is None or self.result_path is None:
