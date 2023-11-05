@@ -1122,6 +1122,7 @@ def preprocess_video(
     right=0,
     top=0,
     bottom=0,
+    fps_reduction_factor=1.0,
 ):
     """Preprocess the given video for faster model training."""
 
@@ -1129,6 +1130,7 @@ def preprocess_video(
     capture = cv2.VideoCapture(path_to_video)
     name = os.path.basename(path_to_video).split(".")[0]
     fps = round(capture.get(cv2.CAP_PROP_FPS))
+    num_frames = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
     width = capture.get(cv2.CAP_PROP_FRAME_WIDTH)
     height = capture.get(cv2.CAP_PROP_FRAME_HEIGHT)
 
@@ -1147,16 +1149,22 @@ def preprocess_video(
     writer = cv2.VideoWriter(
         filename=os.path.join(out_folder, name + added_name + "_processed.avi"),
         fourcc=cv2.VideoWriter_fourcc(*"MJPG"),
-        fps=fps,
+        fps=fps / fps_reduction_factor,
         frameSize=(int(width), int(height)),
         isColor=True,
     )
+
+    # Get the indices of all dropped frames
+    dropped_frames = get_dropped_frames(num_frames, fps_reduction_factor)
 
     frame_count = 1
     while True:
         ret, frame = capture.read()
         if frame is None:
             break
+
+        if frame_count - 1 in dropped_frames:
+            continue
 
         # Apply preprocessing to the frame
         if framewidth is not None:
@@ -1187,3 +1195,17 @@ def preprocess_video(
     capture.release()
 
     print("The processed video(s) stored in: " + out_folder)
+
+
+def get_dropped_frames(n: int, reduction_factor: float) -> list[int]:
+    """Return a list of indices of frames to be dropped after an FPS reduction
+
+    n: the number of frames in the original video
+    reduction_factor: the FPS reduction factor, where the new FPS is
+        calculated using new_fps = old_fps / reduction_factor
+    """
+    if n <= 1.0:
+        return []
+    num_dropped_frames = int(n * (1 - 1 / reduction_factor))
+    block_size = n / (n * (1 - 1 / reduction_factor) - 1)
+    return [round(block_size * i) for i in range(num_dropped_frames)]
