@@ -174,6 +174,8 @@ Two detection methods to fit different scenarios:
 
 Refer to the open / closed issues or open a new issue or contact the author: Yujia Hu (henryhu@umich.edu).
 
+For instructions on how to contribute to LabGym, please see [CONTRIBUTING.md](./CONTRIBUTING.md).
+
 <p>&nbsp;</p>
 
 # Changelog:
