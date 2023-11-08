@@ -158,15 +158,9 @@ Two detection methods to fit different scenarios:
 
 # Initiate user interface for each use
 
-1. Activate Python3 by typing 'python3' or 'py' in the terminal / cmd prompt. Then type:
+Type the following command to initiate LabGym.
 
-        from LabGym import gui
-
-2. Then type:
-
-        gui.gui()
-
-    Now the user interface is initiated and ready to use.
+      python3 -m LabGym
 
 <p>&nbsp;</p>
 
