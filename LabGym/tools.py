@@ -1157,8 +1157,10 @@ def preprocess_video(
     # Get the indices of all dropped frames
     dropped_frames = get_dropped_frames(num_frames, fps_reduction_factor)
 
-    frame_count = 1
+    frame_count = 0
     while True:
+        frame_count += 1
+
         ret, frame = capture.read()
         if frame is None:
             break
@@ -1188,8 +1190,6 @@ def preprocess_video(
                     writer.write(frame)
         else:
             writer.write(frame)
-
-        frame_count += 1
 
     writer.release()
     capture.release()

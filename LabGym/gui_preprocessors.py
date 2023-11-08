@@ -43,6 +43,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
         self.top = 0
         self.bottom = 0
         self.decode_t = False
+        self.fps_reduction_factor = 1.0
 
         self.display_window()
 
@@ -512,9 +513,50 @@ class WindowLv2_ProcessVideos(wx.Frame):
                 dialog.Destroy()
             cv2.destroyAllWindows()
 
+    @property
+    def fps_reduction_factor(self):
+        return self._fps_reduction_factor
+
+    @fps_reduction_factor.setter
+    def fps_reduction_factor(self, factor: float):
+        """Ensure reduction factor is greater than 1 before setting.
+
+        The new FPS of the video will be calculated using the formula
+        new_fps = old_fps / factor. If the factor is less than 1, then
+        new_fps will be greater than old_fps, which is not supported.
+        """
+        if factor < 1.0:
+            raise ValueError("FPS reduction factor must be greater than or equal to 1.")
+        self._fps_reduction_factor = factor
+
     def reduce_fps(self, event):
         """Let user enter FPS reduction factor."""
-        print("Reduce FPS callback")
+        while True:
+            fps_dialog = wx.TextEntryDialog(
+                self,
+                "Enter a number greater than 1.0",
+                "Enter FPS reduction factor",
+            )
+            if fps_dialog.ShowModal() == wx.ID_OK:
+                try:
+                    factor = float(fps_dialog.GetValue())
+                    try:
+                        self.fps_reduction_factor = factor
+                        self.text_fps.SetLabel(f"FPS Reduction Factor: {factor}")
+                        break
+                    except ValueError as e:
+                        wx.MessageBox(
+                            str(e),
+                            "Error",
+                            wx.OK | wx.ICON_ERROR,
+                        )
+                except ValueError:
+                    wx.MessageBox(
+                        "Please enter a number.",
+                        "Error",
+                        wx.OK | wx.ICON_ERROR,
+                    )
+        fps_dialog.Destroy()
 
     def preprocess_videos(self, event):
         if self.path_to_videos is None or self.result_path is None:
@@ -551,6 +593,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
                     right=self.right,
                     top=self.top,
                     bottom=self.bottom,
+                    fps_reduction_factor=self.fps_reduction_factor,
                 )
 
             print("Preprocessing completed!")
