@@ -158,9 +158,19 @@ Two detection methods to fit different scenarios:
 
 # Initiate user interface for each use
 
-Type the following command to initiate LabGym.
+First, you need to activate python3 in your terminal / CMD by typing:
 
-      python3 -m LabGym
+      python3
+
+After python3 is activated, type:
+
+      from LabGym import gui
+
+And then type:
+
+      gui.gui()
+
+Now the user interface is inititated and ready to use
 
 <p>&nbsp;</p>
 
