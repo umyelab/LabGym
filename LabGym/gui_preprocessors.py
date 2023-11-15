@@ -556,6 +556,8 @@ class WindowLv2_ProcessVideos(wx.Frame):
                         "Error",
                         wx.OK | wx.ICON_ERROR,
                     )
+            else:
+                break
         fps_dialog.Destroy()
 
     def preprocess_videos(self, event):
