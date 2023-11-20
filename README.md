@@ -3,7 +3,7 @@
 LabGym can:
 
 1. **TRACK** multiple animals / objects without restrictions on recording environments
-2. **IDENTIFY** user-defined interactive or non-interactive behaviors without restrictions on behavior types / animal species
+2. **IDENTIFY** user-defined social or non-social behaviors without restrictions on behavior types / animal species
 3. **QUANTIFY** user-defined behaviors by providing quantitative measures for each behavior
 4. **MINE** the analysis results to show statistically significant findings
 
@@ -18,23 +18,23 @@ Cite LabGym: https://www.cell.com/cell-reports-methods/fulltext/S2667-2375(23)00
 
 ## Identifies user-defined behaviors
 
-Three modes of behavior identifications to fit different scenarios:
+LabGym is equipped with three distinct modes of behavior identification to suit different scenarios:
 
 1. **'Interactive advanced'**
 
-   Distinguishes which individual does what in an interaction, like which finger is 'helding peanut' / 'offering peanut', when the chipmunk is 'taking the offer' / 'loading peanut', and which peanut is 'being held' / 'being taken' / 'being loaded'. Or, which fly is singing a love song and which fly is being courted.
+   This mode is for analyzing the behavior of each individual in a group of animals or objects. Below are two examples. Left: LabGym can differentiate between a finger 'holding a peanut' vs. 'offering a peanut', discern whether a chipmunk is 'taking the offer' or 'loading peanut', and identify the status of the peanut itself as 'being held', 'being taken', or 'being loaded'. Right: it can distinguish in a group of flies which fly is 'singing’ a courtship song, which one is ‘being courted’, which one is ‘resting’, and which one is ‘locomotion’.
 
    ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_chipmunks_1.gif?raw=true)    ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_flies_1.gif?raw=true)
 
 2. **'Interactive basic'**
 
-   Assesses the whole interactive group as one for faster processing speed than **'Interactive advanced'**. This mode does not distinguish behaviors of individuals, so select it if all the animals in the interactive group do the same behaviors, or if you don't care about which individual does what.
+   Optimized for speed, this mode considers the entire interactive group (2 or more individuals) as an entity, streamlining the processing time compared to the **'Interactive advanced'** mode. It is ideal for scenarios where individual behaviors within the group are uniform or when the specific actions of each member are not the primary focus of the study.
 
    ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_chipmunks_2.gif?raw=true)    ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_flies_2.gif?raw=true)
 
 3. **'Non-interactive'**
 
-   Identifies non-interactive behaviors of individuals.
+   This mode is for identifying solitary behaviors of individuals that are not engaging in interactive activities. It is suitable for studies where the emphasis is on non-social or independent behaviors.
 
    ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_mice_1.gif?raw=true)    ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_mice_2.gif?raw=true)
 
@@ -44,25 +44,29 @@ Three modes of behavior identifications to fit different scenarios:
 
 ## Quantifies user-defined behaviors
 
-Calculates diverse motion / kinematics parameters for each behavior, such as **count**, **duration**, **latency** of a behavior, and **speed**, **acceleration**, **distance traveled**, **motion vigor**, **motion intensity** during a behavior. Outputs annotated videos and a temporal raster plot for every behavior event for each animal at each frame in an analysis batch, and spread sheets for storing the calculated behavioral parameters.
-
-![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Quantify%20behavior.jpg?raw=true)
+LabGym computes a range of motion and kinematics parameters for each behavior defined by users. The parameters include **count**, **duration**, and **latency** of behavioral incidents, as well as **speed**, **acceleration**, **distance traveled**, and the **intensity** and **vigor** of motions during the behaviors. LabGym outputs these parameters in spreadsheets.
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Analysis_output.jpg?raw=true)
 
 <p>&nbsp;</p>
 
+LabGym also provides visualization of analysis results, including annotated videos that visually mark each behavior event, temporal raster plots that show every behavior event overtime. The temporal raster plots below were output by LabGym and show the changes in behavior events of rodent before and after amphetamine treatments (See detailed explanation in Hu et al. (2023) Cell Reports Methods 3(3): 100415).
+
+![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Quantify%20behavior.jpg?raw=true)
+
+<p>&nbsp;</p>
+
 ## Mines the analysis results
 
-Displays significant findings, such as the behavioral parameters that show statistically significant difference among different groups of your selection, and then show the data details.
+LabGym outputs diverse spreadsheets that store the behavior parameters that it calculates. It is labor intensive to dig into these spreadsheets manually for statistical analysis across different experimental groups and behavioral types and parameters. To address this, LabGym contains a data-mining module that automatically performs the statistical tests on every behavioral parameter across the experimental groups of your choice. The data-mining result below displays the details of the comparisons that show statistically significant differences between groups.
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Results_mining.jpg?raw=true)
 
 <p>&nbsp;</p>
 
-## Easy to access
+## Accessible and User-Friendly
 
-**NO NEED** of writing code because of a self-illustrative user interface. **NO NEED** of GPUs (but can be even faster on NVIDIA GPUs with CUDA toolkit installed).
+LabGym eliminates the need for coding due to its intuitive user interface, ensuring ease of use for all users regardless of their programming skills. While the software operates efficiently without GPUs, it can achieve enhanced speed on systems equipped with NVIDIA GPUs and the CUDA toolkit (version==11.7) installed.
 
 <p>&nbsp;</p>
 
@@ -78,35 +82,43 @@ Extended user guide: (https://github.com/yujiahu415/LabGym/blob/master/LabGym%20
 
 <p>&nbsp;</p>
 
-**'Preprocessing Module'** enhances video contrast / trims videos to include only necessary time windows / crops frames to exclude unnecessary regions.
+LabGym comprises three modules, each tailored to streamline the analysis process. Together, these modules create a cohesive workflow, enabling users to prepare, train, and analyze their behavioral data with accuracy and ease.
 
-**'Training Module'** is for you to teach LabGym to detect animals / objects of your interest, and to recognize behaviors that are defined by you.
+1. **'Preprocessing Module'**: This module is for optimizing video footage for analysis. It can enhance video contrast to make the relevant details more discernible. It can trim videos to focus solely on the necessary time windows. It can also crop frames to remove irrelevant regions.
 
-**'Analysis Module'** analyzes videos, outputs analysis results, and mines analysis results.
+2. **'Training Module'**: Here, you can customize LabGym according to your specific research needs. You can train a Detector in this module to detect animals or objects of your interest in videos. You can also train a Categorizer to recognize specific behaviors that are defined by you.
+
+3. **'Analysis Module'**: After customizing LabGym to your need, you can use this module for automated behavioral analysis in videos. It not only outputs comprehensive analysis results but also delves into these results to mine significant findings.
 
 <p>&nbsp;</p>
 
 ## How to teach LabGym to recognize behaviors defined by you
 
-First, use **'Generate Behavior Examples'** button to input some videos and generate stand-alone behavior examples. Each behavior example includes an **Animation** and its paired **Pattern Image**, which spans a duration (a behavior episode) defined by you. Next, use **'Sort Behavior Examples'** button to select and sort the behavior examples based on their types. Finally, use **'Train Categorizers'** button to input the sorted behavior examples and train a **Categorizer**.
+Follow these three steps (three buttons in the **‘Training Module’**):
 
-Three different modes of behavior examples:
+1. **'Generate Behavior Examples'**: Use this button to input your video files and let LabGym generate behavior examples from these videos. Each behavior example is comprised of an **Animation** paired with a **Pattern Image**, spanning a specific behavior episode that is defined by you.
+
+2. **'Sort Behavior Examples'**: Once your behavior examples are generated, use this button to select appropriate examples and sort them according to their behavior types.
+
+3. **'Train Categorizers'**: Finally, use this button to feed the sorted behavior examples into the system to train a Categorizer. The trained Categorizer is stored in LabGym and can categorize these behaviors automatically in future analyses.
+
+LabGym has three modes of behavior identification, so it offers three modes for behavior examples:
 
 1. **'Interactive advanced'**
 
-   Each 'spotlight' **Animation** / **Pattern Image** contains all characters in an interactive group with a 'spotlight' on the main character. Sort them based on the behavior type of the main character. For example, the below 4 are: 'taking the offer'; 'being taken'; 'being held'; 'offering peanut'.
+   In this mode, each pair of **Animation** and **Pattern Image** highlights an entire interactive group, with a 'spotlight' focusing on the main character. The categorization is based on the main character’s behavior. In the example below, behaviors of the chipmunk ('taking the offer'), the peanuts ('being taken' and 'being held'), and the hand ('offering peanut') can be distinguished.
 
    ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Chipmunks.gif?raw=true)
 
 2. **'Interactive basic'**
 
-   Each **Animation** / **Pattern Image** contains all the animals / objects of your interest in a video. Sort them as one. For example, the below 3 are: 'orientating'; 'singing while licking'; 'attempted copulation'. The sorting focuses on the courtship steps of the male fly and ignores what the female fly does (suppose we are only interested on studying the courtship behaviors of the male flies).
+   This mode captures all relevant animals or objects in each pair of **Animation** and **Pattern Image**. Sort these as one collective unit. In the following example of fly courtship behavior, behaviors like 'orientating', 'singing while licking', and 'attempted copulation' could be categorized, focusing on specific actions like the courtship steps of a male fly while disregarding the female's response, if the research focuses only on male courtship behaviors.
 
    ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Flies.gif?raw=true)
 
 3. **'Non-interactive'**
 
-   Each **Animation** / **Pattern Image** is a 'monodrama' of each animal / object.
+   Each pair of **Animation** and **Pattern Image** in this mode represents a 'monodrama', focusing solely on individual animals or objects without interaction.
 
    ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Mice.gif?raw=true)
 
@@ -116,27 +128,25 @@ Three different modes of behavior examples:
 
 ## How does LabGym detect animals / objects?
 
-Two detection methods to fit different scenarios:
+LabGym employs two distinct methods for detecting animals or objects in different scenarios.
 
 1. **Subtract background**
 
-   Fast and accurate and is the first choice for videos with static background and stable illumination. No training is needed but you need to specify a time window during which animals are moving, for background extraction. Shorter time window = faster processing speed. Typically, 10 to 30 seconds are sufficient.
+   This method is fast and accurate but requires stable illumination and static background in videos to analysis. It does not require training neural networks, but you need to define a time window during which the animals are in motion for effective background extraction. A shorter time window leads to quicker processing. Typically, a duration of 10 to 30 seconds is adequate.
 
     ***How to select an appropriate time window for background extraction?***
 
-    This video is of 60 seconds. The following three images are backgrounds extracted using the time windows of the first, second, and last 20 seconds, respectively. In the first and last 20 seconds, the mouse mostly stays either in left or right side and moves little and the extracted backgrounds contain animal trace, which is not ideal. In the second 20 seconds, the mouse frequently moves around and the extracted background is perfect:
+    To determine the optimal time window for background extraction, consider the animal's movement throughout the video. In the example below, in a 60-second video, selecting a 20-second window where the mouse moves frequently and covers different areas is ideal. The following three images are backgrounds extracted using the time windows of the first, second, and last 20 seconds, respectively. In the first and last 20 seconds, the mouse mostly stays either in left or right side and moves little and the extracted backgrounds contain animal trace, which is not ideal. In the second 20 seconds, the mouse frequently moves around and the extracted background is perfect:
 
     ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Background_extraction_demo.gif?raw=true)  ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Extracted_background_0-20.jpg?raw=true)  ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Extracted_background_20-40.jpg?raw=true)  ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Extracted_background_40-60.jpg?raw=true)
 
 2. **Use trained Detectors**
 
-   This method integrates Detectron2 (https://github.com/facebookresearch/detectron2). It is more versatile but slower than the **Subtract background** method. It also differentiates individuals when they collide and is particularly useful for the **'Interactive advanced'** mode. Use a GPU or decrease the frame size during analysis to increase the processing speed.
+   This method incorporates Detectron2 (https://github.com/facebookresearch/detectron2), offering more versatility but at a slower processing speed compared to the **‘Subtract Background’** method. It excels in differentiating individual animals or objects, even during collisions, which is particularly beneficial for the **'Interactive advanced'** mode. To enhance processing speed, use a GPU or reduce the frame size during analysis. To train a **Detector** in **‘Training Module’**: 
 
-    To train a **Detector**:
-
-    1. Use **‘Generate Image Examples’** button to extract images (frames) from videos.
-    2. Use free online annotation tools such as Roboflow (https://roboflow.com) to annotate the outlines (NOT bounding boxes) of animals / objects in images. Select 'Instance Segmentation' for annotation type and 'COCO instance segmentation' format when exporting the annotation, which is a ‘*.json’ file. When in **'Interactive advanced'** mode, select images in which individuals collide and annotate the colliding boundaries well. Let the **Detector** see diverse colliding scenarios during training can significantly prevent individual identity switching during analysis.
-    3. Use **‘Train Detectors’** button to input the annotated images and train your **Detectors**.
+    1. Click the **‘Generate Image Examples’** button to extract image frames from videos.
+    2. Use free online annotation tools like Roboflow (https://roboflow.com) to annotate the outlines of animals or objects in these images. For annotation type, choose 'Instance Segmentation', and export the annotations in 'COCO instance segmentation' format, which generates a ‘*.json’ file. In **'Interactive advanced'** mode, focus on images where individuals collide and annotate these boundaries precisely. Exposing the **Detector** to a variety of collision scenarios during training can significantly minimize identity switching in subsequent analyses.
+    3. Use the **‘Train Detectors’** button to input these annotated images and commence training your **Detectors**.
 
 <p>&nbsp;</p>
 
