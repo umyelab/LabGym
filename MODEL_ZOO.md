@@ -21,3 +21,12 @@ later date.
 | Drosophila Adult |           |        | Coming soon! |
 | Mouse            |           |        | Coming soon! |
 | Rat              |           |        | Coming soon! |
+
+## Behavior Examples
+
+| Name             | Behaviors | Author | Download     |
+|------------------|-----------|--------|--------------|
+| Drosophila Larva |           |        | Coming soon! |
+| Drosophila Adult |           |        | Coming soon! |
+| Mouse            |           |        | Coming soon! |
+| Rat              |           |        | Coming soon! |
