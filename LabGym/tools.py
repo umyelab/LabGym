@@ -35,79 +35,81 @@ import functools
 import operator
 
 
-def extract_background(frames, stable_illumination=True, animal_vs_bg=0):
+# Constants to store animal lighter vs darker than background
+ANIMAL_LIGHTER = 0
+ANIMAL_DARKER = 1
+HARD_TO_TELL = 2
+
+
+def extract_background(frames, stable_illumination=True, animal_vs_bg=ANIMAL_LIGHTER):
+    """Extract the background from the given list of frames"""
+
     len_frames = len(frames)
 
+    # Need at least 4 frames to extract background
     if len_frames <= 3:
-        background = None
-    else:
-        frames = np.array(frames, dtype="float32")
-        if animal_vs_bg == 2:
-            if len_frames > 101:
-                frames_mean = []
-                check_frames = []
-                mean_overall = frames.mean(0)
-                n = 0
-                while n < len_frames - 101:
-                    frames_temp = frames[n : n + 100]
-                    mean = frames_temp.mean(0)
-                    frames_mean.append(mean)
-                    check_frames.append(abs(mean - mean_overall) + frames_temp.std(0))
-                    n += 30
-                frames_mean = np.array(frames_mean, dtype="float32")
-                check_frames = np.array(check_frames, dtype="float32")
-                background = np.uint8(
-                    np.take_along_axis(
-                        frames_mean, np.argsort(check_frames, axis=0), axis=0
-                    )[0]
-                )
-                del frames_mean
-                del check_frames
-                del frames_temp
-                gc.collect()
-            else:
-                background = np.uint8(np.median(frames, axis=0))
-        else:
-            if stable_illumination is True:
-                if animal_vs_bg == 1:
-                    background = np.uint8(frames.max(0))
-                else:
-                    background = np.uint8(frames.min(0))
-            else:
-                if len_frames > 101:
-                    frames_mean = []
-                    check_frames = []
-                    n = 0
-                    while n < len_frames - 101:
-                        frames_temp = frames[n : n + 100]
-                        mean = frames_temp.mean(0)
-                        frames_mean.append(mean)
-                        if animal_vs_bg == 1:
-                            frames_temp_inv = 255 - frames_temp
-                            check_frames.append(
-                                frames_temp_inv.mean(0) + frames_temp_inv.std(0)
-                            )
-                        else:
-                            check_frames.append(mean + frames_temp.std(0))
-                        n += 30
-                    frames_mean = np.array(frames_mean, dtype="float32")
-                    check_frames = np.array(check_frames, dtype="float32")
-                    background = np.uint8(
-                        np.take_along_axis(
-                            frames_mean, np.argsort(check_frames, axis=0), axis=0
-                        )[0]
-                    )
-                    del frames_mean
-                    del check_frames
-                    del frames_temp
-                    gc.collect()
-                else:
-                    if animal_vs_bg == 1:
-                        background = np.uint8(frames.max(0))
-                    else:
-                        background = np.uint8(frames.min(0))
+        return None
 
-    return background
+    frames = np.array(frames, dtype="float32")
+
+    if animal_vs_bg == HARD_TO_TELL:
+        if len_frames <= 101:
+            return np.uint8(np.median(frames, axis=0))
+
+        frames_mean = []
+        check_frames = []
+        mean_overall = frames.mean(0)
+        for n in range(0, len_frames - 101, 30):
+            frames_temp = frames[n : n + 100]
+            mean = frames_temp.mean(0)
+            frames_mean.append(mean)
+            check_frames.append(abs(mean - mean_overall) + frames_temp.std(0))
+        frames_mean = np.array(frames_mean, dtype="float32")
+        check_frames = np.array(check_frames, dtype="float32")
+        background = np.uint8(
+            np.take_along_axis(frames_mean, np.argsort(check_frames, axis=0), axis=0)[0]
+        )
+        del frames_mean
+        del check_frames
+        del frames_temp
+        gc.collect()
+        return background
+
+    if stable_illumination is True:
+        return (
+            np.uint8(frames.max(0))
+            if animal_vs_bg == ANIMAL_DARKER
+            else np.uint8(frames.min(0))
+        )
+
+    if len_frames > 101:
+        frames_mean = []
+        check_frames = []
+        for n in range(0, len_frames - 101, 30):
+            frames_temp = frames[n : n + 100]
+            mean = frames_temp.mean(0)
+            frames_mean.append(mean)
+            if animal_vs_bg == 1:
+                frames_temp_inv = 255 - frames_temp
+                check_frames.append(frames_temp_inv.mean(0) + frames_temp_inv.std(0))
+            else:
+                check_frames.append(mean + frames_temp.std(0))
+        frames_mean = np.array(frames_mean, dtype="float32")
+        check_frames = np.array(check_frames, dtype="float32")
+        background = np.uint8(
+            np.take_along_axis(frames_mean, np.argsort(check_frames, axis=0), axis=0)[0]
+        )
+        del frames_mean
+        del check_frames
+        del frames_temp
+        gc.collect()
+        return background
+
+    return (
+        np.uint8(frames.max(0))
+        if animal_vs_bg == ANIMAL_DARKER
+        else np.uint8(frames.min(0))
+    )
 
 
 def estimate_constants(
