@@ -1,7 +1,6 @@
 # How to Contribute
 
-Thanks for contributing to LabGym! This guide is mainly intended for members of the Bing Ye Lab at the U-M Life Sciences Institute, but these instructions will work for others
-as long as you create a fork of this repository and follow along from there. 
+Thanks for contributing to LabGym! Any contributors can create a fork of this repository and follow along from there.
 
  - [Getting Set Up to Contribute](#getting-set-up-to-contribute)
  - [Adding a New Feature](#adding-a-new-feature)
