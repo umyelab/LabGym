@@ -17,22 +17,22 @@ Email: bingye@umich.edu
 """
 
 
-import os
+from collections import deque
+import datetime
+import functools
 import gc
+import operator
+import os
+
 import cv2
 import numpy as np
-import datetime
-import scipy.ndimage as ndimage
-from skimage import exposure
-from tensorflow.keras.preprocessing.image import img_to_array
-from collections import deque
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap, Normalize
 from matplotlib.colorbar import ColorbarBase
 import pandas as pd
+from skimage import exposure
 import seaborn as sb
-import functools
-import operator
+from tensorflow.keras.preprocessing.image import img_to_array
 
 
 # Constants to store animal lighter vs darker than background
