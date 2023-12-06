@@ -15,23 +15,26 @@ USA
 
 Email: bingye@umich.edu
 """
+from __future__ import annotations
 
-
-from collections import deque
 import datetime
 import functools
 import gc
 import operator
 import os
+from collections import deque
+from typing import Sequence, TypeAlias
 
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sb
+from cv2.typing import MatLike
 from matplotlib.colors import LinearSegmentedColormap, Normalize
 from matplotlib.colorbar import ColorbarBase
-import pandas as pd
+from numpy.typing import NDArray
 from skimage import exposure
-import seaborn as sb
 from tensorflow.keras.preprocessing.image import img_to_array
 
 
@@ -40,9 +43,32 @@ ANIMAL_LIGHTER = 0
 ANIMAL_DARKER = 1
 HARD_TO_TELL = 2
 
+# Use Frame to refer to different representations of a frame
+Frame = MatLike | NDArray[np.uint8]
 
-def extract_background(frames, stable_illumination=True, animal_vs_bg=ANIMAL_LIGHTER):
-    """Extract the background from the given list of frames"""
+
+def _extract_background(
+    frames: Sequence[MatLike],
+    stable_illumination: bool = True,
+    animal_vs_bg: int = ANIMAL_LIGHTER,
+) -> Frame | None:
+    """
+    Extracts the background from the given list of frames.
+
+    Args:
+        frames: A list of frames to extract the background from.
+        stable_illumination: False if background lighting changes for
+            optogenetic experiments, else True.
+        animal_vs_bg: Whether the animal is lighter or darker than the
+            background or whether it's hard to tell; use constants at top of
+            tools.py for specific values.
+
+    Returns:
+        An NDArray containing the extracted background.
+
+    Raises:
+        None
+    """
 
     len_frames = len(frames)
 
@@ -50,19 +76,20 @@ def extract_background(frames, stable_illumination=True, animal_vs_bg=ANIMAL_LIG
     if len_frames <= 3:
         return None
 
-    frames = np.array(frames, dtype="float32")
+    # Convert to ndarray
+    frames_arr = np.array(frames, dtype="float32")
 
     if animal_vs_bg == HARD_TO_TELL:
         if len_frames <= 101:
-            return np.uint8(np.median(frames, axis=0))
+            return np.uint8(np.median(frames_arr, axis=0))
 
         frames_mean = []
         check_frames = []
-        mean_overall = frames.mean(0)
+        mean_overall = frames_arr.mean(0)
         for n in range(0, len_frames - 101, 30):
-            frames_temp = frames[n : n + 100]
+            frames_temp = frames_arr[n : n + 100]
             mean = frames_temp.mean(0)
-            frames_mean.append(mean)
+            frames_mean.append(frames_temp.mean(0))
             check_frames.append(abs(mean - mean_overall) + frames_temp.std(0))
         frames_mean = np.array(frames_mean, dtype="float32")
         check_frames = np.array(check_frames, dtype="float32")
@@ -77,16 +104,16 @@ def extract_background(frames, stable_illumination=True, animal_vs_bg=ANIMAL_LIG
 
     if stable_illumination is True:
         return (
-            np.uint8(frames.max(0))
+            np.uint8(frames_arr.max(0))
             if animal_vs_bg == ANIMAL_DARKER
-            else np.uint8(frames.min(0))
+            else np.uint8(frames_arr.min(0))
         )
 
     if len_frames > 101:
         frames_mean = []
         check_frames = []
         for n in range(0, len_frames - 101, 30):
-            frames_temp = frames[n : n + 100]
+            frames_temp = frames_arr[n : n + 100]
             mean = frames_temp.mean(0)
             frames_mean.append(mean)
             if animal_vs_bg == 1:
@@ -106,9 +133,9 @@ def extract_background(frames, stable_illumination=True, animal_vs_bg=ANIMAL_LIG
         return background
 
     return (
-        np.uint8(frames.max(0))
+        np.uint8(frames_arr.max(0))
         if animal_vs_bg == ANIMAL_DARKER
-        else np.uint8(frames.min(0))
+        else np.uint8(frames_arr.min(0))
     )
 
 
@@ -198,7 +225,7 @@ def estimate_constants(
 
             if frame_count == 1001:
                 frame_count = 1
-                background = extract_background(
+                background = _extract_background(
                     frames,
                     stable_illumination=stable_illumination,
                     animal_vs_bg=animal_vs_bg,
@@ -207,7 +234,7 @@ def estimate_constants(
 
             if frame_low_count == 1001:
                 frame_low_count = 1
-                background_low = extract_background(
+                background_low = _extract_background(
                     frames_low,
                     stable_illumination=stable_illumination,
                     animal_vs_bg=animal_vs_bg,
@@ -216,7 +243,7 @@ def estimate_constants(
 
             if frame_high_count == 1001:
                 frame_high_count = 1
-                background_high = extract_background(
+                background_high = _extract_background(
                     frames_high,
                     stable_illumination=stable_illumination,
                     animal_vs_bg=animal_vs_bg,
@@ -229,7 +256,7 @@ def estimate_constants(
 
         if len(backgrounds) > 0:
             if frame_count > 600:
-                background = extract_background(
+                background = _extract_background(
                     frames,
                     stable_illumination=stable_illumination,
                     animal_vs_bg=animal_vs_bg,
@@ -250,7 +277,7 @@ def estimate_constants(
                 del backgrounds
                 gc.collect()
         else:
-            background = extract_background(
+            background = _extract_background(
                 frames,
                 stable_illumination=stable_illumination,
                 animal_vs_bg=animal_vs_bg,
@@ -260,7 +287,7 @@ def estimate_constants(
 
         if len(backgrounds_low) > 0:
             if frame_low_count > 600:
-                background_low = extract_background(
+                background_low = _extract_background(
                     frames_low,
                     stable_illumination=stable_illumination,
                     animal_vs_bg=animal_vs_bg,
@@ -281,7 +308,7 @@ def estimate_constants(
                 del backgrounds_low
                 gc.collect()
         else:
-            background_low = extract_background(
+            background_low = _extract_background(
                 frames_low,
                 stable_illumination=stable_illumination,
                 animal_vs_bg=animal_vs_bg,
@@ -291,7 +318,7 @@ def estimate_constants(
 
         if len(backgrounds_high) > 0:
             if frame_high_count > 600:
-                background_high = extract_background(
+                background_high = _extract_background(
                     frames_high,
                     stable_illumination=stable_illumination,
                     animal_vs_bg=animal_vs_bg,
@@ -312,7 +339,7 @@ def estimate_constants(
                 del backgrounds_high
                 gc.collect()
         else:
-            background_high = extract_background(
+            background_high = _extract_background(
                 frames_high,
                 stable_illumination=stable_illumination,
                 animal_vs_bg=animal_vs_bg,
