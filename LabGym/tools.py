@@ -300,6 +300,34 @@ def extract_backgrounds_from_video(
     return (backgrounds["default"], backgrounds["low"], backgrounds["high"], stim_t)  # type: ignore
 
 
+def get_backgrounds_from_folder(
+    folder: str, frame_size: tuple[int, int] | None = None
+) -> tuple[Frame | None, Frame | None, Frame | None]:
+    """
+    Loads background images from given folder, resizing them if required.
+
+    Args:
+        folder: The path to the folder containing the background images.
+        frame_size: The dimensions (width, height) by which to resize the frame
+
+    Returns:
+        A tuple (default, low, high) where `default` is the default
+        background, `low` is the dimmer background, `high` is the brighter
+        background.
+
+    Raises:
+        None
+    """
+    default = cv2.imread(os.path.join(folder, "background.jpg"))
+    low = cv2.imread(os.path.join(folder, "background_low.jpg"))
+    high = cv2.imread(os.path.join(folder, "background_high.jpg"))
+    if frame_size is not None:
+        default = cv2.resize(default, frame_size, interpolation=cv2.INTER_AREA)
+        low = cv2.resize(low, frame_size, interpolation=cv2.INTER_AREA)
+        high = cv2.resize(high, frame_size, interpolation=cv2.INTER_AREA)
+    return (default, low, high)
+
+
 def estimate_constants(
     path_to_video,
     delta,
@@ -342,7 +370,9 @@ def estimate_constants(
             animal_vs_bg,
         )
     else:
-        frame_initial = background
+        (background, background_low, background_high) = get_backgrounds_from_folder(
+            path_background, frame_size
+        )
 
     print("Estimating the animal size...")
     print(datetime.datetime.now())
