@@ -23,7 +23,7 @@ import gc
 import operator
 import os
 from collections import deque
-from typing import Sequence, TypeAlias
+from typing import Sequence
 
 import cv2
 import numpy as np
@@ -147,16 +147,16 @@ def extract_backgrounds_from_video(
     start_time: float = 0.0,
     end_time: float | None = None,
     animal_vs_bg: int = ANIMAL_LIGHTER,
-) -> tuple[Frame, Frame, Frame, float]:
+) -> tuple[Frame, Frame, Frame]:
     """
-    Extract backgrounds and optogenetic stimulation time from given video.
+    Extracts backgrounds from given video.
 
     Args:
         path_to_video: The path to the video file.
         delta: The factor by which to compare frame brightness. The mean
             brightness of each frame is compared to the mean brightness of the
-            initial frame multiplied by and divided by delta to bin the frame
-            as default, low, or high.
+            initial frame multiplied by and divided by delta to categorize the
+            frame as default, low, or high.
         frame_size: The dimensions (width, height) by which to resize the frame
         stable_illumination: False if background lighting changes for
             optogenetic experiments, else True.
@@ -167,10 +167,9 @@ def extract_backgrounds_from_video(
             tools.py for specific values.
 
     Returns:
-        A tuple (default, low, high, stim_t) where `default` is the default
-        background, `low` is the dimmer background, `high` is the brighter
-        background, and `stim_t` is the time that the background lighting
-        changes.
+        A tuple (default, low, high) where `default` is the default
+        background, `low` is the dim-light background, `high` is the
+        bright-light background.
 
     Raises:
         None
@@ -183,8 +182,8 @@ def extract_backgrounds_from_video(
     frame_count = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
     duration = frame_count / fps
     initial_frame = None
-    initial_frame_mean = None
-    stim_t = None
+    lower_threshold = None
+    upper_threshold = None
 
     if start_time >= duration:
         print(
@@ -229,22 +228,16 @@ def extract_backgrounds_from_video(
 
         if initial_frame is None:
             initial_frame = frame
-            initial_frame_mean = np.mean(initial_frame)
+            lower_threshold = np.mean(initial_frame) / delta
+            upper_threshold = np.mean(initial_frame) * delta
 
-        if np.mean(frame) < initial_frame_mean / delta:
-            # Dim lighting
-            if stim_t is None:
-                stim_t = frame_number / fps
+        if np.mean(frame) < lower_threshold:
             frames["low"].append(frame)
             counts["low"] += 1
-        elif np.mean(frame) > initial_frame_mean * delta:
-            # Bright lighting
-            if stim_t is None:
-                stim_t = frame_number / fps
+        elif np.mean(frame) > upper_threshold:
             frames["high"].append(frame)
             counts["high"] += 1
         else:
-            # Default lighting
             frames["default"].append(frame)
             counts["default"] += 1
 
@@ -297,7 +290,7 @@ def extract_backgrounds_from_video(
 
     print("Background extraction completed!")
 
-    return (backgrounds["default"], backgrounds["low"], backgrounds["high"], stim_t)  # type: ignore
+    return (backgrounds["default"], backgrounds["low"], backgrounds["high"])  # type: ignore
 
 
 def get_backgrounds_from_folder(
@@ -312,8 +305,8 @@ def get_backgrounds_from_folder(
 
     Returns:
         A tuple (default, low, high) where `default` is the default
-        background, `low` is the dimmer background, `high` is the brighter
-        background.
+        background, `low` is the dim-light background, `high` is the
+        bright-light background.
 
     Raises:
         None
@@ -326,6 +319,52 @@ def get_backgrounds_from_folder(
         low = cv2.resize(low, frame_size, interpolation=cv2.INTER_AREA)
         high = cv2.resize(high, frame_size, interpolation=cv2.INTER_AREA)
     return (default, low, high)
+
+
+def get_stimulation_time(path_to_video: str, delta: float) -> float | None:
+    """
+    Calculates optogenetic stimulation time from given video.
+
+    Args:
+        path_to_video: The path to the video.
+        delta: The factor by which to compare frame brightness. The mean
+            brightness of each frame is compared to the mean brightness of the
+            initial frame multiplied by and divided by delta to categorize the
+            frame as default, low, or high.
+
+    Returns:
+        The time of the lighting change in seconds, None if no lighting change
+        is detected.
+
+    Raises:
+        None
+    """
+    capture = cv2.VideoCapture(path_to_video)
+    frame_count = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
+    fps = capture.get(cv2.CAP_PROP_FPS)
+    lower_threshold = None
+    upper_threshold = None
+
+    frame_number = 1
+    for frame_number in range(1, frame_count + 1):
+        _, frame = capture.read()
+
+        if frame is None:
+            break
+        frame = np.array(frame, dtype="uint8")
+
+        if lower_threshold is None or upper_threshold is None:
+            lower_threshold = np.mean(frame) / delta
+            upper_threshold = np.mean(frame) * delta
+
+        if np.mean(frame) < lower_threshold:  # type: ignore[reportGeneralTypeIssues]
+            capture.release()
+            return frame_number / fps
+        if np.mean(frame) > upper_threshold:  # type: ignore[reportGeneralTypeIssues]
+            capture.release()
+            return frame_number / fps
+
+    return None
 
 
 def estimate_constants(
@@ -355,12 +394,7 @@ def estimate_constants(
     )
 
     if path_background is None:
-        (
-            background,
-            background_low,
-            background_high,
-            stim_t,
-        ) = extract_backgrounds_from_video(
+        (background, background_low, background_high) = extract_backgrounds_from_video(
             path_to_video,
             delta,
             frame_size,
@@ -369,6 +403,7 @@ def estimate_constants(
             ex_end,
             animal_vs_bg,
         )
+        stim_t = get_stimulation_time(path_to_video, delta)
     else:
         (background, background_low, background_high) = get_backgrounds_from_folder(
             path_background, frame_size
@@ -377,35 +412,8 @@ def estimate_constants(
     print("Estimating the animal size...")
     print(datetime.datetime.now())
 
-    if delta < 10000:
-        if ex_start != 0 or path_background is not None:
-            capture = cv2.VideoCapture(path_to_video)
-            frame_count = 1
-
-            while True:
-                retval, frame = capture.read()
-                if frame is None:
-                    break
-
-                if framewidth is not None:
-                    frame = cv2.resize(
-                        frame, (framewidth, frameheight), interpolation=cv2.INTER_AREA
-                    )
-
-                if frame_initial is None:
-                    frame_initial = frame
-                else:
-                    if np.mean(frame) < np.mean(frame_initial) / delta:
-                        stim_t = frame_count / fps
-                        break
-                    if np.mean(frame) > delta * np.mean(frame_initial):
-                        stim_t = frame_count / fps
-                        break
-
-                frame_count += 1
-
-            capture.release()
-
+    if delta < 10000 and (ex_start != 0 or path_background is not None):
+        stim_t = get_stimulation_time(path_to_video, delta)
     if t is None:
         if stim_t is None:
             es_start = 0
