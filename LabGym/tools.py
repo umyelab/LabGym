@@ -23,7 +23,7 @@ import gc
 import operator
 import os
 from collections import deque
-from typing import Sequence
+from typing import Sequence, TypeAlias
 
 import cv2
 import numpy as np
@@ -44,7 +44,7 @@ ANIMAL_DARKER = 1
 HARD_TO_TELL = 2
 
 # Use Frame to refer to different representations of a frame
-Frame = MatLike | NDArray[np.uint8]
+Frame: TypeAlias = NDArray[np.uint8] | MatLike
 
 
 def _extract_background(
@@ -345,7 +345,6 @@ def get_stimulation_time(path_to_video: str, delta: float) -> float | None:
     lower_threshold = None
     upper_threshold = None
 
-    frame_number = 1
     for frame_number in range(1, frame_count + 1):
         _, frame = capture.read()
 
@@ -365,6 +364,166 @@ def get_stimulation_time(path_to_video: str, delta: float) -> float | None:
             return frame_number / fps
 
     return None
+
+
+def estimate_animal_area(
+    path_to_video: str,
+    delta: float,
+    background_default: Frame,
+    background_low: Frame,
+    background_high: Frame,
+    animal_number: int,
+    frame_size: tuple[int, int] | None = None,
+    stim_t: float | None = None,
+    start_time: float | None = None,
+    duration: float = 10.0,
+    animal_vs_bg: int = ANIMAL_LIGHTER,
+    kernel_size: int = 3,
+) -> float | None:
+    """
+    Estimates animal size from a video.
+
+    For all frames within the given time window, the background is subtracted
+    and morphological transformations (see https://docs.opencv.org/4.7.0/d9/
+    d61/tutorial_py_morphological_ops.html) are applied to fill in any holes
+    within the animal mask. The average area of all animals in each frame is
+    divided by the number of animals to return average animal size in pixels.
+
+    Args:
+        path_to_video: The path to the video.
+        delta: The factor by which to compare frame brightness. The mean
+            brightness of each frame is compared to the mean brightness of the
+            initial frame multiplied by and divided by delta to categorize the
+            frame as default, low, or high.
+        background_default: The default-lighting background.
+        background_low: The low-light background.
+        background_high: The bright-light background.
+        animal_number: The number of animals present in the video.
+        frame_size: The dimensions (width, height) by which to resize the frame
+        stim_t: The time in seconds of a lighting change in the video, used
+            in optogenetic experiments.
+        start_time: The time in seconds at which to start animal size
+            estimation.
+        duration: The duration in seconds of the animal size estimation.
+        animal_vs_bg: Whether the animal is lighter or darker than the
+            background or whether it's hard to tell; use constants at top of
+            tools.py for specific values.
+        kernel_size: The kernel size to use for morphological transformations,
+            see https://docs.opencv.org/4.7.0/d9/d61/tutorial_py_morphological_
+            ops.html for more information
+
+    Returns:
+        The area of the animal in pixels after accounting for frame resizing.
+
+    Raises:
+        None
+    """
+    if animal_number == 0:
+        print("Animal number is 0. Please enter the correct animal number!")
+        return None
+
+    print("Estimating the animal size...")
+    print(datetime.datetime.now())
+
+    capture = cv2.ViThedeoCapture(path_to_video)
+    fps = capture.get(cv2.CAP_PROP_FPS)
+    frame_count = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
+
+    if start_time is None:
+        start_time = stim_t if stim_t is not None else 0.0
+
+    # Cap estimation duration at 30 sec
+    if not 0 < duration <= 30:
+        duration = 30.0
+
+    end_time = start_time + duration
+
+    min_area = (background_default.shape[1] / 100) * (background_default.shape[0] / 100)
+    max_area = (background_default.shape[1] * background_default.shape[0]) * 3 / 4
+
+    background_estimation = background_default
+    background_low_estimation = background_low
+    background_high_estimation = background_high
+
+    # Make animal lighter than background for morphological transformation
+    if animal_vs_bg == ANIMAL_DARKER:
+        background_estimation = 255 - background_default  # type: ignore
+        background_low_estimation = 255 - background_low  # type: ignore
+        background_high_estimation = 255 - background_high  # type: ignore
+
+    lower_threshold = None
+    upper_threshold = None
+    total_contour_areas = []
+    for frame_number in range(1, frame_count + 1):
+        _, frame = capture.read()
+
+        reached_start = frame_number >= start_time * fps
+        reached_end = (
+            end_time is not None and frame_number >= end_time * fps or frame is None
+        )
+        if reached_end:
+            break
+        if not reached_start:
+            continue
+
+        # Preprocess frame
+        if frame_size is not None:
+            frame = cv2.resize(frame, frame_size, interpolation=cv2.INTER_AREA)
+        frame = np.array(frame, dtype=np.uint8)
+
+        # Make animal brighter than background for morphological transformation
+        if animal_vs_bg == ANIMAL_DARKER:
+            frame = 255 - frame
+
+        if lower_threshold is None or upper_threshold is None:
+            lower_threshold = np.mean(frame) / delta
+            upper_threshold = np.mean(frame) * delta
+
+        # Select correct background to use
+        if np.mean(frame) < lower_threshold:
+            background = background_low_estimation
+        elif np.mean(frame) > upper_threshold:
+            background = background_high_estimation
+        else:
+            background = background_estimation
+
+        # Subtract background and convert to grayscale
+        if animal_vs_bg == HARD_TO_TELL:
+            foreground = cv2.absdiff(frame, background)
+        else:
+            foreground = cv2.subtract(frame, background)
+        foreground = cv2.cvtColor(foreground, cv2.COLOR_BGR2GRAY)
+
+        # Extract contours from frame
+        _, thred = cv2.threshold(
+            foreground, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
+        )
+        kernel = np.ones((kernel_size, kernel_size), np.uint8)
+        thred = cv2.morphologyEx(thred, cv2.MORPH_CLOSE, kernel)
+        if animal_vs_bg == HARD_TO_TELL:
+            kernel_erode_size = max(kernel_size - 4, 1)
+            kernel_erode = np.ones((kernel_erode_size, kernel_erode_size), np.uint8)
+            thred = cv2.erode(thred, kernel_erode)
+        contours, _ = cv2.findContours(thred, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+
+        # Get total contour area and append to list
+        contour_area = 0
+        for contour in contours:
+            if min_area < cv2.contourArea(contour) < max_area:
+                contour_area += cv2.contourArea(contour)
+        total_contour_areas.append(contour_area)
+
+    capture.release()
+
+    print("Estimation completed!")
+
+    if len(total_contour_areas) <= 0:
+        print("No animal detected!")
+        return None
+
+    animal_area = sum(total_contour_areas) / len(total_contour_areas) / animal_number
+    print(f"Single animal size: {animal_area}")
+    return animal_area
 
 
 def estimate_constants(
@@ -409,114 +568,26 @@ def estimate_constants(
             path_background, frame_size
         )
 
-    print("Estimating the animal size...")
-    print(datetime.datetime.now())
-
-    if delta < 10000 and (ex_start != 0 or path_background is not None):
-        stim_t = get_stimulation_time(path_to_video, delta)
-    if t is None:
-        if stim_t is None:
-            es_start = 0
-        else:
-            es_start = stim_t
-    else:
-        es_start = t
-    if duration > 30 or duration <= 0:
-        duration = 30
-    es_end = es_start + duration
-
-    capture = cv2.VideoCapture(path_to_video)
-    total_contour_area = []
-    frame_count = 1
-    min_area = (background.shape[1] / 100) * (background.shape[0] / 100)
-    max_area = (background.shape[1] * background.shape[0]) * 3 / 4
-
-    if animal_vs_bg == 1:
-        background_estimation = np.uint8(255 - background)
-        background_low_estimation = np.uint8(255 - background_low)
-        background_high_estimation = np.uint8(255 - background_high)
-    else:
-        background_estimation = background
-        background_low_estimation = background_low
-        background_high_estimation = background_high
-
-    while True:
-        retval, frame = capture.read()
-        if frame_initial is None:
-            frame_initial = frame
-        if frame is None:
-            break
-        if es_end is not None:
-            if frame_count >= es_end * fps:
-                break
-
-        if frame_count >= es_start * fps:
-            if framewidth is not None:
-                frame = cv2.resize(
-                    frame, (framewidth, frameheight), interpolation=cv2.INTER_AREA
-                )
-
-            if animal_vs_bg == 1:
-                frame = np.uint8(255 - frame)
-
-            contour_area = 0
-
-            if np.mean(frame) < np.mean(frame_initial) / delta:
-                if animal_vs_bg == 2:
-                    foreground = cv2.absdiff(frame, background_low_estimation)
-                else:
-                    foreground = cv2.subtract(frame, background_low_estimation)
-            elif np.mean(frame) > delta * np.mean(frame_initial):
-                if animal_vs_bg == 2:
-                    foreground = cv2.absdiff(frame, background_high_estimation)
-                else:
-                    foreground = cv2.subtract(frame, background_high_estimation)
-            else:
-                if animal_vs_bg == 2:
-                    foreground = cv2.absdiff(frame, background_estimation)
-                else:
-                    foreground = cv2.subtract(frame, background_estimation)
-            foreground = cv2.cvtColor(foreground, cv2.COLOR_BGR2GRAY)
-            thred = cv2.threshold(
-                foreground, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
-            )[1]
-            thred = cv2.morphologyEx(
-                thred, cv2.MORPH_CLOSE, np.ones((kernel, kernel), np.uint8)
-            )
-            if animal_vs_bg == 2:
-                kernel_erode = max(kernel - 4, 1)
-                thred = cv2.erode(
-                    thred, np.ones((kernel_erode, kernel_erode), np.uint8)
-                )
-            contours, _ = cv2.findContours(thred, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
-
-            for i in contours:
-                if min_area < cv2.contourArea(i) < max_area:
-                    contour_area += cv2.contourArea(i)
-            total_contour_area.append(contour_area)
-
-        frame_count += 1
-
-    capture.release()
-
-    print("Estimation completed!")
-
-    if len(total_contour_area) > 0:
-        if animal_number == 0:
-            print("Animal number is 0. Please enter the correct animal number!")
-            animal_area = 1
-        else:
-            animal_area = (
-                sum(total_contour_area) / len(total_contour_area)
-            ) / animal_number
-    else:
-        print("No animal detected!")
-        animal_area = 1
-
-    print("Single animal size: " + str(animal_area))
+    animal_area = estimate_animal_area(
+        path_to_video,
+        delta,
+        background,  # type: ignore
+        background_low,  # type: ignore
+        background_high,  # type: ignore
+        animal_number,
+        frame_size,
+        stim_t,
+        t,
+        duration,
+        animal_vs_bg,
+        kernel,
+    )
 
     if stim_t is None:
         stim_t = 2
+
+    if animal_area is None:
+        animal_area = 1
 
     return (background, background_low, background_high, stim_t, animal_area)
 
