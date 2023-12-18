@@ -542,9 +542,7 @@ def estimate_constants(
     kernel=3,
 ):
     capture = cv2.VideoCapture(path_to_video)
-    fps = round(capture.get(cv2.CAP_PROP_FPS))
     capture.release()
-    frame_initial = None
     stim_t = None
     frame_size = (
         (framewidth, frameheight)
@@ -1217,21 +1215,53 @@ def extract_frames(
 
 
 def preprocess_video(
-    path_to_video,
-    out_folder,
-    framewidth,
-    trim_video=False,
-    time_windows=[[0, 10]],
-    enhance_contrast=True,
-    contrast=1.0,
-    crop_frame=True,
-    left=0,
-    right=0,
-    top=0,
-    bottom=0,
-    fps_reduction_factor=1.0,
+    path_to_video: str,
+    out_folder: str,
+    framewidth: int,
+    trim_video: bool = False,
+    time_windows: list[list[float]] = [[0, 10]],
+    enhance_contrast: bool = True,
+    contrast: float = 1.0,
+    crop_frame: bool = True,
+    left: int = 0,
+    right: int = 0,
+    top: int = 0,
+    bottom: int = 0,
+    fps_reduction_factor: float = 1.0,
 ):
-    """Preprocess the given video for faster model training."""
+    """
+    Preprocess the given video for faster model training.
+
+    Args:
+        path_to_video: The path to the video to process.
+        out_folder: The folder in which to store the processed video.
+        framewidth: The width of the frame after resizing.
+        trim_video: Whether or not to apply the given time windows.
+        time_windows: A list of lists, where each inner list is of format
+            [start, end] and indicates the start time and end time of a
+            subsection of the video to include in preprocessing.
+        enhance_contrast: Whether or not to enhance the contrast of the video.
+            NOTE: The current implementation doesn't actually increase the
+            contrast -- instead, it increases the brightness. This feature will
+            need to be rewritten at some point.
+        contrast: The factor by which to increase the brightness (see NOTE
+            above for explanation).
+        crop_frame: Whether or not to crop the video.
+        left: The left coordinate to crop at.
+        right: The right coordinate to crop at.
+        top: The top coordinate to crop at.
+        bottom: The bottom coordinate to crop at.
+        fps_reduction_factor: The factor by which to reduce the FPS of the
+            video. For example, if the video is originally at 60 FPS and
+            fps_reduction_factor is 4, then the new video will be scaled down
+            to 15 FPS while maintaining the same duration.
+
+    Returns:
+        None. The processed videos will be stored in `out_folder`.
+
+    Raises:
+        None
+    """
 
     # Get video and metadata
     capture = cv2.VideoCapture(path_to_video)
@@ -1305,11 +1335,19 @@ def preprocess_video(
 
 
 def get_dropped_frames(n: int, reduction_factor: float) -> list[int]:
-    """Return a list of indices of frames to be dropped after an FPS reduction
+    """
+    Return a list of indices of frames to be dropped after an FPS reduction
 
-    n: the number of frames in the original video
-    reduction_factor: the FPS reduction factor, where the new FPS is
-        calculated using new_fps = old_fps / reduction_factor
+    Args:
+        n: The number of frames in the original video.
+        reduction_factor: The FPS reduction factor, where the new FPS is
+            calculated using new_fps = old_fps / reduction_factor.
+
+    Returns:
+        A list of indices of frames to be dropped.
+
+    Raises:
+        None
     """
     if n <= 1.0:
         return []
