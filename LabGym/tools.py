@@ -81,7 +81,7 @@ def _extract_background(
 
     if animal_vs_bg == HARD_TO_TELL:
         if len_frames <= 101:
-            return np.uint8(np.median(frames_arr, axis=0))
+            return np.uint8(np.median(frames_arr, axis=0))  # type: ignore
 
         frames_mean = []
         check_frames = []
@@ -100,14 +100,14 @@ def _extract_background(
         del check_frames
         del frames_temp
         gc.collect()
-        return background
+        return background  # type: ignore
 
     if stable_illumination is True:
         return (
             np.uint8(frames_arr.max(0))
             if animal_vs_bg == ANIMAL_DARKER
             else np.uint8(frames_arr.min(0))
-        )
+        )  # type:ignore
 
     if len_frames > 101:
         frames_mean = []
@@ -136,7 +136,7 @@ def _extract_background(
         np.uint8(frames_arr.max(0))
         if animal_vs_bg == ANIMAL_DARKER
         else np.uint8(frames_arr.min(0))
-    )
+    )  # type: ignore
 
 
 def extract_backgrounds_from_video(
@@ -231,10 +231,10 @@ def extract_backgrounds_from_video(
             lower_threshold = np.mean(initial_frame) / delta
             upper_threshold = np.mean(initial_frame) * delta
 
-        if np.mean(frame) < lower_threshold:
+        if np.mean(frame) < lower_threshold:  # type: ignore
             frames["low"].append(frame)
             counts["low"] += 1
-        elif np.mean(frame) > upper_threshold:
+        elif np.mean(frame) > upper_threshold:  # type: ignore
             frames["high"].append(frame)
             counts["high"] += 1
         else:
@@ -295,7 +295,7 @@ def extract_backgrounds_from_video(
 
 def get_backgrounds_from_folder(
     folder: str, frame_size: tuple[int, int] | None = None
-) -> tuple[Frame | None, Frame | None, Frame | None]:
+) -> tuple[Frame, Frame, Frame]:
     """
     Loads background images from given folder, resizing them if required.
 
@@ -425,7 +425,7 @@ def estimate_animal_area(
     print("Estimating the animal size...")
     print(datetime.datetime.now())
 
-    capture = cv2.ViThedeoCapture(path_to_video)
+    capture = cv2.VideoCapture(path_to_video)
     fps = capture.get(cv2.CAP_PROP_FPS)
     frame_count = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
 
