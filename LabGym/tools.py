@@ -293,7 +293,7 @@ def extract_backgrounds_from_video(
     return (backgrounds["default"], backgrounds["low"], backgrounds["high"])  # type: ignore
 
 
-def get_backgrounds_from_folder(
+def load_backgrounds_from_folder(
     folder: str, frame_size: tuple[int, int] | None = None
 ) -> tuple[Frame, Frame, Frame]:
     """
@@ -562,7 +562,7 @@ def estimate_constants(
         )
         stim_t = get_stimulation_time(path_to_video, delta)
     else:
-        (background, background_low, background_high) = get_backgrounds_from_folder(
+        (background, background_low, background_high) = load_backgrounds_from_folder(
             path_background, frame_size
         )
 
