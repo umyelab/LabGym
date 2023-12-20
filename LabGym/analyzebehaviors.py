@@ -30,7 +30,6 @@ import tensorflow as tf
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array
 import pandas as pd
-import seaborn as sb
 import functools
 import operator
 
@@ -163,15 +162,15 @@ class AnalyzeAnimal:
             )
         else:
             self.background = frame
-        framesize = min(self.background.shape[0], self.background.shape[1])
 
-        if framesize / self.animal_number < 250:
+        smallest_dimension = min(self.background.shape[0], self.background.shape[1])
+        if smallest_dimension / self.animal_number < 250:
             self.kernel = 3
-        elif framesize / self.animal_number < 500:
+        elif smallest_dimension / self.animal_number < 500:
             self.kernel = 5
-        elif framesize / self.animal_number < 1000:
+        elif smallest_dimension / self.animal_number < 1000:
             self.kernel = 7
-        elif framesize / self.animal_number < 1500:
+        elif smallest_dimension / self.animal_number < 1500:
             self.kernel = 9
         else:
             self.kernel = 11
@@ -179,36 +178,60 @@ class AnalyzeAnimal:
         self.delta = delta
         self.autofind_t = autofind_t
         self.animal_vs_bg = animal_vs_bg
+
         if self.autofind_t is True:
             es_start = None
         else:
             es_start = self.t
-        constants = estimate_constants(
+
+        if self.framewidth is None or self.frameheight is None:
+            frame_size = None
+        else:
+            frame_size = (self.framewidth, self.frameheight)
+
+        if path_background is None:
+            backgrounds = extract_backgrounds_from_video(
+                self.path_to_video,
+                self.delta,
+                frame_size,
+                stable_illumination,
+                ex_start,
+                ex_end,
+                self.animal_vs_bg,
+            )
+        else:
+            backgrounds = load_backgrounds_from_folder(path_background, frame_size)
+
+        self.background = backgrounds[0]
+        self.background_low = backgrounds[1]
+        self.background_high = backgrounds[2]
+        cv2.imwrite(os.path.join(self.results_path, "background.jpg"), self.background)
+        cv2.imwrite(
+            os.path.join(self.results_path, "background_low.jpg"), self.background_low
+        )
+        cv2.imwrite(
+            os.path.join(self.results_path, "background_high.jpg"), self.background_high
+        )
+
+        if self.autofind_t:
+            self.t = get_stimulation_time(self.path_to_video, self.delta)
+        else:
+            self.t = None
+
+        self.animal_area = estimate_animal_area(
             self.path_to_video,
             self.delta,
+            self.background,
+            self.background_low,
+            self.background_high,
             self.animal_number,
-            framewidth=self.framewidth,
-            frameheight=self.frameheight,
-            stable_illumination=stable_illumination,
-            ex_start=ex_start,
-            ex_end=ex_end,
-            t=es_start,
-            duration=self.duration,
-            animal_vs_bg=self.animal_vs_bg,
-            path_background=path_background,
-            kernel=self.kernel,
+            frame_size,
+            self.t,
+            es_start,
+            self.duration,
+            self.animal_vs_bg,
+            self.kernel,
         )
-        self.animal_area = constants[4]
-        self.background = constants[0]
-        self.background_low = constants[1]
-        self.background_high = constants[2]
-        cv2.imwrite(os.path.join(self.results_path, "background.jpg"), constants[0])
-        cv2.imwrite(os.path.join(self.results_path, "background_low.jpg"), constants[1])
-        cv2.imwrite(
-            os.path.join(self.results_path, "background_high.jpg"), constants[2]
-        )
-        if self.autofind_t is True:
-            self.t = constants[3]
 
         if self.categorize_behavior is True:
             for behavior_name in names_and_colors:
@@ -335,8 +358,7 @@ class AnalyzeAnimal:
                             self.animal_contours[index_in_existing][
                                 max(
                                     0, (frame_count_analyze - self.length + 1)
-                                ) : frame_count_analyze
-                                + 1
+                                ) : frame_count_analyze + 1
                             ],
                             inners=self.animal_inners[index_in_existing],
                             std=self.std,
@@ -347,8 +369,7 @@ class AnalyzeAnimal:
                             self.animal_contours[index_in_existing][
                                 max(
                                     0, (frame_count_analyze - self.length + 1)
-                                ) : frame_count_analyze
-                                + 1
+                                ) : frame_count_analyze + 1
                             ],
                             inners=None,
                             std=0,
@@ -488,8 +509,7 @@ class AnalyzeAnimal:
                                             max(
                                                 0,
                                                 (frame_count_analyze - self.length + 1),
-                                            ) : frame_count_analyze
-                                            + 1
+                                            ) : frame_count_analyze + 1
                                         ][n]
                                         is None
                                     ):
@@ -512,8 +532,7 @@ class AnalyzeAnimal:
                                                         - self.length
                                                         + 1
                                                     ),
-                                                ) : frame_count_analyze
-                                                + 1
+                                                ) : frame_count_analyze + 1
                                             ],
                                             contour=None,
                                             channel=self.channel,
@@ -674,8 +693,7 @@ class AnalyzeAnimal:
                                 self.animal_contours[0][
                                     max(
                                         0, (frame_count_analyze - self.length + 1)
-                                    ) : frame_count_analyze
-                                    + 1
+                                    ) : frame_count_analyze + 1
                                 ][n]
                                 is None
                             ):
@@ -1722,9 +1740,11 @@ class AnalyzeAnimal:
                 os.path.join(self.results_path, "examples", str(i)), exist_ok=True
             )
 
-        start_t = round((self.t - self.length / self.fps), 2)
-        if start_t < 0:
-            start_t = 0.00
+        if self.t is not None and self.length is not None:
+            start_t = round((self.t - self.length / self.fps), 2)
+        else:
+            start_t = 0.0
+
         if self.duration == 0:
             end_t = float("inf")
         else:
@@ -1782,8 +1802,7 @@ class AnalyzeAnimal:
                                 contour = self.animal_contours[n][
                                     frame_count_analyze
                                     - self.length
-                                    + 1 : frame_count_analyze
-                                    + 1
+                                    + 1 : frame_count_analyze + 1
                                 ][i]
                                 if contour is None:
                                     blob = np.zeros_like(f)
@@ -1793,8 +1812,7 @@ class AnalyzeAnimal:
                                         self.animal_contours[n][
                                             frame_count_analyze
                                             - self.length
-                                            + 1 : frame_count_analyze
-                                            + 1
+                                            + 1 : frame_count_analyze + 1
                                         ],
                                         contour=contour,
                                         channel=3,
@@ -1834,8 +1852,7 @@ class AnalyzeAnimal:
                                         self.animal_contours[n][
                                             frame_count_analyze
                                             - self.length
-                                            + 1 : frame_count_analyze
-                                            + 1
+                                            + 1 : frame_count_analyze + 1
                                         ],
                                         inners=self.animal_inners[n],
                                         std=self.std,
@@ -1866,8 +1883,7 @@ class AnalyzeAnimal:
                                         self.animal_contours[n][
                                             frame_count_analyze
                                             - self.length
-                                            + 1 : frame_count_analyze
-                                            + 1
+                                            + 1 : frame_count_analyze + 1
                                         ],
                                         inners=None,
                                         std=0,
