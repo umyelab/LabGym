@@ -384,10 +384,10 @@ def estimate_animal_area(
     Estimates animal size from a video.
 
     For all frames within the given time window, the background is subtracted
-    and morphological transformations (see https://docs.opencv.org/4.7.0/d9/
-    d61/tutorial_py_morphological_ops.html) are applied to fill in any holes
-    within the animal mask. The average area of all animals in each frame is
-    divided by the number of animals to return average animal size in pixels.
+    and morphological transformations (see https://docs.opencv.org/4.7.0/d9/d61/tutorial_py_morphological_ops.html)
+    are applied to fill in any holes within the animal mask. The average area
+    of all animals in each frame is divided by the number of animals to return
+    average animal size in pixels.
 
     Args:
         path_to_video: The path to the video.
@@ -409,8 +409,8 @@ def estimate_animal_area(
             background or whether it's hard to tell; use constants at top of
             tools.py for specific values.
         kernel_size: The kernel size to use for morphological transformations,
-            see https://docs.opencv.org/4.7.0/d9/d61/tutorial_py_morphological_
-            ops.html for more information
+            see https://docs.opencv.org/4.7.0/d9/d61/tutorial_py_morphological_ops.html
+            for more information
 
     Returns:
         The area of the animal in pixels after accounting for frame resizing.
