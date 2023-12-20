@@ -15,474 +15,515 @@ USA
 
 Email: bingye@umich.edu
 """
+from __future__ import annotations
 
-
-import os
+import datetime
+import functools
 import gc
+import operator
+import os
+from collections import deque
+from typing import Sequence, TypeAlias
+
 import cv2
 import numpy as np
-import datetime
-import scipy.ndimage as ndimage
-from skimage import exposure
-from tensorflow.keras.preprocessing.image import img_to_array
-from collections import deque
 import matplotlib.pyplot as plt
-from matplotlib.colors import LinearSegmentedColormap, Normalize
-from matplotlib.colorbar import ColorbarBase
 import pandas as pd
 import seaborn as sb
-import functools
-import operator
+from cv2.typing import MatLike
+from matplotlib.colors import LinearSegmentedColormap, Normalize
+from matplotlib.colorbar import ColorbarBase
+from numpy.typing import NDArray
+from skimage import exposure
+from tensorflow.keras.preprocessing.image import img_to_array
 
 
-def extract_background(frames, stable_illumination=True, animal_vs_bg=0):
+# Constants to store animal lighter vs darker than background
+ANIMAL_LIGHTER = 0
+ANIMAL_DARKER = 1
+HARD_TO_TELL = 2
+
+# Use Frame to refer to different representations of a frame
+Frame: TypeAlias = NDArray[np.uint8] | MatLike
+
+
+def _extract_background(
+    frames: Sequence[MatLike],
+    stable_illumination: bool = True,
+    animal_vs_bg: int = ANIMAL_LIGHTER,
+) -> Frame | None:
+    """
+    Extracts the background from the given list of frames.
+
+    Args:
+        frames: A list of frames to extract the background from.
+        stable_illumination: False if background lighting changes for
+            optogenetic experiments, else True.
+        animal_vs_bg: Whether the animal is lighter or darker than the
+            background or whether it's hard to tell; use constants at top of
+            tools.py for specific values.
+
+    Returns:
+        An NDArray containing the extracted background.
+
+    Raises:
+        None
+    """
+
     len_frames = len(frames)
 
+    # Need at least 4 frames to extract background
     if len_frames <= 3:
-        background = None
-    else:
-        frames = np.array(frames, dtype="float32")
-        if animal_vs_bg == 2:
-            if len_frames > 101:
-                frames_mean = []
-                check_frames = []
-                mean_overall = frames.mean(0)
-                n = 0
-                while n < len_frames - 101:
-                    frames_temp = frames[n : n + 100]
-                    mean = frames_temp.mean(0)
-                    frames_mean.append(mean)
-                    check_frames.append(abs(mean - mean_overall) + frames_temp.std(0))
-                    n += 30
-                frames_mean = np.array(frames_mean, dtype="float32")
-                check_frames = np.array(check_frames, dtype="float32")
-                background = np.uint8(
-                    np.take_along_axis(
-                        frames_mean, np.argsort(check_frames, axis=0), axis=0
-                    )[0]
-                )
-                del frames_mean
-                del check_frames
-                del frames_temp
-                gc.collect()
-            else:
-                background = np.uint8(np.median(frames, axis=0))
-        else:
-            if stable_illumination is True:
-                if animal_vs_bg == 1:
-                    background = np.uint8(frames.max(0))
-                else:
-                    background = np.uint8(frames.min(0))
-            else:
-                if len_frames > 101:
-                    frames_mean = []
-                    check_frames = []
-                    n = 0
-                    while n < len_frames - 101:
-                        frames_temp = frames[n : n + 100]
-                        mean = frames_temp.mean(0)
-                        frames_mean.append(mean)
-                        if animal_vs_bg == 1:
-                            frames_temp_inv = 255 - frames_temp
-                            check_frames.append(
-                                frames_temp_inv.mean(0) + frames_temp_inv.std(0)
-                            )
-                        else:
-                            check_frames.append(mean + frames_temp.std(0))
-                        n += 30
-                    frames_mean = np.array(frames_mean, dtype="float32")
-                    check_frames = np.array(check_frames, dtype="float32")
-                    background = np.uint8(
-                        np.take_along_axis(
-                            frames_mean, np.argsort(check_frames, axis=0), axis=0
-                        )[0]
-                    )
-                    del frames_mean
-                    del check_frames
-                    del frames_temp
-                    gc.collect()
-                else:
-                    if animal_vs_bg == 1:
-                        background = np.uint8(frames.max(0))
-                    else:
-                        background = np.uint8(frames.min(0))
+        return None
 
-    return background
+    # Convert to ndarray
+    frames_arr = np.array(frames, dtype="float32")
 
+    if animal_vs_bg == HARD_TO_TELL:
+        if len_frames <= 101:
+            return np.uint8(np.median(frames_arr, axis=0))  # type: ignore
 
-def estimate_constants(
-    path_to_video,
-    delta,
-    animal_number,
-    framewidth=None,
-    frameheight=None,
-    stable_illumination=True,
-    ex_start=0,
-    ex_end=None,
-    t=None,
-    duration=10,
-    animal_vs_bg=0,
-    path_background=None,
-    kernel=3,
-):
-    capture = cv2.VideoCapture(path_to_video)
-    fps = round(capture.get(cv2.CAP_PROP_FPS))
-    capture.release()
-    frame_initial = None
-    stim_t = None
-
-    if path_background is None:
-        print("Extracting the static background...")
-
-        capture = cv2.VideoCapture(path_to_video)
-
-        if ex_start >= capture.get(cv2.CAP_PROP_FRAME_COUNT) / fps:
-            print(
-                "The beginning time for background extraction is later than the end of the video!"
-            )
-            print(
-                "Will use the 1st second of the video as the beginning time for background extraction!"
-            )
-            ex_start = 0
-        if ex_start == ex_end:
-            ex_end = ex_start + 1
-
-        frames = deque(maxlen=1000)
-        frames_low = deque(maxlen=1000)
-        frames_high = deque(maxlen=1000)
-        backgrounds = deque(maxlen=1000)
-        backgrounds_low = deque(maxlen=1000)
-        backgrounds_high = deque(maxlen=1000)
-        frame_number = 1
-        frame_count = 1
-        frame_low_count = 1
-        frame_high_count = 1
-
-        while True:
-            retval, frame = capture.read()
-            if frame is None:
-                break
-
-            if ex_end is not None:
-                if frame_number >= ex_end * fps:
-                    break
-
-            if frame_initial is None:
-                frame_initial = frame
-                if framewidth is not None:
-                    frame_initial = cv2.resize(
-                        frame, (framewidth, frameheight), interpolation=cv2.INTER_AREA
-                    )
-
-            if frame_number >= ex_start * fps:
-                if framewidth is not None:
-                    frame = cv2.resize(
-                        frame, (framewidth, frameheight), interpolation=cv2.INTER_AREA
-                    )
-
-                if np.mean(frame) < np.mean(frame_initial) / delta:
-                    if stim_t is None:
-                        stim_t = frame_number / fps
-                    frames_low.append(frame)
-                    frame_low_count += 1
-                elif np.mean(frame) > delta * np.mean(frame_initial):
-                    if stim_t is None:
-                        stim_t = frame_number / fps
-                    frames_high.append(frame)
-                    frame_high_count += 1
-                else:
-                    frames.append(frame)
-                    frame_count += 1
-
-            if frame_count == 1001:
-                frame_count = 1
-                background = extract_background(
-                    frames,
-                    stable_illumination=stable_illumination,
-                    animal_vs_bg=animal_vs_bg,
-                )
-                backgrounds.append(background)
-
-            if frame_low_count == 1001:
-                frame_low_count = 1
-                background_low = extract_background(
-                    frames_low,
-                    stable_illumination=stable_illumination,
-                    animal_vs_bg=animal_vs_bg,
-                )
-                backgrounds_low.append(background_low)
-
-            if frame_high_count == 1001:
-                frame_high_count = 1
-                background_high = extract_background(
-                    frames_high,
-                    stable_illumination=stable_illumination,
-                    animal_vs_bg=animal_vs_bg,
-                )
-                backgrounds_high.append(background_high)
-
-            frame_number += 1
-
-        capture.release()
-
-        if len(backgrounds) > 0:
-            if frame_count > 600:
-                background = extract_background(
-                    frames,
-                    stable_illumination=stable_illumination,
-                    animal_vs_bg=animal_vs_bg,
-                )
-                del frames
-                gc.collect()
-                backgrounds.append(background)
-            if len(backgrounds) == 1:
-                background = backgrounds[0]
-            else:
-                backgrounds = np.array(backgrounds, dtype="float32")
-                if animal_vs_bg == 1:
-                    background = np.uint8(backgrounds.max(0))
-                elif animal_vs_bg == 2:
-                    background = np.uint8(np.median(backgrounds, axis=0))
-                else:
-                    background = np.uint8(backgrounds.min(0))
-                del backgrounds
-                gc.collect()
-        else:
-            background = extract_background(
-                frames,
-                stable_illumination=stable_illumination,
-                animal_vs_bg=animal_vs_bg,
-            )
-            del frames
-            gc.collect()
-
-        if len(backgrounds_low) > 0:
-            if frame_low_count > 600:
-                background_low = extract_background(
-                    frames_low,
-                    stable_illumination=stable_illumination,
-                    animal_vs_bg=animal_vs_bg,
-                )
-                del frames_low
-                gc.collect()
-                backgrounds_low.append(background_low)
-            if len(backgrounds_low) == 1:
-                background_low = backgrounds_low[0]
-            else:
-                backgrounds_low = np.array(backgrounds_low, dtype="float32")
-                if animal_vs_bg == 1:
-                    background_low = np.uint8(backgrounds_low.max(0))
-                elif animal_vs_bg == 2:
-                    background_low = np.uint8(np.median(backgrounds_low, axis=0))
-                else:
-                    background_low = np.uint8(backgrounds_low.min(0))
-                del backgrounds_low
-                gc.collect()
-        else:
-            background_low = extract_background(
-                frames_low,
-                stable_illumination=stable_illumination,
-                animal_vs_bg=animal_vs_bg,
-            )
-            del frames_low
-            gc.collect()
-
-        if len(backgrounds_high) > 0:
-            if frame_high_count > 600:
-                background_high = extract_background(
-                    frames_high,
-                    stable_illumination=stable_illumination,
-                    animal_vs_bg=animal_vs_bg,
-                )
-                del frames_high
-                gc.collect()
-                backgrounds_high.append(background_high)
-            if len(backgrounds_high) == 1:
-                background_high = backgrounds_high[0]
-            else:
-                backgrounds_high = np.array(backgrounds_high, dtype="float32")
-                if animal_vs_bg == 1:
-                    background_high = np.uint8(backgrounds_high.max(0))
-                elif animal_vs_bg == 2:
-                    background_high = np.uint8(np.median(backgrounds_high, axis=0))
-                else:
-                    background_high = np.uint8(backgrounds_high.min(0))
-                del backgrounds_high
-                gc.collect()
-        else:
-            background_high = extract_background(
-                frames_high,
-                stable_illumination=stable_illumination,
-                animal_vs_bg=animal_vs_bg,
-            )
-            del frames_high
-            gc.collect()
-
-        if background is None:
-            background = frame_initial
-        if background_low is None:
-            background_low = background
-        if background_high is None:
-            background_high = background
-
-        print("Background extraction completed!")
-
-    else:
-        background = cv2.imread(os.path.join(path_background, "background.jpg"))
-        background_low = cv2.imread(os.path.join(path_background, "background_low.jpg"))
-        background_high = cv2.imread(
-            os.path.join(path_background, "background_high.jpg")
+        frames_mean = []
+        check_frames = []
+        mean_overall = frames_arr.mean(0)
+        for n in range(0, len_frames - 101, 30):
+            frames_temp = frames_arr[n : n + 100]
+            mean = frames_temp.mean(0)
+            frames_mean.append(frames_temp.mean(0))
+            check_frames.append(abs(mean - mean_overall) + frames_temp.std(0))
+        frames_mean = np.array(frames_mean, dtype="float32")
+        check_frames = np.array(check_frames, dtype="float32")
+        background = np.uint8(
+            np.take_along_axis(frames_mean, np.argsort(check_frames, axis=0), axis=0)[0]
         )
-        if framewidth is not None:
-            background = cv2.resize(
-                background, (framewidth, frameheight), interpolation=cv2.INTER_AREA
-            )
-            background_low = cv2.resize(
-                background_low, (framewidth, frameheight), interpolation=cv2.INTER_AREA
-            )
-            background_high = cv2.resize(
-                background_high, (framewidth, frameheight), interpolation=cv2.INTER_AREA
+        del frames_mean
+        del check_frames
+        del frames_temp
+        gc.collect()
+        return background  # type: ignore
+
+    if stable_illumination is True:
+        return (
+            np.uint8(frames_arr.max(0))
+            if animal_vs_bg == ANIMAL_DARKER
+            else np.uint8(frames_arr.min(0))
+        )  # type:ignore
+
+    if len_frames > 101:
+        frames_mean = []
+        check_frames = []
+        for n in range(0, len_frames - 101, 30):
+            frames_temp = frames_arr[n : n + 100]
+            mean = frames_temp.mean(0)
+            frames_mean.append(mean)
+            if animal_vs_bg == 1:
+                frames_temp_inv = 255 - frames_temp
+                check_frames.append(frames_temp_inv.mean(0) + frames_temp_inv.std(0))
+            else:
+                check_frames.append(mean + frames_temp.std(0))
+        frames_mean = np.array(frames_mean, dtype="float32")
+        check_frames = np.array(check_frames, dtype="float32")
+        background = np.uint8(
+            np.take_along_axis(frames_mean, np.argsort(check_frames, axis=0), axis=0)[0]
+        )
+        del frames_mean
+        del check_frames
+        del frames_temp
+        gc.collect()
+        return background  # type: ignore
+
+    return (
+        np.uint8(frames_arr.max(0))
+        if animal_vs_bg == ANIMAL_DARKER
+        else np.uint8(frames_arr.min(0))
+    )  # type: ignore
+
+
+def extract_backgrounds_from_video(
+    path_to_video: str,
+    delta: float,
+    frame_size: tuple[int, int] | None = None,
+    stable_illumination: bool = True,
+    start_time: float = 0.0,
+    end_time: float | None = None,
+    animal_vs_bg: int = ANIMAL_LIGHTER,
+) -> tuple[Frame, Frame, Frame]:
+    """
+    Extracts backgrounds from given video.
+
+    Args:
+        path_to_video: The path to the video file.
+        delta: The factor by which to compare frame brightness. The mean
+            brightness of each frame is compared to the mean brightness of the
+            initial frame multiplied by and divided by delta to categorize the
+            frame as default, low, or high.
+        frame_size: The dimensions (width, height) by which to resize the frame
+        stable_illumination: False if background lighting changes for
+            optogenetic experiments, else True.
+        start_time: The beginning of the time window to start extraction.
+        end_time: The end of the time window to stop extraction.
+        animal_vs_bg: Whether the animal is lighter or darker than the
+            background or whether it's hard to tell; use constants at top of
+            tools.py for specific values.
+
+    Returns:
+        A tuple (default, low, high) where `default` is the default
+        background, `low` is the dim-light background, `high` is the
+        bright-light background.
+
+    Raises:
+        None
+    """
+    print("Extracting the static background...")
+
+    BG_TYPES = ["default", "low", "high"]
+    capture = cv2.VideoCapture(path_to_video)
+    fps = capture.get(cv2.CAP_PROP_FPS)
+    frame_count = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
+    duration = frame_count / fps
+    initial_frame = None
+    lower_threshold = None
+    upper_threshold = None
+
+    if start_time >= duration:
+        print(
+            "The beginning time for background extraction is later than the end of the video!"
+        )
+        print(
+            "Will use the 1st second of the video as the beginning time for background extraction!"
+        )
+        start_time = 0
+    if start_time == end_time:
+        end_time = start_time + 1
+
+    # Initialize data storage
+    frames = {}
+    counts = {}
+    background_options = {}
+    backgrounds = {}
+    for bg_type in BG_TYPES:
+        frames[bg_type] = deque(maxlen=1000)
+        counts[bg_type] = 0
+        background_options[bg_type] = deque(maxlen=1000)
+        backgrounds[bg_type] = None
+
+    for frame_number in range(1, frame_count + 1):
+        _, frame = capture.read()
+
+        reached_start = frame_number >= start_time * fps
+        reached_end = (
+            end_time is not None and frame_number >= end_time * fps or frame is None
+        )
+
+        if reached_end:
+            break
+
+        if not reached_start:
+            continue
+
+        if frame_size is not None:
+            frame = cv2.resize(frame, frame_size, interpolation=cv2.INTER_AREA)
+
+        frame = np.array(frame, dtype=np.uint8)
+
+        if initial_frame is None:
+            initial_frame = frame
+            lower_threshold = np.mean(initial_frame) / delta
+            upper_threshold = np.mean(initial_frame) * delta
+
+        if np.mean(frame) < lower_threshold:  # type: ignore
+            frames["low"].append(frame)
+            counts["low"] += 1
+        elif np.mean(frame) > upper_threshold:  # type: ignore
+            frames["high"].append(frame)
+            counts["high"] += 1
+        else:
+            frames["default"].append(frame)
+            counts["default"] += 1
+
+        # Extract background if frame buffer has reached 1000 frames
+        for bg_type in BG_TYPES:
+            if counts[bg_type] == 1001:
+                counts[bg_type] = 1
+                background = _extract_background(
+                    frames[bg_type], stable_illumination, animal_vs_bg
+                )
+                if background is not None:
+                    background_options[bg_type].append(background)
+
+    capture.release()
+
+    for bg_type in BG_TYPES:
+        if len(background_options[bg_type]) > 0:
+            # Process any remaining frames
+            if counts[bg_type] > 600:
+                background = _extract_background(
+                    frames[bg_type], stable_illumination, animal_vs_bg
+                )
+                if background is not None:
+                    background_options[bg_type].append(background)
+
+            # Pick the best background option
+            if len(background_options[bg_type]) == 1:
+                backgrounds[bg_type] = background_options[bg_type][0]
+            else:
+                options = np.array(background_options[bg_type], dtype="uint8")
+                if animal_vs_bg == ANIMAL_LIGHTER:
+                    backgrounds[bg_type] = options.min(axis=0)
+                elif animal_vs_bg == ANIMAL_DARKER:
+                    backgrounds[bg_type] = options.max(axis=0)
+                elif animal_vs_bg == HARD_TO_TELL:
+                    backgrounds[bg_type] = np.median(options, axis=0)
+                del options
+                gc.collect()
+        else:
+            backgrounds[bg_type] = _extract_background(
+                frames[bg_type], stable_illumination, animal_vs_bg
             )
 
-        frame_initial = background
+    if backgrounds["default"] is None:
+        background = initial_frame
+    if backgrounds["low"] is None:
+        backgrounds["low"] = backgrounds["default"]
+    if backgrounds["high"] is None:
+        backgrounds["high"] = backgrounds["default"]
+
+    print("Background extraction completed!")
+
+    return (backgrounds["default"], backgrounds["low"], backgrounds["high"])  # type: ignore
+
+
+def load_backgrounds_from_folder(
+    folder: str, frame_size: tuple[int, int] | None = None
+) -> tuple[Frame, Frame, Frame]:
+    """
+    Loads background images from given folder, resizing them if required.
+
+    Args:
+        folder: The path to the folder containing the background images.
+        frame_size: The dimensions (width, height) by which to resize the frame
+
+    Returns:
+        A tuple (default, low, high) where `default` is the default
+        background, `low` is the dim-light background, `high` is the
+        bright-light background.
+
+    Raises:
+        None
+    """
+    default = cv2.imread(os.path.join(folder, "background.jpg"))
+    low = cv2.imread(os.path.join(folder, "background_low.jpg"))
+    high = cv2.imread(os.path.join(folder, "background_high.jpg"))
+    if frame_size is not None:
+        default = cv2.resize(default, frame_size, interpolation=cv2.INTER_AREA)
+        low = cv2.resize(low, frame_size, interpolation=cv2.INTER_AREA)
+        high = cv2.resize(high, frame_size, interpolation=cv2.INTER_AREA)
+    return (default, low, high)
+
+
+def get_stimulation_time(path_to_video: str, delta: float) -> float | None:
+    """
+    Calculates optogenetic stimulation time from given video.
+
+    Args:
+        path_to_video: The path to the video.
+        delta: The factor by which to compare frame brightness. The mean
+            brightness of each frame is compared to the mean brightness of the
+            initial frame multiplied by and divided by delta to categorize the
+            frame as default, low, or high.
+
+    Returns:
+        The time of the lighting change in seconds, None if no lighting change
+        is detected.
+
+    Raises:
+        None
+    """
+    capture = cv2.VideoCapture(path_to_video)
+    frame_count = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
+    fps = capture.get(cv2.CAP_PROP_FPS)
+    lower_threshold = None
+    upper_threshold = None
+
+    for frame_number in range(1, frame_count + 1):
+        _, frame = capture.read()
+
+        if frame is None:
+            break
+        frame = np.array(frame, dtype="uint8")
+
+        if lower_threshold is None or upper_threshold is None:
+            lower_threshold = np.mean(frame) / delta
+            upper_threshold = np.mean(frame) * delta
+
+        if np.mean(frame) < lower_threshold:  # type: ignore[reportGeneralTypeIssues]
+            capture.release()
+            return frame_number / fps
+        if np.mean(frame) > upper_threshold:  # type: ignore[reportGeneralTypeIssues]
+            capture.release()
+            return frame_number / fps
+
+    return None
+
+
+def estimate_animal_area(
+    path_to_video: str,
+    delta: float,
+    background_default: Frame,
+    background_low: Frame,
+    background_high: Frame,
+    animal_number: int,
+    frame_size: tuple[int, int] | None = None,
+    stim_t: float | None = None,
+    start_time: float | None = None,
+    duration: float = 10.0,
+    animal_vs_bg: int = ANIMAL_LIGHTER,
+    kernel_size: int = 3,
+) -> float | None:
+    """
+    Estimates animal size from a video.
+
+    For all frames within the given time window, the background is subtracted
+    and morphological transformations (see https://docs.opencv.org/4.7.0/d9/d61/tutorial_py_morphological_ops.html)
+    are applied to fill in any holes within the animal mask. The average area
+    of all animals in each frame is divided by the number of animals to return
+    average animal size in pixels.
+
+    Args:
+        path_to_video: The path to the video.
+        delta: The factor by which to compare frame brightness. The mean
+            brightness of each frame is compared to the mean brightness of the
+            initial frame multiplied by and divided by delta to categorize the
+            frame as default, low, or high.
+        background_default: The default-lighting background.
+        background_low: The low-light background.
+        background_high: The bright-light background.
+        animal_number: The number of animals present in the video.
+        frame_size: The dimensions (width, height) by which to resize the frame
+        stim_t: The time in seconds of a lighting change in the video, used
+            in optogenetic experiments.
+        start_time: The time in seconds at which to start animal size
+            estimation.
+        duration: The duration in seconds of the animal size estimation.
+        animal_vs_bg: Whether the animal is lighter or darker than the
+            background or whether it's hard to tell; use constants at top of
+            tools.py for specific values.
+        kernel_size: The kernel size to use for morphological transformations,
+            see https://docs.opencv.org/4.7.0/d9/d61/tutorial_py_morphological_ops.html
+            for more information
+
+    Returns:
+        The area of the animal in pixels after accounting for frame resizing.
+
+    Raises:
+        None
+    """
+    if animal_number == 0:
+        print("Animal number is 0. Please enter the correct animal number!")
+        return None
 
     print("Estimating the animal size...")
     print(datetime.datetime.now())
 
-    if delta < 10000:
-        if ex_start != 0 or path_background is not None:
-            capture = cv2.VideoCapture(path_to_video)
-            frame_count = 1
-
-            while True:
-                retval, frame = capture.read()
-                if frame is None:
-                    break
-
-                if framewidth is not None:
-                    frame = cv2.resize(
-                        frame, (framewidth, frameheight), interpolation=cv2.INTER_AREA
-                    )
-
-                if frame_initial is None:
-                    frame_initial = frame
-                else:
-                    if np.mean(frame) < np.mean(frame_initial) / delta:
-                        stim_t = frame_count / fps
-                        break
-                    if np.mean(frame) > delta * np.mean(frame_initial):
-                        stim_t = frame_count / fps
-                        break
-
-                frame_count += 1
-
-            capture.release()
-
-    if t is None:
-        if stim_t is None:
-            es_start = 0
-        else:
-            es_start = stim_t
-    else:
-        es_start = t
-    if duration > 30 or duration <= 0:
-        duration = 30
-    es_end = es_start + duration
-
     capture = cv2.VideoCapture(path_to_video)
-    total_contour_area = []
-    frame_count = 1
-    min_area = (background.shape[1] / 100) * (background.shape[0] / 100)
-    max_area = (background.shape[1] * background.shape[0]) * 3 / 4
+    fps = capture.get(cv2.CAP_PROP_FPS)
+    frame_count = int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
 
-    if animal_vs_bg == 1:
-        background_estimation = np.uint8(255 - background)
-        background_low_estimation = np.uint8(255 - background_low)
-        background_high_estimation = np.uint8(255 - background_high)
-    else:
-        background_estimation = background
-        background_low_estimation = background_low
-        background_high_estimation = background_high
+    if start_time is None:
+        start_time = stim_t if stim_t is not None else 0.0
 
-    while True:
-        retval, frame = capture.read()
-        if frame_initial is None:
-            frame_initial = frame
-        if frame is None:
+    # Cap estimation duration at 30 sec
+    if not 0 < duration <= 30:
+        duration = 30.0
+
+    end_time = start_time + duration
+
+    min_area = (background_default.shape[1] / 100) * (background_default.shape[0] / 100)
+    max_area = (background_default.shape[1] * background_default.shape[0]) * 3 / 4
+
+    background_estimation = background_default
+    background_low_estimation = background_low
+    background_high_estimation = background_high
+
+    # Make animal lighter than background for morphological transformation
+    if animal_vs_bg == ANIMAL_DARKER:
+        background_estimation = 255 - background_default  # type: ignore
+        background_low_estimation = 255 - background_low  # type: ignore
+        background_high_estimation = 255 - background_high  # type: ignore
+
+    lower_threshold = None
+    upper_threshold = None
+    total_contour_areas = []
+    for frame_number in range(1, frame_count + 1):
+        _, frame = capture.read()
+
+        reached_start = frame_number >= start_time * fps
+        reached_end = (
+            end_time is not None and frame_number >= end_time * fps or frame is None
+        )
+        if reached_end:
             break
-        if es_end is not None:
-            if frame_count >= es_end * fps:
-                break
+        if not reached_start:
+            continue
 
-        if frame_count >= es_start * fps:
-            if framewidth is not None:
-                frame = cv2.resize(
-                    frame, (framewidth, frameheight), interpolation=cv2.INTER_AREA
-                )
+        # Preprocess frame
+        if frame_size is not None:
+            frame = cv2.resize(frame, frame_size, interpolation=cv2.INTER_AREA)
+        frame = np.array(frame, dtype=np.uint8)
 
-            if animal_vs_bg == 1:
-                frame = np.uint8(255 - frame)
+        # Make animal brighter than background for morphological transformation
+        if animal_vs_bg == ANIMAL_DARKER:
+            frame = 255 - frame
 
-            contour_area = 0
+        if lower_threshold is None or upper_threshold is None:
+            lower_threshold = np.mean(frame) / delta
+            upper_threshold = np.mean(frame) * delta
 
-            if np.mean(frame) < np.mean(frame_initial) / delta:
-                if animal_vs_bg == 2:
-                    foreground = cv2.absdiff(frame, background_low_estimation)
-                else:
-                    foreground = cv2.subtract(frame, background_low_estimation)
-            elif np.mean(frame) > delta * np.mean(frame_initial):
-                if animal_vs_bg == 2:
-                    foreground = cv2.absdiff(frame, background_high_estimation)
-                else:
-                    foreground = cv2.subtract(frame, background_high_estimation)
-            else:
-                if animal_vs_bg == 2:
-                    foreground = cv2.absdiff(frame, background_estimation)
-                else:
-                    foreground = cv2.subtract(frame, background_estimation)
-            foreground = cv2.cvtColor(foreground, cv2.COLOR_BGR2GRAY)
-            thred = cv2.threshold(
-                foreground, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
-            )[1]
-            thred = cv2.morphologyEx(
-                thred, cv2.MORPH_CLOSE, np.ones((kernel, kernel), np.uint8)
-            )
-            if animal_vs_bg == 2:
-                kernel_erode = max(kernel - 4, 1)
-                thred = cv2.erode(
-                    thred, np.ones((kernel_erode, kernel_erode), np.uint8)
-                )
-            contours, _ = cv2.findContours(thred, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+        # Select correct background to use
+        if np.mean(frame) < lower_threshold:
+            background = background_low_estimation
+        elif np.mean(frame) > upper_threshold:
+            background = background_high_estimation
+        else:
+            background = background_estimation
 
-            for i in contours:
-                if min_area < cv2.contourArea(i) < max_area:
-                    contour_area += cv2.contourArea(i)
-            total_contour_area.append(contour_area)
+        # Subtract background and convert to grayscale
+        if animal_vs_bg == HARD_TO_TELL:
+            foreground = cv2.absdiff(frame, background)
+        else:
+            foreground = cv2.subtract(frame, background)
+        foreground = cv2.cvtColor(foreground, cv2.COLOR_BGR2GRAY)
 
-        frame_count += 1
+        # Extract contours from frame
+        _, thred = cv2.threshold(
+            foreground, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
+        )
+        kernel = np.ones((kernel_size, kernel_size), np.uint8)
+        thred = cv2.morphologyEx(thred, cv2.MORPH_CLOSE, kernel)
+        if animal_vs_bg == HARD_TO_TELL:
+            kernel_erode_size = max(kernel_size - 4, 1)
+            kernel_erode = np.ones((kernel_erode_size, kernel_erode_size), np.uint8)
+            thred = cv2.erode(thred, kernel_erode)
+        contours, _ = cv2.findContours(thred, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
+
+        # Get total contour area and append to list
+        contour_area = 0
+        for contour in contours:
+            if min_area < cv2.contourArea(contour) < max_area:
+                contour_area += cv2.contourArea(contour)
+        total_contour_areas.append(contour_area)
 
     capture.release()
 
     print("Estimation completed!")
 
-    if len(total_contour_area) > 0:
-        if animal_number == 0:
-            print("Animal number is 0. Please enter the correct animal number!")
-            animal_area = 1
-        else:
-            animal_area = (
-                sum(total_contour_area) / len(total_contour_area)
-            ) / animal_number
-    else:
+    if len(total_contour_areas) <= 0:
         print("No animal detected!")
-        animal_area = 1
+        return None
 
-    print("Single animal size: " + str(animal_area))
-
-    if stim_t is None:
-        stim_t = 2
-
-    return (background, background_low, background_high, stim_t, animal_area)
+    animal_area = sum(total_contour_areas) / len(total_contour_areas) / animal_number
+    print(f"Single animal size: {animal_area}")
+    return animal_area
 
 
 def crop_frame(frame, contours):
@@ -1110,21 +1151,53 @@ def extract_frames(
 
 
 def preprocess_video(
-    path_to_video,
-    out_folder,
-    framewidth,
-    trim_video=False,
-    time_windows=[[0, 10]],
-    enhance_contrast=True,
-    contrast=1.0,
-    crop_frame=True,
-    left=0,
-    right=0,
-    top=0,
-    bottom=0,
-    fps_reduction_factor=1.0,
+    path_to_video: str,
+    out_folder: str,
+    framewidth: int,
+    trim_video: bool = False,
+    time_windows: list[list[float]] = [[0, 10]],
+    enhance_contrast: bool = True,
+    contrast: float = 1.0,
+    crop_frame: bool = True,
+    left: int = 0,
+    right: int = 0,
+    top: int = 0,
+    bottom: int = 0,
+    fps_reduction_factor: float = 1.0,
 ):
-    """Preprocess the given video for faster model training."""
+    """
+    Preprocess the given video for faster model training.
+
+    Args:
+        path_to_video: The path to the video to process.
+        out_folder: The folder in which to store the processed video.
+        framewidth: The width of the frame after resizing.
+        trim_video: Whether or not to apply the given time windows.
+        time_windows: A list of lists, where each inner list is of format
+            [start, end] and indicates the start time and end time of a
+            subsection of the video to include in preprocessing.
+        enhance_contrast: Whether or not to enhance the contrast of the video.
+            NOTE: The current implementation doesn't actually increase the
+            contrast -- instead, it increases the brightness. This feature will
+            need to be rewritten at some point.
+        contrast: The factor by which to increase the brightness (see NOTE
+            above for explanation).
+        crop_frame: Whether or not to crop the video.
+        left: The left coordinate to crop at.
+        right: The right coordinate to crop at.
+        top: The top coordinate to crop at.
+        bottom: The bottom coordinate to crop at.
+        fps_reduction_factor: The factor by which to reduce the FPS of the
+            video. For example, if the video is originally at 60 FPS and
+            fps_reduction_factor is 4, then the new video will be scaled down
+            to 15 FPS while maintaining the same duration.
+
+    Returns:
+        None. The processed videos will be stored in `out_folder`.
+
+    Raises:
+        None
+    """
 
     # Get video and metadata
     capture = cv2.VideoCapture(path_to_video)
@@ -1198,11 +1271,19 @@ def preprocess_video(
 
 
 def get_dropped_frames(n: int, reduction_factor: float) -> list[int]:
-    """Return a list of indices of frames to be dropped after an FPS reduction
+    """
+    Return a list of indices of frames to be dropped after an FPS reduction
 
-    n: the number of frames in the original video
-    reduction_factor: the FPS reduction factor, where the new FPS is
-        calculated using new_fps = old_fps / reduction_factor
+    Args:
+        n: The number of frames in the original video.
+        reduction_factor: The FPS reduction factor, where the new FPS is
+            calculated using new_fps = old_fps / reduction_factor.
+
+    Returns:
+        A list of indices of frames to be dropped.
+
+    Raises:
+        None
     """
     if n <= 1.0:
         return []
