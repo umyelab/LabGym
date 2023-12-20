@@ -6,6 +6,7 @@ Thanks for contributing to LabGym! Any contributors can create a fork of this re
  - [Adding a New Feature](#adding-a-new-feature)
  - [Collaborating on a Pull Request](#collaborating-on-a-pull-request)
  - [Submitting a Bug Fix](#submitting-a-bug-fix)
+ - [Adding Documentation](#adding-documentation)
 
 ## Getting Set Up to Contribute
 
@@ -75,3 +76,21 @@ git push
 ## Submitting a Bug Fix
 
 To submit a bug fix, follow the same instructions as in [Adding a New Feature](#adding-a-new-feature), but name your branch `bugfix/fix-this-bug` or `hotfix/fix-this-bug` instead. 
+
+## Adding Documentation
+
+LabGym uses Sphinx to generate HTML documentation from Markdown files with the [`Furo`](https://pradyunsg.me/furo/) documentation theme. To contribute to the documentation, you will need to install some dependencies. If you're using a virtual environment, activate it, then run the following command to install the documentation dependencies.
+
+```bash
+pip install -r docs/requirements.txt
+```
+
+Then, to start the local documentation server, run the following command. This command tells the `sphinx-autobuild` extension that the `.md` files are in the `docs` folder and the built HTML files are in `docs/_build/html`.
+
+```bash
+sphinx-autobuild docs docs/_build/html
+```
+
+Navigate to `https://localhost:8000` in your browser, where you should see the LabGym documentation!
+
+For a reference on documentation format, check out the [Furo documentation](https://pradyunsg.me/furo/reference). Make sure to select the tab that says `Markdown (MyST)` - we prefer writing documentation in Markdown instead of reStructuredText for readability for developers who might not be familiar with reStructuredText.
