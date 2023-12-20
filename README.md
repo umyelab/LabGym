@@ -1,5 +1,5 @@
 # LabGym: quantifying user-defined behaviors
-
+<!-- start elevator-pitch -->
 LabGym can:
 
 1. **TRACK** multiple animals / objects without restrictions on recording environments
@@ -13,6 +13,8 @@ A tutorial video for a high-level understanding of what LabGym can do, how it wo
 
 
 Cite LabGym: https://www.cell.com/cell-reports-methods/fulltext/S2667-2375(23)00026-7.
+
+<!-- end elevator-pitch -->
 
 <p>&nbsp;</p>
 
