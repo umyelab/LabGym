@@ -17,11 +17,13 @@ Email: bingye@umich.edu
 """
 
 
-import wx
-import os
-import shutil
-from pathlib import Path
 import json
+import shutil
+import os
+from pathlib import Path
+
+import wx
+
 from ..analyzebehaviors import AnalyzeAnimal
 from ..analyzebehaviorsdetector import AnalyzeAnimalDetector
 from ..categorizers import Categorizers

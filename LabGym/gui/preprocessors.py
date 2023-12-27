@@ -17,12 +17,14 @@ Email: bingye@umich.edu
 """
 
 
-from ..tools import preprocess_video
-import wx
 import os
-import cv2
 import shutil
+import wx
+
+import cv2
 import numpy as np
+
+from ..tools import preprocess_video
 
 
 class WindowLv2_ProcessVideos(wx.Frame):

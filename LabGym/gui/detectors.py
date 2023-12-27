@@ -17,14 +17,16 @@ Email: bingye@umich.edu
 """
 
 
-from ..tools import extract_frames
-from pathlib import Path
-import wx
-import os
-import cv2
 import json
+import os
 import shutil
+from pathlib import Path
+
+import cv2
 import torch
+import wx
+
+from ..tools import extract_frames
 
 try:
     from detectron2 import model_zoo

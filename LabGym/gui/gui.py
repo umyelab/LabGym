@@ -17,11 +17,13 @@ Email: bingye@umich.edu
 """
 
 
+import json
+from pathlib import Path
+from urllib import request
+
 import wx
 import wx.lib.agw.hyperlink
-import json
-from urllib import request
-from pathlib import Path
+
 from .categorizers import (
     WindowLv2_GenerateExamples,
     WindowLv2_TrainCategorizers,

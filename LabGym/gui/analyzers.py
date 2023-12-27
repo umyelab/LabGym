@@ -16,14 +16,15 @@ USA
 Email: bingye@umich.edu
 """
 
-
-import wx
+import json
 import os
-import matplotlib as mpl
 from pathlib import Path
+
+import matplotlib as mpl
 import pandas as pd
 import torch
-import json
+import wx
+
 from ..analyzebehaviors import AnalyzeAnimal
 from ..analyzebehaviorsdetector import AnalyzeAnimalDetector
 from ..tools import plot_evnets
