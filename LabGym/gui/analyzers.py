@@ -24,10 +24,10 @@ from pathlib import Path
 import pandas as pd
 import torch
 import json
-from .analyzebehaviors import AnalyzeAnimal
-from .analyzebehaviorsdetector import AnalyzeAnimalDetector
-from .tools import plot_evnets
-from .minedata import data_mining
+from ..analyzebehaviors import AnalyzeAnimal
+from ..analyzebehaviorsdetector import AnalyzeAnimalDetector
+from ..tools import plot_evnets
+from ..minedata import data_mining
 
 
 the_absolute_current_path = str(Path(__file__).resolve().parent)

@@ -22,9 +22,9 @@ import os
 import shutil
 from pathlib import Path
 import json
-from .analyzebehaviors import AnalyzeAnimal
-from .analyzebehaviorsdetector import AnalyzeAnimalDetector
-from .categorizers import Categorizers
+from ..analyzebehaviors import AnalyzeAnimal
+from ..analyzebehaviorsdetector import AnalyzeAnimalDetector
+from ..categorizers import Categorizers
 
 
 the_absolute_current_path = str(Path(__file__).resolve().parent)

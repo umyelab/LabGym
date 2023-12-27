@@ -17,7 +17,7 @@ Email: bingye@umich.edu
 """
 
 
-from .tools import preprocess_video
+from ..tools import preprocess_video
 import wx
 import os
 import cv2

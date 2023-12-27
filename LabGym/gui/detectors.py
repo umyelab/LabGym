@@ -17,7 +17,7 @@ Email: bingye@umich.edu
 """
 
 
-from .tools import extract_frames
+from ..tools import extract_frames
 from pathlib import Path
 import wx
 import os

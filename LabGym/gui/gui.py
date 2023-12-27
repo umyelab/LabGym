@@ -18,22 +18,22 @@ Email: bingye@umich.edu
 
 
 import wx
-import wx.lib.agw.hyperlink as hl
+import wx.lib.agw.hyperlink
 import json
 from urllib import request
 from pathlib import Path
-from .gui_categorizers import (
+from .categorizers import (
     WindowLv2_GenerateExamples,
     WindowLv2_TrainCategorizers,
     WindowLv2_TestCategorizers,
 )
-from .gui_detectors import (
+from .detectors import (
     WindowLv2_GenerateImages,
     WindowLv2_TrainDetectors,
     WindowLv2_TestDetectors,
 )
-from .gui_preprocessors import WindowLv2_ProcessVideos, WindowLv2_SortBehaviors
-from .gui_analyzers import WindowLv2_AnalyzeBehaviors, WindowLv2_MineResults
+from .preprocessors import WindowLv2_ProcessVideos, WindowLv2_SortBehaviors
+from .analyzers import WindowLv2_AnalyzeBehaviors, WindowLv2_MineResults
 
 
 current_version = 2.2
