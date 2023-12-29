@@ -1,5 +1,6 @@
 # LabGym: quantifying user-defined behaviors
 
+![PyPI - Version](https://img.shields.io/pypi/v/LabGym)
 [![Documentation Status](https://readthedocs.org/projects/labgym/badge/?version=latest)](https://labgym.readthedocs.io/en/latest/?badge=latest)
 
 <!-- start elevator-pitch -->
