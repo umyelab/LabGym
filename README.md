@@ -16,7 +16,7 @@ A tutorial video for a high-level understanding of what LabGym can do, how it wo
 [![Watch the video](https://img.youtube.com/vi/YoYhHMPbf_o/hqdefault.jpg)](https://youtu.be/YoYhHMPbf_o)
 
 
-Cite LabGym: https://www.cell.com/cell-reports-methods/fulltext/S2667-2375(23)00026-7.
+Cite LabGym: <https://www.cell.com/cell-reports-methods/fulltext/S2667-2375(23)00026-7>.
 
 <!-- end elevator-pitch -->
 
