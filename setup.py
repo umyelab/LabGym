@@ -30,9 +30,20 @@ except Exception:
     long_description = ""
 
 
+def get_version() -> str:
+    """Return version number from __init__.py"""
+    with open("LabGym/__init__.py") as f:
+        for line in f.readlines():
+            if line.startswith("__version__"):
+                delim = '"' if '"' in line else "'"
+                return line.split(delim)[1]
+        else:
+            raise RuntimeError("Unable to find version string.")
+
+
 setup(
     name="LabGym",
-    version="2.2.2",
+    version=get_version(),
     author="Yujia Hu, Kelly Goss, Isabelle Baker",
     author_email="henryhu@umich.edu",
     description="Quantify user-defined behaviors",
@@ -76,5 +87,6 @@ setup(
         "scikit_posthocs",
         "torch",
         "torchvision",
+        "packaging",
     ],
 )

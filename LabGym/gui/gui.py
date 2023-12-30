@@ -17,8 +17,6 @@ Email: bingye@umich.edu
 """
 
 
-from pathlib import Path
-
 import wx
 import wx.lib.agw.hyperlink
 
@@ -34,6 +32,7 @@ from .detectors import (
     WindowLv2_TestDetectors,
 )
 from .preprocessors import WindowLv2_ProcessVideos, WindowLv2_SortBehaviors
+from .. import __version__
 
 
 class InitialWindow(wx.Frame):
@@ -317,11 +316,9 @@ class WindowLv1_AnalysisModule(wx.Frame):
 
 
 def gui():
-    the_absolute_current_path = str(Path(__file__).resolve().parent)
-
     app = wx.App()
 
-    InitialWindow("LabGym version " + str(current_version))
+    InitialWindow("LabGym " + __version__)
 
     print("The user interface initialized!")
 
