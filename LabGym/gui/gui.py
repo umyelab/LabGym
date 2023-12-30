@@ -17,13 +17,12 @@ Email: bingye@umich.edu
 """
 
 
-import json
 from pathlib import Path
-from urllib import request
 
 import wx
 import wx.lib.agw.hyperlink
 
+from .analyzers import WindowLv2_AnalyzeBehaviors, WindowLv2_MineResults
 from .categorizers import (
     WindowLv2_GenerateExamples,
     WindowLv2_TrainCategorizers,
@@ -35,35 +34,6 @@ from .detectors import (
     WindowLv2_TestDetectors,
 )
 from .preprocessors import WindowLv2_ProcessVideos, WindowLv2_SortBehaviors
-from .analyzers import WindowLv2_AnalyzeBehaviors, WindowLv2_MineResults
-
-
-current_version = 2.2
-current_version_check = 22.2
-
-try:
-    latest_version = list(
-        json.loads(request.urlopen("https://pypi.python.org/pypi/LabGym/json").read())[
-            "releases"
-        ].keys()
-    )[-1]
-    latest_version_str = list(latest_version)
-    latest_version_str.remove(".")
-    latest_version_check = latest_version_str[0]
-    for i in latest_version_str[1:]:
-        latest_version_check += i
-    latest_version_check = float(latest_version_check)
-    if latest_version_check > current_version_check:
-        print(
-            "A newer version "
-            + "("
-            + str(latest_version)
-            + ")"
-            + ' of LabGym is available. You may upgrade it by "python3 -m pip install --upgrade LabGym".\nFor the details of new changes, check: "https://github.com/umyelab/LabGym".'
-        )
-
-except:
-    pass
 
 
 class InitialWindow(wx.Frame):
