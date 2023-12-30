@@ -31,35 +31,38 @@ from .detectors import (
     WindowLv2_TrainDetectors,
     WindowLv2_TestDetectors,
 )
-from .preprocessors import WindowLv2_ProcessVideos, WindowLv2_SortBehaviors
+from .preprocessing import PreprocessingModule, WindowLv2_SortBehaviors
 from .. import __version__
 
 
-class InitialWindow(wx.Frame):
-    def __init__(self, title):
-        super(InitialWindow, self).__init__(parent=None, title=title, size=(750, 440))
-        self.dispaly_window()
+class MainWindow(wx.Frame):
+    """The main LabGym window."""
 
-    def dispaly_window(self):
+    def __init__(self, title):
+        super().__init__(parent=None, title=title, size=(750, 440))
         panel = wx.Panel(self)
         boxsizer = wx.BoxSizer(wx.VERTICAL)
 
-        self.text_welcome = wx.StaticText(
+        # Welcome text
+        self.welcome_text = wx.StaticText(
             panel,
             label="Welcome to LabGym!",
             style=wx.ALIGN_CENTER | wx.ST_ELLIPSIZE_END,
         )
         boxsizer.Add(0, 60, 0)
-        boxsizer.Add(self.text_welcome, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 5)
+        boxsizer.Add(self.welcome_text, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 5)
         boxsizer.Add(0, 60, 0)
-        self.text_developers = wx.StaticText(
+
+        # Developers text
+        self.developers_text = wx.StaticText(
             panel,
             label="Developed by Yujia Hu, Kelly Goss, Isabelle Baker\n\nBing Ye Lab, Life Sciences Institute, University of Michigan",
             style=wx.ALIGN_CENTER | wx.ST_ELLIPSIZE_END,
         )
-        boxsizer.Add(self.text_developers, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 5)
+        boxsizer.Add(self.developers_text, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 5)
         boxsizer.Add(0, 60, 0)
 
+        # Links to GitHub and extended user guide
         links = wx.BoxSizer(wx.HORIZONTAL)
         homepage = wx.lib.agw.hyperlink.HyperLinkCtrl(
             panel, 0, "Home Page", URL="https://github.com/umyelab/LabGym"
@@ -75,31 +78,32 @@ class InitialWindow(wx.Frame):
         boxsizer.Add(links, 0, wx.ALIGN_CENTER, 50)
         boxsizer.Add(0, 50, 0)
 
-        module_modules = wx.BoxSizer(wx.HORIZONTAL)
-        button_preprocess = wx.Button(
+        # Main modules
+        modules = wx.BoxSizer(wx.HORIZONTAL)
+        preprocessing_button = wx.Button(
             panel, label="Preprocessing Module", size=(200, 40)
         )
-        button_preprocess.Bind(wx.EVT_BUTTON, self.window_preprocess)
+        preprocessing_button.Bind(wx.EVT_BUTTON, self.open_preprocessing_module)
         wx.Button.SetToolTip(
-            button_preprocess,
+            preprocessing_button,
             "Enhance video contrast / crop frames to exclude unnecessary region / trim videos to only keep necessary time windows.",
         )
-        button_train = wx.Button(panel, label="Training Module", size=(200, 40))
-        button_train.Bind(wx.EVT_BUTTON, self.window_train)
+        training_button = wx.Button(panel, label="Training Module", size=(200, 40))
+        training_button.Bind(wx.EVT_BUTTON, self.open_training_module)
         wx.Button.SetToolTip(
-            button_train,
+            training_button,
             "Teach LabGym to recognize the animals / objects of your interest and identify their behaviors that are defined by you.",
         )
-        button_analyze = wx.Button(panel, label="Analysis Module", size=(200, 40))
-        button_analyze.Bind(wx.EVT_BUTTON, self.window_analyze)
+        analysis_button = wx.Button(panel, label="Analysis Module", size=(200, 40))
+        analysis_button.Bind(wx.EVT_BUTTON, self.open_analysis_module)
         wx.Button.SetToolTip(
-            button_analyze,
+            analysis_button,
             "Use LabGym to track the animals / objects of your interest, identify and quantify their behaviors, and display the statistically significant findings.",
         )
-        module_modules.Add(button_preprocess, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        module_modules.Add(button_train, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        module_modules.Add(button_analyze, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(module_modules, 0, wx.ALIGN_CENTER, 50)
+        modules.Add(preprocessing_button, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
+        modules.Add(training_button, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
+        modules.Add(analysis_button, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
+        boxsizer.Add(modules, 0, wx.ALIGN_CENTER, 50)
         boxsizer.Add(0, 50, 0)
 
         panel.SetSizer(boxsizer)
@@ -107,46 +111,14 @@ class InitialWindow(wx.Frame):
         self.Centre()
         self.Show(True)
 
-    def window_preprocess(self, event):
-        WindowLv1_ProcessModule("Preprocessing Module")
+    def open_preprocessing_module(self, event):
+        PreprocessingModule()
 
-    def window_train(self, event):
+    def open_training_module(self, event):
         WindowLv1_TrainingModule("Training Module")
 
-    def window_analyze(self, event):
+    def open_analysis_module(self, event):
         WindowLv1_AnalysisModule("Analysis Module")
-
-
-class WindowLv1_ProcessModule(wx.Frame):
-    def __init__(self, title):
-        super(WindowLv1_ProcessModule, self).__init__(
-            parent=None, title=title, size=(500, 150)
-        )
-        self.dispaly_window()
-
-    def dispaly_window(self):
-        panel = wx.Panel(self)
-        boxsizer = wx.BoxSizer(wx.VERTICAL)
-        boxsizer.Add(0, 40, 0)
-
-        button_processvideos = wx.Button(
-            panel, label="Preprocess Videos", size=(300, 40)
-        )
-        button_processvideos.Bind(wx.EVT_BUTTON, self.process_videos)
-        wx.Button.SetToolTip(
-            button_processvideos,
-            "Enhance video contrast / crop frames to exclude unnecessary region / trim videos to only keep necessary time windows.",
-        )
-        boxsizer.Add(button_processvideos, 0, wx.ALIGN_CENTER, 10)
-        boxsizer.Add(0, 30, 0)
-
-        panel.SetSizer(boxsizer)
-
-        self.Centre()
-        self.Show(True)
-
-    def process_videos(self, event):
-        WindowLv2_ProcessVideos("Preprocess Videos")
 
 
 class WindowLv1_TrainingModule(wx.Frame):
@@ -318,7 +290,7 @@ class WindowLv1_AnalysisModule(wx.Frame):
 def gui():
     app = wx.App()
 
-    InitialWindow("LabGym " + __version__)
+    MainWindow("LabGym " + __version__)
 
     print("The user interface initialized!")
 

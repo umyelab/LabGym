@@ -27,10 +27,10 @@ import numpy as np
 from ..tools import preprocess_video
 
 
-class WindowLv2_ProcessVideos(wx.Frame):
-    def __init__(self, title):
-        super(WindowLv2_ProcessVideos, self).__init__(
-            parent=None, title=title, size=(1000, 370)
+class PreprocessingModule(wx.Frame):
+    def __init__(self):
+        super(PreprocessingModule, self).__init__(
+            parent=None, title="Preprocess Videos", size=(1000, 370)
         )
         self.path_to_videos = None
         self.framewidth = None
