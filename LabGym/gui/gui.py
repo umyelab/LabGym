@@ -112,12 +112,15 @@ class MainWindow(wx.Frame):
         self.Show(True)
 
     def open_preprocessing_module(self, event):
+        """Opens the preprocessing module."""
         PreprocessingModule()
 
     def open_training_module(self, event):
+        """Opens the training module."""
         WindowLv1_TrainingModule("Training Module")
 
     def open_analysis_module(self, event):
+        """Opens the analysis module."""
         WindowLv1_AnalysisModule("Analysis Module")
 
 
