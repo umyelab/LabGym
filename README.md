@@ -1,4 +1,8 @@
 # LabGym: quantifying user-defined behaviors
+
+![PyPI - Version](https://img.shields.io/pypi/v/LabGym)
+[![Documentation Status](https://readthedocs.org/projects/labgym/badge/?version=latest)](https://labgym.readthedocs.io/en/latest/?badge=latest)
+
 <!-- start elevator-pitch -->
 LabGym can:
 
@@ -12,9 +16,15 @@ A tutorial video for a high-level understanding of what LabGym can do, how it wo
 [![Watch the video](https://img.youtube.com/vi/YoYhHMPbf_o/hqdefault.jpg)](https://youtu.be/YoYhHMPbf_o)
 
 
-Cite LabGym: https://www.cell.com/cell-reports-methods/fulltext/S2667-2375(23)00026-7.
+Cite LabGym: <https://www.cell.com/cell-reports-methods/fulltext/S2667-2375(23)00026-7>.
 
 <!-- end elevator-pitch -->
+
+For installation instructions and documentation, please see [https://labgym.readthedocs.io](https://labgym.readthedocs.io).
+
+> [!NOTE]
+> We are currently in the process of migrating documentation to the above website. If you can't find information you're looking for there,
+> refer to the [extended user guide](./LabGym%20user%20guide_v2.2.pdf) for a more detailed reference on how to use LabGym.
 
 <p>&nbsp;</p>
 
@@ -154,35 +164,16 @@ LabGym employs two distinct methods for detecting animals or objects in differen
 
 # Installation
 
-1. Install Python3 (version >= 3.9.7)
+Please refer to the installation instructions at [https://labgym.readthedocs.io/en/latest/installation.html](https://labgym.readthedocs.io/en/latest/installation.html).
 
-    Do not install the latest version of Python3 since it might not be compatible yet.
+To launch LabGym, open a Python interpreter as per the instructons above, then issue the following commands:
 
-2. In your terminal / cmd prompt, type:
+```pycon
+>>> from LabGym import gui
+>>> gui.gui()
+```
 
-        python3 -m pip install LabGym
-
-3. If want to use **Detectors**, after LabGym is installed, install Detectron2 separately (https://detectron2.readthedocs.io/en/latest/tutorials/install.html):
-
-        python3 -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
-
-<p>&nbsp;</p>
-
-# Initiate user interface for each use
-
-First, you need to activate python3 in your terminal / CMD by typing:
-
-      python3
-
-After python3 is activated, type:
-
-      from LabGym import gui
-
-And then type:
-
-      gui.gui()
-
-Now the user interface is inititated and ready to use
+Now, the user interface is inititated and ready to use.
 
 <p>&nbsp;</p>
 
