@@ -211,11 +211,14 @@ class PreprocessingModule(wx.Frame):
         self.text_inputvideos.SetLabel(label_text)
 
     def select_outpath(self, event):
-        dialog = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
+        """Opens folder selection dialog for storing processed video."""
+        dialog = wx.DirDialog(
+            parent=self, message="Select a directory", style=wx.DD_DEFAULT_STYLE
+        )
         if dialog.ShowModal() == wx.ID_OK:
             self.result_path = dialog.GetPath()
             self.text_outputfolder.SetLabel(
-                "Processed videos will be in: " + self.result_path + "."
+                f"Processed videos will be in: {self.result_path}."
             )
         dialog.Destroy()
 
