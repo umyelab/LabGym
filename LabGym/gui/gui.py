@@ -21,17 +21,8 @@ import wx
 import wx.lib.agw.hyperlink
 
 from .analyzers import WindowLv2_AnalyzeBehaviors, WindowLv2_MineResults
-from .categorizers import (
-    WindowLv2_GenerateExamples,
-    WindowLv2_TrainCategorizers,
-    WindowLv2_TestCategorizers,
-)
-from .detectors import (
-    WindowLv2_GenerateImages,
-    WindowLv2_TrainDetectors,
-    WindowLv2_TestDetectors,
-)
-from .preprocessing import PreprocessingModule, WindowLv2_SortBehaviors
+from .preprocessing import PreprocessingModule
+from .training import TrainingModule
 from .. import __version__
 
 
@@ -117,133 +108,11 @@ class MainWindow(wx.Frame):
 
     def open_training_module(self, event):
         """Opens the training module."""
-        WindowLv1_TrainingModule("Training Module")
+        TrainingModule()
 
     def open_analysis_module(self, event):
         """Opens the analysis module."""
         WindowLv1_AnalysisModule("Analysis Module")
-
-
-class WindowLv1_TrainingModule(wx.Frame):
-    def __init__(self, title):
-        super(WindowLv1_TrainingModule, self).__init__(
-            parent=None, title=title, size=(500, 560)
-        )
-        self.dispaly_window()
-
-    def dispaly_window(self):
-        panel = wx.Panel(self)
-        boxsizer = wx.BoxSizer(wx.VERTICAL)
-        boxsizer.Add(0, 60, 0)
-
-        button_generateimages = wx.Button(
-            panel, label="Generate Image Examples", size=(300, 40)
-        )
-        button_generateimages.Bind(wx.EVT_BUTTON, self.generate_images)
-        wx.Button.SetToolTip(
-            button_generateimages,
-            "Extract frames from videos for annotating animals / objects in them so that they can be used to train a Detector to detect animals / objects of your interest. See Extended Guide for how to select images to annotate.",
-        )
-        boxsizer.Add(button_generateimages, 0, wx.ALIGN_CENTER, 10)
-        boxsizer.Add(0, 5, 0)
-
-        link_annotate = wx.lib.agw.hyperlink.HyperLinkCtrl(
-            panel, 0, "\nAnnotate images with Roboflow\n", URL="https://roboflow.com"
-        )
-        boxsizer.Add(link_annotate, 0, wx.ALIGN_CENTER, 10)
-        boxsizer.Add(0, 5, 0)
-
-        button_traindetectors = wx.Button(
-            panel, label="Train Detectors", size=(300, 40)
-        )
-        button_traindetectors.Bind(wx.EVT_BUTTON, self.train_detectors)
-        wx.Button.SetToolTip(
-            button_traindetectors,
-            "There are two detection methods in LabGym, the Detector-based method is more versatile (useful in any recording conditions and complex interactive behaviors) but slower than the other background subtraction-based method (requires static background and stable illumination in videos).",
-        )
-        boxsizer.Add(button_traindetectors, 0, wx.ALIGN_CENTER, 10)
-        boxsizer.Add(0, 5, 0)
-
-        button_testdetectors = wx.Button(panel, label="Test Detectors", size=(300, 40))
-        button_testdetectors.Bind(wx.EVT_BUTTON, self.test_detectors)
-        wx.Button.SetToolTip(
-            button_testdetectors,
-            "Test trained Detectors on the annotated ground-truth image dataset (similar to the image dataset used for training a Detector).",
-        )
-        boxsizer.Add(button_testdetectors, 0, wx.ALIGN_CENTER, 10)
-        boxsizer.Add(0, 50, 0)
-
-        button_generatebehaviorexamples = wx.Button(
-            panel, label="Generate Behavior Examples", size=(300, 40)
-        )
-        button_generatebehaviorexamples.Bind(
-            wx.EVT_BUTTON, self.generate_behaviorexamples
-        )
-        wx.Button.SetToolTip(
-            button_generatebehaviorexamples,
-            "Generate behavior examples for sorting them so that they can be used to teach a Categorizer to recognize behaviors defined by you.",
-        )
-        boxsizer.Add(button_generatebehaviorexamples, 0, wx.ALIGN_CENTER, 10)
-        boxsizer.Add(0, 5, 0)
-
-        button_sortbehaviorexamples = wx.Button(
-            panel, label="Sort Behavior Examples", size=(300, 40)
-        )
-        button_sortbehaviorexamples.Bind(wx.EVT_BUTTON, self.sort_behaviorexamples)
-        wx.Button.SetToolTip(
-            button_sortbehaviorexamples,
-            "Set shortcut keys for behavior categories to help sorting the behavior examples in an easier way. See Extended Guide for how to select and sort the behavior examples.",
-        )
-        boxsizer.Add(button_sortbehaviorexamples, 0, wx.ALIGN_CENTER, 10)
-        boxsizer.Add(0, 5, 0)
-
-        button_traincategorizers = wx.Button(
-            panel, label="Train Categorizers", size=(300, 40)
-        )
-        button_traincategorizers.Bind(wx.EVT_BUTTON, self.train_categorizers)
-        wx.Button.SetToolTip(
-            button_traincategorizers,
-            "Customize a Categorizer and use the sorted behavior examples to train it so that it can recognize the behaviors of your interest during analysis.",
-        )
-        boxsizer.Add(button_traincategorizers, 0, wx.ALIGN_CENTER, 10)
-        boxsizer.Add(0, 5, 0)
-
-        button_testcategorizers = wx.Button(
-            panel, label="Test Categorizers", size=(300, 40)
-        )
-        button_testcategorizers.Bind(wx.EVT_BUTTON, self.test_categorizers)
-        wx.Button.SetToolTip(
-            button_testcategorizers,
-            "Test trained Categorizers on the sorted ground-truth behavior examples (similar to the behavior examples used for training a Categorizer).",
-        )
-        boxsizer.Add(button_testcategorizers, 0, wx.ALIGN_CENTER, 10)
-        boxsizer.Add(0, 50, 0)
-
-        panel.SetSizer(boxsizer)
-
-        self.Centre()
-        self.Show(True)
-
-    def generate_images(self, event):
-        WindowLv2_GenerateImages("Generate Image Examples")
-
-    def train_detectors(self, event):
-        WindowLv2_TrainDetectors("Train Detectors")
-
-    def test_detectors(self, event):
-        WindowLv2_TestDetectors("Test Detectors")
-
-    def generate_behaviorexamples(self, event):
-        WindowLv2_GenerateExamples("Generate Behavior Examples")
-
-    def sort_behaviorexamples(self, event):
-        WindowLv2_SortBehaviors("Sort Behavior Examples")
-
-    def train_categorizers(self, event):
-        WindowLv2_TrainCategorizers("Train Categorizers")
-
-    def test_categorizers(self, event):
-        WindowLv2_TestCategorizers("Test Categorizers")
 
 
 class WindowLv1_AnalysisModule(wx.Frame):

@@ -24,17 +24,17 @@ from pathlib import Path
 
 import wx
 
-from ..analyzebehaviors import AnalyzeAnimal
-from ..analyzebehaviorsdetector import AnalyzeAnimalDetector
-from ..categorizers import Categorizers
+from ...analyzebehaviors import AnalyzeAnimal
+from ...analyzebehaviorsdetector import AnalyzeAnimalDetector
+from ...categorizers import Categorizers
 
 
-the_absolute_current_path = str(Path(__file__).resolve().parent)
+the_absolute_current_path = str(Path(__file__).resolve().parent.parent)
 
 
-class WindowLv2_GenerateExamples(wx.Frame):
+class GenerateExamples(wx.Frame):
     def __init__(self, title):
-        super(WindowLv2_GenerateExamples, self).__init__(
+        super(GenerateExamples, self).__init__(
             parent=None, title=title, size=(1000, 510)
         )
         self.behavior_mode = 0  # 0: non-interactive behavior; 1: interact basic; 2: interact advanced; 3: static images
@@ -1185,9 +1185,9 @@ class WindowLv2_GenerateExamples(wx.Frame):
                                 )
 
 
-class WindowLv2_TrainCategorizers(wx.Frame):
+class TrainCategorizers(wx.Frame):
     def __init__(self, title):
-        super(WindowLv2_TrainCategorizers, self).__init__(
+        super(TrainCategorizers, self).__init__(
             parent=None, title=title, size=(1000, 520)
         )
         self.file_path = None  # the file path storing orginal examples
@@ -2006,9 +2006,9 @@ class WindowLv2_TrainCategorizers(wx.Frame):
                     )
 
 
-class WindowLv2_TestCategorizers(wx.Frame):
+class TestCategorizers(wx.Frame):
     def __init__(self, title):
-        super(WindowLv2_TestCategorizers, self).__init__(
+        super(TestCategorizers, self).__init__(
             parent=None, title=title, size=(1000, 240)
         )
         self.file_path = None  # the file path storing ground-truth examples

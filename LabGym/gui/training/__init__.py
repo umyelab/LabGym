@@ -16,4 +16,4 @@ USA
 Email: bingye@umich.edu
 """
 
-from .gui import gui
+from .training_module import TrainingModule

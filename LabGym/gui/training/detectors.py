@@ -26,7 +26,7 @@ import cv2
 import torch
 import wx
 
-from ..tools import extract_frames
+from ...tools import extract_frames
 
 try:
     from detectron2 import model_zoo
@@ -46,7 +46,7 @@ except:
     print("https://detectron2.readthedocs.io/en/latest/tutorials/install.html")
 
 
-the_absolute_current_path = str(Path(__file__).resolve().parent)
+detector_path = str(Path(__file__).resolve().parent.parent / "detectors")
 
 
 def traindetector(
@@ -190,11 +190,9 @@ def testdetector(
     print("Detector testing completed!")
 
 
-class WindowLv2_GenerateImages(wx.Frame):
+class GenerateImages(wx.Frame):
     def __init__(self, title):
-        super(WindowLv2_GenerateImages, self).__init__(
-            parent=None, title=title, size=(1000, 330)
-        )
+        super(GenerateImages, self).__init__(parent=None, title=title, size=(1000, 330))
         self.path_to_videos = None
         self.result_path = None
         self.framewidth = None
@@ -512,16 +510,14 @@ class WindowLv2_GenerateImages(wx.Frame):
                 print("Image example generation completed!")
 
 
-class WindowLv2_TrainDetectors(wx.Frame):
+class TrainDetectors(wx.Frame):
     def __init__(self, title):
-        super(WindowLv2_TrainDetectors, self).__init__(
-            parent=None, title=title, size=(1000, 280)
-        )
+        super(TrainDetectors, self).__init__(parent=None, title=title, size=(1000, 280))
         self.path_to_trainingimages = None
         self.path_to_annotation = None
         self.inference_size = 320
         self.iteration_num = 200
-        self.detector_path = os.path.join(the_absolute_current_path, "detectors")
+        self.detector_path = detector_path
         self.path_to_detector = None
 
         self.dispaly_window()
@@ -742,14 +738,12 @@ class WindowLv2_TrainDetectors(wx.Frame):
                 )
 
 
-class WindowLv2_TestDetectors(wx.Frame):
+class TestDetectors(wx.Frame):
     def __init__(self, title):
-        super(WindowLv2_TestDetectors, self).__init__(
-            parent=None, title=title, size=(1000, 280)
-        )
+        super(TestDetectors, self).__init__(parent=None, title=title, size=(1000, 280))
         self.path_to_testingimages = None
         self.path_to_annotation = None
-        self.detector_path = os.path.join(the_absolute_current_path, "detectors")
+        self.detector_path = detector_path
         self.path_to_detector = None
         self.output_path = None
 
