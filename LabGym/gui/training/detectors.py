@@ -190,9 +190,9 @@ def testdetector(
     print("Detector testing completed!")
 
 
-class GenerateImages(wx.Frame):
-    def __init__(self, title):
-        super(GenerateImages, self).__init__(parent=None, title=title, size=(1000, 330))
+class GenerateImageExamples(wx.Frame):
+    def __init__(self):
+        super().__init__(parent=None, title="Generate Image Examples", size=(1000, 330))
         self.path_to_videos = None
         self.result_path = None
         self.framewidth = None
@@ -200,9 +200,6 @@ class GenerateImages(wx.Frame):
         self.duration = 0
         self.skip_redundant = 1000
 
-        self.dispaly_window()
-
-    def dispaly_window(self):
         panel = wx.Panel(self)
         boxsizer = wx.BoxSizer(wx.VERTICAL)
 
@@ -511,8 +508,8 @@ class GenerateImages(wx.Frame):
 
 
 class TrainDetectors(wx.Frame):
-    def __init__(self, title):
-        super(TrainDetectors, self).__init__(parent=None, title=title, size=(1000, 280))
+    def __init__(self):
+        super().__init__(parent=None, title="Train Detectors", size=(1000, 280))
         self.path_to_trainingimages = None
         self.path_to_annotation = None
         self.inference_size = 320
@@ -739,17 +736,14 @@ class TrainDetectors(wx.Frame):
 
 
 class TestDetectors(wx.Frame):
-    def __init__(self, title):
-        super(TestDetectors, self).__init__(parent=None, title=title, size=(1000, 280))
+    def __init__(self):
+        super().__init__(parent=None, title="Test Detectors", size=(1000, 280))
         self.path_to_testingimages = None
         self.path_to_annotation = None
         self.detector_path = detector_path
         self.path_to_detector = None
         self.output_path = None
 
-        self.dispaly_window()
-
-    def dispaly_window(self):
         panel = wx.Panel(self)
         boxsizer = wx.BoxSizer(wx.VERTICAL)
 

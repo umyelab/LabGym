@@ -20,16 +20,15 @@ import wx
 import wx.lib.agw.hyperlink
 
 from .categorizers import (
-    GenerateExamples,
     TrainCategorizers,
     TestCategorizers,
 )
 from .detectors import (
-    GenerateImages,
+    GenerateImageExamples,
     TrainDetectors,
     TestDetectors,
 )
-from .sort_behaviors import SortBehaviors
+from .behavior_examples import GenerateBehaviorExamples, SortBehaviorExamples
 
 
 class TrainingModule(wx.Frame):
@@ -138,22 +137,22 @@ class TrainingModule(wx.Frame):
         self.Show(True)
 
     def generate_images(self, event):
-        GenerateImages("Generate Image Examples")
+        GenerateImageExamples()
 
     def train_detectors(self, event):
-        TrainDetectors("Train Detectors")
+        TrainDetectors()
 
     def test_detectors(self, event):
-        TestDetectors("Test Detectors")
+        TestDetectors()
 
     def generate_behavior_examples(self, event):
-        GenerateExamples("Generate Behavior Examples")
+        GenerateBehaviorExamples()
 
     def sort_behavior_examples(self, event):
-        SortBehaviors("Sort Behavior Examples")
+        SortBehaviorExamples()
 
     def train_categorizers(self, event):
-        TrainCategorizers("Train Categorizers")
+        TrainCategorizers()
 
     def test_categorizers(self, event):
-        TestCategorizers("Test Categorizers")
+        TestCategorizers()
