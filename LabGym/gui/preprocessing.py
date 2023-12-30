@@ -18,7 +18,6 @@ Email: bingye@umich.edu
 
 
 import os
-import shutil
 import wx
 
 import cv2

@@ -24,11 +24,9 @@ import wx
 from ...minedata import data_mining
 
 
-class WindowLv2_MineResults(wx.Frame):
-    def __init__(self, title):
-        super(WindowLv2_MineResults, self).__init__(
-            parent=None, title=title, size=(1000, 240)
-        )
+class MineResults(wx.Frame):
+    def __init__(self):
+        super().__init__(parent=None, title="Mine Results", size=(1000, 240))
         self.file_path = None
         self.result_path = None
         self.dataset = None

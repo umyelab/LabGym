@@ -17,9 +17,11 @@ Email: bingye@umich.edu
 """
 
 import json
+import os
 from pathlib import Path
 
 import matplotlib as mpl
+import pandas as pd
 import torch
 import wx
 
@@ -53,11 +55,9 @@ class ColorPicker(wx.Dialog):
         self.SetSizer(boxsizer)
 
 
-class WindowLv2_AnalyzeBehaviors(wx.Frame):
-    def __init__(self, title):
-        super(WindowLv2_AnalyzeBehaviors, self).__init__(
-            parent=None, title=title, size=(1000, 510)
-        )
+class AnalyzeBehaviors(wx.Frame):
+    def __init__(self):
+        super().__init__(parent=None, title="Analyze Behaviors", size=(1000, 510))
         self.behavior_mode = 0
         self.use_detector = False
         self.detector_path = None

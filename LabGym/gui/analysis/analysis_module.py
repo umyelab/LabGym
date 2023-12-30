@@ -18,8 +18,8 @@ Email: bingye@umich.edu
 
 import wx
 
-from .analyze_behaviors import WindowLv2_AnalyzeBehaviors
-from .mine_results import WindowLv2_MineResults
+from .analyze_behaviors import AnalyzeBehaviors
+from .mine_results import MineResults
 
 
 class AnalysisModule(wx.Frame):
@@ -55,7 +55,7 @@ class AnalysisModule(wx.Frame):
         self.Show(True)
 
     def analyze_behaviors(self, event):
-        WindowLv2_AnalyzeBehaviors("Analyze Behaviors")
+        AnalyzeBehaviors()
 
     def mine_results(self, event):
-        WindowLv2_MineResults("Mine Results")
+        MineResults()
