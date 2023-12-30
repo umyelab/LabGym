@@ -24,7 +24,7 @@ import wx
 import cv2
 import numpy as np
 
-from ..tools import preprocess_video
+from ..tools import preprocess_video, wx_video_wildcard
 
 
 class PreprocessingModule(wx.Frame):
@@ -148,72 +148,67 @@ class PreprocessingModule(wx.Frame):
         self.boxsizer.Add(module, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
 
     def get_module_text(self, label: str) -> wx.StaticText:
-        """Return a wx.StaticText instance with the given label."""
+        """Returns a wx.StaticText instance with the given label."""
         return wx.StaticText(
             self.panel, label=label, style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
         )
 
     def select_videos(self, event):
-        wildcard = "Video files(*.avi;*.mpg;*.mpeg;*.wmv;*.mp4;*.mkv;*.m4v;*.mov)|*.avi;*.mpg;*.mpeg;*.wmv;*.mp4;*.mkv;*.m4v;*.mov"
-        dialog = wx.FileDialog(
-            self, "Select video(s)", "", "", wildcard, style=wx.FD_MULTIPLE
+        """Opens file selection dialog to select videos to preprocess."""
+
+        # Select videos
+        video_selection_dialog = wx.FileDialog(
+            parent=self,
+            message="Select video(s)",
+            wildcard=wx_video_wildcard(),
+            style=wx.FD_MULTIPLE,
         )
 
-        if dialog.ShowModal() == wx.ID_OK:
-            self.path_to_videos = dialog.GetPaths()
-            self.path_to_videos.sort()
-            path = os.path.dirname(self.path_to_videos[0])
-            dialog1 = wx.MessageDialog(
-                self,
-                "Proportional resize the video frames?",
-                "(Optional) resize the frames?",
-                wx.YES_NO | wx.ICON_QUESTION,
-            )
-            if dialog1.ShowModal() == wx.ID_YES:
-                dialog2 = wx.NumberEntryDialog(
-                    self,
-                    "Enter the desired frame width",
-                    "The unit is pixel:",
-                    "Desired frame width",
-                    480,
-                    1,
-                    10000,
-                )
-                if dialog2.ShowModal() == wx.ID_OK:
-                    self.framewidth = int(dialog2.GetValue())
-                    if self.framewidth < 10:
-                        self.framewidth = 10
-                    self.text_inputvideos.SetLabel(
-                        "Selected "
-                        + str(len(self.path_to_videos))
-                        + " video(s) in: "
-                        + path
-                        + " (proportionally resize framewidth to "
-                        + str(self.framewidth)
-                        + ")."
-                    )
-                else:
-                    self.framewidth = None
-                    self.text_inputvideos.SetLabel(
-                        "Selected "
-                        + str(len(self.path_to_videos))
-                        + " video(s) in: "
-                        + path
-                        + " (original framesize)."
-                    )
-                dialog2.Destroy()
-            else:
-                self.framewidth = None
-                self.text_inputvideos.SetLabel(
-                    "Selected "
-                    + str(len(self.path_to_videos))
-                    + " video(s) in: "
-                    + path
-                    + " (original framesize)."
-                )
-            dialog1.Destroy()
+        if video_selection_dialog.ShowModal() != wx.ID_OK:
+            video_selection_dialog.Destroy()
+            return
 
-        dialog.Destroy()
+        self.path_to_videos = video_selection_dialog.GetPaths()
+        video_selection_dialog.Destroy()
+        self.path_to_videos.sort()
+        video_folder = os.path.dirname(self.path_to_videos[0])
+        label_text = f"Selected {len(self.path_to_videos)} video(s) in: {video_folder}"
+
+        # Ask whether or not to resize the videos
+        resize_dialog = wx.MessageDialog(
+            parent=self,
+            message="Proportional resize the video frames?",
+            caption="(Optional) resize the frames?",
+            style=wx.YES_NO | wx.ICON_QUESTION,
+        )
+
+        if resize_dialog.ShowModal() != wx.ID_YES:
+            self.framewidth = None
+            self.text_inputvideos.SetLabel(label_text + " (original framesize).")
+            resize_dialog.Destroy()
+            return
+
+        # Ask for the new frame width
+        frame_width_dialog = wx.NumberEntryDialog(
+            parent=self,
+            message="Enter the desired frame width",
+            prompt="The unit is pixel:",
+            caption="Desired frame width",
+            value=480,
+            min=10,
+            max=10000,
+        )
+
+        if frame_width_dialog.ShowModal() == wx.ID_OK:
+            self.framewidth = int(frame_width_dialog.GetValue())
+            label_text += f" (proportionally resize framewidth to {self.framewidth})."
+        else:
+            self.framewidth = None
+            label_text += " (original framesize)."
+
+        frame_width_dialog.Destroy()
+        resize_dialog.Destroy()
+        self.text_inputvideos.SetLabel(label_text)
 
     def select_outpath(self, event):
         dialog = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)

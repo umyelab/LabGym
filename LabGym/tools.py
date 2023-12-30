@@ -1290,3 +1290,10 @@ def get_dropped_frames(n: int, reduction_factor: float) -> list[int]:
     num_dropped_frames = int(n * (1 - 1 / reduction_factor))
     block_size = n / (n * (1 - 1 / reduction_factor) - 1)
     return [round(block_size * i) for i in range(num_dropped_frames)]
+
+
+def wx_video_wildcard() -> str:
+    """Return the wx wildcard for all supported video formats"""
+    supported_formats = ["avi", "mpg", "mpeg", "wmv", "mp4", "mkv", "m4v", "mov"]
+    wildcard_formats = ";".join(["*." + format for format in supported_formats])
+    return f"Video files({wildcard_formats})|{wildcard_formats}"
