@@ -18,7 +18,8 @@ Email: bingye@umich.edu
 
 
 import os
-from typing import Callable
+from pathlib import Path
+from typing import Callable, Tuple
 import wx
 
 import cv2
@@ -32,7 +33,7 @@ class PreprocessingModule(wx.Frame):
 
     def __init__(self):
         super().__init__(parent=None, title="Preprocess Videos", size=(1000, 370))
-        self.path_to_videos = None
+        self.video_paths = None
         self.framewidth = None
         self.result_path = None
         self.trim_video = False
@@ -168,11 +169,11 @@ class PreprocessingModule(wx.Frame):
             video_selection_dialog.Destroy()
             return
 
-        self.path_to_videos = video_selection_dialog.GetPaths()
+        self.video_paths = video_selection_dialog.GetPaths()
         video_selection_dialog.Destroy()
-        self.path_to_videos.sort()
-        video_folder = os.path.dirname(self.path_to_videos[0])
-        label_text = f"Selected {len(self.path_to_videos)} video(s) in: {video_folder}"
+        self.video_paths.sort()
+        video_folder = os.path.dirname(self.video_paths[0])
+        label_text = f"Selected {len(self.video_paths)} video(s) in: {video_folder}"
 
         # Ask whether or not to resize the videos
         resize_dialog = wx.MessageDialog(
@@ -223,72 +224,117 @@ class PreprocessingModule(wx.Frame):
         dialog.Destroy()
 
     def input_duration(self, event):
-        dialog = wx.MessageDialog(
+        """Opens dialogs to configure input time windows."""
+
+        # Ask whether or not to trim a video
+        trim_dialog = wx.MessageDialog(
             self,
             "Whether to trim a video?",
             "Trim videos?",
             wx.YES_NO | wx.ICON_QUESTION,
         )
-        if dialog.ShowModal() == wx.ID_YES:
-            self.trim_video = True
-        else:
-            self.trim_video = False
-        dialog.Destroy()
+        self.trim_video = trim_dialog.ShowModal() == wx.ID_YES
+        trim_dialog.Destroy()
 
-        if self.trim_video is True:
-            methods = [
-                'Decode from filenames: "_stt_" and "_edt_"',
-                "Enter time points",
-            ]
-            dialog = wx.SingleChoiceDialog(
-                self,
-                message="Specify the time windows for trimming videos",
-                caption="Time windows for trimming videos",
-                choices=methods,
+        if not self.trim_video:
+            return
+
+        # Ask for method for time windows
+        methods = [
+            'Decode from filenames: "_stt_" and "_edt_"',
+            "Enter time points",
+        ]
+        method_dialog = wx.SingleChoiceDialog(
+            self,
+            message="Specify the time windows for trimming videos",
+            caption="Time windows for trimming videos",
+            choices=methods,
+        )
+
+        if method_dialog.ShowModal() != wx.ID_OK:
+            method_dialog.Destroy()
+            return
+
+        self.decode_t = False
+        method = method_dialog.GetStringSelection()
+        if method == methods[0]:  # Use st<start> and ed<end> tags
+            self.decode_t = True
+            method_dialog.Destroy()
+            return
+
+        # Manual entry for time windows
+        windows_dialog = wx.TextEntryDialog(
+            self,
+            "Format: starttime1-endtime1,starttime2-endtime2,...",
+            "Enter the time windows (in seconds)",
+        )
+
+        if windows_dialog.ShowModal() != wx.ID_OK:
+            self.trim_video = False
+            self.text_duration.SetLabel("Not to trim the videos.")
+            windows_dialog.Destroy()
+            method_dialog.Destroy()
+            return
+
+        try:
+            window_input: str = windows_dialog.GetValue()
+            self.time_windows = self.parse_time_window_str(window_input)
+            self.text_duration.SetLabel(
+                f"The time windows to form the new, trimmed video: {self.time_windows}."
             )
-            if dialog.ShowModal() == wx.ID_OK:
-                method = dialog.GetStringSelection()
-                if method == 'Decode from filenames: "_stt_" and "_edt_"':
-                    self.decode_t = True
-                else:
-                    self.decode_t = False
-                    dialog1 = wx.TextEntryDialog(
-                        self,
-                        "Format: starttime1-endtime1,starttime2-endtime2,...",
-                        "Enter the time windows (in seconds)",
-                    )
-                    if dialog1.ShowModal() == wx.ID_OK:
-                        time_windows = dialog1.GetValue()
-                        self.time_windows = []
-                        try:
-                            for i in time_windows.split(","):
-                                times = i.split("-")
-                                self.time_windows.append([times[0], times[1]])
-                            self.text_duration.SetLabel(
-                                "The time windows to form the new, trimmed video: "
-                                + str(self.time_windows)
-                                + "."
-                            )
-                        except:
-                            self.trim_video = False
-                            self.text_duration.SetLabel("Not to trim the videos.")
-                            wx.MessageBox(
-                                "Please enter the time windows in correct format!",
-                                "Error",
-                                wx.OK | wx.ICON_ERROR,
-                            )
-                    else:
-                        self.trim_video = False
-                        self.text_duration.SetLabel("Not to trim the videos.")
-                    dialog1.Destroy()
-            dialog.Destroy()
+        except ValueError as err:
+            self.trim_video = False
+            self.text_duration.SetLabel("Not to trim the videos.")
+            wx.MessageBox(
+                f"{str(err)} Please enter the time windows in correct format!",
+                "Error",
+                wx.OK | wx.ICON_ERROR,
+            )
+        windows_dialog.Destroy()
+        method_dialog.Destroy()
+
+    def parse_time_window_str(self, window_input: str) -> list[Tuple[float, float]]:
+        """
+        Return the time windows to trim the videos by given user input.
+
+        The user should input the time windows in the format
+            start-end, start-end, start-end...
+        where start and end represent times in seconds such that start < end.
+
+        Args:
+            windows: The user's time window entry.
+
+        Returns:
+            A list of tuples (start, end) where start and end are floats that
+            represent the start and end times in seconds of each time window.
+
+        Raises:
+            ValueError: There was an error parsing the time window string.
+        """
+        windows = []
+        for window in window_input.split(","):
+            w = [i.strip() for i in window.split("-")]
+            if len(w) != 2:
+                raise ValueError(f"'{window}' is an invalid time window.")
+            try:
+                start = float(w[0].strip())
+            except ValueError:
+                raise ValueError(f"'{w[0]}' is an invalid start time.")
+            try:
+                end = float(w[1])
+            except ValueError:
+                raise ValueError(f"'{w[1]}' is an invalid end time.")
+            if not start <= end:
+                raise ValueError("Start time must be less than end time.")
+            windows.append((start, end))
+        return windows
 
     def crop_frames(self, event):
-        if self.path_to_videos is None:
+        if self.video_paths is None:
             wx.MessageBox("No video selected.", "Error", wx.OK | wx.ICON_ERROR)
 
         else:
-            capture = cv2.VideoCapture(self.path_to_videos[0])
+            capture = cv2.VideoCapture(self.video_paths[0])
             while True:
                 retval, frame = capture.read()
                 break
@@ -384,11 +430,11 @@ class PreprocessingModule(wx.Frame):
             cv2.destroyAllWindows()
 
     def enhance_contrasts(self, event):
-        if self.path_to_videos is None:
+        if self.video_paths is None:
             wx.MessageBox("No video selected.", "Error", wx.OK | wx.ICON_ERROR)
 
         else:
-            capture = cv2.VideoCapture(self.path_to_videos[0])
+            capture = cv2.VideoCapture(self.video_paths[0])
             while True:
                 retval, frame = capture.read()
                 break
@@ -508,8 +554,54 @@ class PreprocessingModule(wx.Frame):
                 break
         fps_dialog.Destroy()
 
+    def parse_time_window_filename(self, video_path: str) -> list[Tuple[float, float]]:
+        """
+        Return the time windows to trim the video given the video file.
+
+        The video filename should contain tags st<start> and ed<end> where
+        start and end are the start and end times of the time window, and each
+        tag is separated from the video file by an underscore.
+
+        Ex. /path/to/video_st0_ed30_st120_ed150.mov will return the time
+        windows (0, 30) and (120, 150).
+
+        Args:
+            video_path: The path to the video to extract time windows from.
+
+        Returns:
+            A list of tuples (start, end) where start and end are floats that
+            represent the start and end times in seconds of each time window.
+
+        Raises:
+            ValueError: There was an error parsing the file path.
+        """
+        video = Path(video_path)
+        parts = [
+            part
+            for part in video.stem.split("_")
+            if part.startswith("st") or part.startswith("ed")
+        ]
+
+        windows = []
+        for i in range(0, len(parts), 2):
+            if i >= len(parts):
+                raise ValueError(f"Missing ed tag in file {video.name}.")
+            try:
+                assert parts[i].startswith("st")
+                start = float(parts[i][2:])
+            except (ValueError, AssertionError):
+                raise ValueError(f"Invalid tag {parts[i]} in file {video.name}.")
+            try:
+                assert parts[i + 1].startswith("ed")
+                end = float(parts[i + 1][2:])
+            except (ValueError, AssertionError):
+                raise ValueError(f"Invalid tag {parts[i+1]} in file {video.name}.")
+            windows.append((start, end))
+
+        return windows
+
     def preprocess_videos(self, event):
-        if self.path_to_videos is None or self.result_path is None:
+        if self.video_paths is None or self.result_path is None:
             wx.MessageBox(
                 "No input video(s) / output folder.", "Error", wx.OK | wx.ICON_ERROR
             )
@@ -517,21 +609,12 @@ class PreprocessingModule(wx.Frame):
         else:
             print("Start to preprocess video(s)...")
 
-            for i in self.path_to_videos:
+            for video_path in self.video_paths:
                 if self.decode_t is True:
-                    self.time_windows = []
-                    filename = os.path.splitext(os.path.basename(i))[0].split("_")
-                    starttime_windows = [
-                        x[2:] for x in filename if len(x) > 2 and x[:2] == "st"
-                    ]
-                    endtime_windows = [
-                        x[2:] for x in filename if len(x) > 2 and x[:2] == "ed"
-                    ]
-                    for x, startt in enumerate(starttime_windows):
-                        self.time_windows.append([startt, endtime_windows[x]])
+                    self.time_windows = self.parse_time_window_filename(video_path)
 
                 preprocess_video(
-                    i,
+                    video_path,
                     self.result_path,
                     self.framewidth,
                     trim_video=self.trim_video,
