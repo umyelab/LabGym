@@ -16,6 +16,8 @@ USA
 Email: bingye@umich.edu
 """
 
+from typing import Callable
+
 import wx
 import wx.lib.agw.hyperlink
 
@@ -36,105 +38,84 @@ class TrainingModule(wx.Frame):
 
     def __init__(self):
         super().__init__(parent=None, title="Training Module", size=(500, 560))
-        panel = wx.Panel(self)
-        boxsizer = wx.BoxSizer(wx.VERTICAL)
-        boxsizer.Add(0, 60, 0)
+        self.panel = wx.Panel(self)
+        self.boxsizer = wx.BoxSizer(wx.VERTICAL)
+        self.boxsizer.Add(0, 60, 0)
 
-        # Generate images
-        generate_images_button = wx.Button(
-            panel, label="Generate Image Examples", size=(300, 40)
-        )
-        generate_images_button.Bind(wx.EVT_BUTTON, self.generate_images)
-        wx.Button.SetToolTip(
-            generate_images_button,
+        self.add_button(
+            "Generate Image Examples",
+            self.generate_images,
             "Extract frames from videos for annotating animals / objects in them so that they can be used to train a Detector to detect animals / objects of your interest. See Extended Guide for how to select images to annotate.",
         )
-        boxsizer.Add(generate_images_button, 0, wx.ALIGN_CENTER, 10)
-        boxsizer.Add(0, 5, 0)
 
-        # Annotate images
         annotate_link = wx.lib.agw.hyperlink.HyperLinkCtrl(
-            panel, 0, "\nAnnotate images with Roboflow\n", URL="https://roboflow.com"
+            self.panel,
+            0,
+            "\nAnnotate images with Roboflow\n",
+            URL="https://roboflow.com",
         )
-        boxsizer.Add(annotate_link, 0, wx.ALIGN_CENTER, 10)
-        boxsizer.Add(0, 5, 0)
+        self.boxsizer.Add(annotate_link, 0, wx.ALIGN_CENTER, 10)
+        self.boxsizer.Add(0, 5, 0)
 
-        # Train detectors
-        train_detectors_button = wx.Button(
-            panel, label="Train Detectors", size=(300, 40)
-        )
-        train_detectors_button.Bind(wx.EVT_BUTTON, self.train_detectors)
-        wx.Button.SetToolTip(
-            train_detectors_button,
+        self.add_button(
+            "Train Detectors",
+            self.train_detectors,
             "There are two detection methods in LabGym, the Detector-based method is more versatile (useful in any recording conditions and complex interactive behaviors) but slower than the other background subtraction-based method (requires static background and stable illumination in videos).",
         )
-        boxsizer.Add(train_detectors_button, 0, wx.ALIGN_CENTER, 10)
-        boxsizer.Add(0, 5, 0)
 
-        # Test detectors
-        test_detectors_button = wx.Button(panel, label="Test Detectors", size=(300, 40))
-        test_detectors_button.Bind(wx.EVT_BUTTON, self.test_detectors)
-        wx.Button.SetToolTip(
-            test_detectors_button,
+        self.add_button(
+            "Test Detectors",
+            self.test_detectors,
             "Test trained Detectors on the annotated ground-truth image dataset (similar to the image dataset used for training a Detector).",
         )
-        boxsizer.Add(test_detectors_button, 0, wx.ALIGN_CENTER, 10)
-        boxsizer.Add(0, 50, 0)
 
-        # Generate behavior examples
-        generate_behavior_examples_button = wx.Button(
-            panel, label="Generate Behavior Examples", size=(300, 40)
-        )
-        generate_behavior_examples_button.Bind(
-            wx.EVT_BUTTON, self.generate_behavior_examples
-        )
-        wx.Button.SetToolTip(
-            generate_behavior_examples_button,
+        self.boxsizer.Add(0, 45, 0)
+
+        self.add_button(
+            "Generate Behavior Examples",
+            self.generate_behavior_examples,
             "Generate behavior examples for sorting them so that they can be used to teach a Categorizer to recognize behaviors defined by you.",
         )
-        boxsizer.Add(generate_behavior_examples_button, 0, wx.ALIGN_CENTER, 10)
-        boxsizer.Add(0, 5, 0)
 
-        # Sort behavior examples
-        sort_behavior_examples_button = wx.Button(
-            panel, label="Sort Behavior Examples", size=(300, 40)
-        )
-        sort_behavior_examples_button.Bind(wx.EVT_BUTTON, self.sort_behavior_examples)
-        wx.Button.SetToolTip(
-            sort_behavior_examples_button,
+        self.add_button(
+            "Sort Behavior Examples",
+            self.sort_behavior_examples,
             "Set shortcut keys for behavior categories to help sorting the behavior examples in an easier way. See Extended Guide for how to select and sort the behavior examples.",
         )
-        boxsizer.Add(sort_behavior_examples_button, 0, wx.ALIGN_CENTER, 10)
-        boxsizer.Add(0, 5, 0)
 
-        # Train categorizers
-        train_categorizers_button = wx.Button(
-            panel, label="Train Categorizers", size=(300, 40)
-        )
-        train_categorizers_button.Bind(wx.EVT_BUTTON, self.train_categorizers)
-        wx.Button.SetToolTip(
-            train_categorizers_button,
+        self.add_button(
+            "Train Categorizers",
+            self.train_categorizers,
             "Customize a Categorizer and use the sorted behavior examples to train it so that it can recognize the behaviors of your interest during analysis.",
         )
-        boxsizer.Add(train_categorizers_button, 0, wx.ALIGN_CENTER, 10)
-        boxsizer.Add(0, 5, 0)
 
-        # Test categorizers
-        test_categorizers_button = wx.Button(
-            panel, label="Test Categorizers", size=(300, 40)
-        )
-        test_categorizers_button.Bind(wx.EVT_BUTTON, self.test_categorizers)
-        wx.Button.SetToolTip(
-            test_categorizers_button,
+        self.add_button(
+            "Test Categorizers",
+            self.test_categorizers,
             "Test trained Categorizers on the sorted ground-truth behavior examples (similar to the behavior examples used for training a Categorizer).",
         )
-        boxsizer.Add(test_categorizers_button, 0, wx.ALIGN_CENTER, 10)
-        boxsizer.Add(0, 50, 0)
 
-        panel.SetSizer(boxsizer)
-
+        self.boxsizer.Add(0, 45, 0)
+        self.panel.SetSizer(self.boxsizer)
         self.Centre()
         self.Show(True)
+
+    def add_button(
+        self, button_label: str, button_handler: Callable, button_tool_tip: str
+    ):
+        """
+        Adds a button to the main sizer.
+
+        Args:
+            button_label: The button label.
+            button_handler: The function to handle the button press.
+            button_tool_tip: The text displayed when the user hovers over the button.
+        """
+        button = wx.Button(self.panel, label=button_label, size=(300, 40))
+        button.Bind(wx.EVT_BUTTON, button_handler)
+        wx.Button.SetToolTip(button, button_tool_tip)
+        self.boxsizer.Add(button, 0, wx.ALIGN_CENTER, 10)
+        self.boxsizer.Add(0, 5, 0)
 
     def generate_images(self, event):
         GenerateImageExamples()
