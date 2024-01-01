@@ -541,7 +541,6 @@ class PreprocessingModule(wx.Frame):
                     wx.OK | wx.ICON_ERROR,
                 )
                 continue
-
             try:
                 self.fps_reduction_factor = factor
             except ValueError as e:
@@ -551,10 +550,8 @@ class PreprocessingModule(wx.Frame):
                     wx.OK | wx.ICON_ERROR,
                 )
                 continue
-
             self.text_fps.SetLabel(f"FPS Reduction Factor: {factor}")
             break
-
         fps_dialog.Destroy()
 
     def parse_time_window_filename(self, video_path: str) -> list[Tuple[float, float]]:

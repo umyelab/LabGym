@@ -1153,7 +1153,7 @@ def extract_frames(
 def preprocess_video(
     path_to_video: str,
     out_folder: str,
-    framewidth: int,
+    framewidth: int | None,
     trim_video: bool = False,
     time_windows: list[Tuple[float, float]] = [(0, 10)],
     enhance_contrast: bool = True,
@@ -1221,7 +1221,7 @@ def preprocess_video(
     # Create VideoWriter with given parameters
     writer = cv2.VideoWriter(
         filename=os.path.join(out_folder, name + added_name + "_processed.avi"),
-        fourcc=cv2.VideoWriter_fourcc(*"MJPG"),
+        fourcc=cv2.VideoWriter_fourcc(*"MJPG"),  # type: ignore
         fps=fps / fps_reduction_factor,
         frameSize=(int(width), int(height)),
         isColor=True,
@@ -1251,18 +1251,18 @@ def preprocess_video(
         if crop_frame is True:
             frame = frame[top:bottom, left:right, :]
         if enhance_contrast is True:
-            frame = frame * contrast
+            frame = frame * contrast  # type: ignore
             frame[frame > 255] = 255
 
         # Add frame to video file
-        frame = np.uint8(frame)
+        frame = np.uint8(frame)  # type: ignore
         if trim_video is True:
             t = frame_count / fps
             for start, end in time_windows:
                 if start <= t <= end:
-                    writer.write(frame)
+                    writer.write(frame)  # type: ignore
         else:
-            writer.write(frame)
+            writer.write(frame)  # type: ignore
 
     writer.release()
     capture.release()
