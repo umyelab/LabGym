@@ -21,6 +21,7 @@ import json
 import os
 import shutil
 from pathlib import Path
+from typing import Callable
 
 import wx
 
@@ -32,7 +33,10 @@ detector_path = str(Path(__file__).resolve().parent.parent / "detectors")
 
 
 class GenerateImageExamples(wx.Frame):
+    """Generate image examples to use to train a Detector."""
+
     def __init__(self):
+        """Open the Generate Image Example frame."""
         super().__init__(parent=None, title="Generate Image Examples", size=(1000, 330))
         self.path_to_videos = None
         self.result_path = None
@@ -41,142 +45,107 @@ class GenerateImageExamples(wx.Frame):
         self.duration = 0
         self.skip_redundant = 1000
 
-        panel = wx.Panel(self)
-        boxsizer = wx.BoxSizer(wx.VERTICAL)
+        self.panel = wx.Panel(self)
+        self.boxsizer = wx.BoxSizer(wx.VERTICAL)
 
-        module_inputvideos = wx.BoxSizer(wx.HORIZONTAL)
-        button_inputvideos = wx.Button(
-            panel,
-            label="Select the video(s) to generate\nimage examples",
-            size=(300, 40),
-        )
-        button_inputvideos.Bind(wx.EVT_BUTTON, self.select_videos)
-        wx.Button.SetToolTip(
-            button_inputvideos,
-            "Select one or more videos. Common video formats (mp4, mov, avi, m4v, mkv, mpg, mpeg) are supported except wmv format.",
-        )
         self.text_inputvideos = wx.StaticText(
-            panel, label="None.", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
+            self.panel, label="None.", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
         )
-        module_inputvideos.Add(
-            button_inputvideos, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
+        self.add_module(
+            "Select the video(s) to generate\nimage examples",
+            self.select_videos,
+            "Select one or more videos. Common video formats (mp4, mov, avi, m4v, mkv, mpg, mpeg) are supported except wmv format.",
+            self.text_inputvideos,
         )
-        module_inputvideos.Add(
-            self.text_inputvideos, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        boxsizer.Add(0, 10, 0)
-        boxsizer.Add(module_inputvideos, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        module_outputfolder = wx.BoxSizer(wx.HORIZONTAL)
-        button_outputfolder = wx.Button(
-            panel,
-            label="Select a folder to store the\ngenerated image examples",
-            size=(300, 40),
-        )
-        button_outputfolder.Bind(wx.EVT_BUTTON, self.select_outpath)
-        wx.Button.SetToolTip(
-            button_outputfolder,
-            "The generated image examples (extracted frames) will be stored in this folder.",
-        )
         self.text_outputfolder = wx.StaticText(
-            panel, label="None.", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
+            self.panel, label="None.", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
         )
-        module_outputfolder.Add(
-            button_outputfolder, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
+        self.add_module(
+            "Select a folder to store the\ngenerated image examples",
+            self.select_outpath,
+            "The generated image examples (extracted frames) will be stored in this folder.",
+            self.text_outputfolder,
         )
-        module_outputfolder.Add(
-            self.text_outputfolder, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        boxsizer.Add(module_outputfolder, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        module_startgenerate = wx.BoxSizer(wx.HORIZONTAL)
-        button_startgenerate = wx.Button(
-            panel,
-            label="Specify when generating image examples\nshould begin (unit: second)",
-            size=(300, 40),
-        )
-        button_startgenerate.Bind(wx.EVT_BUTTON, self.specify_timing)
-        wx.Button.SetToolTip(
-            button_startgenerate, "Enter a beginning time point for all videos"
-        )
         self.text_startgenerate = wx.StaticText(
-            panel,
+            self.panel,
             label="Default: at the beginning of the video(s).",
             style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END,
         )
-        module_startgenerate.Add(
-            button_startgenerate, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
+        self.add_module(
+            "Specify when generating image examples\nshould begin (unit: second)",
+            self.specify_timing,
+            "Enter a beginning time point for all videos",
+            self.text_startgenerate,
         )
-        module_startgenerate.Add(
-            self.text_startgenerate, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        boxsizer.Add(module_startgenerate, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        module_duration = wx.BoxSizer(wx.HORIZONTAL)
-        button_duration = wx.Button(
-            panel,
-            label="Specify how long generating examples\nshould last (unit: second)",
-            size=(300, 40),
-        )
-        button_duration.Bind(wx.EVT_BUTTON, self.input_duration)
-        wx.Button.SetToolTip(
-            button_duration, "This duration will be used for all the videos."
-        )
         self.text_duration = wx.StaticText(
-            panel,
+            self.panel,
             label="Default: from the specified beginning time to the end of a video.",
             style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END,
         )
-        module_duration.Add(button_duration, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        module_duration.Add(self.text_duration, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(module_duration, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
+        self.add_module(
+            "Specify how long generating examples\nshould last (unit: second)",
+            self.input_duration,
+            "This duration will be used for all the videos.",
+            self.text_duration,
+        )
 
-        module_skipredundant = wx.BoxSizer(wx.HORIZONTAL)
-        button_skipredundant = wx.Button(
-            panel,
-            label="Specify how many frames to skip when\ngenerating two consecutive images",
-            size=(300, 40),
-        )
-        button_skipredundant.Bind(wx.EVT_BUTTON, self.specify_redundant)
-        wx.Button.SetToolTip(
-            button_skipredundant,
-            "To increase the efficiency of training a Detector, you need to make the training images as diverse (look different) as possible. You can do this by setting an interval between the two consecutively extracted images.",
-        )
         self.text_skipredundant = wx.StaticText(
-            panel,
+            self.panel,
             label="Default: generate an image example every 1000 frames.",
             style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END,
         )
-        module_skipredundant.Add(
-            button_skipredundant, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
+        self.add_module(
+            "Specify how many frames to skip when\ngenerating two consecutive images",
+            self.specify_redundant,
+            "To increase the efficiency of training a Detector, you need to make the training images as diverse (look different) as possible. You can do this by setting an interval between the two consecutively extracted images.",
+            self.text_skipredundant,
         )
-        module_skipredundant.Add(
-            self.text_skipredundant, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        boxsizer.Add(module_skipredundant, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
         generate = wx.BoxSizer(wx.HORIZONTAL)
         button_generate = wx.Button(
-            panel, label="Start to generate image examples", size=(300, 40)
+            self.panel, label="Start to generate image examples", size=(300, 40)
         )
         button_generate.Bind(wx.EVT_BUTTON, self.generate_images)
         wx.Button.SetToolTip(
             button_generate, "Press the button to start generating image examples."
         )
         generate.Add(button_generate, 0, wx.LEFT, 50)
-        boxsizer.Add(0, 5, 0)
-        boxsizer.Add(generate, 0, wx.RIGHT | wx.ALIGN_RIGHT, 90)
-        boxsizer.Add(0, 10, 0)
+        self.boxsizer.Add(0, 5, 0)
+        self.boxsizer.Add(generate, 0, wx.RIGHT | wx.ALIGN_RIGHT, 90)
+        self.boxsizer.Add(0, 10, 0)
 
-        panel.SetSizer(boxsizer)
+        self.panel.SetSizer(self.boxsizer)
 
         self.Centre()
         self.Show(True)
+
+    def add_module(
+        self,
+        button_label: str,
+        button_handler: Callable,
+        tool_tip: str,
+        text: wx.StaticText,
+    ):
+        """
+        Adds a button and text box to the main sizer.
+
+        Args:
+            button_label: The button label.
+            button_handler: The function to handle the button press.
+            tooltip: The text displayed when the user hovers over the button.
+            text: The wx.StaticText to be displayed next to the button.
+        """
+        module = wx.BoxSizer(wx.HORIZONTAL)
+        button = wx.Button(self.panel, label=button_label, size=(300, 40))
+        button.Bind(wx.EVT_BUTTON, button_handler)
+        wx.Button.SetToolTip(button, tool_tip)
+        module.Add(button, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
+        module.Add(text, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
+        self.boxsizer.Add(0, 10, 0)
+        self.boxsizer.Add(module, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
 
     def select_videos(self, event):
         wildcard = "Video files(*.avi;*.mpg;*.mpeg;*.wmv;*.mp4;*.mkv;*.m4v;*.mov)|*.avi;*.mpg;*.mpeg;*.wmv;*.mp4;*.mkv;*.m4v;*.mov"
