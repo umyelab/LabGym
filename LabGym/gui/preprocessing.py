@@ -424,82 +424,84 @@ class PreprocessingModule(wx.Frame):
         cv2.destroyAllWindows()
 
     def enhance_contrasts(self, event):
+        """Opens dialogs to configure frame cropping."""
+
         if self.video_paths is None:
             wx.MessageBox("No video selected.", "Error", wx.OK | wx.ICON_ERROR)
+            return
 
-        else:
-            capture = cv2.VideoCapture(self.video_paths[0])
-            while True:
-                retval, frame = capture.read()
-                break
-            capture.release()
+        capture = cv2.VideoCapture(self.video_paths[0])
+        _, frame = capture.read()
+        capture.release()
 
-            if self.framewidth is not None:
-                frame = cv2.resize(
-                    frame,
-                    (
-                        self.framewidth,
-                        int(frame.shape[0] * self.framewidth / frame.shape[1]),
-                    ),
-                    interpolation=cv2.INTER_AREA,
-                )
+        if self.framewidth is not None:
+            frame = cv2.resize(
+                frame,
+                (
+                    self.framewidth,
+                    int(frame.shape[0] * self.framewidth / frame.shape[1]),
+                ),
+                interpolation=cv2.INTER_AREA,
+            )
 
-            stop = False
-            while stop is False:
-                cv2.destroyAllWindows()
-                cv2.namedWindow("The first frame in coordinates", cv2.WINDOW_NORMAL)
-                cv2.imshow("The first frame in coordinates", frame)
-                dialog = wx.TextEntryDialog(
-                    self,
-                    "Enter the fold changes for contrast enhancement",
-                    "A number between 1.0~5.0",
-                )
-                if dialog.ShowModal() == wx.ID_OK:
-                    contrast = dialog.GetValue()
-                    try:
-                        self.contrast = float(contrast)
-                        show_frame = frame * self.contrast
-                        show_frame[show_frame > 255] = 255
-                        show_frame = np.uint8(show_frame)
-                        cv2.destroyAllWindows()
-                        cv2.namedWindow(
-                            "The first frame in coordinates", cv2.WINDOW_NORMAL
-                        )
-                        cv2.imshow("The first frame in coordinates", show_frame)
-                        dialog1 = wx.MessageDialog(
-                            self,
-                            "Apply the current contrast value?",
-                            "Apply value?",
-                            wx.YES_NO | wx.ICON_QUESTION,
-                        )
-                        if dialog1.ShowModal() == wx.ID_YES:
-                            stop = True
-                            self.enhance_contrast = True
-                            self.text_enhancecontrast.SetLabel(
-                                "The contrast enhancement fold change is: "
-                                + str(self.contrast)
-                                + "."
-                            )
-                        else:
-                            self.enhance_contrast = False
-                            self.text_enhancecontrast.SetLabel(
-                                "Not to enhance contrast."
-                            )
-                        dialog1.Destroy()
-                    except:
-                        self.enhance_contrast = False
-                        wx.MessageBox(
-                            "Please enter a float number between 1.0~5.0.",
-                            "Error",
-                            wx.OK | wx.ICON_ERROR,
-                        )
-                        self.text_enhancecontrast.SetLabel("Not to enhance contrast.")
-                else:
-                    self.enhance_contrast = False
-                    stop = True
-                    self.text_enhancecontrast.SetLabel("Not to enhance contrast.")
-                dialog.Destroy()
+        while True:
             cv2.destroyAllWindows()
+            cv2.namedWindow("The first frame in coordinates", cv2.WINDOW_NORMAL)
+            cv2.imshow("The first frame in coordinates", frame)
+
+            dialog = wx.TextEntryDialog(
+                self,
+                "Enter the fold changes for contrast enhancement",
+                "A number between 1.0~5.0",
+            )
+            if dialog.ShowModal() != wx.ID_OK:
+                self.enhance_contrast = False
+                self.text_enhancecontrast.SetLabel("Not to enhance contrast.")
+                dialog.Destroy()
+                break
+
+            contrast = dialog.GetValue()
+            try:
+                self.contrast = float(contrast)
+            except ValueError:
+                self.enhance_contrast = False
+                wx.MessageBox(
+                    "Please enter a float number between 1.0~5.0.",
+                    "Error",
+                    wx.OK | wx.ICON_ERROR,
+                )
+                self.text_enhancecontrast.SetLabel("Not to enhance contrast.")
+                dialog.Destroy()
+                continue
+
+            show_frame = frame * self.contrast  # type: ignore
+            show_frame[show_frame > 255] = 255
+            show_frame = np.uint8(show_frame)
+            cv2.destroyAllWindows()
+            cv2.namedWindow("The first frame in coordinates", cv2.WINDOW_NORMAL)
+            cv2.imshow("The first frame in coordinates", show_frame)  # type: ignore
+
+            confirm = wx.MessageDialog(
+                self,
+                "Apply the current contrast value?",
+                "Apply value?",
+                wx.YES_NO | wx.ICON_QUESTION,
+            )
+            if confirm.ShowModal() != wx.ID_YES:
+                self.enhance_contrast = False
+                self.text_enhancecontrast.SetLabel("Not to enhance contrast.")
+                confirm.Destroy()
+                dialog.Destroy()
+                continue
+
+            self.enhance_contrast = True
+            self.text_enhancecontrast.SetLabel(
+                f"The contrast enhancement fold change is: {self.contrast}."
+            )
+            confirm.Destroy()
+            dialog.Destroy()
+            cv2.destroyAllWindows()
+            break
 
     @property
     def fps_reduction_factor(self):
