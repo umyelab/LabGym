@@ -202,11 +202,12 @@ class GenerateImageExamples(wx.Frame):
         frame_width_dialog.Destroy()
 
     def select_outpath(self, event):
+        """Select directory to store image examples."""
         dialog = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
         if dialog.ShowModal() == wx.ID_OK:
             self.result_path = dialog.GetPath()
             self.text_outputfolder.SetLabel(
-                "Generate image examples in: " + self.result_path + "."
+                f"Generate image examples in: {self.result_path}."
             )
         dialog.Destroy()
 
