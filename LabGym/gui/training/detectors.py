@@ -230,23 +230,21 @@ class GenerateImageExamples(wx.Frame):
         dialog.Destroy()
 
     def input_duration(self, event):
+        """Choose duration to generate video examples."""
         dialog = wx.NumberEntryDialog(
-            self,
-            "Enter the duration for generating examples",
-            "The unit is second:",
-            "Duration for generating examples",
-            0,
-            0,
-            100000000000000,
+            parent=self,
+            message="Enter the duration for generating examples",
+            prompt="The unit is second:",
+            caption="Duration for generating examples",
+            value=0,
+            min=0,
+            max=100000000000000,
         )
         if dialog.ShowModal() == wx.ID_OK:
             self.duration = int(dialog.GetValue())
-            if self.duration != 0:
-                self.text_duration.SetLabel(
-                    "The generation of image examples lasts for "
-                    + str(self.duration)
-                    + " seconds."
-                )
+            self.text_duration.SetLabel(
+                f"The generation of image examples lasts for {self.duration} seconds."
+            )
         dialog.Destroy()
 
     def specify_redundant(self, event):
