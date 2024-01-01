@@ -505,16 +505,18 @@ class PreprocessingModule(wx.Frame):
 
     @property
     def fps_reduction_factor(self):
+        """
+        The factor by which to reduce the video framerate.
+
+        The new FPS of the video will be calculated using the formula
+        new_fps = old_fps / factor. The reduction factor must be greater than
+        1.0.
+        """
         return self._fps_reduction_factor
 
     @fps_reduction_factor.setter
     def fps_reduction_factor(self, factor: float):
-        """Ensure reduction factor is greater than 1 before setting.
-
-        The new FPS of the video will be calculated using the formula
-        new_fps = old_fps / factor. If the factor is less than 1, then
-        new_fps will be greater than old_fps, which is not supported.
-        """
+        """Ensure reduction factor is greater than or equal to 1.0 before setting."""
         if factor < 1.0:
             raise ValueError("FPS reduction factor must be greater than or equal to 1.")
         self._fps_reduction_factor = factor
@@ -527,27 +529,32 @@ class PreprocessingModule(wx.Frame):
                 "Enter a number greater than 1.0",
                 "Enter FPS reduction factor",
             )
-            if fps_dialog.ShowModal() == wx.ID_OK:
-                try:
-                    factor = float(fps_dialog.GetValue())
-                    try:
-                        self.fps_reduction_factor = factor
-                        self.text_fps.SetLabel(f"FPS Reduction Factor: {factor}")
-                        break
-                    except ValueError as e:
-                        wx.MessageBox(
-                            str(e),
-                            "Error",
-                            wx.OK | wx.ICON_ERROR,
-                        )
-                except ValueError:
-                    wx.MessageBox(
-                        "Please enter a number.",
-                        "Error",
-                        wx.OK | wx.ICON_ERROR,
-                    )
-            else:
+            if fps_dialog.ShowModal() != wx.ID_OK:
                 break
+
+            try:
+                factor = float(fps_dialog.GetValue())
+            except ValueError:
+                wx.MessageBox(
+                    "Please enter a number.",
+                    "Error",
+                    wx.OK | wx.ICON_ERROR,
+                )
+                continue
+
+            try:
+                self.fps_reduction_factor = factor
+            except ValueError as e:
+                wx.MessageBox(
+                    str(e),
+                    "Error",
+                    wx.OK | wx.ICON_ERROR,
+                )
+                continue
+
+            self.text_fps.SetLabel(f"FPS Reduction Factor: {factor}")
+            break
+
         fps_dialog.Destroy()
 
     def parse_time_window_filename(self, video_path: str) -> list[Tuple[float, float]]:
