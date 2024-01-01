@@ -601,32 +601,32 @@ class PreprocessingModule(wx.Frame):
         return windows
 
     def preprocess_videos(self, event):
+        """Process videos given the current configuration."""
+
         if self.video_paths is None or self.result_path is None:
             wx.MessageBox(
                 "No input video(s) / output folder.", "Error", wx.OK | wx.ICON_ERROR
             )
+            return
 
-        else:
-            print("Start to preprocess video(s)...")
+        print("Start to preprocess video(s)...")
+        for video_path in self.video_paths:
+            if self.decode_t is True:
+                self.time_windows = self.parse_time_window_filename(video_path)
 
-            for video_path in self.video_paths:
-                if self.decode_t is True:
-                    self.time_windows = self.parse_time_window_filename(video_path)
-
-                preprocess_video(
-                    video_path,
-                    self.result_path,
-                    self.framewidth,
-                    trim_video=self.trim_video,
-                    time_windows=self.time_windows,
-                    enhance_contrast=self.enhance_contrast,
-                    contrast=self.contrast,
-                    crop_frame=self.crop_frame,
-                    left=self.left,
-                    right=self.right,
-                    top=self.top,
-                    bottom=self.bottom,
-                    fps_reduction_factor=self.fps_reduction_factor,
-                )
-
-            print("Preprocessing completed!")
+            preprocess_video(
+                video_path,
+                self.result_path,
+                self.framewidth,
+                trim_video=self.trim_video,
+                time_windows=self.time_windows,
+                enhance_contrast=self.enhance_contrast,
+                contrast=self.contrast,
+                crop_frame=self.crop_frame,
+                left=self.left,
+                right=self.right,
+                top=self.top,
+                bottom=self.bottom,
+                fps_reduction_factor=self.fps_reduction_factor,
+            )
+        print("Preprocessing completed!")
