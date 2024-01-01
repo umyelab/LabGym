@@ -23,7 +23,7 @@ import gc
 import operator
 import os
 from collections import deque
-from typing import Sequence, TypeAlias
+from typing import Sequence, Tuple, TypeAlias
 
 import cv2
 import numpy as np
@@ -1155,7 +1155,7 @@ def preprocess_video(
     out_folder: str,
     framewidth: int,
     trim_video: bool = False,
-    time_windows: list[list[float]] = [[0, 10]],
+    time_windows: list[Tuple[float, float]] = [(0, 10)],
     enhance_contrast: bool = True,
     contrast: float = 1.0,
     crop_frame: bool = True,
@@ -1259,7 +1259,7 @@ def preprocess_video(
         if trim_video is True:
             t = frame_count / fps
             for start, end in time_windows:
-                if float(start) <= t <= float(end):
+                if start <= t <= end:
                     writer.write(frame)
         else:
             writer.write(frame)
