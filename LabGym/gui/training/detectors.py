@@ -212,21 +212,20 @@ class GenerateImageExamples(wx.Frame):
         dialog.Destroy()
 
     def specify_timing(self, event):
+        """Choose time point to start generating image examples."""
         dialog = wx.NumberEntryDialog(
-            self,
-            "Enter beginning time to generate examples",
-            "The unit is second:",
-            "Beginning time to generate examples",
-            0,
-            0,
-            100000000000000,
+            parent=self,
+            message="Enter beginning time to generate examples",
+            prompt="The unit is second:",
+            caption="Beginning time to generate examples",
+            value=0,
+            min=0,
+            max=100000000000000,
         )
         if dialog.ShowModal() == wx.ID_OK:
-            self.t = float(dialog.GetValue())
-            if self.t < 0:
-                self.t = 0
+            self.t = max(float(dialog.GetValue()), 0)
             self.text_startgenerate.SetLabel(
-                "Start to generate image examples at the: " + str(self.t) + " second."
+                f"Start to generate image examples at the: {str(self.t)} second."
             )
         dialog.Destroy()
 
