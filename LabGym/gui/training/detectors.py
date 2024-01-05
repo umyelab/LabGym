@@ -248,6 +248,7 @@ class GenerateImageExamples(wx.Frame):
         dialog.Destroy()
 
     def specify_redundant(self, event):
+        """Select number of frames to skip per example."""
         dialog = wx.NumberEntryDialog(
             self,
             "How many frames to skip?",
@@ -257,18 +258,12 @@ class GenerateImageExamples(wx.Frame):
             0,
             100000000000000,
         )
-        if dialog.ShowModal() == wx.ID_OK:
-            self.skip_redundant = int(dialog.GetValue())
-            self.text_skipredundant.SetLabel(
-                "Generate an image example every "
-                + str(self.skip_redundant)
-                + " frames."
-            )
-        else:
-            self.skip_redundant = 1000
-            self.text_skipredundant.SetLabel(
-                "Generate an image example every 10000 frames."
-            )
+        self.skip_redundant = (
+            int(dialog.GetValue()) if dialog.ShowModal() == wx.ID_OK else 1000
+        )
+        self.text_skipredundant.SetLabel(
+            f"Generate an image example every {self.skip_redundant} frames."
+        )
         dialog.Destroy()
 
     def generate_images(self, event):
