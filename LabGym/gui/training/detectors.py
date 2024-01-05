@@ -267,40 +267,35 @@ class GenerateImageExamples(wx.Frame):
         dialog.Destroy()
 
     def generate_images(self, event):
+        """Confirm image example generation."""
         if self.path_to_videos is None or self.result_path is None:
             wx.MessageBox(
                 "No input video(s) / output folder selected.",
                 "Error",
                 wx.OK | wx.ICON_ERROR,
             )
+            return
 
-        else:
-            do_nothing = True
+        dialog = wx.MessageDialog(
+            self,
+            "Start to generate image examples?",
+            "Start to generate examples?",
+            wx.YES_NO | wx.ICON_QUESTION,
+        )
 
-            dialog = wx.MessageDialog(
-                self,
-                "Start to generate image examples?",
-                "Start to generate examples?",
-                wx.YES_NO | wx.ICON_QUESTION,
-            )
-            if dialog.ShowModal() == wx.ID_YES:
-                do_nothing = False
-            else:
-                do_nothing = True
-            dialog.Destroy()
-
-            if do_nothing is False:
-                print("Generating image examples...")
-                for i in self.path_to_videos:
-                    extract_frames(
-                        i,
-                        self.result_path,
-                        framewidth=self.framewidth,
-                        start_t=self.t,
-                        duration=self.duration,
-                        skip_redundant=self.skip_redundant,
-                    )
-                print("Image example generation completed!")
+        if dialog.ShowModal() == wx.ID_YES:
+            print("Generating image examples...")
+            for i in self.path_to_videos:
+                extract_frames(
+                    i,
+                    self.result_path,
+                    framewidth=self.framewidth,
+                    start_t=self.t,
+                    duration=self.duration,
+                    skip_redundant=self.skip_redundant,
+                )
+            print("Image example generation completed!")
+        dialog.Destroy()
 
 
 class TrainDetectors(wx.Frame):
