@@ -19,20 +19,22 @@ Email: bingye@umich.edu
 
 import os
 from pathlib import Path
-from typing import Callable, Tuple
+from typing import Tuple
 import wx
 
 import cv2
 import numpy as np
 
+from .utils import LabGymWindow
+
 from ..tools import preprocess_video, wx_video_wildcard
 
 
-class PreprocessingModule(wx.Frame):
+class PreprocessingModule(LabGymWindow):
     """Contains functions related to preprocessing videos for analysis."""
 
     def __init__(self):
-        super().__init__(parent=None, title="Preprocess Videos", size=(1000, 370))
+        super().__init__(title="Preprocess Videos", size=(1000, 370))
         self.video_paths = None
         self.framewidth = None
         self.result_path = None
@@ -48,11 +50,8 @@ class PreprocessingModule(wx.Frame):
         self.decode_t = False
         self.fps_reduction_factor = 1.0
 
-        self.panel = wx.Panel(self)
-        self.boxsizer = wx.BoxSizer(wx.VERTICAL)
-
         # Video selection module
-        self.text_inputvideos = self.get_module_text("None.")
+        self.text_inputvideos = self.module_text("None.")
         self.add_module(
             button_label="Select the video(s)\nfor preprocessing",
             button_handler=self.select_videos,
@@ -61,7 +60,7 @@ class PreprocessingModule(wx.Frame):
         )
 
         # Output folder selection module
-        self.text_outputfolder = self.get_module_text("None.")
+        self.text_outputfolder = self.module_text("None.")
         self.add_module(
             button_label="Select a folder to store\nthe processed videos",
             button_handler=self.select_outpath,
@@ -70,7 +69,7 @@ class PreprocessingModule(wx.Frame):
         )
 
         # Video trimming module
-        self.text_duration = self.get_module_text("Default: not to trim a video.")
+        self.text_duration = self.module_text("Default: not to trim a video.")
         self.add_module(
             button_label="Specify whether to enter time windows\nto form a trimmed video",
             button_handler=self.input_duration,
@@ -79,7 +78,7 @@ class PreprocessingModule(wx.Frame):
         )
 
         # Frame crop module
-        self.text_cropframe = self.get_module_text("Default: not to crop frames.")
+        self.text_cropframe = self.module_text("Default: not to crop frames.")
         self.add_module(
             button_label="Specify whether to crop\nthe video frames",
             button_handler=self.crop_frames,
@@ -89,7 +88,7 @@ class PreprocessingModule(wx.Frame):
 
         # Contrast module
         # TODO: This feature increases brightness, not contrast (see tools.preprocess_video())
-        self.text_enhancecontrast = self.get_module_text(
+        self.text_enhancecontrast = self.module_text(
             "Default: not to enhance contrast."
         )
         self.add_module(
@@ -100,7 +99,7 @@ class PreprocessingModule(wx.Frame):
         )
 
         # FPS reduction module
-        self.text_fps = self.get_module_text("Default: original FPS")
+        self.text_fps = self.module_text("Default: original FPS")
         self.add_module(
             button_label="Specify whether to reduce\nthe video FPS",
             button_handler=self.reduce_fps,
@@ -109,50 +108,13 @@ class PreprocessingModule(wx.Frame):
         )
 
         # Start button
-        button_preprocessvideos = wx.Button(
-            self.panel, label="Start to preprocess the videos", size=(300, 40)
+        self.add_submit_button(
+            label="Start to preprocess the videos",
+            handler=self.preprocess_videos,
+            tool_tip="Preprocess each selected video.",
         )
-        button_preprocessvideos.Bind(wx.EVT_BUTTON, self.preprocess_videos)
-        wx.Button.SetToolTip(button_preprocessvideos, "Preprocess each selected video.")
-        self.boxsizer.Add(0, 10, 0)
-        self.boxsizer.Add(button_preprocessvideos, 0, wx.RIGHT | wx.ALIGN_RIGHT, 90)
-        self.boxsizer.Add(0, 5, 0)
 
-        self.panel.SetSizer(self.boxsizer)
-
-        self.Centre()
-        self.Show(True)
-
-    def add_module(
-        self,
-        button_label: str,
-        button_handler: Callable,
-        tool_tip: str,
-        text: wx.StaticText,
-    ):
-        """
-        Adds a button and text box to the main sizer.
-
-        Args:
-            button_label: The button label.
-            button_handler: The function to handle the button press.
-            tooltip: The text displayed when the user hovers over the button.
-            text: The wx.StaticText to be displayed next to the button.
-        """
-        module = wx.BoxSizer(wx.HORIZONTAL)
-        button = wx.Button(self.panel, label=button_label, size=(300, 40))
-        button.Bind(wx.EVT_BUTTON, button_handler)
-        wx.Button.SetToolTip(button, tool_tip)
-        module.Add(button, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        module.Add(text, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        self.boxsizer.Add(0, 10, 0)
-        self.boxsizer.Add(module, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-
-    def get_module_text(self, label: str) -> wx.StaticText:
-        """Returns a wx.StaticText instance with the given label."""
-        return wx.StaticText(
-            self.panel, label=label, style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
-        )
+        self.show()
 
     def select_videos(self, event):
         """Opens file selection dialog to select videos to preprocess."""
