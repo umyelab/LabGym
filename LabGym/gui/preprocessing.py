@@ -26,7 +26,6 @@ import cv2
 import numpy as np
 
 from .utils import LabGymWindow
-
 from ..tools import preprocess_video, wx_video_wildcard
 
 

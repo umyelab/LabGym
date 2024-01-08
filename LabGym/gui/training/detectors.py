@@ -251,9 +251,11 @@ class GenerateImageExamples(LabGymWindow):
         dialog.Destroy()
 
 
-class TrainDetectors(wx.Frame):
+class TrainDetectors(LabGymWindow):
+    """Train Detectors using labeled image examples."""
+
     def __init__(self):
-        super().__init__(parent=None, title="Train Detectors", size=(1000, 280))
+        super().__init__(title="Train Detectors", size=(1000, 280))
         self.path_to_trainingimages = None
         self.path_to_annotation = None
         self.inference_size = 320
@@ -261,114 +263,45 @@ class TrainDetectors(wx.Frame):
         self.detector_path = detector_path
         self.path_to_detector = None
 
-        self.dispaly_window()
+        self.text_selectimages = self.module_text("None.")
+        self.add_module(
+            button_label="Select the folder containing\nall the training images",
+            button_handler=self.select_images,
+            tool_tip="The folder that stores all the training images.",
+            text=self.text_selectimages,
+        )
 
-    def dispaly_window(self):
-        panel = wx.Panel(self)
-        boxsizer = wx.BoxSizer(wx.VERTICAL)
+        self.text_selectannotation = self.module_text("None.")
+        self.add_module(
+            button_label="Select the *.json\nannotation file",
+            button_handler=self.select_annotation,
+            tool_tip="The .json file that stores the annotation for the training images. Make sure it is in “COCO instance segmentation” format.",
+            text=self.text_selectannotation,
+        )
 
-        module_selectimages = wx.BoxSizer(wx.HORIZONTAL)
-        button_selectimages = wx.Button(
-            panel,
-            label="Select the folder containing\nall the training images",
-            size=(300, 40),
+        self.text_inferencingsize = self.module_text("Default: 480.")
+        self.add_module(
+            button_label="Specify the inferencing framesize\nfor the Detector to train",
+            button_handler=self.input_inferencingsize,
+            tool_tip="This number should be divisible by 32. It determines the speed-accuracy trade-off of Detector performance. Larger size means higher accuracy but slower speed. See Extended Guide for details.",
+            text=self.text_inferencingsize,
         )
-        button_selectimages.Bind(wx.EVT_BUTTON, self.select_images)
-        wx.Button.SetToolTip(
-            button_selectimages, "The folder that stores all the training images."
-        )
-        self.text_selectimages = wx.StaticText(
-            panel, label="None.", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
-        )
-        module_selectimages.Add(
-            button_selectimages, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        module_selectimages.Add(
-            self.text_selectimages, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        boxsizer.Add(0, 10, 0)
-        boxsizer.Add(module_selectimages, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        module_selectannotation = wx.BoxSizer(wx.HORIZONTAL)
-        button_selectannotation = wx.Button(
-            panel, label="Select the *.json\nannotation file", size=(300, 40)
+        self.text_iterations = self.module_text("Default: 200.")
+        self.add_module(
+            button_label="Specify the iteration number\nfor the Detector training",
+            button_handler=self.input_iterations,
+            tool_tip='More training iterations typically yield higher accuracy but take longer. A number between 200 ~ 2000 is good for most scenarios. For "Interactive advanced" mode, more iterations (>2000) may be needed. You may also increase the diversity and amount of training images for higher accuracy.',
+            text=self.text_iterations,
         )
-        button_selectannotation.Bind(wx.EVT_BUTTON, self.select_annotation)
-        wx.Button.SetToolTip(
-            button_selectannotation,
-            "The .json file that stores the annotation for the training images. Make sure it is in “COCO instance segmentation” format.",
-        )
-        self.text_selectannotation = wx.StaticText(
-            panel, label="None.", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
-        )
-        module_selectannotation.Add(
-            button_selectannotation, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        module_selectannotation.Add(
-            self.text_selectannotation, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        boxsizer.Add(module_selectannotation, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        module_inferencingsize = wx.BoxSizer(wx.HORIZONTAL)
-        button_inferencingsize = wx.Button(
-            panel,
-            label="Specify the inferencing framesize\nfor the Detector to train",
-            size=(300, 40),
+        self.add_submit_button(
+            label="Train the Detector",
+            handler=self.train_detector,
+            tool_tip="You need to name the Detector to train. English letters, numbers, underscore “_”, or hyphen “-” are acceptable but do not use special characters such as “@” or “^”.",
         )
-        button_inferencingsize.Bind(wx.EVT_BUTTON, self.input_inferencingsize)
-        wx.Button.SetToolTip(
-            button_inferencingsize,
-            "This number should be divisible by 32. It determines the speed-accuracy trade-off of Detector performance. Larger size means higher accuracy but slower speed. See Extended Guide for details.",
-        )
-        self.text_inferencingsize = wx.StaticText(
-            panel, label="Default: 480.", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
-        )
-        module_inferencingsize.Add(
-            button_inferencingsize, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        module_inferencingsize.Add(
-            self.text_inferencingsize, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        boxsizer.Add(module_inferencingsize, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        module_iterations = wx.BoxSizer(wx.HORIZONTAL)
-        button_iterations = wx.Button(
-            panel,
-            label="Specify the iteration number\nfor the Detector training",
-            size=(300, 40),
-        )
-        button_iterations.Bind(wx.EVT_BUTTON, self.input_iterations)
-        wx.Button.SetToolTip(
-            button_iterations,
-            'More training iterations typically yield higher accuracy but take longer. A number between 200 ~ 2000 is good for most scenarios. For "Interactive advanced" mode, more iterations (>2000) may be needed. You may also increase the diversity and amount of training images for higher accuracy.',
-        )
-        self.text_iterations = wx.StaticText(
-            panel, label="Default: 200.", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
-        )
-        module_iterations.Add(button_iterations, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        module_iterations.Add(
-            self.text_iterations, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        boxsizer.Add(module_iterations, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
-
-        button_train = wx.Button(panel, label="Train the Detector", size=(300, 40))
-        button_train.Bind(wx.EVT_BUTTON, self.train_detector)
-        wx.Button.SetToolTip(
-            button_train,
-            "You need to name the Detector to train. English letters, numbers, underscore “_”, or hyphen “-” are acceptable but do not use special characters such as “@” or “^”.",
-        )
-        boxsizer.Add(0, 5, 0)
-        boxsizer.Add(button_train, 0, wx.RIGHT | wx.ALIGN_RIGHT, 90)
-        boxsizer.Add(0, 10, 0)
-
-        panel.SetSizer(boxsizer)
-
-        self.Centre()
-        self.Show(True)
+        self.show()
 
     def select_images(self, event):
         dialog = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
