@@ -304,11 +304,12 @@ class TrainDetectors(LabGymWindow):
         self.show()
 
     def select_images(self, event):
+        """Select labeled images."""
         dialog = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
         if dialog.ShowModal() == wx.ID_OK:
             self.path_to_trainingimages = dialog.GetPath()
             self.text_selectimages.SetLabel(
-                "Path to training images: " + self.path_to_trainingimages + "."
+                f"Path to training images: {self.path_to_trainingimages}."
             )
         dialog.Destroy()
 
