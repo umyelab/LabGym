@@ -332,20 +332,50 @@ class TrainDetectors(LabGymWindow):
             )
         dialog.Destroy()
 
+    @property
+    def inference_size(self) -> int:
+        """The inferencing frame size for the Detector."""
+        return self._inference_size
+
+    @inference_size.setter
+    def inference_size(self, inference_size: int):
+        """Set the inferencing frame size.
+
+        Args:
+            inference_size: The new inferencing frame size.
+
+        Raises:
+            ValueError: The frame size is not a multiple of 32.
+        """
+        if inference_size % 32 != 0:
+            raise ValueError(f"{inference_size} is not a multiple of 32.")
+        self._inference_size = inference_size
+
     def input_inferencingsize(self, event):
+        """Enter inferencing frame size for the Detector."""
         dialog = wx.NumberEntryDialog(
             self,
             "Input the inferencing frame size\nof the Detector to train",
             "Enter a number:",
             "Divisible by 32",
-            480,
-            1,
-            2048,
+            value=self.inference_size,
+            min=32,
+            max=2048,
         )
-        if dialog.ShowModal() == wx.ID_OK:
+        if dialog.ShowModal() != wx.ID_OK:
+            dialog.Destroy()
+            return
+
+        try:
             self.inference_size = int(dialog.GetValue())
             self.text_inferencingsize.SetLabel(
                 "Inferencing frame size: " + str(self.inference_size) + "."
+            )
+        except ValueError as err:
+            wx.MessageBox(
+                str(err),
+                "Error",
+                wx.OK | wx.ICON_ERROR,
             )
         dialog.Destroy()
 
