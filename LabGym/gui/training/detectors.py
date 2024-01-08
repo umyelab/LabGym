@@ -314,24 +314,21 @@ class TrainDetectors(LabGymWindow):
         dialog.Destroy()
 
     def select_annotation(self, event):
-        wildcard = "Annotation File (*.json)|*.json"
+        """Select COCO annotation file for images."""
         dialog = wx.FileDialog(
             self,
             "Select the annotation file (.json)",
             "",
-            wildcard=wildcard,
+            wildcard="Annotation File (*.json)|*.json",
             style=wx.FD_OPEN,
         )
         if dialog.ShowModal() == wx.ID_OK:
             self.path_to_annotation = dialog.GetPath()
-            f = open(self.path_to_annotation)
-            info = json.load(f)
-            classnames = []
-            for i in info["categories"]:
-                if i["id"] > 0:
-                    classnames.append(i["name"])
+            with open(self.path_to_annotation) as f:
+                info = json.load(f)
+            categories = [i["name"] for i in info["categories"] if i["id"] > 0]
             self.text_selectannotation.SetLabel(
-                "Animal/object categories in annotation file: " + str(classnames) + "."
+                f"Animal/object categories in annotation file: {categories}."
             )
         dialog.Destroy()
 
