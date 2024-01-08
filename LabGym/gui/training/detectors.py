@@ -380,19 +380,20 @@ class TrainDetectors(LabGymWindow):
         dialog.Destroy()
 
     def input_iterations(self, event):
+        """Set the number of iterations for Detector training."""
         dialog = wx.NumberEntryDialog(
             self,
             "Input the iteration number\nfor the Detector training",
             "Enter a number:",
             "Iterations",
-            200,
-            1,
-            10000,
+            value=self.iteration_num,
+            min=1,
+            max=10000,
         )
         if dialog.ShowModal() == wx.ID_OK:
             self.iteration_num = int(dialog.GetValue())
             self.text_iterations.SetLabel(
-                "Training iteration number: " + str(self.iteration_num) + "."
+                f"Training iteration number: {self.iteration_num}."
             )
         dialog.Destroy()
 
