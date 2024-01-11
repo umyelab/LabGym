@@ -21,7 +21,6 @@ import json
 import os
 import shutil
 from pathlib import Path
-from typing import Callable
 
 import wx
 
@@ -30,7 +29,7 @@ from ...analyzebehaviorsdetector import test_detector, train_detector
 from ...tools import extract_frames, wx_video_wildcard
 
 
-detector_path = str(Path(__file__).resolve().parent.parent / "detectors")
+detector_path = str(Path(__file__).resolve().parent.parent.parent / "detectors")
 
 
 class GenerateImageExamples(LabGymWindow):
@@ -398,47 +397,47 @@ class TrainDetectors(LabGymWindow):
         dialog.Destroy()
 
     def train_detector(self, event):
+        """Train a Detector with the given parameters."""
         if self.path_to_trainingimages is None or self.path_to_annotation is None:
             wx.MessageBox(
                 "No training images / annotation file selected.",
                 "Error",
                 wx.OK | wx.ICON_ERROR,
             )
+            return
 
-        else:
-            do_nothing = False
+        while True:
+            dialog = wx.TextEntryDialog(
+                self, "Enter a name for the Detector to train", "Detector name"
+            )
+            if dialog.ShowModal() != wx.ID_OK:
+                break
 
-            stop = False
-            while stop is False:
-                dialog = wx.TextEntryDialog(
-                    self, "Enter a name for the Detector to train", "Detector name"
+            if dialog.GetValue().strip() == "":
+                wx.MessageBox(
+                    "Please enter a name.",
+                    "Error",
+                    wx.OK | wx.ICON_ERROR,
                 )
-                if dialog.ShowModal() == wx.ID_OK:
-                    if dialog.GetValue() != "":
-                        self.path_to_detector = os.path.join(
-                            self.detector_path, dialog.GetValue()
-                        )
-                        if not os.path.isdir(self.path_to_detector):
-                            stop = True
-                        else:
-                            wx.MessageBox(
-                                "The name already exists.",
-                                "Error",
-                                wx.OK | wx.ICON_ERROR,
-                            )
-                else:
-                    do_nothing = True
-                    stop = True
-                dialog.Destroy()
+                continue
 
-            if do_nothing is False:
-                train_detector(
-                    self.path_to_annotation,
-                    self.path_to_trainingimages,
-                    self.path_to_detector,
-                    self.iteration_num,
-                    self.inference_size,
+            self.path_to_detector = os.path.join(self.detector_path, dialog.GetValue())
+            if os.path.isdir(self.path_to_detector):
+                wx.MessageBox(
+                    f"The Detector {dialog.GetValue()} already exists!",
+                    "Error",
+                    wx.OK | wx.ICON_ERROR,
                 )
+                continue
+
+            train_detector(
+                self.path_to_annotation,
+                self.path_to_trainingimages,
+                self.path_to_detector,
+                self.iteration_num,
+                self.inference_size,
+            )
+            break
 
 
 class TestDetectors(wx.Frame):
