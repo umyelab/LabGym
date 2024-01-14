@@ -26,6 +26,7 @@ import wx
 
 from ..utils import LabGymWindow
 from ...analyzebehaviorsdetector import (
+    delete_detector,
     get_animal_names,
     get_annotation_class_names,
     test_detector,
@@ -497,7 +498,7 @@ class TestDetectors(LabGymWindow):
             "Test the selected Detector on the annotated, ground-truth testing images.",
         )
         button_delete = wx.Button(self.panel, label="Delete a Detector", size=(300, 40))
-        button_delete.Bind(wx.EVT_BUTTON, self.remove_detector)
+        button_delete.Bind(wx.EVT_BUTTON, self.delete_detector)
         wx.Button.SetToolTip(
             button_delete,
             "Permanently delete a Detector. The deletion CANNOT be restored.",
@@ -587,35 +588,25 @@ class TestDetectors(LabGymWindow):
                 self.results_folder,
             )
 
-    def remove_detector(self, event):
-        detectors = [
-            i
-            for i in os.listdir(self.detector_path)
-            if os.path.isdir(os.path.join(self.detector_path, i))
-        ]
-        if "__pycache__" in detectors:
-            detectors.remove("__pycache__")
-        if "__init__" in detectors:
-            detectors.remove("__init__")
-        if "__init__.py" in detectors:
-            detectors.remove("__init__.py")
-        detectors.sort()
-
+    def delete_detector(self, event):
+        """Delete a Detector."""
         dialog = wx.SingleChoiceDialog(
             self,
             message="Select a Detector to delete",
             caption="Delete a Detector",
-            choices=detectors,
+            choices=get_detector_names().sort(),
         )
-        if dialog.ShowModal() == wx.ID_OK:
-            detector = dialog.GetStringSelection()
-            dialog1 = wx.MessageDialog(
-                self,
-                "Delete " + str(detector) + "?",
-                "CANNOT be restored!",
-                wx.YES_NO | wx.ICON_QUESTION,
-            )
-            if dialog1.ShowModal() == wx.ID_YES:
-                shutil.rmtree(os.path.join(self.detector_path, detector))
-            dialog1.Destroy()
-        dialog.Destroy()
+        if dialog.ShowModal() != wx.ID_OK:
+            dialog.Destroy()
+            return
+
+        detector = dialog.GetStringSelection()
+        confirm = wx.MessageDialog(
+            self,
+            f"Delete {detector}?",
+            "CANNOT be restored!",
+            wx.YES_NO | wx.ICON_QUESTION,
+        )
+        if confirm.ShowModal() == wx.ID_YES:
+            delete_detector(detector)
+        confirm.Destroy()

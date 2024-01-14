@@ -18,6 +18,7 @@ Email: bingye@umich.edu
 
 
 from pathlib import Path
+import shutil
 from .tools import *
 import os
 import gc
@@ -96,13 +97,18 @@ def get_annotation_class_names(annotation_path: str) -> list[str]:
         FileNotFoundError: The annotation file doesn't exist (this should
             be taken care of by the file selection GUI).
     """
-    f = open(annotation_path)
-    info = json.load(f)
+    with open(annotation_path) as f:
+        info = json.load(f)
     classnames = []
     for category in info["categories"]:
         if category["id"] > 0:
             classnames.append(category["name"])
-    return [category["name"] for category in info["categories"] if category["id"] > 0]
+    return classnames
+
+
+def delete_detector(detector: str):
+    """Permanently delete the given detector."""
+    shutil.rmtree(str(DETECTOR_FOLDER / detector))
 
 
 def train_detector(
