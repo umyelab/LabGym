@@ -25,7 +25,11 @@ from pathlib import Path
 import wx
 
 from ..utils import LabGymWindow
-from ...analyzebehaviorsdetector import test_detector, train_detector
+from ...analyzebehaviorsdetector import (
+    test_detector,
+    train_detector,
+    get_detector_names,
+)
 from ...tools import extract_frames, wx_video_wildcard
 
 
@@ -422,7 +426,7 @@ class TrainDetectors(LabGymWindow):
                 continue
 
             self.path_to_detector = os.path.join(self.detector_path, dialog.GetValue())
-            if os.path.isdir(self.path_to_detector):
+            if dialog.GetValue() in get_detector_names():
                 wx.MessageBox(
                     f"The Detector {dialog.GetValue()} already exists!",
                     "Error",
@@ -440,126 +444,71 @@ class TrainDetectors(LabGymWindow):
             break
 
 
-class TestDetectors(wx.Frame):
+class TestDetectors(LabGymWindow):
+    """Test Detectors using labeled image examples."""
+
     def __init__(self):
-        super().__init__(parent=None, title="Test Detectors", size=(1000, 280))
+        super().__init__(title="Test Detectors", size=(1000, 280))
         self.path_to_testingimages = None
         self.path_to_annotation = None
         self.detector_path = detector_path
         self.path_to_detector = None
         self.output_path = None
 
-        panel = wx.Panel(self)
-        boxsizer = wx.BoxSizer(wx.VERTICAL)
-
-        module_selectdetector = wx.BoxSizer(wx.HORIZONTAL)
-        button_selectdetector = wx.Button(
-            panel, label="Select a Detector\nto test", size=(300, 40)
-        )
-        button_selectdetector.Bind(wx.EVT_BUTTON, self.select_detector)
-        wx.Button.SetToolTip(
-            button_selectdetector,
+        self.text_selectdetector = self.module_text("None.")
+        self.add_module(
+            "Select a Detector\nto test",
+            self.select_detector,
             "The object / animal names in the ground-truth testing image dataset should match those in the selected Detector.",
+            self.text_selectdetector,
         )
-        self.text_selectdetector = wx.StaticText(
-            panel, label="None.", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
-        )
-        module_selectdetector.Add(
-            button_selectdetector, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        module_selectdetector.Add(
-            self.text_selectdetector, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        boxsizer.Add(0, 10, 0)
-        boxsizer.Add(module_selectdetector, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        module_selectimages = wx.BoxSizer(wx.HORIZONTAL)
-        button_selectimages = wx.Button(
-            panel,
-            label="Select the folder containing\nall the testing images",
-            size=(300, 40),
+        self.text_selectimages = self.module_text("None.")
+        self.add_module(
+            "Select the folder containing\nall the testing images",
+            self.select_images,
+            "The folder that stores all the testing images.",
+            self.text_selectimages,
         )
-        button_selectimages.Bind(wx.EVT_BUTTON, self.select_images)
-        wx.Button.SetToolTip(
-            button_selectimages, "The folder that stores all the testing images."
-        )
-        self.text_selectimages = wx.StaticText(
-            panel, label="None.", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
-        )
-        module_selectimages.Add(
-            button_selectimages, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        module_selectimages.Add(
-            self.text_selectimages, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        boxsizer.Add(module_selectimages, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        module_selectannotation = wx.BoxSizer(wx.HORIZONTAL)
-        button_selectannotation = wx.Button(
-            panel, label="Select the *.json\nannotation file", size=(300, 40)
-        )
-        button_selectannotation.Bind(wx.EVT_BUTTON, self.select_annotation)
-        wx.Button.SetToolTip(
-            button_selectannotation,
+        self.text_selectannotation = self.module_text("None.")
+        self.add_module(
+            "Select the *.json\nannotation file",
+            self.select_annotation,
             "The .json file that stores the annotation for the testing images. Make sure it is in “COCO instance segmentation” format.",
+            self.text_selectannotation,
         )
-        self.text_selectannotation = wx.StaticText(
-            panel, label="None.", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
-        )
-        module_selectannotation.Add(
-            button_selectannotation, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        module_selectannotation.Add(
-            self.text_selectannotation, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        boxsizer.Add(module_selectannotation, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        module_selectoutpath = wx.BoxSizer(wx.HORIZONTAL)
-        button_selectoutpath = wx.Button(
-            panel, label="Select the folder to\nstore testing results", size=(300, 40)
+        self.text_selectoutpath = self.module_text("None.")
+        self.add_module(
+            "Select the folder to\nstore testing results",
+            self.select_outpath,
+            "The folder will stores the testing results.",
+            self.text_selectoutpath,
         )
-        button_selectoutpath.Bind(wx.EVT_BUTTON, self.select_outpath)
-        wx.Button.SetToolTip(
-            button_selectoutpath, "The folder will stores the testing results."
-        )
-        self.text_selectoutpath = wx.StaticText(
-            panel, label="None.", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
-        )
-        module_selectoutpath.Add(
-            button_selectoutpath, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        module_selectoutpath.Add(
-            self.text_selectoutpath, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        boxsizer.Add(module_selectoutpath, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
         testanddelete = wx.BoxSizer(wx.HORIZONTAL)
-        button_test = wx.Button(panel, label="Test the Detector", size=(300, 40))
+        button_test = wx.Button(self.panel, label="Test the Detector", size=(300, 40))
         button_test.Bind(wx.EVT_BUTTON, self.test_detector)
         wx.Button.SetToolTip(
             button_test,
             "Test the selected Detector on the annotated, ground-truth testing images.",
         )
-        button_delete = wx.Button(panel, label="Delete a Detector", size=(300, 40))
+        button_delete = wx.Button(self.panel, label="Delete a Detector", size=(300, 40))
         button_delete.Bind(wx.EVT_BUTTON, self.remove_detector)
         wx.Button.SetToolTip(
             button_delete,
             "Permanently delete a Detector. The deletion CANNOT be restored.",
         )
-        testanddelete.Add(button_test, 0, wx.RIGHT, 50)
-        testanddelete.Add(button_delete, 0, wx.LEFT, 50)
-        boxsizer.Add(0, 5, 0)
-        boxsizer.Add(testanddelete, 0, wx.RIGHT | wx.ALIGN_RIGHT, 90)
-        boxsizer.Add(0, 10, 0)
+        testanddelete.Add(button_test, 0, wx.RIGHT, 5)
+        testanddelete.Add(button_delete, 0, wx.LEFT, 5)
+        self.boxsizer.Add(0, self.MODULE_TOP_MARGIN, 0)
+        self.boxsizer.Add(
+            testanddelete, 0, wx.RIGHT | wx.ALIGN_RIGHT, self.BOTTOM_MARGIN * 2
+        )
+        self.boxsizer.Add(0, self.BOTTOM_MARGIN, 0)
 
-        panel.SetSizer(boxsizer)
-
-        self.Centre()
-        self.Show(True)
+        self.show()
 
     def select_detector(self, event):
         detectors = [

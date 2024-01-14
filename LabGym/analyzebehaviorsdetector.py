@@ -17,6 +17,7 @@ Email: bingye@umich.edu
 """
 
 
+from pathlib import Path
 from .tools import *
 import os
 import gc
@@ -54,6 +55,17 @@ try:
 except:
     print("You need to install Detectron2 to use the Detector module in LabGym:")
     print("https://detectron2.readthedocs.io/en/latest/tutorials/install.html")
+
+
+def get_detector_names():
+    """Return the names of all saved detectors."""
+    detector_folder = Path(__file__).resolve().parent / "detectors"
+    ignore = ["__pycache__", "__init__", "__init.py__"]
+    return [
+        path.name
+        for path in detector_folder.glob("*")
+        if path.is_dir() and path.name not in ignore
+    ]
 
 
 def train_detector(
