@@ -60,7 +60,7 @@ except:
 DETECTOR_FOLDER = Path(__file__).resolve().parent / "detectors"
 
 
-def get_detector_names():
+def get_detector_names() -> list[str]:
     """Return the names of all saved detectors."""
     ignore = ["__pycache__", "__init__", "__init.py__"]
     return [
