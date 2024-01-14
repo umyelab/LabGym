@@ -567,6 +567,7 @@ class TestDetectors(LabGymWindow):
         dialog.Destroy()
 
     def test_detector(self, event):
+        """Test the selected detector."""
         if (
             self.path_to_detector is None
             or self.path_to_testingimages is None
