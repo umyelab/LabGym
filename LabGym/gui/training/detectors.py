@@ -529,11 +529,12 @@ class TestDetectors(LabGymWindow):
         dialog.Destroy()
 
     def select_images(self, event):
+        """Select annotated testing images."""
         dialog = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
         if dialog.ShowModal() == wx.ID_OK:
             self.path_to_testingimages = dialog.GetPath()
             self.text_selectimages.SetLabel(
-                "Path to testing images: " + self.path_to_testingimages + "."
+                f"Path to testing images: {self.path_to_testingimages}."
             )
         dialog.Destroy()
 

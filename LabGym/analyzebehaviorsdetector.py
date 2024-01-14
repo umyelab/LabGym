@@ -83,7 +83,6 @@ def get_animal_names(detector: str) -> list[str]:
     animalmapping = DETECTOR_FOLDER / detector / "model_parameters.txt"
     with open(animalmapping) as f:
         model_parameters = f.read()
-    animal_names = json.loads(model_parameters)["animal_names"]
     return json.loads(model_parameters)["animal_names"]
 
 
