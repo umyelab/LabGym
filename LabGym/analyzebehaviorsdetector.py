@@ -57,15 +57,34 @@ except:
     print("https://detectron2.readthedocs.io/en/latest/tutorials/install.html")
 
 
+DETECTOR_FOLDER = Path(__file__).resolve().parent / "detectors"
+
+
 def get_detector_names():
     """Return the names of all saved detectors."""
-    detector_folder = Path(__file__).resolve().parent / "detectors"
     ignore = ["__pycache__", "__init__", "__init.py__"]
     return [
         path.name
-        for path in detector_folder.glob("*")
+        for path in DETECTOR_FOLDER.glob("*")
         if path.is_dir() and path.name not in ignore
     ]
+
+
+def get_animal_names(detector: str) -> list[str]:
+    """Return a list of animal names associated with the given Detector.
+
+    Args:
+        detector: The name of the Detector.
+
+    Raises:
+        FileNotFoundError: The Detector doesn't exist (this should be taken
+            care of by the detector selection).
+    """
+    animalmapping = DETECTOR_FOLDER / detector / "model_parameters.txt"
+    with open(animalmapping) as f:
+        model_parameters = f.read()
+    animal_names = json.loads(model_parameters)["animal_names"]
+    return json.loads(model_parameters)["animal_names"]
 
 
 def train_detector(

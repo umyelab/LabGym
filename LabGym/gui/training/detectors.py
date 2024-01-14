@@ -26,6 +26,7 @@ import wx
 
 from ..utils import LabGymWindow
 from ...analyzebehaviorsdetector import (
+    get_animal_names,
     test_detector,
     train_detector,
     get_detector_names,
@@ -511,38 +512,19 @@ class TestDetectors(LabGymWindow):
         self.show()
 
     def select_detector(self, event):
-        detectors = [
-            i
-            for i in os.listdir(self.detector_path)
-            if os.path.isdir(os.path.join(self.detector_path, i))
-        ]
-        if "__pycache__" in detectors:
-            detectors.remove("__pycache__")
-        if "__init__" in detectors:
-            detectors.remove("__init__")
-        if "__init__.py" in detectors:
-            detectors.remove("__init__.py")
-        detectors.sort()
-
+        """Select a detector to test."""
         dialog = wx.SingleChoiceDialog(
             self,
             message="Select a Detector to test",
             caption="Test a Detector",
-            choices=detectors,
+            choices=get_detector_names(),
         )
+
         if dialog.ShowModal() == wx.ID_OK:
             detector = dialog.GetStringSelection()
             self.path_to_detector = os.path.join(self.detector_path, detector)
-            animalmapping = os.path.join(self.path_to_detector, "model_parameters.txt")
-            with open(animalmapping) as f:
-                model_parameters = f.read()
-            animal_names = json.loads(model_parameters)["animal_names"]
             self.text_selectdetector.SetLabel(
-                "Selected: "
-                + str(detector)
-                + " (animals / objects: "
-                + str(animal_names)
-                + ")."
+                f"Selected: {detector} (animals/objects: {get_animal_names(detector)})."
             )
         dialog.Destroy()
 
