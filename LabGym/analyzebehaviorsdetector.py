@@ -86,6 +86,25 @@ def get_animal_names(detector: str) -> list[str]:
     return json.loads(model_parameters)["animal_names"]
 
 
+def get_annotation_class_names(annotation_path: str) -> list[str]:
+    """Return a list of class names associated with the annotation file.
+
+    Args:
+        annotation_path: The absolute path to the COCO annotation file.
+
+    Raises:
+        FileNotFoundError: The annotation file doesn't exist (this should
+            be taken care of by the file selection GUI).
+    """
+    f = open(annotation_path)
+    info = json.load(f)
+    classnames = []
+    for category in info["categories"]:
+        if category["id"] > 0:
+            classnames.append(category["name"])
+    return [category["name"] for category in info["categories"] if category["id"] > 0]
+
+
 def train_detector(
     path_to_annotation,
     path_to_trainingimages,

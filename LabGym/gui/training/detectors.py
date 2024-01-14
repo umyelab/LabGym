@@ -27,6 +27,7 @@ import wx
 from ..utils import LabGymWindow
 from ...analyzebehaviorsdetector import (
     get_animal_names,
+    get_annotation_class_names,
     test_detector,
     train_detector,
     get_detector_names,
@@ -539,24 +540,19 @@ class TestDetectors(LabGymWindow):
         dialog.Destroy()
 
     def select_annotation(self, event):
-        wildcard = "Annotation File (*.json)|*.json"
+        """Select COCO annotation file."""
         dialog = wx.FileDialog(
             self,
             "Select the annotation file (.json)",
             "",
-            wildcard=wildcard,
+            wildcard="Annotation File (*.json)|*.json",
             style=wx.FD_OPEN,
         )
         if dialog.ShowModal() == wx.ID_OK:
             self.path_to_annotation = dialog.GetPath()
-            f = open(self.path_to_annotation)
-            info = json.load(f)
-            classnames = []
-            for i in info["categories"]:
-                if i["id"] > 0:
-                    classnames.append(i["name"])
+            class_names = get_annotation_class_names(self.path_to_annotation)
             self.text_selectannotation.SetLabel(
-                "Animal/object categories in annotation file: " + str(classnames) + "."
+                f"Animal/object categories in annotation file: {class_names}."
             )
         dialog.Destroy()
 
