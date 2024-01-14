@@ -455,7 +455,7 @@ class TestDetectors(LabGymWindow):
         self.path_to_annotation = None
         self.detector_path = detector_path
         self.path_to_detector = None
-        self.output_path = None
+        self.results_folder = None
 
         self.text_selectdetector = self.module_text("None.")
         self.add_module(
@@ -481,12 +481,12 @@ class TestDetectors(LabGymWindow):
             self.text_selectannotation,
         )
 
-        self.text_selectoutpath = self.module_text("None.")
+        self.text_select_results_folder = self.module_text("None.")
         self.add_module(
             "Select the folder to\nstore testing results",
-            self.select_outpath,
+            self.select_results_folder,
             "The folder will stores the testing results.",
-            self.text_selectoutpath,
+            self.text_select_results_folder,
         )
 
         testanddelete = wx.BoxSizer(wx.HORIZONTAL)
@@ -556,12 +556,13 @@ class TestDetectors(LabGymWindow):
             )
         dialog.Destroy()
 
-    def select_outpath(self, event):
+    def select_results_folder(self, event):
+        """Select folder to store testing results."""
         dialog = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
         if dialog.ShowModal() == wx.ID_OK:
-            self.output_path = dialog.GetPath()
-            self.text_selectoutpath.SetLabel(
-                "Path to testing images: " + self.output_path + "."
+            self.results_folder = dialog.GetPath()
+            self.text_select_results_folder.SetLabel(
+                f"Testing results stored in: {self.results_folder}."
             )
         dialog.Destroy()
 
@@ -570,7 +571,7 @@ class TestDetectors(LabGymWindow):
             self.path_to_detector is None
             or self.path_to_testingimages is None
             or self.path_to_annotation is None
-            or self.output_path is None
+            or self.results_folder is None
         ):
             wx.MessageBox(
                 "No Detector / training images / annotation file / output path selected.",
@@ -582,7 +583,7 @@ class TestDetectors(LabGymWindow):
                 self.path_to_annotation,
                 self.path_to_testingimages,
                 self.path_to_detector,
-                self.output_path,
+                self.results_folder,
             )
 
     def remove_detector(self, event):
