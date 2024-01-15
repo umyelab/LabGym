@@ -297,11 +297,12 @@ class GenerateBehaviorExamples(LabGymWindow):
         )
 
     def select_outpath(self, event):
+        """Select folder to store behavior examples."""
         dialog = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
         if dialog.ShowModal() == wx.ID_OK:
             self.result_path = dialog.GetPath()
             self.text_outputfolder.SetLabel(
-                "Generate behavior examples in: " + self.result_path + "."
+                f"Generate behavior examples in: {self.result_path}."
             )
         dialog.Destroy()
 
