@@ -18,7 +18,6 @@ Email: bingye@umich.edu
 
 
 import os
-from pathlib import Path
 
 import wx
 
@@ -32,9 +31,6 @@ from ...analyzebehaviorsdetector import (
     get_detector_names,
 )
 from ...tools import extract_frames, wx_video_wildcard
-
-
-detector_path = str(Path(__file__).resolve().parent.parent.parent / "detectors")
 
 
 class GenerateImageExamples(LabGymWindow):
@@ -264,8 +260,6 @@ class TrainDetectors(LabGymWindow):
         self.path_to_annotation = None
         self.inference_size = 320
         self.iteration_num = 200
-        self.detector_path = detector_path
-        self.path_to_detector = None
 
         self.text_selectimages = self.module_text("None.")
         self.add_module(
@@ -424,8 +418,8 @@ class TrainDetectors(LabGymWindow):
                 )
                 continue
 
-            self.path_to_detector = os.path.join(self.detector_path, dialog.GetValue())
-            if dialog.GetValue() in get_detector_names():
+            detector_name = dialog.GetValue()
+            if detector_name in get_detector_names():
                 wx.MessageBox(
                     f"The Detector {dialog.GetValue()} already exists!",
                     "Error",
@@ -436,7 +430,7 @@ class TrainDetectors(LabGymWindow):
             train_detector(
                 self.path_to_annotation,
                 self.path_to_trainingimages,
-                self.path_to_detector,
+                detector_name,
                 self.iteration_num,
                 self.inference_size,
             )
@@ -450,8 +444,7 @@ class TestDetectors(LabGymWindow):
         super().__init__(title="Test Detectors", size=(1000, 280))
         self.path_to_testingimages = None
         self.path_to_annotation = None
-        self.detector_path = detector_path
-        self.path_to_detector = None
+        self.detector_name = None
         self.results_folder = None
 
         self.text_selectdetector = self.module_text("None.")
@@ -519,10 +512,9 @@ class TestDetectors(LabGymWindow):
         )
 
         if dialog.ShowModal() == wx.ID_OK:
-            detector = dialog.GetStringSelection()
-            self.path_to_detector = os.path.join(self.detector_path, detector)
+            self.detector_name = dialog.GetStringSelection()
             self.text_selectdetector.SetLabel(
-                f"Selected: {detector} (animals/objects: {get_animal_names(detector)})."
+                f"Selected: {self.detector_name} (animals/objects: {get_animal_names(self.detector_name)})."
             )
         dialog.Destroy()
 
@@ -566,7 +558,7 @@ class TestDetectors(LabGymWindow):
     def test_detector(self, event):
         """Test the selected detector."""
         if (
-            self.path_to_detector is None
+            self.detector_name is None
             or self.path_to_testingimages is None
             or self.path_to_annotation is None
             or self.results_folder is None
@@ -580,7 +572,7 @@ class TestDetectors(LabGymWindow):
             test_detector(
                 self.path_to_annotation,
                 self.path_to_testingimages,
-                self.path_to_detector,
+                self.detector_name,
                 self.results_folder,
             )
 

@@ -71,17 +71,17 @@ def get_detector_names() -> list[str]:
     ]
 
 
-def get_animal_names(detector: str) -> list[str]:
+def get_animal_names(detector_name: str) -> list[str]:
     """Return a list of animal names associated with the given Detector.
 
     Args:
-        detector: The name of the Detector.
+        detector_name: The name of the Detector.
 
     Raises:
         FileNotFoundError: The Detector doesn't exist (this should be taken
             care of by the detector selection).
     """
-    animalmapping = DETECTOR_FOLDER / detector / "model_parameters.txt"
+    animalmapping = DETECTOR_FOLDER / detector_name / "model_parameters.txt"
     with open(animalmapping) as f:
         model_parameters = f.read()
     return json.loads(model_parameters)["animal_names"]
@@ -106,18 +106,19 @@ def get_annotation_class_names(annotation_path: str) -> list[str]:
     return classnames
 
 
-def delete_detector(detector: str):
+def delete_detector(detector_name: str):
     """Permanently delete the given detector."""
-    shutil.rmtree(str(DETECTOR_FOLDER / detector))
+    shutil.rmtree(str(DETECTOR_FOLDER / detector_name))
 
 
 def train_detector(
-    path_to_annotation,
-    path_to_trainingimages,
-    path_to_detector,
-    iteration_num,
-    inference_size,
+    path_to_annotation: str,
+    path_to_trainingimages: str,
+    detector_name: str,
+    iteration_num: int,
+    inference_size: int,
 ):
+    path_to_detector = str(DETECTOR_FOLDER / detector_name)
     if torch.cuda.is_available():
         device = "cuda"
     else:
@@ -201,8 +202,12 @@ def train_detector(
 
 
 def test_detector(
-    path_to_annotation, path_to_testingimages, path_to_detector, output_path
+    path_to_annotation: str,
+    path_to_testingimages: str,
+    detector_name: str,
+    output_path: str,
 ):
+    path_to_detector = str(DETECTOR_FOLDER / detector_name)
     if str("LabGym_detector_test") in DatasetCatalog.list():
         DatasetCatalog.remove("LabGym_detector_test")
         MetadataCatalog.remove("LabGym_detector_test")
