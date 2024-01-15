@@ -166,6 +166,7 @@ class GenerateBehaviorExamples(LabGymWindow):
         self.display_window()
 
     def specify_mode(self, event):
+        """Select a behavior mode to generate examples."""
         behavior_modes = [
             "Non-interactive: behaviors of each individual (each example contains one animal / object)",
             "Interactive basic: behaviors of all (each example contains all animals / objects)",
@@ -178,76 +179,63 @@ class GenerateBehaviorExamples(LabGymWindow):
             caption="Behavior-example mode",
             choices=behavior_modes,
         )
-        if dialog.ShowModal() == wx.ID_OK:
-            behavior_mode = dialog.GetStringSelection()
-            if (
-                behavior_mode
-                == "Non-interactive: behaviors of each individual (each example contains one animal / object)"
-            ):
-                self.behavior_mode = 0
-            elif (
-                behavior_mode
-                == "Interactive basic: behaviors of all (each example contains all animals / objects)"
-            ):
-                self.behavior_mode = 1
-            elif (
-                behavior_mode
-                == "Interactive advanced: behaviors of each individual and social groups (each example contains either one or multiple animals / objects)"
-            ):
-                self.behavior_mode = 2
-                dialog1 = wx.NumberEntryDialog(
-                    self,
-                    "Interactions happen within the social distance.",
-                    "(See Extended Guide for details)\nHow many folds of square root of the animals area\nis the social distance (0=infinity far):",
-                    "Social distance (Enter an integer)",
-                    0,
-                    0,
-                    100000000000000,
-                )
-                if dialog1.ShowModal() == wx.ID_OK:
-                    self.social_distance = int(dialog1.GetValue())
-                    if self.social_distance == 0:
-                        self.social_distance = float("inf")
-                else:
-                    self.social_distance = float("inf")
-                dialog1.Destroy()
-                self.text_detection.SetLabel(
-                    "Only Detector-based detection method is available for the selected behavior mode."
-                )
-            else:
-                self.behavior_mode = 3
-                self.text_detection.SetLabel(
-                    "Only Detector-based detection method is available for the selected behavior mode."
-                )
-                self.text_startgenerate.SetLabel(
-                    'No need to specify this since the selected behavior mode is "Static images".'
-                )
-                self.text_duration.SetLabel(
-                    'No need to specify this since the selected behavior mode is "Static images".'
-                )
-                self.text_animalnumber.SetLabel(
-                    'No need to specify this since the selected behavior mode is "Static images".'
-                )
-                self.text_length.SetLabel(
-                    'No need to specify this since the selected behavior mode is "Static images".'
-                )
-                self.text_skipredundant.SetLabel(
-                    'No need to specify this since the selected behavior mode is "Static images".'
-                )
-        else:
-            self.behavior_mode = 0
-            behavior_mode = "Non-interactive: behaviors of each individual (each example contains one animal / object)"
-        if self.behavior_mode == 2:
+        if dialog.ShowModal() != wx.ID_OK:
+            self.behavior_mode = BehaviorMode.NON_INTERACTIVE
             self.text_specifymode.SetLabel(
-                "Behavior mode: "
-                + behavior_mode
-                + " with social distance: "
-                + str(self.social_distance)
-                + " folds of the animal diameter."
+                f"Behavior mode: {behavior_modes[self.behavior_mode]}."
             )
-        else:
-            self.text_specifymode.SetLabel("Behavior mode: " + behavior_mode + ".")
+            dialog.Destroy()
+            return
+
+        self.behavior_mode = dialog.GetSelection()
         dialog.Destroy()
+
+        if self.behavior_mode == BehaviorMode.INTERACT_ADVANCED:
+            # Need to set social distance for Interactive Advanced mode
+            dialog1 = wx.NumberEntryDialog(
+                self,
+                "Interactions happen within the social distance.",
+                "(See Extended Guide for details)\nHow many folds of square root of the animals area\nis the social distance (0=infinity far):",
+                "Social distance (Enter an integer)",
+                0,
+                0,
+                100000000000000,
+            )
+            if dialog1.ShowModal() == wx.ID_OK:
+                self.social_distance = int(dialog1.GetValue())
+                if self.social_distance == 0:
+                    self.social_distance = float("inf")
+            else:
+                self.social_distance = float("inf")
+            dialog1.Destroy()
+            self.text_detection.SetLabel(
+                "Only Detector-based detection method is available for the selected behavior mode."
+            )
+        elif self.behavior_mode == BehaviorMode.STATIC_IMAGES:
+            self.text_detection.SetLabel(
+                "Only Detector-based detection method is available for the selected behavior mode."
+            )
+            self.text_startgenerate.SetLabel(
+                'No need to specify this since the selected behavior mode is "Static images".'
+            )
+            self.text_duration.SetLabel(
+                'No need to specify this since the selected behavior mode is "Static images".'
+            )
+            self.text_animalnumber.SetLabel(
+                'No need to specify this since the selected behavior mode is "Static images".'
+            )
+            self.text_length.SetLabel(
+                'No need to specify this since the selected behavior mode is "Static images".'
+            )
+            self.text_skipredundant.SetLabel(
+                'No need to specify this since the selected behavior mode is "Static images".'
+            )
+
+        label_text = f"Behavior mode: {behavior_modes[self.behavior_mode]}"
+        if self.behavior_mode == BehaviorMode.INTERACT_ADVANCED:
+            label_text += f" with social distance {self.social_distance}"
+        label_text += "."
+        self.text_specifymode.SetLabel(label_text)
 
     def select_videos(self, event):
         if self.behavior_mode >= 3:
