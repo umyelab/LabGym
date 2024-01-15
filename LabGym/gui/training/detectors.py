@@ -17,9 +17,7 @@ Email: bingye@umich.edu
 """
 
 
-import json
 import os
-import shutil
 from pathlib import Path
 
 import wx
@@ -330,11 +328,9 @@ class TrainDetectors(LabGymWindow):
         )
         if dialog.ShowModal() == wx.ID_OK:
             self.path_to_annotation = dialog.GetPath()
-            with open(self.path_to_annotation) as f:
-                info = json.load(f)
-            categories = [i["name"] for i in info["categories"] if i["id"] > 0]
+            class_names = get_annotation_class_names(self.path_to_annotation)
             self.text_selectannotation.SetLabel(
-                f"Animal/object categories in annotation file: {categories}."
+                f"Animal/object categories in annotation file: {class_names}."
             )
         dialog.Destroy()
 
