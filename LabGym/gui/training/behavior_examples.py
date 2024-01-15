@@ -25,19 +25,28 @@ import cv2
 import numpy as np
 import wx
 
+from ..utils import LabGymWindow
 from ...analyzebehaviors import AnalyzeAnimal
 from ...analyzebehaviorsdetector import AnalyzeAnimalDetector
+from ...tools import AnimalVsBg
 
 
-the_absolute_current_path = str(Path(__file__).resolve().parent.parent)
+THE_ABSOLUTE_CURRENT_PATH = str(Path(__file__).resolve().parent.parent)
 
 
-class GenerateBehaviorExamples(wx.Frame):
+class BehaviorMode:
+    NON_INTERACTIVE = 0
+    INTERACT_BASIC = 1
+    INTERACT_ADVANCED = 2
+    STATIC_IMAGES = 3
+
+
+class GenerateBehaviorExamples(LabGymWindow):
+    """Generate behavior examples for the user to sort."""
+
     def __init__(self):
-        super().__init__(
-            parent=None, title="Generate Behavior Examples", size=(1000, 510)
-        )
-        self.behavior_mode = 0  # 0: non-interactive behavior; 1: interact basic; 2: interact advanced; 3: static images
+        super().__init__(title="Generate Behavior Examples", size=(1000, 530))
+        self.behavior_mode = BehaviorMode.NON_INTERACTIVE
         self.use_detector = False
         self.detector_path = None
         self.path_to_detector = None
@@ -57,7 +66,7 @@ class GenerateBehaviorExamples(wx.Frame):
         self.decode_extraction = False
         self.ex_start = 0
         self.ex_end = None
-        self.animal_vs_bg = 0  # 0: animals birghter than the background; 1: animals darker than the background; 2: hard to tell
+        self.animal_vs_bg = AnimalVsBg.ANIMAL_LIGHTER
         self.stable_illumination = True
         self.length = 15
         self.skip_redundant = 1
@@ -66,230 +75,95 @@ class GenerateBehaviorExamples(wx.Frame):
         self.background_free = True
         self.social_distance = 0
 
-        panel = wx.Panel(self)
-        boxsizer = wx.BoxSizer(wx.VERTICAL)
-
-        module_specifymode = wx.BoxSizer(wx.HORIZONTAL)
-        button_specifymode = wx.Button(
-            panel,
-            label="Specify the mode of behavior\nexamples to generate",
-            size=(300, 40),
+        self.text_specifymode = self.module_text(
+            "Default: Non-interactive: behaviors of each individuals (each example contains one animal / object)"
         )
-        button_specifymode.Bind(wx.EVT_BUTTON, self.specify_mode)
-        wx.Button.SetToolTip(
-            button_specifymode,
+        self.add_module(
+            "Specify the mode of behavior\nexamples to generate",
+            self.specify_mode,
             '"Non-interactive" is for behaviors of each individual; "Interactive basic" is for interactive behaviors of all animals but not distinguishing each individual; "Interactive advanced" is slower in analysis than "basic" but distinguishes individuals during close body contact. "Static images" is for analyzing images not videos. See Extended Guide for details.',
+            self.text_specifymode,
         )
-        self.text_specifymode = wx.StaticText(
-            panel,
-            label="Default: Non-interactive: behaviors of each individuals (each example contains one animal / object)",
-            style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END,
-        )
-        module_specifymode.Add(
-            button_specifymode, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        module_specifymode.Add(
-            self.text_specifymode, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        boxsizer.Add(0, 10, 0)
-        boxsizer.Add(module_specifymode, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        module_inputvideos = wx.BoxSizer(wx.HORIZONTAL)
-        button_inputvideos = wx.Button(
-            panel,
-            label="Select the video(s) / image(s) to\ngenerate behavior examples",
-            size=(300, 40),
-        )
-        button_inputvideos.Bind(wx.EVT_BUTTON, self.select_videos)
-        wx.Button.SetToolTip(
-            button_inputvideos,
+        self.text_inputvideos = self.module_text("None.")
+        self.add_module(
+            "Select the video(s) / image(s) to\ngenerate behavior examples",
+            self.select_videos,
             "Select one or more videos / images. Common video formats (mp4, mov, avi, m4v, mkv, mpg, mpeg) or image formats (jpg, jpeg, png, tiff, bmp) are supported except wmv format.",
+            self.text_inputvideos,
         )
-        self.text_inputvideos = wx.StaticText(
-            panel, label="None.", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
-        )
-        module_inputvideos.Add(
-            button_inputvideos, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        module_inputvideos.Add(
-            self.text_inputvideos, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        boxsizer.Add(module_inputvideos, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        module_outputfolder = wx.BoxSizer(wx.HORIZONTAL)
-        button_outputfolder = wx.Button(
-            panel,
-            label="Select a folder to store the\ngenerated behavior examples",
-            size=(300, 40),
-        )
-        button_outputfolder.Bind(wx.EVT_BUTTON, self.select_outpath)
-        wx.Button.SetToolTip(
-            button_outputfolder,
+        self.text_outputfolder = self.module_text("None.")
+        self.add_module(
+            "Select a folder to store the\ngenerated behavior examples",
+            self.select_outpath,
             'Will create a subfolder for each video in the selected folder. Each subfolder is named after the file name of the video and stores the generated behavior examples. For "Static images" mode, all generated behavior examples will be in this folder.',
+            self.text_outputfolder,
         )
-        self.text_outputfolder = wx.StaticText(
-            panel, label="None.", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
-        )
-        module_outputfolder.Add(
-            button_outputfolder, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        module_outputfolder.Add(
-            self.text_outputfolder, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        boxsizer.Add(module_outputfolder, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        module_detection = wx.BoxSizer(wx.HORIZONTAL)
-        button_detection = wx.Button(
-            panel,
-            label="Specify the method to\ndetect animals or objects",
-            size=(300, 40),
+        self.text_detection = self.module_text(
+            "Default: Background subtraction-based method."
         )
-        button_detection.Bind(wx.EVT_BUTTON, self.select_method)
-        wx.Button.SetToolTip(
-            button_detection,
+        self.add_module(
+            "Specify the method to\ndetect animals or objects",
+            self.select_method,
             "Background subtraction-based method is accurate and fast but needs static background and stable illumination in videos; Detectors-based method is accurate and versatile in any recording settings but is slow. See Extended Guide for details.",
+            self.text_detection,
         )
-        self.text_detection = wx.StaticText(
-            panel,
-            label="Default: Background subtraction-based method.",
-            style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END,
-        )
-        module_detection.Add(button_detection, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        module_detection.Add(self.text_detection, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(module_detection, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        module_startgenerate = wx.BoxSizer(wx.HORIZONTAL)
-        button_startgenerate = wx.Button(
-            panel,
-            label="Specify when generating behavior examples\nshould begin (unit: second)",
-            size=(300, 40),
+        self.text_startgenerate = self.module_text(
+            "Default: at the beginning of the video(s)."
         )
-        button_startgenerate.Bind(wx.EVT_BUTTON, self.specify_timing)
-        wx.Button.SetToolTip(
-            button_startgenerate,
+        self.add_module(
+            "Specify when generating behavior examples\nshould begin (unit: second)",
+            self.specify_timing,
             'Enter a beginning time point for all videos or use "Decode from filenames" to let LabGym decode the different beginning time for different videos. See Extended Guide for details.',
+            self.text_startgenerate,
         )
-        self.text_startgenerate = wx.StaticText(
-            panel,
-            label="Default: at the beginning of the video(s).",
-            style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END,
-        )
-        module_startgenerate.Add(
-            button_startgenerate, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        module_startgenerate.Add(
-            self.text_startgenerate, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        boxsizer.Add(module_startgenerate, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        module_duration = wx.BoxSizer(wx.HORIZONTAL)
-        button_duration = wx.Button(
-            panel,
-            label="Specify how long generating examples\nshould last (unit: second)",
-            size=(300, 40),
+        self.text_duration = self.module_text(
+            "Default: from the specified beginning time to the end of a video."
         )
-        button_duration.Bind(wx.EVT_BUTTON, self.input_duration)
-        wx.Button.SetToolTip(
-            button_duration, "The duration is the same for all the videos in one batch."
+        self.add_module(
+            "Specify how long generating examples\nshould last (unit: second)",
+            self.input_duration,
+            "The duration is the same for all the videos in one batch.",
+            self.text_duration,
         )
-        self.text_duration = wx.StaticText(
-            panel,
-            label="Default: from the specified beginning time to the end of a video.",
-            style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END,
-        )
-        module_duration.Add(button_duration, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        module_duration.Add(self.text_duration, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(module_duration, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        module_animalnumber = wx.BoxSizer(wx.HORIZONTAL)
-        button_animalnumber = wx.Button(
-            panel, label="Specify the number of animals\nin a video", size=(300, 40)
-        )
-        button_animalnumber.Bind(wx.EVT_BUTTON, self.specify_animalnumber)
-        wx.Button.SetToolTip(
-            button_animalnumber,
+        self.text_animalnumber = self.module_text("Default: 1.")
+        self.add_module(
+            "Specify the number of animals\nin a video",
+            self.specify_animalnumber,
             'Enter a number for all videos or use "Decode from filenames" to let LabGym decode the different animal number for different videos. See Extended Guide for details.',
+            self.text_animalnumber,
         )
-        self.text_animalnumber = wx.StaticText(
-            panel, label="Default: 1.", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
-        )
-        module_animalnumber.Add(
-            button_animalnumber, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        module_animalnumber.Add(
-            self.text_animalnumber, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        boxsizer.Add(module_animalnumber, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        module_length = wx.BoxSizer(wx.HORIZONTAL)
-        button_length = wx.Button(
-            panel,
-            label="Specify the number of frames for\nan animation / pattern image",
-            size=(300, 40),
-        )
-        button_length.Bind(wx.EVT_BUTTON, self.input_length)
-        wx.Button.SetToolTip(
-            button_length,
+        self.text_length = self.module_text("Default: 15 frames.")
+        self.add_module(
+            "Specify the number of frames for\nan animation / pattern image",
+            self.input_length,
             "The duration (the number of frames, an integer) of each behavior example, which should approximate the length of a behavior episode. This duration needs to be the same across all the behavior examples for training one Categorizer. See Extended Guide for details.",
+            self.text_length,
         )
-        self.text_length = wx.StaticText(
-            panel,
-            label="Default: 15 frames.",
-            style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END,
-        )
-        module_length.Add(button_length, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        module_length.Add(self.text_length, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(module_length, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        module_skipredundant = wx.BoxSizer(wx.HORIZONTAL)
-        button_skipredundant = wx.Button(
-            panel,
-            label="Specify how many frames to skip when\ngenerating two consecutive behavior examples",
-            size=(300, 40),
+        self.text_skipredundant = self.module_text(
+            "Default: no frame to skip (generate a behavior example every frame)."
         )
-        button_skipredundant.Bind(wx.EVT_BUTTON, self.specify_redundant)
-        wx.Button.SetToolTip(
-            button_skipredundant,
+        self.add_module(
+            "Specify how many frames to skip when\ngenerating two consecutive behavior examples",
+            self.specify_redundant,
             "If two consecutively generated examples have many overlapping frames, they look similar, which makes training inefficient and sorting laborious. Specifying an interval (skipped frames) between two examples can address this. See Extended Guide for details.",
+            self.text_skipredundant,
         )
-        self.text_skipredundant = wx.StaticText(
-            panel,
-            label="Default: no frame to skip (generate a behavior example every frame).",
-            style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END,
-        )
-        module_skipredundant.Add(
-            button_skipredundant, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        module_skipredundant.Add(
-            self.text_skipredundant, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        boxsizer.Add(module_skipredundant, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        button_generate = wx.Button(
-            panel, label="Start to generate behavior examples", size=(300, 40)
-        )
-        button_generate.Bind(wx.EVT_BUTTON, self.generate_data)
-        wx.Button.SetToolTip(
-            button_generate,
+        self.add_submit_button(
+            "Start to generate behavior examples",
+            self.generate_data,
             "Need to specify whether to include background and body parts in the generated behavior examples. See Extended Guide for details.",
         )
-        boxsizer.Add(0, 5, 0)
-        boxsizer.Add(button_generate, 0, wx.RIGHT | wx.ALIGN_RIGHT, 90)
-        boxsizer.Add(0, 10, 0)
 
-        panel.SetSizer(boxsizer)
-
-        self.Centre()
-        self.Show(True)
+        self.display_window()
 
     def specify_mode(self, event):
         behavior_modes = [
@@ -648,7 +522,7 @@ class GenerateBehaviorExamples(wx.Frame):
                 self.use_detector = True
                 self.animal_number = {}
                 self.detector_path = os.path.join(
-                    the_absolute_current_path, "detectors"
+                    THE_ABSOLUTE_CURRENT_PATH, "detectors"
                 )
 
                 detectors = [

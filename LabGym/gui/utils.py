@@ -94,7 +94,7 @@ class LabGymWindow(wx.Frame):
         self.boxsizer.Add(button, 0, wx.RIGHT | wx.ALIGN_RIGHT, 90)
         self.boxsizer.Add(0, self.BOTTOM_MARGIN, 0)
 
-    def show(self):
+    def display_window(self):
         """Display the window to the user.
 
         Call this method AFTER adding all elements.

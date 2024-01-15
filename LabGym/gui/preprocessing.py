@@ -113,7 +113,7 @@ class PreprocessingModule(LabGymWindow):
             tool_tip="Preprocess each selected video.",
         )
 
-        self.show()
+        self.display_window()
 
     def select_videos(self, event):
         """Opens file selection dialog to select videos to preprocess."""

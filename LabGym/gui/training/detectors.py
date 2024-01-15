@@ -98,7 +98,7 @@ class GenerateImageExamples(LabGymWindow):
             tool_tip="Press the button to start generating image examples.",
         )
 
-        self.show()
+        self.display_window()
 
     def select_videos(self, event):
         """Open dialogs to select videos to generate images from."""
@@ -299,7 +299,7 @@ class TrainDetectors(LabGymWindow):
             tool_tip="You need to name the Detector to train. English letters, numbers, underscore “_”, or hyphen “-” are acceptable but do not use special characters such as “@” or “^”.",
         )
 
-        self.show()
+        self.display_window()
 
     def select_images(self, event):
         """Select labeled images."""
@@ -500,7 +500,7 @@ class TestDetectors(LabGymWindow):
         )
         self.boxsizer.Add(0, self.BOTTOM_MARGIN, 0)
 
-        self.show()
+        self.display_window()
 
     def select_detector(self, event):
         """Select a detector to test."""
