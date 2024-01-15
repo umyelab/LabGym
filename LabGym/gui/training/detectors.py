@@ -21,7 +21,7 @@ import os
 
 import wx
 
-from ..utils import LabGymWindow
+from ..utils import WX_VIDEO_WILDCARD, LabGymWindow
 from ...analyzebehaviorsdetector import (
     delete_detector,
     get_animal_names,
@@ -30,7 +30,7 @@ from ...analyzebehaviorsdetector import (
     train_detector,
     get_detector_names,
 )
-from ...tools import extract_frames, wx_video_wildcard
+from ...tools import extract_frames
 
 
 class GenerateImageExamples(LabGymWindow):
@@ -103,7 +103,7 @@ class GenerateImageExamples(LabGymWindow):
     def select_videos(self, event):
         """Open dialogs to select videos to generate images from."""
         video_select_dialog = wx.FileDialog(
-            self, "Select video(s)", "", "", wx_video_wildcard(), style=wx.FD_MULTIPLE
+            self, "Select video(s)", "", "", WX_VIDEO_WILDCARD, style=wx.FD_MULTIPLE
         )
         if video_select_dialog.ShowModal() != wx.ID_OK:
             video_select_dialog.Destroy()

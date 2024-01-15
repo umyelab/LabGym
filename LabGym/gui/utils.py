@@ -21,6 +21,10 @@ from typing import Callable, Tuple
 import wx
 
 
+WX_VIDEO_WILDCARD = "Video files(*.avi;*.mpg;*.mpeg;*.wmv;*.mp4;*.mkv;*.m4v;*.mov)|*.avi;*.mpg;*.mpeg;*.wmv;*.mp4;*.mkv;*.m4v;*.mov"
+WX_IMAGE_WILDCARD = "Image files(*.jpg;*.jpeg;*.png;*.tiff;*.bmp)|*.jpg;*.JPG;*.jpeg;*.JPEG;*.png;*.PNG;*.tiff;*.TIFF;*.bmp;*.BMP"
+
+
 class LabGymWindow(wx.Frame):
     """A base class for LabGym windows.
 

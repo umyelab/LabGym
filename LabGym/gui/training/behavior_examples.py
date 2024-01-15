@@ -25,7 +25,7 @@ import cv2
 import numpy as np
 import wx
 
-from ..utils import LabGymWindow
+from ..utils import WX_IMAGE_WILDCARD, WX_VIDEO_WILDCARD, LabGymWindow
 from ...analyzebehaviors import AnalyzeAnimal
 from ...analyzebehaviorsdetector import AnalyzeAnimalDetector
 from ...tools import AnimalVsBg
@@ -167,6 +167,9 @@ class GenerateBehaviorExamples(LabGymWindow):
 
     def specify_mode(self, event):
         """Select a behavior mode to generate examples."""
+
+        # The indices of each behavior mode in this list are mapped to the same
+        # constant values used in the BehaviorMode class.
         behavior_modes = [
             "Non-interactive: behaviors of each individual (each example contains one animal / object)",
             "Interactive basic: behaviors of all (each example contains all animals / objects)",
@@ -238,69 +241,60 @@ class GenerateBehaviorExamples(LabGymWindow):
         self.text_specifymode.SetLabel(label_text)
 
     def select_videos(self, event):
-        if self.behavior_mode >= 3:
-            wildcard = "Image files(*.jpg;*.jpeg;*.png;*.tiff;*.bmp)|*.jpg;*.JPG;*.jpeg;*.JPEG;*.png;*.PNG;*.tiff;*.TIFF;*.bmp;*.BMP"
+        """Select videos/images to generate behavior examples from."""
+        if self.behavior_mode == BehaviorMode.STATIC_IMAGES:
+            wildcard = WX_IMAGE_WILDCARD
         else:
-            wildcard = "Video files(*.avi;*.mpg;*.mpeg;*.wmv;*.mp4;*.mkv;*.m4v;*.mov)|*.avi;*.mpg;*.mpeg;*.wmv;*.mp4;*.mkv;*.m4v;*.mov"
+            wildcard = WX_VIDEO_WILDCARD
 
         dialog = wx.FileDialog(
             self, "Select video(s) / image(s)", "", "", wildcard, style=wx.FD_MULTIPLE
         )
-        if dialog.ShowModal() == wx.ID_OK:
-            self.path_to_videos = dialog.GetPaths()
-            self.path_to_videos.sort()
-            path = os.path.dirname(self.path_to_videos[0])
-            dialog1 = wx.MessageDialog(
-                self,
-                'Proportional resize the video frames / images?\nSelect "No" if dont know what it is.',
-                "(Optional) resize the frames / images?",
-                wx.YES_NO | wx.ICON_QUESTION,
-            )
-            if dialog1.ShowModal() == wx.ID_YES:
-                dialog2 = wx.NumberEntryDialog(
-                    self,
-                    "Enter the desired frame / image width",
-                    "The unit is pixel:",
-                    "Desired frame / image width",
-                    480,
-                    1,
-                    10000,
-                )
-                if dialog2.ShowModal() == wx.ID_OK:
-                    self.framewidth = int(dialog2.GetValue())
-                    if self.framewidth < 10:
-                        self.framewidth = 10
-                    self.text_inputvideos.SetLabel(
-                        "Selected "
-                        + str(len(self.path_to_videos))
-                        + " file(s) in: "
-                        + path
-                        + " (proportionally resize frame / image width to "
-                        + str(self.framewidth)
-                        + ")."
-                    )
-                else:
-                    self.framewidth = None
-                    self.text_inputvideos.SetLabel(
-                        "Selected "
-                        + str(len(self.path_to_videos))
-                        + " file(s) in: "
-                        + path
-                        + " (original frame / image size)."
-                    )
-                dialog2.Destroy()
-            else:
-                self.framewidth = None
-                self.text_inputvideos.SetLabel(
-                    "Selected "
-                    + str(len(self.path_to_videos))
-                    + " file(s) in: "
-                    + path
-                    + " (original frame / image size)."
-                )
-            dialog1.Destroy()
+        if dialog.ShowModal() != wx.ID_OK:
+            dialog.Destroy()
+            return
 
+        self.path_to_videos = dialog.GetPaths()
+        self.path_to_videos.sort()
         dialog.Destroy()
+
+        folder = os.path.dirname(self.path_to_videos[0])
+        dialog1 = wx.MessageDialog(
+            self,
+            'Proportional resize the video frames / images?\nSelect "No" if dont know what it is.',
+            "(Optional) resize the frames / images?",
+            wx.YES_NO | wx.ICON_QUESTION,
+        )
+        if dialog1.ShowModal() != wx.ID_YES:
+            self.framewidth = None
+            self.text_inputvideos.SetLabel(
+                f"Selected {len(self.path_to_videos)} file(s) in {folder} (original frame / image size)."
+            )
+            dialog1.Destroy()
+            return
+
+        dialog2 = wx.NumberEntryDialog(
+            self,
+            "Enter the desired frame / image width",
+            "The unit is pixel:",
+            "Desired frame / image width",
+            480,
+            1,
+            10000,
+        )
+        if dialog2.ShowModal() != wx.ID_OK:
+            self.framewidth = None
+            self.text_inputvideos.SetLabel(
+                f"Selected {len(self.path_to_videos)} file(s) in {folder} (original frame / image size)."
+            )
+            dialog2.Destroy()
+            return
+
+        self.framewidth = max(int(dialog2.GetValue()), 10)
+        dialog2.Destroy()
+        self.text_inputvideos.SetLabel(
+            f"Selected {len(self.path_to_videos)} file(s) in {folder} (proportionally resize frame / image width to {self.framewidth})."
+        )
 
     def select_outpath(self, event):
         dialog = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)

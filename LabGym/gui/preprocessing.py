@@ -25,8 +25,8 @@ import wx
 import cv2
 import numpy as np
 
-from .utils import LabGymWindow
-from ..tools import preprocess_video, wx_video_wildcard
+from .utils import WX_VIDEO_WILDCARD, LabGymWindow
+from ..tools import preprocess_video
 
 
 class PreprocessingModule(LabGymWindow):
@@ -122,7 +122,7 @@ class PreprocessingModule(LabGymWindow):
         video_selection_dialog = wx.FileDialog(
             parent=self,
             message="Select video(s)",
-            wildcard=wx_video_wildcard(),
+            wildcard=WX_VIDEO_WILDCARD,
             style=wx.FD_MULTIPLE,
         )
 
