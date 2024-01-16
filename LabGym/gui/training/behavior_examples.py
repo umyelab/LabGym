@@ -743,36 +743,35 @@ class GenerateBehaviorExamples(LabGymWindow):
         dialog.Destroy()
 
     def specify_redundant(self, event):
-        if self.behavior_mode >= 3:
+        """Select the number of frames to skip when generating examples."""
+        if self.behavior_mode == BehaviorMode.STATIC_IMAGES:
             wx.MessageBox(
                 'No need to specify this since the selected behavior mode is "Static images".',
                 "Error",
                 wx.OK | wx.ICON_ERROR,
             )
+            return
 
-        else:
-            dialog = wx.NumberEntryDialog(
-                self,
-                "How many frames to skip?",
-                "Enter a number:",
-                "Interval for generating examples",
-                15,
-                0,
-                100000000000000,
+        dialog = wx.NumberEntryDialog(
+            self,
+            "How many frames to skip?",
+            "Enter a number:",
+            "Interval for generating examples",
+            15,
+            0,
+            100000000000000,
+        )
+        if dialog.ShowModal() == wx.ID_OK:
+            self.skip_redundant = int(dialog.GetValue())
+            self.text_skipredundant.SetLabel(
+                f"Generate a pair of example every {self.skip_redundant} frames."
             )
-            if dialog.ShowModal() == wx.ID_OK:
-                self.skip_redundant = int(dialog.GetValue())
-                self.text_skipredundant.SetLabel(
-                    "Generate a pair of example every "
-                    + str(self.skip_redundant)
-                    + " frames."
-                )
-            else:
-                self.skip_redundant = 1
-                self.text_skipredundant.SetLabel(
-                    "Generate a pair of example at every frame."
-                )
-            dialog.Destroy()
+        else:
+            self.skip_redundant = 1
+            self.text_skipredundant.SetLabel(
+                "Generate a pair of example at every frame."
+            )
+        dialog.Destroy()
 
     def generate_data(self, event):
         if self.path_to_videos is None or self.result_path is None:
