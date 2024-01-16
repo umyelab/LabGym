@@ -643,78 +643,78 @@ class GenerateBehaviorExamples(LabGymWindow):
         dialog.Destroy()
 
     def specify_animalnumber(self, event):
-        if self.behavior_mode >= 3:
+        """Select the number of animals in the video."""
+        if self.behavior_mode == BehaviorMode.STATIC_IMAGES:
             wx.MessageBox(
                 'No need to specify this since the selected behavior mode is "Static images".',
                 "Error",
                 wx.OK | wx.ICON_ERROR,
             )
+            return
 
-        else:
-            methods = ['Decode from filenames: "_nn_"', "Enter the number of animals"]
+        DECODE = 'Decode from filenames: "_nn_"'
+        ENTER = "Enter the number of animals"
+        methods = [DECODE, ENTER]
 
-            dialog = wx.SingleChoiceDialog(
-                self,
-                message="Specify the number of animals in a video",
-                caption="The number of animals in a video",
-                choices=methods,
-            )
-            if dialog.ShowModal() == wx.ID_OK:
-                method = dialog.GetStringSelection()
-                if method == "Enter the number of animals":
-                    self.decode_animalnumber = False
-                    if self.use_detector is True:
-                        self.animal_number = {}
-                        for animal_name in self.animal_kinds:
-                            dialog1 = wx.NumberEntryDialog(
-                                self,
-                                "",
-                                "The number of " + str(animal_name) + ": ",
-                                str(animal_name) + " number",
-                                1,
-                                1,
-                                100,
-                            )
-                            if dialog1.ShowModal() == wx.ID_OK:
-                                self.animal_number[animal_name] = int(
-                                    dialog1.GetValue()
-                                )
-                            else:
-                                self.animal_number[animal_name] = 1
-                            dialog1.Destroy()
-                        self.text_animalnumber.SetLabel(
-                            "The number of "
-                            + str(self.animal_kinds)
-                            + " is: "
-                            + str(list(self.animal_number.values()))
-                            + "."
-                        )
-                    else:
-                        dialog1 = wx.NumberEntryDialog(
-                            self,
-                            "",
-                            "The number of animals:",
-                            "Animal number",
-                            1,
-                            1,
-                            100,
-                        )
-                        if dialog1.ShowModal() == wx.ID_OK:
-                            self.animal_number = int(dialog1.GetValue())
-                        else:
-                            self.animal_number = 1
-                        self.text_animalnumber.SetLabel(
-                            "The total number of animals in a video is "
-                            + str(self.animal_number)
-                            + "."
-                        )
-                        dialog1.Destroy()
-                else:
-                    self.decode_animalnumber = True
-                    self.text_animalnumber.SetLabel(
-                        'Decode from the filenames: the "n" immediately after the letter "n" in _"nn"_.'
-                    )
+        dialog = wx.SingleChoiceDialog(
+            self,
+            message="Specify the number of animals in a video",
+            caption="The number of animals in a video",
+            choices=methods,
+        )
+        if dialog.ShowModal() != wx.ID_OK:
             dialog.Destroy()
+            return
+        else:
+            method = dialog.GetStringSelection()
+            dialog.Destroy()
+
+        self.decode_animalnumber = False
+        if method == DECODE:
+            self.decode_animalnumber = True
+            self.text_animalnumber.SetLabel(
+                'Decode from the filenames: the "n" immediately after the letter "n" in _"nn"_.'
+            )
+            return
+
+        if self.use_detector:
+            self.animal_number = {}
+            for animal_name in self.animal_kinds:
+                dialog1 = wx.NumberEntryDialog(
+                    self,
+                    "",
+                    "The number of " + str(animal_name) + ": ",
+                    str(animal_name) + " number",
+                    1,
+                    1,
+                    100,
+                )
+                if dialog1.ShowModal() == wx.ID_OK:
+                    self.animal_number[animal_name] = int(dialog1.GetValue())
+                else:
+                    self.animal_number[animal_name] = 1
+                dialog1.Destroy()
+            self.text_animalnumber.SetLabel(
+                f"The number of {self.animal_kinds} is: {list(self.animal_number.values())}."
+            )
+        else:
+            dialog1 = wx.NumberEntryDialog(
+                self,
+                "",
+                "The number of animals:",
+                "Animal number",
+                1,
+                1,
+                100,
+            )
+            if dialog1.ShowModal() == wx.ID_OK:
+                self.animal_number = int(dialog1.GetValue())
+            else:
+                self.animal_number = 1
+            self.text_animalnumber.SetLabel(
+                f"The total number of animals in a video is {self.animal_number}."
+            )
+            dialog1.Destroy()
 
     def input_length(self, event):
         if self.behavior_mode >= 3:
