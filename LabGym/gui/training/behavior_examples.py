@@ -540,111 +540,107 @@ class GenerateBehaviorExamples(LabGymWindow):
             self._configure_detector()
 
     def specify_timing(self, event):
-        if self.behavior_mode >= 3:
+        """Specify how to handle lighting changes for optogenetic experiments."""
+        if self.behavior_mode == BehaviorMode.STATIC_IMAGES:
             wx.MessageBox(
                 'No need to specify this since the selected behavior mode is "Static images".',
                 "Error",
                 wx.OK | wx.ICON_ERROR,
             )
+            return
 
-        else:
-            if self.use_detector is False:
-                dialog = wx.MessageDialog(
-                    self,
-                    "light on and off in videos?",
-                    "Illumination shifts?",
-                    wx.YES_NO | wx.ICON_QUESTION,
-                )
-                if dialog.ShowModal() == wx.ID_YES:
-                    self.delta = 1.2
-                else:
-                    self.delta = 10000
-                dialog.Destroy()
-
-            if self.delta == 1.2 and self.use_detector is False:
-                methods = [
-                    "Automatic (for light on and off)",
-                    'Decode from filenames: "_bt_"',
-                    "Enter a time point",
-                ]
-            else:
-                methods = ['Decode from filenames: "_bt_"', "Enter a time point"]
-
-            dialog = wx.SingleChoiceDialog(
+        if self.use_detector is False:
+            dialog = wx.MessageDialog(
                 self,
-                message="Specify beginning time to generate behavior examples",
-                caption="Beginning time for generator",
-                choices=methods,
+                "light on and off in videos?",
+                "Illumination shifts?",
+                wx.YES_NO | wx.ICON_QUESTION,
             )
-            if dialog.ShowModal() == wx.ID_OK:
-                method = dialog.GetStringSelection()
-                if method == "Automatic (for light on and off)":
-                    self.autofind_t = True
-                    self.decode_t = False
-                    self.text_startgenerate.SetLabel(
-                        "Automatically find the onset of the 1st time when light on / off as the beginning time."
-                    )
-                elif method == 'Decode from filenames: "_bt_"':
-                    self.autofind_t = False
-                    self.decode_t = True
-                    self.text_startgenerate.SetLabel(
-                        'Decode from the filenames: the "t" immediately after the letter "b"" in "_bt_".'
-                    )
-                else:
-                    self.autofind_t = False
-                    self.decode_t = False
-                    dialog2 = wx.NumberEntryDialog(
-                        self,
-                        "Enter beginning time to generate examples",
-                        "The unit is second:",
-                        "Beginning time to generate examples",
-                        0,
-                        0,
-                        100000000000000,
-                    )
-                    if dialog2.ShowModal() == wx.ID_OK:
-                        self.t = float(dialog2.GetValue())
-                        if self.t < 0:
-                            self.t = 0
-                        self.text_startgenerate.SetLabel(
-                            "Start to generate behavior examples at the: "
-                            + str(self.t)
-                            + " second."
-                        )
-                    dialog2.Destroy()
+            if dialog.ShowModal() == wx.ID_YES:
+                self.delta = 1.2
+            else:
+                self.delta = 10000
             dialog.Destroy()
 
+        AUTOMATIC = "Automatic (for light on and off)"
+        DECODE = 'Decode from filenames: "_bt_"'
+        TIME_POINT = "Enter a time point"
+        methods = [DECODE, TIME_POINT]
+        if self.delta == 1.2 and self.use_detector is False:
+            methods.insert(0, AUTOMATIC)
+
+        dialog = wx.SingleChoiceDialog(
+            self,
+            message="Specify beginning time to generate behavior examples",
+            caption="Beginning time for generator",
+            choices=methods,
+        )
+        if dialog.ShowModal() != wx.ID_OK:
+            dialog.Destroy()
+            return
+        else:
+            method = dialog.GetStringSelection()
+            dialog.Destroy()
+
+        self.autofind_t = False
+        self.decode_t = False
+        if method == AUTOMATIC:
+            self.autofind_t = True
+            self.text_startgenerate.SetLabel(
+                "Automatically find the onset of the 1st time when light on / off as the beginning time."
+            )
+        elif method == DECODE:
+            self.decode_t = True
+            self.text_startgenerate.SetLabel(
+                'Decode from the filenames: the "t" immediately after the letter "b"" in "_bt_".'
+            )
+        else:
+            dialog2 = wx.NumberEntryDialog(
+                self,
+                "Enter beginning time to generate examples",
+                "The unit is second:",
+                "Beginning time to generate examples",
+                0,
+                0,
+                100000000000000,
+            )
+            if dialog2.ShowModal() == wx.ID_OK:
+                self.t = max(float(dialog2.GetValue()), 0)
+                self.text_startgenerate.SetLabel(
+                    f"Start to generate behavior examples at the: {self.t} second."
+                )
+            dialog2.Destroy()
+
     def input_duration(self, event):
-        if self.behavior_mode >= 3:
+        """Select duration for generating behavior examples."""
+        if self.behavior_mode == BehaviorMode.STATIC_IMAGES:
             wx.MessageBox(
                 "No need to specify this since the selected behavior mode is 'Static images'.",
                 "Error",
                 wx.OK | wx.ICON_ERROR,
             )
+            return
 
-        else:
-            dialog = wx.NumberEntryDialog(
-                self,
-                "Enter the duration for generating examples",
-                "The unit is second:",
-                "Duration for generating examples",
-                0,
-                0,
-                100000000000000,
-            )
-            if dialog.ShowModal() == wx.ID_OK:
-                self.duration = int(dialog.GetValue())
-                if self.duration != 0:
-                    self.text_duration.SetLabel(
-                        "The generation of behavior examples lasts for "
-                        + str(self.duration)
-                        + " seconds."
-                    )
-                else:
-                    self.text_duration.SetLabel(
-                        "The generation of behavior examples lasts for the entire duration of a video."
-                    )
-            dialog.Destroy()
+        dialog = wx.NumberEntryDialog(
+            self,
+            "Enter the duration for generating examples",
+            "The unit is second:",
+            "Duration for generating examples",
+            0,
+            0,
+            100000000000000,
+        )
+        if dialog.ShowModal() == wx.ID_OK:
+            self.duration = int(dialog.GetValue())
+            if self.duration != 0:
+                self.text_duration.SetLabel(
+                    f"The generation of behavior examples lasts for {self.duration} seconds."
+                )
+            else:
+                self.text_duration.SetLabel(
+                    "The generation of behavior examples lasts for the entire duration of a video."
+                )
+        dialog.Destroy()
 
     def specify_animalnumber(self, event):
         if self.behavior_mode >= 3:
