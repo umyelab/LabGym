@@ -717,33 +717,30 @@ class GenerateBehaviorExamples(LabGymWindow):
             dialog1.Destroy()
 
     def input_length(self, event):
-        if self.behavior_mode >= 3:
+        """Enter the number of frames corresponding to a behavior."""
+        if self.behavior_mode == BehaviorMode.STATIC_IMAGES:
             wx.MessageBox(
                 'No need to specify this since the selected behavior mode is "Static images".',
                 "Error",
                 wx.OK | wx.ICON_ERROR,
             )
+            return
 
-        else:
-            dialog = wx.NumberEntryDialog(
-                self,
-                "Enter the number of frames\nfor a behavior example",
-                "Enter a number\n(minimum=3):",
-                "Behavior episode duration",
-                15,
-                1,
-                1000,
+        dialog = wx.NumberEntryDialog(
+            self,
+            "Enter the number of frames\nfor a behavior example",
+            "Enter a number\n(minimum=3):",
+            "Behavior episode duration",
+            15,
+            1,
+            1000,
+        )
+        if dialog.ShowModal() == wx.ID_OK:
+            self.length = max(int(dialog.GetValue()), 3)
+            self.text_length.SetLabel(
+                f"The duration of a behavior example is: {self.length} frames."
             )
-            if dialog.ShowModal() == wx.ID_OK:
-                self.length = int(dialog.GetValue())
-                if self.length < 3:
-                    self.length = 3
-                self.text_length.SetLabel(
-                    "The duration of a behavior example is: "
-                    + str(self.length)
-                    + " frames."
-                )
-            dialog.Destroy()
+        dialog.Destroy()
 
     def specify_redundant(self, event):
         if self.behavior_mode >= 3:
