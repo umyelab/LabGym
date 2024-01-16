@@ -306,14 +306,241 @@ class GenerateBehaviorExamples(LabGymWindow):
             )
         dialog.Destroy()
 
-    def select_method(self, event):
-        if self.behavior_mode <= 1:
-            methods = [
-                "Subtract background (fast but requires static background & stable illumination)",
-                "Use trained Detectors (versatile but slow)",
-            ]
+    def _configure_background_subtraction(self):
+        """Configure background subtraction-based example generation."""
+        self.use_detector = False
+
+        # The indices of these options are mapped to the same values as the
+        # constants in the AnimalVsBg class
+        contrasts = [
+            "Animal brighter than background",
+            "Animal darker than background",
+            "Hard to tell",
+        ]
+        dialog = wx.SingleChoiceDialog(
+            self,
+            message="Select the scenario that fits your videos best",
+            caption="Which fits best?",
+            choices=contrasts,
+        )
+        if dialog.ShowModal() != wx.ID_OK:
+            dialog.Destroy()
+            return
+
+        self.animal_vs_bg = dialog.GetSelection()
+        label_options = [
+            "animal brighter",
+            "animal darker",
+            "animal partially brighter/darker",
+        ]
+        label_text = f"Background Subtraction: {label_options[self.animal_vs_bg]}"
+        dialog.Destroy()
+
+        dialog2 = wx.MessageDialog(
+            self,
+            'Load an existing background from a folder?\nSelect "No" if dont know what it is.',
+            "(Optional) load existing background?",
+            wx.YES_NO | wx.ICON_QUESTION,
+        )
+        if dialog2.ShowModal() == wx.ID_YES:
+            start_time_dialog = wx.DirDialog(
+                self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE
+            )
+            if start_time_dialog.ShowModal() == wx.ID_OK:
+                self.background_path = start_time_dialog.GetPath()
+            start_time_dialog.Destroy()
         else:
-            methods = ["Use trained Detectors (versatile but slow)"]
+            self.background_path = None
+            if self.animal_vs_bg != AnimalVsBg.HARD_TO_TELL:
+                start_time_dialog = wx.MessageDialog(
+                    self,
+                    'Unstable illumination in the video?\nSelect "Yes" if dont know what it is.',
+                    "(Optional) unstable illumination?",
+                    wx.YES_NO | wx.ICON_QUESTION,
+                )
+                self.stable_illumination = start_time_dialog.ShowModal() != wx.ID_YES
+                start_time_dialog.Destroy()
+        dialog2.Destroy()
+
+        if self.background_path is not None:
+            self.text_detection.SetLabel(label_text)
+            return
+
+        extraction_methods = [
+            "Use the entire duration (default but NOT recommended)",
+            'Decode from filenames: "_xst_" and "_xet_"',
+            "Enter two time points",
+        ]
+        dialog2 = wx.SingleChoiceDialog(
+            self,
+            message="Specify the time window for background extraction",
+            caption="Time window for background extraction",
+            choices=extraction_methods,
+        )
+        if dialog2.ShowModal() != wx.ID_OK:
+            self.text_detection.SetLabel(label_text)
+            return
+
+        extraction_method = dialog2.GetStringSelection()
+        dialog2.Destroy()
+
+        self.decode_extraction = False
+        if extraction_method == extraction_methods[0]:
+            self.text_detection.SetLabel(f"{label_text}, using the entire duration.")
+            return
+        elif extraction_method == extraction_methods[1]:
+            self.decode_extraction = True
+            self.text_detection.SetLabel(
+                f"{label_text}, using time window decoded from filenames '_xst_' and '_xet_'."
+            )
+            return
+
+        # Prompt for extraction time window
+        label_text += ", using time window (in seconds) from "
+        start_time_dialog = wx.NumberEntryDialog(
+            self,
+            "Enter the start time",
+            "The unit is second:",
+            "Start time for background extraction",
+            0,
+            0,
+            100000000000000,
+        )
+        if start_time_dialog.ShowModal() == wx.ID_OK:
+            self.ex_start = int(start_time_dialog.GetValue())
+            label_text += f"{self.ex_start} to "
+        start_time_dialog.Destroy()
+
+        end_time_dialog = wx.NumberEntryDialog(
+            self,
+            "Enter the end time",
+            "The unit is second:",
+            "End time for background extraction",
+            0,
+            0,
+            100000000000000,
+        )
+        if end_time_dialog.ShowModal() == wx.ID_OK:
+            self.ex_end = int(end_time_dialog.GetValue())
+            if self.ex_end == 0:
+                self.ex_end = None
+                label_text += "the end."
+            else:
+                label_text += f"{self.ex_end}."
+        end_time_dialog.Destroy()
+
+        self.text_detection.SetLabel(label_text)
+
+    def _configure_detector(self):
+        """Configure Detector-based example generation."""
+        self.use_detector = True
+        self.animal_number = {}
+        self.detector_path = os.path.join(THE_ABSOLUTE_CURRENT_PATH, "detectors")
+
+        detectors = [
+            i
+            for i in os.listdir(self.detector_path)
+            if os.path.isdir(os.path.join(self.detector_path, i))
+        ]
+        if "__pycache__" in detectors:
+            detectors.remove("__pycache__")
+        if "__init__" in detectors:
+            detectors.remove("__init__")
+        if "__init__.py" in detectors:
+            detectors.remove("__init__.py")
+        detectors.sort()
+        if "Choose a new directory of the Detector" not in detectors:
+            detectors.append("Choose a new directory of the Detector")
+
+        dialog1 = wx.SingleChoiceDialog(
+            self,
+            message="Select a Detector for animal detection",
+            caption="Select a Detector",
+            choices=detectors,
+        )
+        if dialog1.ShowModal() == wx.ID_OK:
+            detector = dialog1.GetStringSelection()
+            if detector == "Choose a new directory of the Detector":
+                dialog2 = wx.DirDialog(
+                    self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE
+                )
+                if dialog2.ShowModal() == wx.ID_OK:
+                    self.path_to_detector = dialog2.GetPaths()
+                dialog2.Destroy()
+            else:
+                self.path_to_detector = os.path.join(self.detector_path, detector)
+            with open(os.path.join(self.path_to_detector, "model_parameters.txt")) as f:
+                model_parameters = f.read()
+            animal_names = json.loads(model_parameters)["animal_names"]
+            if len(animal_names) > 1:
+                dialog2 = wx.MultiChoiceDialog(
+                    self,
+                    message="Specify which animals/objects involved in behavior examples",
+                    caption="Animal/Object kind",
+                    choices=animal_names,
+                )
+                if dialog2.ShowModal() == wx.ID_OK:
+                    self.animal_kinds = [
+                        animal_names[i] for i in dialog2.GetSelections()
+                    ]
+                else:
+                    self.animal_kinds = animal_names
+                dialog2.Destroy()
+            else:
+                self.animal_kinds = animal_names
+            if self.behavior_mode >= 3:
+                dialog2 = wx.NumberEntryDialog(
+                    self,
+                    "Enter the Detector's detection threshold (0~100%)",
+                    "The higher detection threshold,\nthe higher detection accuracy,\nbut the lower detection sensitivity.\nEnter 0 if don't know how to set.",
+                    "Detection threshold",
+                    0,
+                    0,
+                    100,
+                )
+                if dialog2.ShowModal() == wx.ID_OK:
+                    detection_threshold = dialog2.GetValue()
+                    self.detection_threshold = detection_threshold / 100
+                self.text_detection.SetLabel(
+                    "Detector: "
+                    + detector
+                    + " (detection threshold: "
+                    + str(detection_threshold)
+                    + "%); The animals/objects: "
+                    + str(self.animal_kinds)
+                    + "."
+                )
+                dialog2.Destroy()
+            else:
+                for animal_name in self.animal_kinds:
+                    self.animal_number[animal_name] = 1
+                self.text_animalnumber.SetLabel(
+                    "The number of "
+                    + str(self.animal_kinds)
+                    + " is: "
+                    + str(list(self.animal_number.values()))
+                    + "."
+                )
+                self.text_detection.SetLabel(
+                    "Detector: "
+                    + detector
+                    + "; "
+                    + "The animals/objects: "
+                    + str(self.animal_kinds)
+                    + "."
+                )
+        dialog1.Destroy()
+
+    def select_method(self, event):
+        """Select method to generate contours for behavior examples."""
+        DETECTOR = "Use trained Detectors (versatile but slow)"
+        BACKGROUND_SUBTRACTION = "Subtract background (fast but requires static background & stable illumination)"
+        methods = [DETECTOR]
+        if self.behavior_mode in [
+            BehaviorMode.NON_INTERACTIVE,
+            BehaviorMode.INTERACT_BASIC,
+        ]:
+            methods.append(BACKGROUND_SUBTRACTION)
 
         dialog = wx.SingleChoiceDialog(
             self,
@@ -321,292 +548,17 @@ class GenerateBehaviorExamples(LabGymWindow):
             caption="Detection methods",
             choices=methods,
         )
-        if dialog.ShowModal() == wx.ID_OK:
-            method = dialog.GetStringSelection()
+        if dialog.ShowModal() != wx.ID_OK:
+            dialog.Destroy()
+            return
 
-            if (
-                method
-                == "Subtract background (fast but requires static background & stable illumination)"
-            ):
-                self.use_detector = False
-
-                contrasts = [
-                    "Animal brighter than background",
-                    "Animal darker than background",
-                    "Hard to tell",
-                ]
-                dialog1 = wx.SingleChoiceDialog(
-                    self,
-                    message="Select the scenario that fits your videos best",
-                    caption="Which fits best?",
-                    choices=contrasts,
-                )
-                if dialog1.ShowModal() == wx.ID_OK:
-                    contrast = dialog1.GetStringSelection()
-                    if contrast == "Animal brighter than background":
-                        self.animal_vs_bg = 0
-                    elif contrast == "Animal darker than background":
-                        self.animal_vs_bg = 1
-                    else:
-                        self.animal_vs_bg = 2
-                    dialog2 = wx.MessageDialog(
-                        self,
-                        'Load an existing background from a folder?\nSelect "No" if dont know what it is.',
-                        "(Optional) load existing background?",
-                        wx.YES_NO | wx.ICON_QUESTION,
-                    )
-                    if dialog2.ShowModal() == wx.ID_YES:
-                        dialog3 = wx.DirDialog(
-                            self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE
-                        )
-                        if dialog3.ShowModal() == wx.ID_OK:
-                            self.background_path = dialog3.GetPath()
-                        dialog3.Destroy()
-                    else:
-                        self.background_path = None
-                        if self.animal_vs_bg != 2:
-                            dialog3 = wx.MessageDialog(
-                                self,
-                                'Unstable illumination in the video?\nSelect "Yes" if dont know what it is.',
-                                "(Optional) unstable illumination?",
-                                wx.YES_NO | wx.ICON_QUESTION,
-                            )
-                            if dialog3.ShowModal() == wx.ID_YES:
-                                self.stable_illumination = False
-                            else:
-                                self.stable_illumination = True
-                            dialog3.Destroy()
-                    dialog2.Destroy()
-                    if self.background_path is None:
-                        ex_methods = [
-                            "Use the entire duration (default but NOT recommended)",
-                            'Decode from filenames: "_xst_" and "_xet_"',
-                            "Enter two time points",
-                        ]
-                        dialog2 = wx.SingleChoiceDialog(
-                            self,
-                            message="Specify the time window for background extraction",
-                            caption="Time window for background extraction",
-                            choices=ex_methods,
-                        )
-                        if dialog2.ShowModal() == wx.ID_OK:
-                            ex_method = dialog2.GetStringSelection()
-                            if (
-                                ex_method
-                                == "Use the entire duration (default but NOT recommended)"
-                            ):
-                                self.decode_extraction = False
-                                if self.animal_vs_bg == 0:
-                                    self.text_detection.SetLabel(
-                                        "Background subtraction: animal brighter, using the entire duration."
-                                    )
-                                elif self.animal_vs_bg == 1:
-                                    self.text_detection.SetLabel(
-                                        "Background subtraction: animal darker, using the entire duration."
-                                    )
-                                else:
-                                    self.text_detection.SetLabel(
-                                        "Background subtraction: animal partially brighter/darker, using the entire duration."
-                                    )
-                            elif (
-                                ex_method
-                                == 'Decode from filenames: "_xst_" and "_xet_"'
-                            ):
-                                self.decode_extraction = True
-                                if self.animal_vs_bg == 0:
-                                    self.text_detection.SetLabel(
-                                        'Background subtraction: animal brighter, using time window decoded from filenames "_xst_" and "_xet_".'
-                                    )
-                                elif self.animal_vs_bg == 1:
-                                    self.text_detection.SetLabel(
-                                        'Background subtraction: animal darker, using time window decoded from filenames "_xst_" and "_xet_".'
-                                    )
-                                else:
-                                    self.text_detection.SetLabel(
-                                        'Background subtraction: animal partially brighter/darker, using time window decoded from filenames "_xst_" and "_xet_".'
-                                    )
-                            else:
-                                self.decode_extraction = False
-                                dialog3 = wx.NumberEntryDialog(
-                                    self,
-                                    "Enter the start time",
-                                    "The unit is second:",
-                                    "Start time for background extraction",
-                                    0,
-                                    0,
-                                    100000000000000,
-                                )
-                                if dialog3.ShowModal() == wx.ID_OK:
-                                    self.ex_start = int(dialog3.GetValue())
-                                dialog3.Destroy()
-                                dialog3 = wx.NumberEntryDialog(
-                                    self,
-                                    "Enter the end time",
-                                    "The unit is second:",
-                                    "End time for background extraction",
-                                    0,
-                                    0,
-                                    100000000000000,
-                                )
-                                if dialog3.ShowModal() == wx.ID_OK:
-                                    self.ex_end = int(dialog3.GetValue())
-                                    if self.ex_end == 0:
-                                        self.ex_end = None
-                                dialog3.Destroy()
-                                if self.animal_vs_bg == 0:
-                                    if self.ex_end is None:
-                                        self.text_detection.SetLabel(
-                                            "Background subtraction: animal brighter, using time window (in seconds) from "
-                                            + str(self.ex_start)
-                                            + " to the end."
-                                        )
-                                    else:
-                                        self.text_detection.SetLabel(
-                                            "Background subtraction: animal brighter, using time window (in seconds) from "
-                                            + str(self.ex_start)
-                                            + " to "
-                                            + str(self.ex_end)
-                                            + "."
-                                        )
-                                elif self.animal_vs_bg == 1:
-                                    if self.ex_end is None:
-                                        self.text_detection.SetLabel(
-                                            "Background subtraction: animal darker, using time window (in seconds) from "
-                                            + str(self.ex_start)
-                                            + " to the end."
-                                        )
-                                    else:
-                                        self.text_detection.SetLabel(
-                                            "Background subtraction: animal darker, using time window (in seconds) from "
-                                            + str(self.ex_start)
-                                            + " to "
-                                            + str(self.ex_end)
-                                            + "."
-                                        )
-                                else:
-                                    if self.ex_end is None:
-                                        self.text_detection.SetLabel(
-                                            "Background subtraction: animal partially brighter/darker, using time window (in seconds) from "
-                                            + str(self.ex_start)
-                                            + " to the end."
-                                        )
-                                    else:
-                                        self.text_detection.SetLabel(
-                                            "Background subtraction: animal partially brighter/darker, using time window (in seconds) from "
-                                            + str(self.ex_start)
-                                            + " to "
-                                            + str(self.ex_end)
-                                            + "."
-                                        )
-                        dialog2.Destroy()
-                dialog1.Destroy()
-
-            else:
-                self.use_detector = True
-                self.animal_number = {}
-                self.detector_path = os.path.join(
-                    THE_ABSOLUTE_CURRENT_PATH, "detectors"
-                )
-
-                detectors = [
-                    i
-                    for i in os.listdir(self.detector_path)
-                    if os.path.isdir(os.path.join(self.detector_path, i))
-                ]
-                if "__pycache__" in detectors:
-                    detectors.remove("__pycache__")
-                if "__init__" in detectors:
-                    detectors.remove("__init__")
-                if "__init__.py" in detectors:
-                    detectors.remove("__init__.py")
-                detectors.sort()
-                if "Choose a new directory of the Detector" not in detectors:
-                    detectors.append("Choose a new directory of the Detector")
-
-                dialog1 = wx.SingleChoiceDialog(
-                    self,
-                    message="Select a Detector for animal detection",
-                    caption="Select a Detector",
-                    choices=detectors,
-                )
-                if dialog1.ShowModal() == wx.ID_OK:
-                    detector = dialog1.GetStringSelection()
-                    if detector == "Choose a new directory of the Detector":
-                        dialog2 = wx.DirDialog(
-                            self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE
-                        )
-                        if dialog2.ShowModal() == wx.ID_OK:
-                            self.path_to_detector = dialog2.GetPaths()
-                        dialog2.Destroy()
-                    else:
-                        self.path_to_detector = os.path.join(
-                            self.detector_path, detector
-                        )
-                    with open(
-                        os.path.join(self.path_to_detector, "model_parameters.txt")
-                    ) as f:
-                        model_parameters = f.read()
-                    animal_names = json.loads(model_parameters)["animal_names"]
-                    if len(animal_names) > 1:
-                        dialog2 = wx.MultiChoiceDialog(
-                            self,
-                            message="Specify which animals/objects involved in behavior examples",
-                            caption="Animal/Object kind",
-                            choices=animal_names,
-                        )
-                        if dialog2.ShowModal() == wx.ID_OK:
-                            self.animal_kinds = [
-                                animal_names[i] for i in dialog2.GetSelections()
-                            ]
-                        else:
-                            self.animal_kinds = animal_names
-                        dialog2.Destroy()
-                    else:
-                        self.animal_kinds = animal_names
-                    if self.behavior_mode >= 3:
-                        dialog2 = wx.NumberEntryDialog(
-                            self,
-                            "Enter the Detector's detection threshold (0~100%)",
-                            "The higher detection threshold,\nthe higher detection accuracy,\nbut the lower detection sensitivity.\nEnter 0 if don't know how to set.",
-                            "Detection threshold",
-                            0,
-                            0,
-                            100,
-                        )
-                        if dialog2.ShowModal() == wx.ID_OK:
-                            detection_threshold = dialog2.GetValue()
-                            self.detection_threshold = detection_threshold / 100
-                        self.text_detection.SetLabel(
-                            "Detector: "
-                            + detector
-                            + " (detection threshold: "
-                            + str(detection_threshold)
-                            + "%); The animals/objects: "
-                            + str(self.animal_kinds)
-                            + "."
-                        )
-                        dialog2.Destroy()
-                    else:
-                        for animal_name in self.animal_kinds:
-                            self.animal_number[animal_name] = 1
-                        self.text_animalnumber.SetLabel(
-                            "The number of "
-                            + str(self.animal_kinds)
-                            + " is: "
-                            + str(list(self.animal_number.values()))
-                            + "."
-                        )
-                        self.text_detection.SetLabel(
-                            "Detector: "
-                            + detector
-                            + "; "
-                            + "The animals/objects: "
-                            + str(self.animal_kinds)
-                            + "."
-                        )
-                dialog1.Destroy()
-
+        method = dialog.GetStringSelection()
         dialog.Destroy()
+
+        if method == BACKGROUND_SUBTRACTION:
+            self._configure_background_subtraction()
+        else:
+            self._configure_detector()
 
     def specify_timing(self, event):
         if self.behavior_mode >= 3:
