@@ -27,7 +27,11 @@ import wx
 
 from ..utils import WX_IMAGE_WILDCARD, WX_VIDEO_WILDCARD, LabGymWindow
 from ...analyzebehaviors import AnalyzeAnimal
-from ...analyzebehaviorsdetector import AnalyzeAnimalDetector
+from ...analyzebehaviorsdetector import (
+    AnalyzeAnimalDetector,
+    get_animal_names,
+    get_detector_names,
+)
 from ...tools import AnimalVsBg
 
 
@@ -437,99 +441,74 @@ class GenerateBehaviorExamples(LabGymWindow):
         self.animal_number = {}
         self.detector_path = os.path.join(THE_ABSOLUTE_CURRENT_PATH, "detectors")
 
-        detectors = [
-            i
-            for i in os.listdir(self.detector_path)
-            if os.path.isdir(os.path.join(self.detector_path, i))
-        ]
-        if "__pycache__" in detectors:
-            detectors.remove("__pycache__")
-        if "__init__" in detectors:
-            detectors.remove("__init__")
-        if "__init__.py" in detectors:
-            detectors.remove("__init__.py")
-        detectors.sort()
-        if "Choose a new directory of the Detector" not in detectors:
-            detectors.append("Choose a new directory of the Detector")
+        detectors = get_detector_names()
+        detectors.append("Choose a new directory of the Detector")
 
-        dialog1 = wx.SingleChoiceDialog(
+        select_detector_dialog = wx.SingleChoiceDialog(
             self,
             message="Select a Detector for animal detection",
             caption="Select a Detector",
             choices=detectors,
         )
-        if dialog1.ShowModal() == wx.ID_OK:
-            detector = dialog1.GetStringSelection()
-            if detector == "Choose a new directory of the Detector":
-                dialog2 = wx.DirDialog(
-                    self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE
-                )
-                if dialog2.ShowModal() == wx.ID_OK:
-                    self.path_to_detector = dialog2.GetPaths()
-                dialog2.Destroy()
-            else:
-                self.path_to_detector = os.path.join(self.detector_path, detector)
-            with open(os.path.join(self.path_to_detector, "model_parameters.txt")) as f:
-                model_parameters = f.read()
-            animal_names = json.loads(model_parameters)["animal_names"]
-            if len(animal_names) > 1:
-                dialog2 = wx.MultiChoiceDialog(
-                    self,
-                    message="Specify which animals/objects involved in behavior examples",
-                    caption="Animal/Object kind",
-                    choices=animal_names,
-                )
-                if dialog2.ShowModal() == wx.ID_OK:
-                    self.animal_kinds = [
-                        animal_names[i] for i in dialog2.GetSelections()
-                    ]
-                else:
-                    self.animal_kinds = animal_names
-                dialog2.Destroy()
+        if select_detector_dialog.ShowModal() != wx.ID_OK:
+            select_detector_dialog.Destroy()
+            return
+        else:
+            detector = select_detector_dialog.GetStringSelection()
+            select_detector_dialog.Destroy()
+
+        if detector == "Choose a new directory of the Detector":
+            dialog2 = wx.DirDialog(
+                self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE
+            )
+            if dialog2.ShowModal() == wx.ID_OK:
+                self.path_to_detector = dialog2.GetPaths()
+            dialog2.Destroy()
+        else:
+            self.path_to_detector = os.path.join(self.detector_path, detector)
+
+        animal_names = get_animal_names(detector)
+        if len(animal_names) > 1:
+            dialog2 = wx.MultiChoiceDialog(
+                self,
+                message="Specify which animals/objects involved in behavior examples",
+                caption="Animal/Object kind",
+                choices=animal_names,
+            )
+            if dialog2.ShowModal() == wx.ID_OK:
+                self.animal_kinds = [animal_names[i] for i in dialog2.GetSelections()]
             else:
                 self.animal_kinds = animal_names
-            if self.behavior_mode >= 3:
-                dialog2 = wx.NumberEntryDialog(
-                    self,
-                    "Enter the Detector's detection threshold (0~100%)",
-                    "The higher detection threshold,\nthe higher detection accuracy,\nbut the lower detection sensitivity.\nEnter 0 if don't know how to set.",
-                    "Detection threshold",
-                    0,
-                    0,
-                    100,
-                )
-                if dialog2.ShowModal() == wx.ID_OK:
-                    detection_threshold = dialog2.GetValue()
-                    self.detection_threshold = detection_threshold / 100
+            dialog2.Destroy()
+        else:
+            self.animal_kinds = animal_names
+
+        if self.behavior_mode == BehaviorMode.STATIC_IMAGES:
+            dialog2 = wx.NumberEntryDialog(
+                self,
+                "Enter the Detector's detection threshold (0~100%)",
+                "The higher detection threshold,\nthe higher detection accuracy,\nbut the lower detection sensitivity.\nEnter 0 if don't know how to set.",
+                "Detection threshold",
+                0,
+                0,
+                100,
+            )
+            if dialog2.ShowModal() == wx.ID_OK:
+                detection_threshold = dialog2.GetValue()
+                self.detection_threshold = detection_threshold / 100
                 self.text_detection.SetLabel(
-                    "Detector: "
-                    + detector
-                    + " (detection threshold: "
-                    + str(detection_threshold)
-                    + "%); The animals/objects: "
-                    + str(self.animal_kinds)
-                    + "."
+                    f"Detector: {detector} (detection threshold: {detection_threshold}%); The animals/objects: {self.animal_kinds}."
                 )
-                dialog2.Destroy()
-            else:
-                for animal_name in self.animal_kinds:
-                    self.animal_number[animal_name] = 1
-                self.text_animalnumber.SetLabel(
-                    "The number of "
-                    + str(self.animal_kinds)
-                    + " is: "
-                    + str(list(self.animal_number.values()))
-                    + "."
-                )
-                self.text_detection.SetLabel(
-                    "Detector: "
-                    + detector
-                    + "; "
-                    + "The animals/objects: "
-                    + str(self.animal_kinds)
-                    + "."
-                )
-        dialog1.Destroy()
+            dialog2.Destroy()
+        else:
+            for animal_name in self.animal_kinds:
+                self.animal_number[animal_name] = 1
+            self.text_animalnumber.SetLabel(
+                f"The number of {self.animal_kinds} is: {list(self.animal_number.values())}."
+            )
+            self.text_detection.SetLabel(
+                f"Detector: {detector}; The animals/objects: {self.animal_kinds}."
+            )
 
     def select_method(self, event):
         """Select method to generate contours for behavior examples."""
