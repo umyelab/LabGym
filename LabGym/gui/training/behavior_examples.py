@@ -774,192 +774,183 @@ class GenerateBehaviorExamples(LabGymWindow):
         dialog.Destroy()
 
     def generate_data(self, event):
+        """Generate behavior examples with the given configuration."""
         if self.path_to_videos is None or self.result_path is None:
             wx.MessageBox(
                 "No input video(s) / output folder selected.",
                 "Error",
                 wx.OK | wx.ICON_ERROR,
             )
+            return
 
-        else:
-            do_nothing = True
+        dialog = wx.MessageDialog(
+            self,
+            'Include background in animations? Select "No"\nif background is behavior irrelevant.',
+            "Including background?",
+            wx.YES_NO | wx.ICON_QUESTION,
+        )
+        self.background_free = dialog.ShowModal() != wx.ID_YES
+        dialog.Destroy()
 
-            dialog = wx.MessageDialog(
-                self,
-                'Include background in animations? Select "No"\nif background is behavior irrelevant.',
-                "Including background?",
-                wx.YES_NO | wx.ICON_QUESTION,
-            )
-            if dialog.ShowModal() == wx.ID_YES:
-                self.background_free = False
+        if self.behavior_mode == BehaviorMode.STATIC_IMAGES:
+            if self.path_to_detector is None:
+                wx.MessageBox(
+                    "You need to select a Detector.", "Error", wx.OK | wx.ICON_ERROR
+                )
+                return
             else:
-                self.background_free = True
+                AAD = AnalyzeAnimalDetector()
+                AAD.analyze_images_individuals(
+                    self.path_to_detector,
+                    self.path_to_videos,
+                    self.result_path,
+                    self.animal_kinds,
+                    generate=True,
+                    imagewidth=self.framewidth,
+                    detection_threshold=self.detection_threshold,
+                    background_free=self.background_free,
+                )
+                return
+
+        dialog = wx.MessageDialog(
+            self,
+            'Include body parts in pattern images?\nSelect "No" if limb movement is neglectable.',
+            "Including body parts?",
+            wx.YES_NO | wx.ICON_QUESTION,
+        )
+        self.include_bodyparts = False
+        if dialog.ShowModal() == wx.ID_YES:
+            self.include_bodyparts = True
+            dialog2 = wx.NumberEntryDialog(
+                self,
+                "Leave it as it is if dont know what it is.",
+                "Enter a number between 0 and 255:",
+                "STD for motionless pixels",
+                0,
+                0,
+                255,
+            )
+            if dialog2.ShowModal() == wx.ID_OK:
+                self.std = int(dialog2.GetValue())
+            else:
+                self.std = 0
+            dialog2.Destroy()
+        dialog.Destroy()
+
+        dialog = wx.MessageDialog(
+            self,
+            "Start to generate behavior examples?",
+            "Start to generate examples?",
+            wx.YES_NO | wx.ICON_QUESTION,
+        )
+        if dialog.ShowModal() != wx.ID_YES:
+            dialog.Destroy()
+            return
+        else:
             dialog.Destroy()
 
-            if self.behavior_mode >= 3:
-                if self.path_to_detector is None:
-                    wx.MessageBox(
-                        "You need to select a Detector.", "Error", wx.OK | wx.ICON_ERROR
-                    )
+        for video in self.path_to_videos:
+            filename = os.path.splitext(os.path.basename(video))[0].split("_")
+            if self.decode_animalnumber is True:
+                if self.use_detector is True:
+                    self.animal_number = {}
+                    number = [x[1:] for x in filename if len(x) > 1 and x[0] == "n"]
+                    for a, animal_name in enumerate(self.animal_kinds):
+                        self.animal_number[animal_name] = int(number[a])
                 else:
-                    AAD = AnalyzeAnimalDetector()
-                    AAD.analyze_images_individuals(
-                        self.path_to_detector,
-                        self.path_to_videos,
-                        self.result_path,
-                        self.animal_kinds,
-                        generate=True,
-                        imagewidth=self.framewidth,
-                        detection_threshold=self.detection_threshold,
+                    for x in filename:
+                        if len(x) > 1:
+                            if x[0] == "n":
+                                self.animal_number = int(x[1:])
+            if self.decode_t is True:
+                for x in filename:
+                    if len(x) > 1:
+                        if x[0] == "b":
+                            self.t = float(x[1:])
+            if self.decode_extraction is True:
+                for x in filename:
+                    if len(x) > 2:
+                        if x[:2] == "xs":
+                            self.ex_start = int(x[2:])
+                        if x[:2] == "xe":
+                            self.ex_end = int(x[2:])
+
+            if self.animal_number is None:
+                if self.use_detector is True:
+                    self.animal_number = {}
+                    for animal_name in self.animal_kinds:
+                        self.animal_number[animal_name] = 1
+                else:
+                    self.animal_number = 1
+
+            if self.use_detector is False:
+                AA = AnalyzeAnimal()
+                AA.prepare_analysis(
+                    video,
+                    self.result_path,
+                    self.animal_number,
+                    delta=self.delta,
+                    framewidth=self.framewidth,
+                    stable_illumination=self.stable_illumination,
+                    channel=3,
+                    include_bodyparts=self.include_bodyparts,
+                    std=self.std,
+                    categorize_behavior=False,
+                    animation_analyzer=False,
+                    path_background=self.background_path,
+                    autofind_t=self.autofind_t,
+                    t=self.t,
+                    duration=self.duration,
+                    ex_start=self.ex_start,
+                    ex_end=self.ex_end,
+                    length=self.length,
+                    animal_vs_bg=self.animal_vs_bg,
+                )
+                if self.behavior_mode == BehaviorMode.NON_INTERACTIVE:
+                    AA.generate_data(
                         background_free=self.background_free,
+                        skip_redundant=self.skip_redundant,
                     )
-
+                else:
+                    AA.generate_data_interact_basic(
+                        background_free=self.background_free,
+                        skip_redundant=self.skip_redundant,
+                    )
             else:
-                dialog = wx.MessageDialog(
-                    self,
-                    'Include body parts in pattern images?\nSelect "No" if limb movement is neglectable.',
-                    "Including body parts?",
-                    wx.YES_NO | wx.ICON_QUESTION,
+                AAD = AnalyzeAnimalDetector()
+                AAD.prepare_analysis(
+                    self.path_to_detector,
+                    video,
+                    self.result_path,
+                    self.animal_number,
+                    self.animal_kinds,
+                    self.behavior_mode,
+                    framewidth=self.framewidth,
+                    channel=3,
+                    include_bodyparts=self.include_bodyparts,
+                    std=self.std,
+                    categorize_behavior=False,
+                    animation_analyzer=False,
+                    t=self.t,
+                    duration=self.duration,
+                    length=self.length,
+                    social_distance=self.social_distance,
                 )
-                if dialog.ShowModal() == wx.ID_YES:
-                    self.include_bodyparts = True
-                    dialog2 = wx.NumberEntryDialog(
-                        self,
-                        "Leave it as it is if dont know what it is.",
-                        "Enter a number between 0 and 255:",
-                        "STD for motionless pixels",
-                        0,
-                        0,
-                        255,
+                if self.behavior_mode == BehaviorMode.NON_INTERACTIVE:
+                    AAD.generate_data(
+                        background_free=self.background_free,
+                        skip_redundant=self.skip_redundant,
                     )
-                    if dialog2.ShowModal() == wx.ID_OK:
-                        self.std = int(dialog2.GetValue())
-                    else:
-                        self.std = 0
-                    dialog2.Destroy()
+                elif self.behavior_mode == BehaviorMode.INTERACT_BASIC:
+                    AAD.generate_data_interact_basic(
+                        background_free=self.background_free,
+                        skip_redundant=self.skip_redundant,
+                    )
                 else:
-                    self.include_bodyparts = False
-                dialog.Destroy()
-
-                dialog = wx.MessageDialog(
-                    self,
-                    "Start to generate behavior examples?",
-                    "Start to generate examples?",
-                    wx.YES_NO | wx.ICON_QUESTION,
-                )
-                if dialog.ShowModal() == wx.ID_YES:
-                    do_nothing = False
-                else:
-                    do_nothing = True
-                dialog.Destroy()
-
-                if do_nothing is False:
-                    for i in self.path_to_videos:
-                        filename = os.path.splitext(os.path.basename(i))[0].split("_")
-                        if self.decode_animalnumber is True:
-                            if self.use_detector is True:
-                                self.animal_number = {}
-                                number = [
-                                    x[1:]
-                                    for x in filename
-                                    if len(x) > 1 and x[0] == "n"
-                                ]
-                                for a, animal_name in enumerate(self.animal_kinds):
-                                    self.animal_number[animal_name] = int(number[a])
-                            else:
-                                for x in filename:
-                                    if len(x) > 1:
-                                        if x[0] == "n":
-                                            self.animal_number = int(x[1:])
-                        if self.decode_t is True:
-                            for x in filename:
-                                if len(x) > 1:
-                                    if x[0] == "b":
-                                        self.t = float(x[1:])
-                        if self.decode_extraction is True:
-                            for x in filename:
-                                if len(x) > 2:
-                                    if x[:2] == "xs":
-                                        self.ex_start = int(x[2:])
-                                    if x[:2] == "xe":
-                                        self.ex_end = int(x[2:])
-
-                        if self.animal_number is None:
-                            if self.use_detector is True:
-                                self.animal_number = {}
-                                for animal_name in self.animal_kinds:
-                                    self.animal_number[animal_name] = 1
-                            else:
-                                self.animal_number = 1
-
-                        if self.use_detector is False:
-                            AA = AnalyzeAnimal()
-                            AA.prepare_analysis(
-                                i,
-                                self.result_path,
-                                self.animal_number,
-                                delta=self.delta,
-                                framewidth=self.framewidth,
-                                stable_illumination=self.stable_illumination,
-                                channel=3,
-                                include_bodyparts=self.include_bodyparts,
-                                std=self.std,
-                                categorize_behavior=False,
-                                animation_analyzer=False,
-                                path_background=self.background_path,
-                                autofind_t=self.autofind_t,
-                                t=self.t,
-                                duration=self.duration,
-                                ex_start=self.ex_start,
-                                ex_end=self.ex_end,
-                                length=self.length,
-                                animal_vs_bg=self.animal_vs_bg,
-                            )
-                            if self.behavior_mode == 0:
-                                AA.generate_data(
-                                    background_free=self.background_free,
-                                    skip_redundant=self.skip_redundant,
-                                )
-                            else:
-                                AA.generate_data_interact_basic(
-                                    background_free=self.background_free,
-                                    skip_redundant=self.skip_redundant,
-                                )
-                        else:
-                            AAD = AnalyzeAnimalDetector()
-                            AAD.prepare_analysis(
-                                self.path_to_detector,
-                                i,
-                                self.result_path,
-                                self.animal_number,
-                                self.animal_kinds,
-                                self.behavior_mode,
-                                framewidth=self.framewidth,
-                                channel=3,
-                                include_bodyparts=self.include_bodyparts,
-                                std=self.std,
-                                categorize_behavior=False,
-                                animation_analyzer=False,
-                                t=self.t,
-                                duration=self.duration,
-                                length=self.length,
-                                social_distance=self.social_distance,
-                            )
-                            if self.behavior_mode == 0:
-                                AAD.generate_data(
-                                    background_free=self.background_free,
-                                    skip_redundant=self.skip_redundant,
-                                )
-                            elif self.behavior_mode == 1:
-                                AAD.generate_data_interact_basic(
-                                    background_free=self.background_free,
-                                    skip_redundant=self.skip_redundant,
-                                )
-                            else:
-                                AAD.generate_data_interact_advance(
-                                    background_free=self.background_free,
-                                    skip_redundant=self.skip_redundant,
-                                )
+                    AAD.generate_data_interact_advance(
+                        background_free=self.background_free,
+                        skip_redundant=self.skip_redundant,
+                    )
 
 
 class SortBehaviorExamples(wx.Frame):
