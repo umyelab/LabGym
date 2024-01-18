@@ -1006,11 +1006,12 @@ class SortBehaviorExamples(LabGymWindow):
         dialog.Destroy()
 
     def output_folder(self, event):
+        """Select folder to store sorted behavior examples."""
         dialog = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
         if dialog.ShowModal() == wx.ID_OK:
             self.result_path = dialog.GetPath()
             self.text_outputfolder.SetLabel(
-                "Sorted behavior examples will be in: " + self.result_path + "."
+                f"Sorted behavior examples will be in: {self.result_path}."
             )
         dialog.Destroy()
 
