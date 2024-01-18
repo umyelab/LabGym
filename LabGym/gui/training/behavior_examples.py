@@ -996,11 +996,12 @@ class SortBehaviorExamples(LabGymWindow):
         self.display_window()
 
     def input_folder(self, event):
+        """Select folder with unsorted behavior examples."""
         dialog = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
         if dialog.ShowModal() == wx.ID_OK:
             self.input_path = dialog.GetPath()
             self.text_inputfolder.SetLabel(
-                "Unsorted behavior examples are in: " + self.input_path + "."
+                f"Unsorted behavior examples are in: f{self.input_path}."
             )
         dialog.Destroy()
 
