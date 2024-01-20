@@ -29,7 +29,7 @@ from ...analyzebehaviors import AnalyzeAnimal
 from ...analyzebehaviorsdetector import AnalyzeAnimalDetector
 from ...tools import plot_evnets
 
-the_absolute_current_path = str(Path(__file__).resolve().parent)
+the_absolute_current_path = str(Path(__file__).resolve().parent.parent.parent)
 
 
 class ColorPicker(wx.Dialog):
