@@ -63,7 +63,7 @@ class TrainCategorizers(LabGymWindow):
     def __init__(self):
         super().__init__(title="Train Categorizers", size=(1200, 550))
         self.behavior_example_folder = None
-        self.new_path = None
+        self.renamed_example_folder = None
         self.behavior_mode = BehaviorMode.NON_INTERACTIVE
         self.using_animation_analyzer = True
         self.level_tconv = 2
@@ -82,7 +82,7 @@ class TrainCategorizers(LabGymWindow):
         self.out_path = None
         self.include_bodyparts = False
         self.std = 0
-        self.resize = None
+        self.example_width = None
         self.background_free = True
         self.social_distance = 0
 
@@ -97,7 +97,7 @@ class TrainCategorizers(LabGymWindow):
         self.text_renameexample = self.module_text("None.")
         self.add_module(
             "Select a new folder to store\nall the prepared behavior examples",
-            self.select_outpath,
+            self.select_renamed_example_folder,
             "This folder will store all the prepared behavior examples and can be directly used for training. Preparing behavior examples is copying all examples into this folder and renaming them to put behavior name labels to their file names.",
             self.text_renameexample,
         )
@@ -178,14 +178,15 @@ class TrainCategorizers(LabGymWindow):
             )
         dialog.Destroy()
 
-    def select_outpath(self, event):
+    def select_renamed_example_folder(self, event):
+        """Select directory to store renamed behavior examples."""
         dialog = wx.DirDialog(
             self, "Select a new directory", "", style=wx.DD_DEFAULT_STYLE
         )
         if dialog.ShowModal() == wx.ID_OK:
-            self.new_path = dialog.GetPath()
+            self.renamed_example_folder = dialog.GetPath()
             self.text_renameexample.SetLabel(
-                "Will copy and rename the examples to: " + self.new_path + "."
+                f"Will copy and rename the examples to: {self.renamed_example_folder}."
             )
         dialog.Destroy()
 
@@ -195,34 +196,33 @@ class TrainCategorizers(LabGymWindow):
             "Resize the frames / images?",
             wx.YES_NO | wx.ICON_QUESTION,
         )
-        if dialog.ShowModal() == wx.ID_YES:
-            dialog1 = wx.NumberEntryDialog(
-                self,
-                "Enter the desired width dimension",
-                "No smaller than the\ndesired input dimension of the Categorizer:",
-                "Frame / image dimension",
-                32,
-                1,
-                300,
-            )
-            if dialog1.ShowModal() == wx.ID_OK:
-                self.resize = int(dialog1.GetValue())
-            if self.resize < 16:
-                self.resize = 16
-            self.text_renameexample.SetLabel(
-                "Will copy, rename, and resize (to "
-                + str(self.resize)
-                + ") the examples to: "
-                + self.new_path
-                + "."
-            )
-            dialog1.Destroy()
+        if dialog.ShowModal() != wx.ID_YES:
+            self.example_width = None
+            dialog.Destroy()
+            return
+
+        width_dialog = wx.NumberEntryDialog(
+            self,
+            "Enter the desired width dimension",
+            "No smaller than the\ndesired input dimension of the Categorizer:",
+            "Frame / image dimension",
+            32,
+            1,
+            300,
+        )
+        if width_dialog.ShowModal() != wx.ID_OK:
+            width_dialog.Destroy()
+            return
         else:
-            self.resize = None
-        dialog.Destroy()
+            self.example_width = max(int(width_dialog.GetValue()), 16)
+            width_dialog.Destroy()
+
+        self.text_renameexample.SetLabel(
+            f"Will copy, rename, and resize (to {self.example_width}) the examples to {self.renamed_example_folder}."
+        )
 
     def rename_files(self, event):
-        if self.behavior_example_folder is None or self.new_path is None:
+        if self.behavior_example_folder is None or self.renamed_example_folder is None:
             wx.MessageBox(
                 "Please select a folder that stores the sorted examples /\na new folder to store prepared training examples!",
                 "Error",
@@ -231,7 +231,9 @@ class TrainCategorizers(LabGymWindow):
         else:
             CA = Categorizers()
             CA.rename_label(
-                self.behavior_example_folder, self.new_path, resize=self.resize
+                self.behavior_example_folder,
+                self.renamed_example_folder,
+                resize=self.example_width,
             )
 
     def specify_categorizer(self, event):
