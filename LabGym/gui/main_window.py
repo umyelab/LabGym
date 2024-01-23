@@ -20,10 +20,11 @@ Email: bingye@umich.edu
 import wx
 import wx.lib.agw.hyperlink
 
+from LabGym import __version__
+
 from .analysis import AnalysisModule
 from .preprocessing import PreprocessingModule
 from .training import TrainingModule
-from .. import __version__
 
 
 class MainWindow(wx.Frame):

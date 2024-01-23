@@ -25,8 +25,9 @@ import wx
 import cv2
 import numpy as np
 
+from LabGym.tools import preprocess_video
+
 from .utils import WX_VIDEO_WILDCARD, LabGymWindow
-from ..tools import preprocess_video
 
 
 class PreprocessingModule(LabGymWindow):

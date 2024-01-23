@@ -25,9 +25,9 @@ import pandas as pd
 import torch
 import wx
 
-from ...analyzebehaviors import AnalyzeAnimal
-from ...analyzebehaviorsdetector import AnalyzeAnimalDetector
-from ...tools import plot_evnets
+from LabGym.analyzebehaviors import AnalyzeAnimal
+from LabGym.analyzebehaviorsdetector import AnalyzeAnimalDetector
+from LabGym.tools import plot_evnets
 
 the_absolute_current_path = str(Path(__file__).resolve().parent.parent.parent)
 

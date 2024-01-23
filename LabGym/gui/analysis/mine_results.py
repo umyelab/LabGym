@@ -21,7 +21,7 @@ import os
 import pandas as pd
 import wx
 
-from ...minedata import data_mining
+from LabGym.minedata import data_mining
 
 
 class MineResults(wx.Frame):

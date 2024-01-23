@@ -25,14 +25,19 @@ import cv2
 import numpy as np
 import wx
 
-from ..utils import WX_IMAGE_WILDCARD, WX_VIDEO_WILDCARD, LabGymWindow, BehaviorMode
-from ...analyzebehaviors import AnalyzeAnimal
-from ...analyzebehaviorsdetector import (
+from LabGym.tools import AnimalVsBg
+from LabGym.analyzebehaviors import AnalyzeAnimal
+from LabGym.analyzebehaviorsdetector import (
     AnalyzeAnimalDetector,
     get_animal_names,
     get_detector_names,
 )
-from ...tools import AnimalVsBg
+from LabGym.gui.utils import (
+    WX_IMAGE_WILDCARD,
+    WX_VIDEO_WILDCARD,
+    LabGymWindow,
+    BehaviorMode,
+)
 
 
 THE_ABSOLUTE_CURRENT_PATH = str(Path(__file__).resolve().parent.parent)
