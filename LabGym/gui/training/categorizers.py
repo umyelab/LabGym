@@ -62,7 +62,7 @@ class TrainCategorizers(LabGymWindow):
 
     def __init__(self):
         super().__init__(title="Train Categorizers", size=(1200, 550))
-        self.file_path = None
+        self.behavior_example_folder = None
         self.new_path = None
         self.behavior_mode = BehaviorMode.NON_INTERACTIVE
         self.using_animation_analyzer = True
@@ -89,7 +89,7 @@ class TrainCategorizers(LabGymWindow):
         self.text_inputexamples = self.module_text("None.")
         self.add_module(
             "Select the folder that stores\nthe sorted behavior examples",
-            self.select_filepath,
+            self.select_behavior_example_folder,
             "This folder should contain all the sorted behavior examples. Each subfolder in this folder should contain behavior examples of a behavior type. The names of the subfolders will be read by LabGym as the behavior names.",
             self.text_inputexamples,
         )
@@ -168,12 +168,13 @@ class TrainCategorizers(LabGymWindow):
 
         self.display_window()
 
-    def select_filepath(self, event):
+    def select_behavior_example_folder(self, event):
+        """Select the folder containing sorted behavior examples."""
         dialog = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
         if dialog.ShowModal() == wx.ID_OK:
-            self.file_path = dialog.GetPath()
+            self.behavior_example_folder = dialog.GetPath()
             self.text_inputexamples.SetLabel(
-                "Path to sorted behavior examples: " + self.file_path + "."
+                f"Path to sorted behavior examples: {self.behavior_example_folder}."
             )
         dialog.Destroy()
 
@@ -221,7 +222,7 @@ class TrainCategorizers(LabGymWindow):
         dialog.Destroy()
 
     def rename_files(self, event):
-        if self.file_path is None or self.new_path is None:
+        if self.behavior_example_folder is None or self.new_path is None:
             wx.MessageBox(
                 "Please select a folder that stores the sorted examples /\na new folder to store prepared training examples!",
                 "Error",
@@ -229,7 +230,9 @@ class TrainCategorizers(LabGymWindow):
             )
         else:
             CA = Categorizers()
-            CA.rename_label(self.file_path, self.new_path, resize=self.resize)
+            CA.rename_label(
+                self.behavior_example_folder, self.new_path, resize=self.resize
+            )
 
     def specify_categorizer(self, event):
         behavior_modes = [
