@@ -34,8 +34,8 @@ class TrainCategorizers(LabGymWindow):
     """Train a Categorizer model using sorted behavior examples.
 
     Attributes:
-        file_path: The location of the sorted behavior examples.
-        new_path: The location of the renamed, labeled examples.
+        behavior_example_folder: The location of the sorted behavior examples.
+        renamed_example_folder: The location of the renamed, labeled examples.
         behavior_mode: The behavior mode.
         using_animation_analyzer: Whether or not to use animations in training
             the categorizer.
@@ -53,8 +53,7 @@ class TrainCategorizers(LabGymWindow):
         out_path: The folder in which to store training reports.
         include_bodyparts: Whether or not to include body parts.
         std: ???
-        resize: Whether or not to resize the animation frames and pattern
-            images before data augmentation.
+        example_width: The behavior example width after resizing, if required.
         background_free: ???
         social_distance: The social distance when detecting interactive
             behaviors. (Units are ???)
