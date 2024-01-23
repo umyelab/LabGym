@@ -16,7 +16,6 @@ USA
 Email: bingye@umich.edu
 """
 
-import json
 import os
 import shutil
 from pathlib import Path
