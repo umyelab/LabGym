@@ -1092,10 +1092,11 @@ class SortBehaviorExamples(LabGymWindow):
             break
 
     def sort_behaviors(self, event):
+        """Sort behavior examples."""
         if (
             self.input_path is None
             or self.result_path is None
-            or len(self.keys_behaviors.items()) == 0
+            or not self.keys_behaviors
         ):
             wx.MessageBox(
                 "No input / output folder or shortcut key - behavior name pair specified.",
@@ -1104,6 +1105,7 @@ class SortBehaviorExamples(LabGymWindow):
             )
             return
 
+        # Create folders to sort behavior examples into
         for key in self.keys_behaviors:
             behavior_path = os.path.join(self.result_path, self.keys_behaviors[key])
             self.keys_behaviorpaths[key] = behavior_path
@@ -1116,6 +1118,7 @@ class SortBehaviorExamples(LabGymWindow):
         moved = False
         only_image = False
 
+        # Check for whether using animations or only pattern images
         check_animations = [
             i for i in os.listdir(self.input_path) if i.endswith(".avi")
         ]
@@ -1147,6 +1150,7 @@ class SortBehaviorExamples(LabGymWindow):
                     ),
                 )
 
+            # Check for remaining animations/pattern images
             if only_image is False:
                 animations = [
                     i for i in os.listdir(self.input_path) if i.endswith(".avi")
@@ -1160,133 +1164,7 @@ class SortBehaviorExamples(LabGymWindow):
                     i for i in os.listdir(self.input_path) if i.endswith(".jpg")
                 ]
 
-            if len(animations) > 0 and index < len(animations):
-                example_name = animations[index].split(".")[0]
-                pattern_image = cv2.resize(
-                    cv2.imread(os.path.join(self.input_path, example_name + ".jpg")),
-                    (600, 600),
-                    interpolation=cv2.INTER_AREA,
-                )
-
-                if only_image is False:
-                    frame_count = example_name.split("_len")[0].split("_")[-1]
-                    animation = cv2.VideoCapture(
-                        os.path.join(self.input_path, example_name + ".avi")
-                    )
-                    fps = round(animation.get(cv2.CAP_PROP_FPS))
-
-                while True:
-                    if only_image is False:
-                        ret, frame = animation.read()
-                        if not ret:
-                            animation.set(cv2.CAP_PROP_POS_FRAMES, 0)
-                            continue
-                        frame = cv2.resize(
-                            frame, (600, 600), interpolation=cv2.INTER_AREA
-                        )
-                        combined = np.hstack((frame, pattern_image))
-                        cv2.putText(
-                            combined,
-                            "frame count: " + frame_count,
-                            (10, 15),
-                            cv2.FONT_HERSHEY_SIMPLEX,
-                            0.5,
-                            (255, 255, 255),
-                            1,
-                        )
-                        x_begin = 550
-                    else:
-                        combined = pattern_image
-                        x_begin = 5
-
-                    n = 1
-                    for i in ["o: Prev", "p: Next", "q: Quit", "u: Undo"]:
-                        cv2.putText(
-                            combined,
-                            i,
-                            (x_begin, 15 * n),
-                            cv2.FONT_HERSHEY_SIMPLEX,
-                            0.5,
-                            (255, 255, 255),
-                            1,
-                        )
-                        n += 1
-                    n += 1
-                    for i in self.keys_behaviors:
-                        cv2.putText(
-                            combined,
-                            i + ": " + self.keys_behaviors[i],
-                            (x_begin, 15 * n),
-                            cv2.FONT_HERSHEY_SIMPLEX,
-                            0.5,
-                            (255, 255, 255),
-                            1,
-                        )
-                        n += 1
-
-                    cv2.imshow("Sorting Behavior Examples", combined)
-                    cv2.moveWindow("Sorting Behavior Examples", 50, 0)
-
-                    if only_image is False:
-                        key = cv2.waitKey(int(1000 / fps)) & 0xFF
-                    else:
-                        key = cv2.waitKey(1) & 0xFF
-
-                    for shortcutkey in self.keys_behaviorpaths:
-                        if key == ord(shortcutkey):
-                            example_name = animations[index].split(".")[0]
-                            actions.append([shortcutkey, example_name])
-                            moved = True
-                            break
-                    if moved is True:
-                        break
-
-                    if key == ord("u"):
-                        if len(actions) > 0:
-                            last = actions.pop()
-                            shortcutkey = last[0]
-                            example_name = last[1]
-                            if only_image is False:
-                                shutil.move(
-                                    os.path.join(
-                                        self.keys_behaviorpaths[shortcutkey],
-                                        example_name + ".avi",
-                                    ),
-                                    os.path.join(
-                                        self.input_path, example_name + ".avi"
-                                    ),
-                                )
-                            shutil.move(
-                                os.path.join(
-                                    self.keys_behaviorpaths[shortcutkey],
-                                    example_name + ".jpg",
-                                ),
-                                os.path.join(self.input_path, example_name + ".jpg"),
-                            )
-                            break
-                        else:
-                            wx.MessageBox(
-                                "Nothing to undo.", "Error", wx.OK | wx.ICON_ERROR
-                            )
-                            continue
-
-                    if key == ord("p"):
-                        index += 1
-                        break
-
-                    if key == ord("o"):
-                        if index >= 1:
-                            index -= 1
-                        break
-
-                    if key == ord("q"):
-                        stop = True
-                        break
-
-                if only_image is False:
-                    animation.release()
-
-            else:
+            if not (0 <= index < len(animations)):
                 if len(animations) == 0:
                     wx.MessageBox(
                         "Behavior example sorting completed!",
@@ -1301,5 +1179,130 @@ class SortBehaviorExamples(LabGymWindow):
                         wx.OK | wx.ICON_INFORMATION,
                     )
                     index = 0
+                continue
+
+            # Load the pattern image and animation
+            example_name = animations[index].split(".")[0]
+            pattern_image = cv2.resize(
+                cv2.imread(os.path.join(self.input_path, example_name + ".jpg")),
+                (600, 600),
+                interpolation=cv2.INTER_AREA,
+            )
+
+            if only_image is False:
+                frame_count = example_name.split("_len")[0].split("_")[-1]
+                animation = cv2.VideoCapture(
+                    os.path.join(self.input_path, example_name + ".avi")
+                )
+                fps = round(animation.get(cv2.CAP_PROP_FPS))
+                frame_count = int(animation.get(cv2.CAP_PROP_FRAME_COUNT))
+
+            # This loop is for repeatedly displaying the animation frames
+            while True:
+                # Create the image preview
+                if only_image is False:
+                    ret, frame = animation.read()
+                    if not ret:
+                        animation.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                        continue
+                    frame = cv2.resize(frame, (600, 600), interpolation=cv2.INTER_AREA)
+                    combined = np.hstack((frame, pattern_image))
+                    cv2.putText(
+                        combined,
+                        f"frame count: {frame_count}",
+                        (10, 15),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.5,
+                        (255, 255, 255),
+                        1,
+                    )
+                    x_begin = 550
+                else:
+                    combined = pattern_image
+                    x_begin = 5
+
+                # Add keyboard shortcut overlay
+                n = 1
+                for i in ["o: Prev", "p: Next", "q: Quit", "u: Undo"]:
+                    cv2.putText(
+                        combined,
+                        i,
+                        (x_begin, 15 * n),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.5,
+                        (255, 255, 255),
+                        1,
+                    )
+                    n += 1
+                n += 1
+                for i in self.keys_behaviors:
+                    cv2.putText(
+                        combined,
+                        i + ": " + self.keys_behaviors[i],
+                        (x_begin, 15 * n),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.5,
+                        (255, 255, 255),
+                        1,
+                    )
+                    n += 1
+
+                cv2.imshow("Sorting Behavior Examples", combined)
+                cv2.moveWindow("Sorting Behavior Examples", 50, 0)
+
+                if only_image is False:
+                    key = cv2.waitKey(int(1000 / fps)) & 0xFF
+                else:
+                    key = cv2.waitKey(1) & 0xFF
+
+                for shortcutkey in self.keys_behaviorpaths:
+                    if key == ord(shortcutkey):
+                        example_name = animations[index].split(".")[0]
+                        actions.append([shortcutkey, example_name])
+                        moved = True
+                        break
+                if moved is True:
+                    break
+
+                if key == ord("u"):
+                    if len(actions) == 0:
+                        wx.MessageBox(
+                            "Nothing to undo.", "Error", wx.OK | wx.ICON_ERROR
+                        )
+                        continue
+
+                    shortcutkey, example_name = actions.pop()
+                    if only_image is False:
+                        shutil.move(
+                            os.path.join(
+                                self.keys_behaviorpaths[shortcutkey],
+                                example_name + ".avi",
+                            ),
+                            os.path.join(self.input_path, example_name + ".avi"),
+                        )
+                    shutil.move(
+                        os.path.join(
+                            self.keys_behaviorpaths[shortcutkey],
+                            example_name + ".jpg",
+                        ),
+                        os.path.join(self.input_path, example_name + ".jpg"),
+                    )
+                    break
+
+                if key == ord("p"):
+                    index += 1
+                    break
+
+                if key == ord("o"):
+                    if index > 0:
+                        index -= 1
+                    break
+
+                if key == ord("q"):
+                    stop = True
+                    break
+
+            if only_image is False:
+                animation.release()
 
         cv2.destroyAllWindows()
