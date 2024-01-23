@@ -23,7 +23,8 @@ from pathlib import Path
 
 import wx
 
-from ...categorizers import Categorizers
+from LabGym.categorizers import Categorizers
+from LabGym.gui.utils import BehaviorMode, LabGymWindow
 
 
 the_absolute_current_path = str(Path(__file__).resolve().parent.parent)

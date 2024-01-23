@@ -25,7 +25,7 @@ import cv2
 import numpy as np
 import wx
 
-from ..utils import WX_IMAGE_WILDCARD, WX_VIDEO_WILDCARD, LabGymWindow
+from ..utils import WX_IMAGE_WILDCARD, WX_VIDEO_WILDCARD, LabGymWindow, BehaviorMode
 from ...analyzebehaviors import AnalyzeAnimal
 from ...analyzebehaviorsdetector import (
     AnalyzeAnimalDetector,
@@ -36,13 +36,6 @@ from ...tools import AnimalVsBg
 
 
 THE_ABSOLUTE_CURRENT_PATH = str(Path(__file__).resolve().parent.parent)
-
-
-class BehaviorMode:
-    NON_INTERACTIVE = 0
-    INTERACT_BASIC = 1
-    INTERACT_ADVANCED = 2
-    STATIC_IMAGES = 3
 
 
 class GenerateBehaviorExamples(LabGymWindow):

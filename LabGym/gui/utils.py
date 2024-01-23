@@ -106,3 +106,10 @@ class LabGymWindow(wx.Frame):
         self.panel.SetSizer(self.boxsizer)
         self.Center()
         self.Show()
+
+
+class BehaviorMode:
+    NON_INTERACTIVE = 0
+    INTERACT_BASIC = 1
+    INTERACT_ADVANCED = 2
+    STATIC_IMAGES = 3
