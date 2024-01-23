@@ -103,7 +103,7 @@ class TrainCategorizers(LabGymWindow):
 
         self.add_submit_button(
             "Start to prepare the training examples",
-            self.rename_files,
+            self.rename_behavior_examples,
             "All prepared behavior examples will be stored in the same folder and ready to be input for training.",
         )
 
@@ -220,7 +220,8 @@ class TrainCategorizers(LabGymWindow):
             f"Will copy, rename, and resize (to {self.example_width}) the examples to {self.renamed_example_folder}."
         )
 
-    def rename_files(self, event):
+    def rename_behavior_examples(self, event):
+        """Move and rename behavior examples for use with Categorizers."""
         if self.behavior_example_folder is None or self.renamed_example_folder is None:
             wx.MessageBox(
                 "Please select a folder that stores the sorted examples /\na new folder to store prepared training examples!",
