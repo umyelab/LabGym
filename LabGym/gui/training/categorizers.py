@@ -30,13 +30,42 @@ from LabGym.gui.utils import BehaviorMode, LabGymWindow
 the_absolute_current_path = str(Path(__file__).resolve().parent.parent)
 
 
-class TrainCategorizers(wx.Frame):
+class TrainCategorizers(LabGymWindow):
+    """Train a Categorizer model using sorted behavior examples.
+
+    Attributes:
+        file_path: The location of the sorted behavior examples.
+        new_path: The location of the renamed, labeled examples.
+        behavior_mode: The behavior mode.
+        using_animation_analyzer: Whether or not to use animations in training
+            the categorizer.
+        level_tconv: ???
+        level_conv: ???
+        dim_tconv: ???
+        dim_conv: ???
+        channel: The number of channels in ???
+        length: The number of frames in a single behavior example.
+        aug_methods: A list of augmentation methods to use while training.
+        augvalid: Whether or not to use augmentation for validation data.
+        data_path: The path to all prepared training examples.
+        model_path: The location of the available categorizers.
+        path_to_categorizer: The path to the newly created categorizer.
+        out_path: The folder in which to store training reports.
+        include_bodyparts: Whether or not to include body parts.
+        std: ???
+        resize: Whether or not to resize the animation frames and pattern
+            images before data augmentation.
+        background_free: ???
+        social_distance: The social distance when detecting interactive
+            behaviors. (Units are ???)
+    """
+
     def __init__(self):
-        super().__init__(parent=None, title="Train Categorizers", size=(1000, 520))
-        self.file_path = None  # the file path storing orginal examples
-        self.new_path = None  # the new path for renamed, labeled examples
-        self.behavior_mode = 0
-        self.animation_analyzer = True
+        super().__init__(title="Train Categorizers", size=(1200, 550))
+        self.file_path = None
+        self.new_path = None
+        self.behavior_mode = BehaviorMode.NON_INTERACTIVE
+        self.using_animation_analyzer = True
         self.level_tconv = 2
         self.level_conv = 2
         self.dim_tconv = 32
@@ -44,231 +73,100 @@ class TrainCategorizers(wx.Frame):
         self.channel = 1
         self.length = 15
         self.aug_methods = []
-        self.augvalid = True  # also perform augmentation for validation data
-        self.data_path = None  # the path to all prepared training examples
+        self.augvalid = True
+        self.data_path = None
         self.model_path = os.path.join(the_absolute_current_path, "models")
         self.path_to_categorizer = os.path.join(
             the_absolute_current_path, "models", "New_model"
         )
-        self.out_path = None  # for storing training reports
+        self.out_path = None
         self.include_bodyparts = False
         self.std = 0
-        self.resize = (
-            None  # resize the frames and pattern images before data augmentation
-        )
+        self.resize = None
         self.background_free = True
         self.social_distance = 0
 
-        self.dispaly_window()
-
-    def dispaly_window(self):
-        panel = wx.Panel(self)
-        boxsizer = wx.BoxSizer(wx.VERTICAL)
-
-        module_inputexamples = wx.BoxSizer(wx.HORIZONTAL)
-        button_inputexamples = wx.Button(
-            panel,
-            label="Select the folder that stores\nthe sorted behavior examples",
-            size=(300, 40),
-        )
-        button_inputexamples.Bind(wx.EVT_BUTTON, self.select_filepath)
-        wx.Button.SetToolTip(
-            button_inputexamples,
+        self.text_inputexamples = self.module_text("None.")
+        self.add_module(
+            "Select the folder that stores\nthe sorted behavior examples",
+            self.select_filepath,
             "This folder should contain all the sorted behavior examples. Each subfolder in this folder should contain behavior examples of a behavior type. The names of the subfolders will be read by LabGym as the behavior names.",
+            self.text_inputexamples,
         )
-        self.text_inputexamples = wx.StaticText(
-            panel, label="None.", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
-        )
-        module_inputexamples.Add(
-            button_inputexamples, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        module_inputexamples.Add(
-            self.text_inputexamples, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        boxsizer.Add(0, 10, 0)
-        boxsizer.Add(module_inputexamples, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        module_renameexample = wx.BoxSizer(wx.HORIZONTAL)
-        button_renameexample = wx.Button(
-            panel,
-            label="Select a new folder to store\nall the prepared behavior examples",
-            size=(300, 40),
-        )
-        button_renameexample.Bind(wx.EVT_BUTTON, self.select_outpath)
-        wx.Button.SetToolTip(
-            button_renameexample,
+        self.text_renameexample = self.module_text("None.")
+        self.add_module(
+            "Select a new folder to store\nall the prepared behavior examples",
+            self.select_outpath,
             "This folder will store all the prepared behavior examples and can be directly used for training. Preparing behavior examples is copying all examples into this folder and renaming them to put behavior name labels to their file names.",
+            self.text_renameexample,
         )
-        self.text_renameexample = wx.StaticText(
-            panel, label="None.", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
-        )
-        module_renameexample.Add(
-            button_renameexample, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        module_renameexample.Add(
-            self.text_renameexample, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        boxsizer.Add(module_renameexample, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        button_prepare = wx.Button(
-            panel, label="Start to prepare the training examples", size=(300, 40)
-        )
-        button_prepare.Bind(wx.EVT_BUTTON, self.rename_files)
-        wx.Button.SetToolTip(
-            button_prepare,
+        self.add_submit_button(
+            "Start to prepare the training examples",
+            self.rename_files,
             "All prepared behavior examples will be stored in the same folder and ready to be input for training.",
         )
-        boxsizer.Add(button_prepare, 0, wx.RIGHT | wx.ALIGN_RIGHT, 90)
-        boxsizer.Add(0, 10, 0)
 
-        module_categorizertype = wx.BoxSizer(wx.HORIZONTAL)
-        button_categorizertype = wx.Button(
-            panel,
-            label="Specify the type / complexity of\nthe Categorizer to train",
-            size=(300, 40),
+        self.text_categorizertype = self.module_text(
+            "Default: Categorizer (Animation Analyzer LV2 + Pattern Recognizer LV2). Behavior mode: Non-interact (identify behavior for each individual)."
         )
-        button_categorizertype.Bind(wx.EVT_BUTTON, self.specify_categorizer)
-        wx.Button.SetToolTip(
-            button_categorizertype,
+        self.add_module(
+            "Specify the type / complexity of\nthe Categorizer to train",
+            self.specify_categorizer,
             "Categorizer with both Animation Analyzer and Pattern Recognizer is slower but a little more accurate than that with Pattern Recognizer only. Higher complexity level means deeper and more complex network architecture. See Extended Guide for details.",
+            self.text_categorizertype,
         )
-        self.text_categorizertype = wx.StaticText(
-            panel,
-            label="Default: Categorizer (Animation Analyzer LV2 + Pattern Recognizer LV2). Behavior mode: Non-interact (identify behavior for each individual).",
-            style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END,
-        )
-        module_categorizertype.Add(
-            button_categorizertype, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        module_categorizertype.Add(
-            self.text_categorizertype, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        boxsizer.Add(0, 10, 0)
-        boxsizer.Add(module_categorizertype, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        module_categorizershape = wx.BoxSizer(wx.HORIZONTAL)
-        button_categorizershape = wx.Button(
-            panel,
-            label="Specify the input shape for\nAnimation Analyzer / Pattern Recognizer",
-            size=(300, 40),
+        self.text_categorizershape = self.module_text(
+            "Default: (width,height,channel) is (32,32,1) / (32,32,3)."
         )
-        button_categorizershape.Bind(wx.EVT_BUTTON, self.set_categorizer)
-        wx.Button.SetToolTip(
-            button_categorizershape,
+        self.add_module(
+            "Specify the input shape for\nAnimation Analyzer / Pattern Recognizer",
+            self.set_categorizer,
             "The input frame / image size should be an even integer and larger than 8. The larger size, the wider of network architecture. Use large size only when there are detailed features in frames / images that are important for identifying behaviors. See Extended Guide for details.",
+            self.text_categorizershape,
         )
-        self.text_categorizershape = wx.StaticText(
-            panel,
-            label="Default: (width,height,channel) is (32,32,1) / (32,32,3).",
-            style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END,
-        )
-        module_categorizershape.Add(
-            button_categorizershape, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        module_categorizershape.Add(
-            self.text_categorizershape, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        boxsizer.Add(module_categorizershape, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        module_length = wx.BoxSizer(wx.HORIZONTAL)
-        button_length = wx.Button(
-            panel,
-            label="Specify the number of frames for\nan animation / pattern image",
-            size=(300, 40),
-        )
-        button_length.Bind(wx.EVT_BUTTON, self.input_timesteps)
-        wx.Button.SetToolTip(
-            button_length,
+        self.text_length = self.module_text("Default: 15.")
+        self.add_module(
+            "Specify the number of frames for\nan animation / pattern image",
+            self.input_timesteps,
             'The duration (how many frames) of a behavior example. This info can be found in the filenames of the generated behavior examples, "_lenXX_" where "XX" is the number you need to enter here.',
+            self.text_length,
         )
-        self.text_length = wx.StaticText(
-            panel, label="Default: 15.", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
-        )
-        module_length.Add(button_length, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        module_length.Add(self.text_length, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(module_length, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        module_trainingfolder = wx.BoxSizer(wx.HORIZONTAL)
-        button_trainingfolder = wx.Button(
-            panel,
-            label="Select the folder that stores\nall the prepared training examples",
-            size=(300, 40),
-        )
-        button_trainingfolder.Bind(wx.EVT_BUTTON, self.select_datapath)
-        wx.Button.SetToolTip(
-            button_trainingfolder,
+        self.text_trainingfolder = self.module_text("None.")
+        self.add_module(
+            "Select the folder that stores\nall the prepared training examples",
+            self.select_datapath,
             'The folder that stores all the prepared behavior examples. If body parts are included, the STD value can be found in the filenames of the generated behavior examples with "_stdXX_" where "XX" is the number you need to enter here.',
+            self.text_trainingfolder,
         )
-        self.text_trainingfolder = wx.StaticText(
-            panel, label="None", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
-        )
-        module_trainingfolder.Add(
-            button_trainingfolder, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        module_trainingfolder.Add(
-            self.text_trainingfolder, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        boxsizer.Add(module_trainingfolder, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        module_augmentation = wx.BoxSizer(wx.HORIZONTAL)
-        button_augmentation = wx.Button(
-            panel,
-            label="Specify the methods to\naugment training examples",
-            size=(300, 40),
-        )
-        button_augmentation.Bind(wx.EVT_BUTTON, self.specify_augmentation)
-        wx.Button.SetToolTip(
-            button_augmentation,
+        self.text_augmentation = self.module_text("None.")
+        self.add_module(
+            "Specify the methods to\naugment training examples",
+            self.specify_augmentation,
             'Randomly change or add noise into the training examples to increase their amount and diversity, which can benefit the training. If the amount of examples less than 1,000 before augmentation, choose "Also augment the validation data". See Extended Guide for details.',
+            self.text_augmentation,
         )
-        self.text_augmentation = wx.StaticText(
-            panel, label="None.", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
-        )
-        module_augmentation.Add(
-            button_augmentation, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        module_augmentation.Add(
-            self.text_augmentation, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        boxsizer.Add(module_augmentation, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        module_report = wx.BoxSizer(wx.HORIZONTAL)
-        button_report = wx.Button(
-            panel, label="Select a folder to\nexport training reports", size=(300, 40)
-        )
-        button_report.Bind(wx.EVT_BUTTON, self.select_reportpath)
-        wx.Button.SetToolTip(
-            button_report,
+        self.text_report = self.module_text("None.")
+        self.add_module(
+            "Select a folder to\nexport training reports",
+            self.select_reportpath,
             "This is the folder to store the reports of training history and metrics. It is optional.",
+            self.text_report,
         )
-        self.text_report = wx.StaticText(
-            panel, label="None.", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
-        )
-        module_report.Add(button_report, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        module_report.Add(self.text_report, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(module_report, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        button_train = wx.Button(panel, label="Train the Categorizer", size=(300, 40))
-        button_train.Bind(wx.EVT_BUTTON, self.train_categorizer)
-        wx.Button.SetToolTip(
-            button_train,
+        self.add_submit_button(
+            "Train the Categorizer",
+            self.train_categorizer,
             "Need to name the Categorizer to train. English letters, numbers, underscore “_”, or hyphen “-” are acceptable but do not use special characters such as “@” or “^”.",
         )
-        boxsizer.Add(button_train, 0, wx.RIGHT | wx.ALIGN_RIGHT, 90)
-        boxsizer.Add(0, 10, 0)
 
-        panel.SetSizer(boxsizer)
-
-        self.Centre()
-        self.Show(True)
+        self.display_window()
 
     def select_filepath(self, event):
         dialog = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
@@ -405,7 +303,7 @@ class TrainCategorizers(wx.Frame):
                 categorizer_tp
                 == "Categorizer (Pattern Recognizer only) (faster / a little less accurate)"
             ):
-                self.animation_analyzer = False
+                self.using_animation_analyzer = False
                 dialog1 = wx.NumberEntryDialog(
                     self,
                     "Complexity level from 1 to 7\nhigher level = deeper network",
@@ -420,7 +318,7 @@ class TrainCategorizers(wx.Frame):
                 dialog1.Destroy()
                 level = self.level_conv
             else:
-                self.animation_analyzer = True
+                self.using_animation_analyzer = True
                 dialog1 = wx.NumberEntryDialog(
                     self,
                     "Complexity level from 1 to 7\nhigher level = deeper network",
@@ -483,7 +381,7 @@ class TrainCategorizers(wx.Frame):
             )
 
     def set_categorizer(self, event):
-        if self.animation_analyzer is True:
+        if self.using_animation_analyzer is True:
             dialog = wx.NumberEntryDialog(
                 self,
                 "Input dimension of Animation Analyzer\nlarger dimension = wider network",
@@ -559,7 +457,7 @@ class TrainCategorizers(wx.Frame):
             shape_conv = (
                 "(" + str(self.dim_conv) + "," + str(self.dim_conv) + "," + "3)"
             )
-        if self.animation_analyzer is False:
+        if self.using_animation_analyzer is False:
             self.text_categorizershape.SetLabel(
                 "Input shapes: Pattern Recognizer" + shape_conv + "."
             )
@@ -802,7 +700,7 @@ class TrainCategorizers(wx.Frame):
                 dialog.Destroy()
 
             if do_nothing is False:
-                if self.animation_analyzer is False:
+                if self.using_animation_analyzer is False:
                     CA = Categorizers()
                     if self.behavior_mode >= 3:
                         self.length = self.std = 0
