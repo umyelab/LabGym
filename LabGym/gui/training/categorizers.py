@@ -39,10 +39,10 @@ class TrainCategorizers(LabGymWindow):
         behavior_mode: The behavior mode.
         using_animation_analyzer: Whether or not to use animations in training
             the categorizer.
-        level_tconv: ???
-        level_conv: ???
-        dim_tconv: ???
-        dim_conv: ???
+        level_tconv: The depth of the Animation Analyzer.
+        level_conv: The depth of the Pattern Recognizer.
+        dim_tconv: The width of the Animation Analyzer.
+        dim_conv: The width of the Pattern Recognizer.
         channel: The number of channels in ???
         length: The number of frames in a single behavior example.
         aug_methods: A list of augmentation methods to use while training.
@@ -450,7 +450,7 @@ class TrainCategorizers(LabGymWindow):
         if dialog.ShowModal() == wx.ID_OK:
             self.length = max(int(dialog.GetValue()), 3)
             self.text_length.SetLabel(
-                f"The duration of a behavior example is :{self.length}."
+                f"The duration of a behavior example is: {self.length}."
             )
         dialog.Destroy()
 
