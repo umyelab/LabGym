@@ -130,7 +130,7 @@ class TrainCategorizers(LabGymWindow):
         self.text_length = self.module_text("Default: 15.")
         self.add_module(
             "Specify the number of frames for\nan animation / pattern image",
-            self.input_timesteps,
+            self.input_behavior_length,
             'The duration (how many frames) of a behavior example. This info can be found in the filenames of the generated behavior examples, "_lenXX_" where "XX" is the number you need to enter here.',
             self.text_length,
         )
@@ -378,8 +378,6 @@ class TrainCategorizers(LabGymWindow):
                 self.dim_tconv = int(dialog.GetValue())
                 dialog.Destroy()
 
-            if self.behavior_mode == BehaviorMode.INTERACT_ADVANCED:
-                self.channel = 3
             self.channel = 3
             if self.behavior_mode != BehaviorMode.INTERACT_ADVANCED:
                 dialog = wx.MessageDialog(
@@ -390,8 +388,6 @@ class TrainCategorizers(LabGymWindow):
                 )
                 if dialog.ShowModal() == wx.ID_YES:
                     self.channel = 1
-                else:
-                    self.channel = 3
                 dialog.Destroy()
 
         dialog = wx.NumberEntryDialog(
@@ -432,32 +428,31 @@ class TrainCategorizers(LabGymWindow):
             label_text += "."
         self.text_categorizershape.SetLabel(label_text)
 
-    def input_timesteps(self, event):
-        if self.behavior_mode >= 3:
+    def input_behavior_length(self, event):
+        """Set the number of frames corresponding to a behavior."""
+        if self.behavior_mode == BehaviorMode.STATIC_IMAGES:
             wx.MessageBox(
                 'No need to specify this since the selected behavior mode is "Static images".',
                 "Error",
                 wx.OK | wx.ICON_ERROR,
             )
+            return
 
-        else:
-            dialog = wx.NumberEntryDialog(
-                self,
-                "The number of frames of\na behavior example",
-                "Enter a number (minimum=3):",
-                "Behavior episode duration",
-                15,
-                1,
-                1000,
+        dialog = wx.NumberEntryDialog(
+            self,
+            "The number of frames of\na behavior example",
+            "Enter a number (minimum=3):",
+            "Behavior episode duration",
+            15,
+            1,
+            1000,
+        )
+        if dialog.ShowModal() == wx.ID_OK:
+            self.length = max(int(dialog.GetValue()), 3)
+            self.text_length.SetLabel(
+                f"The duration of a behavior example is :{self.length}."
             )
-            if dialog.ShowModal() == wx.ID_OK:
-                self.length = int(dialog.GetValue())
-                if self.length < 3:
-                    self.length = 3
-                self.text_length.SetLabel(
-                    "The duration of a behavior example is :" + str(self.length) + "."
-                )
-            dialog.Destroy()
+        dialog.Destroy()
 
     def select_datapath(self, event):
         dialog = wx.MessageDialog(
