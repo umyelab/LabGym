@@ -112,7 +112,7 @@ class TrainCategorizers(LabGymWindow):
         )
         self.add_module(
             "Specify the type / complexity of\nthe Categorizer to train",
-            self.specify_categorizer,
+            self.configure_categorizer,
             "Categorizer with both Animation Analyzer and Pattern Recognizer is slower but a little more accurate than that with Pattern Recognizer only. Higher complexity level means deeper and more complex network architecture. See Extended Guide for details.",
             self.text_categorizertype,
         )
@@ -236,7 +236,10 @@ class TrainCategorizers(LabGymWindow):
                 resize=self.example_width,
             )
 
-    def specify_categorizer(self, event):
+    def configure_categorizer(self, event):
+        """Configure the Categorizer."""
+
+        # These are mapped to the same constants in the BehaviorMode class.
         behavior_modes = [
             "Non-interact (identify behavior for each individual)",
             "Interact basic (identify behavior for the interactive pair / group)",
@@ -249,141 +252,112 @@ class TrainCategorizers(LabGymWindow):
             caption="Behavior mode",
             choices=behavior_modes,
         )
-        if dialog.ShowModal() == wx.ID_OK:
-            behavior_mode = dialog.GetStringSelection()
-            if behavior_mode == "Non-interact (identify behavior for each individual)":
-                self.behavior_mode = 0
-            elif (
-                behavior_mode
-                == "Interact basic (identify behavior for the interactive pair / group)"
-            ):
-                self.behavior_mode = 1
-            elif (
-                behavior_mode
-                == "Interact advanced (identify behavior for both each individual and each interactive pair / group)"
-            ):
-                self.behavior_mode = 2
-                self.channel = 3
-                dialog1 = wx.NumberEntryDialog(
-                    self,
-                    "Interactions happen within the social distance.",
-                    "How many folds of the animals's diameter\nis the social distance (0=inf):",
-                    "Social distance (Enter an integer)",
-                    0,
-                    0,
-                    100000000000000,
-                )
-                if dialog1.ShowModal() == wx.ID_OK:
-                    self.social_distance = int(dialog1.GetValue())
-                    if self.social_distance == 0:
-                        self.social_distance = float("inf")
-                else:
-                    self.social_distance = float("inf")
-                dialog1.Destroy()
-            else:
-                self.behavior_mode = 3
-                self.text_length.SetLabel(
-                    'No need to specify this since the selected behavior mode is "Static images".'
-                )
-        dialog.Destroy()
-
-        if self.behavior_mode >= 3:
-            categorizer_types = [
-                "Categorizer (Pattern Recognizer only) (faster / a little less accurate)"
-            ]
+        if dialog.ShowModal() != wx.ID_OK:
+            dialog.Destroy()
+            return
         else:
-            categorizer_types = [
-                "Categorizer (Animation Analyzer + Pattern Recognizer)",
-                "Categorizer (Pattern Recognizer only) (faster / a little less accurate)",
-            ]
+            self.behavior_mode = dialog.GetSelection()
+            dialog.Destroy()
+
+        if self.behavior_mode == BehaviorMode.INTERACT_ADVANCED:
+            self.channel = 3
+            distance_dialog = wx.NumberEntryDialog(
+                self,
+                "Interactions happen within the social distance.",
+                "How many folds of the animals's diameter\nis the social distance (0=inf):",
+                "Social distance (Enter an integer)",
+                0,
+                0,
+                100000000000000,
+            )
+            if distance_dialog.ShowModal() != wx.ID_OK:
+                distance_dialog.Destroy()
+                self.social_distance = float("inf")
+                return
+            else:
+                self.social_distance = float(distance_dialog.GetValue())
+                if self.social_distance == 0:
+                    self.social_distance = float("inf")
+                distance_dialog.Destroy()
+        elif self.behavior_mode == BehaviorMode.STATIC_IMAGES:
+            self.text_length.SetLabel(
+                'No need to specify this since the selected behavior mode is "Static images".'
+            )
+
+        PATTERN_RECOGNIZER_ONLY = (
+            "Categorizer (Pattern Recognizer only) (faster / a little less accurate)"
+        )
+        BOTH = "Categorizer (Animation Analyzer + Pattern Recognizer)"
+        categorizer_types = [PATTERN_RECOGNIZER_ONLY]
+        if self.behavior_mode != BehaviorMode.STATIC_IMAGES:
+            categorizer_types.append(BOTH)
+
         dialog = wx.SingleChoiceDialog(
             self,
             message="Select the Categorizer type",
             caption="Categorizer types",
             choices=categorizer_types,
         )
-        if dialog.ShowModal() == wx.ID_OK:
+        if dialog.ShowModal() != wx.ID_OK:
+            dialog.Destroy()
+            return
+        else:
             categorizer_tp = dialog.GetStringSelection()
-            if (
-                categorizer_tp
-                == "Categorizer (Pattern Recognizer only) (faster / a little less accurate)"
-            ):
-                self.using_animation_analyzer = False
-                dialog1 = wx.NumberEntryDialog(
-                    self,
-                    "Complexity level from 1 to 7\nhigher level = deeper network",
-                    "Enter a number (1~7)",
-                    "Pattern Recognizer level",
-                    2,
-                    1,
-                    7,
-                )
-                if dialog1.ShowModal() == wx.ID_OK:
-                    self.level_conv = int(dialog1.GetValue())
-                dialog1.Destroy()
-                level = self.level_conv
-            else:
-                self.using_animation_analyzer = True
-                dialog1 = wx.NumberEntryDialog(
-                    self,
-                    "Complexity level from 1 to 7\nhigher level = deeper network",
-                    "Enter a number (1~7)",
-                    "Animation Analyzer level",
-                    2,
-                    1,
-                    7,
-                )
-                if dialog1.ShowModal() == wx.ID_OK:
-                    self.level_tconv = int(dialog1.GetValue())
-                dialog1.Destroy()
-                dialog1 = wx.NumberEntryDialog(
-                    self,
-                    "Complexity level from 1 to 7\nhigher level = deeper network",
-                    "Enter a number (1~7)",
-                    "Pattern Recognizer level",
-                    2,
-                    1,
-                    7,
-                )
-                if dialog1.ShowModal() == wx.ID_OK:
-                    self.level_conv = int(dialog1.GetValue())
-                dialog1.Destroy()
-                level = [self.level_tconv, self.level_conv]
-        else:
-            categorizer_tp = ""
-            level = ""
-        dialog.Destroy()
+            self.using_animation_analyzer = categorizer_tp != PATTERN_RECOGNIZER_ONLY
+            dialog.Destroy()
 
-        if behavior_mode == 0:
-            self.text_categorizertype.SetLabel(
-                categorizer_tp
-                + " (LV "
-                + str(level)
-                + ") to identify behaviors of each non-interactive individual."
+        dialog1 = wx.NumberEntryDialog(
+            self,
+            "Complexity level from 1 to 7\nhigher level = deeper network",
+            "Enter a number (1~7)",
+            "Pattern Recognizer level",
+            2,
+            1,
+            7,
+        )
+        if dialog1.ShowModal() != wx.ID_OK:
+            dialog1.Destroy()
+            return
+        else:
+            self.level_conv = int(dialog1.GetValue())
+            dialog1.Destroy()
+
+        if self.using_animation_analyzer:
+            dialog1 = wx.NumberEntryDialog(
+                self,
+                "Complexity level from 1 to 7\nhigher level = deeper network",
+                "Enter a number (1~7)",
+                "Animation Analyzer level",
+                2,
+                1,
+                7,
             )
-        elif behavior_mode == 1:
-            self.text_categorizertype.SetLabel(
-                categorizer_tp
-                + " (LV "
-                + str(level)
-                + ") to identify behaviors of the interactive group."
+            if dialog1.ShowModal() != wx.ID_OK:
+                dialog1.Destroy()
+                return
+            else:
+                self.level_tconv = int(dialog1.GetValue())
+                dialog1.Destroy()
+
+        label_text = f"Using Pattern Recognizer (Level {self.level_conv})"
+        if self.using_animation_analyzer:
+            label_text += f" and Animation Analyzer (Level {self.level_tconv})"
+
+        if self.behavior_mode == BehaviorMode.NON_INTERACTIVE:
+            label_text += " to identify non-interactive behaviors of each individual."
+        elif self.behavior_mode == BehaviorMode.INTERACT_BASIC:
+            label_text += " to identify interactive behaviors of the group."
+        elif self.behavior_mode == BehaviorMode.INTERACT_ADVANCED:
+            label_text += (
+                " to identify interactive behaviors of the individual and groups."
             )
-        elif behavior_mode == 2:
-            self.text_categorizertype.SetLabel(
-                categorizer_tp
-                + " (LV "
-                + str(level)
-                + ") to identify behaviors of the interactive individuals and groups. Social distance: "
-                + str(self.social_distance)
-                + " folds of the animal diameter."
+            label_text += (
+                f" Social Distance: {self.social_distance} folds of animal diameter."
             )
         else:
-            self.text_categorizertype.SetLabel(
-                categorizer_tp
-                + " (LV "
-                + str(level)
-                + ") to identify behaviors of each non-interactive individual in static images."
-            )
+            label_text += " to identify non-interactive behaviors of each individual in static images."
+
+        self.text_categorizertype.SetLabel(label_text)
 
     def set_categorizer(self, event):
         if self.using_animation_analyzer is True:
