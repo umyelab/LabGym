@@ -122,7 +122,7 @@ class TrainCategorizers(LabGymWindow):
         )
         self.add_module(
             "Specify the input shape for\nAnimation Analyzer / Pattern Recognizer",
-            self.set_categorizer,
+            self.set_categorizer_shape,
             "The input frame / image size should be an even integer and larger than 8. The larger size, the wider of network architecture. Use large size only when there are detailed features in frames / images that are important for identifying behaviors. See Extended Guide for details.",
             self.text_categorizershape,
         )
@@ -359,7 +359,8 @@ class TrainCategorizers(LabGymWindow):
 
         self.text_categorizertype.SetLabel(label_text)
 
-    def set_categorizer(self, event):
+    def set_categorizer_shape(self, event):
+        """Set the network shape of the categorizer."""
         if self.using_animation_analyzer is True:
             dialog = wx.NumberEntryDialog(
                 self,
@@ -370,12 +371,17 @@ class TrainCategorizers(LabGymWindow):
                 1,
                 300,
             )
-            if dialog.ShowModal() == wx.ID_OK:
-                self.dim_tconv = int(dialog.GetValue())
-            dialog.Destroy()
-            if self.behavior_mode == 2:
-                self.channel = 3
+            if dialog.ShowModal() != wx.ID_OK:
+                dialog.Destroy()
+                return
             else:
+                self.dim_tconv = int(dialog.GetValue())
+                dialog.Destroy()
+
+            if self.behavior_mode == BehaviorMode.INTERACT_ADVANCED:
+                self.channel = 3
+            self.channel = 3
+            if self.behavior_mode != BehaviorMode.INTERACT_ADVANCED:
                 dialog = wx.MessageDialog(
                     self,
                     'Grayscale input of Animation Analyzer?\nSelect "Yes" if the color of animals is behavior irrelevant.',
@@ -397,57 +403,34 @@ class TrainCategorizers(LabGymWindow):
             1,
             300,
         )
-        if dialog.ShowModal() == wx.ID_OK:
+        if dialog.ShowModal() != wx.ID_OK:
+            dialog.Destroy()
+            return
+        else:
             self.dim_conv = int(dialog.GetValue())
-            if self.behavior_mode >= 3:
-                dialog1 = wx.MessageDialog(
-                    self,
-                    'Grayscale input?\nSelect "Yes" if the color of animals is behavior irrelevant.',
-                    "Grayscale inputs?",
-                    wx.YES_NO | wx.ICON_QUESTION,
-                )
-                if dialog1.ShowModal() == wx.ID_YES:
-                    self.channel = 1
-                else:
-                    self.channel = 3
-                dialog.Destroy()
-        dialog.Destroy()
+            dialog.Destroy()
 
-        shape_tconv = (
-            "("
-            + str(self.dim_tconv)
-            + ","
-            + str(self.dim_tconv)
-            + ","
-            + str(self.channel)
-            + ")"
-        )
-        if self.behavior_mode >= 3:
-            shape_conv = (
-                "("
-                + str(self.dim_conv)
-                + ","
-                + str(self.dim_conv)
-                + ","
-                + str(self.channel)
-                + ")"
+        self.channel = 3
+        if self.behavior_mode == BehaviorMode.STATIC_IMAGES:
+            dialog1 = wx.MessageDialog(
+                self,
+                'Grayscale input?\nSelect "Yes" if the color of animals is behavior irrelevant.',
+                "Grayscale inputs?",
+                wx.YES_NO | wx.ICON_QUESTION,
             )
+            if dialog1.ShowModal() == wx.ID_YES:
+                self.channel = 1
+            dialog1.Destroy()
+
+        shape_tconv = f"({self.dim_tconv}, {self.dim_tconv}, {self.channel})"
+        shape_conv = f"({self.dim_conv}, {self.dim_conv}, {self.channel})"
+
+        label_text = f"Input shapes: Pattern Recognizer {shape_conv}"
+        if self.using_animation_analyzer:
+            label_text += f", Animation Analyzer {shape_tconv}."
         else:
-            shape_conv = (
-                "(" + str(self.dim_conv) + "," + str(self.dim_conv) + "," + "3)"
-            )
-        if self.using_animation_analyzer is False:
-            self.text_categorizershape.SetLabel(
-                "Input shapes: Pattern Recognizer" + shape_conv + "."
-            )
-        else:
-            self.text_categorizershape.SetLabel(
-                "Input shapes: Animation Analyzer"
-                + shape_tconv
-                + "; Pattern Recognizer"
-                + shape_conv
-                + "."
-            )
+            label_text += "."
+        self.text_categorizershape.SetLabel(label_text)
 
     def input_timesteps(self, event):
         if self.behavior_mode >= 3:
