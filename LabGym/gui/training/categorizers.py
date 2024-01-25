@@ -138,7 +138,7 @@ class TrainCategorizers(LabGymWindow):
         self.text_trainingfolder = self.module_text("None.")
         self.add_module(
             "Select the folder that stores\nall the prepared training examples",
-            self.select_datapath,
+            self.select_training_examples,
             'The folder that stores all the prepared behavior examples. If body parts are included, the STD value can be found in the filenames of the generated behavior examples with "_stdXX_" where "XX" is the number you need to enter here.',
             self.text_trainingfolder,
         )
@@ -454,22 +454,19 @@ class TrainCategorizers(LabGymWindow):
             )
         dialog.Destroy()
 
-    def select_datapath(self, event):
+    def select_training_examples(self, event):
+        """Select the directory with the training examples."""
         dialog = wx.MessageDialog(
             self,
             "Are the animations (in any) in\ntraining examples background free?",
             "Background-free animations?",
             wx.YES_NO | wx.ICON_QUESTION,
         )
-        if dialog.ShowModal() == wx.ID_YES:
-            self.background_free = True
-        else:
-            self.background_free = False
+        self.background_free = dialog.ShowModal == wx.ID_YES
         dialog.Destroy()
 
-        if self.behavior_mode >= 3:
-            self.include_bodyparts = False
-        else:
+        self.include_bodyparts = False
+        if self.behavior_mode != BehaviorMode.STATIC_IMAGES:
             dialog = wx.MessageDialog(
                 self,
                 "Do the pattern images in training examples\ninclude body parts?",
@@ -492,44 +489,26 @@ class TrainCategorizers(LabGymWindow):
                 else:
                     self.std = 0
                 dialog2.Destroy()
-            else:
-                self.include_bodyparts = False
             dialog.Destroy()
 
         dialog = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
-        if dialog.ShowModal() == wx.ID_OK:
+        if dialog.ShowModal() != wx.ID_OK:
+            dialog.Destroy()
+            return
+        else:
             self.data_path = dialog.GetPath()
-            if self.include_bodyparts is True:
-                if self.background_free is True:
-                    self.text_trainingfolder.SetLabel(
-                        "Animations w/o background, pattern images w/ bodyparts ("
-                        + str(self.std)
-                        + ") in: "
-                        + self.data_path
-                        + "."
-                    )
-                else:
-                    self.text_trainingfolder.SetLabel(
-                        "Animations w/ background, pattern images w/ bodyparts ("
-                        + str(self.std)
-                        + ") in: "
-                        + self.data_path
-                        + "."
-                    )
-            else:
-                if self.background_free is True:
-                    self.text_trainingfolder.SetLabel(
-                        "Animations w/o background, pattern images w/o bodyparts in: "
-                        + self.data_path
-                        + "."
-                    )
-                else:
-                    self.text_trainingfolder.SetLabel(
-                        "Animations w/ background, pattern images w/o bodyparts in: "
-                        + self.data_path
-                        + "."
-                    )
-        dialog.Destroy()
+            dialog.Destroy()
+
+        label_text = "Animations w/"
+        if self.background_free:
+            label_text += "o"
+        label_text += " background, "
+        if self.include_bodyparts:
+            label_text += f"pattern images w/ bodyparts (std={self.std})"
+        else:
+            label_text += "pattern images w/o bodyparts"
+        label_text += f" in: {self.data_path}."
+        self.text_trainingfolder.SetLabel(label_text)
 
     def specify_augmentation(self, event):
         dialog = wx.MessageDialog(
