@@ -17,17 +17,16 @@ Email: bingye@umich.edu
 """
 
 
-import shutil
 import os
 from pathlib import Path
 
 import wx
 
-from LabGym.categorizers import Categorizers
+from LabGym.categorizers import Categorizers, delete_categorizer, get_categorizer_names
 from LabGym.gui.utils import BehaviorMode, LabGymWindow
 
 
-the_absolute_current_path = str(Path(__file__).resolve().parent.parent)
+the_absolute_current_path = str(Path(__file__).resolve().parent.parent.parent)
 
 
 class TrainCategorizers(LabGymWindow):
@@ -683,120 +682,71 @@ class TrainCategorizers(LabGymWindow):
                     )
 
 
-class TestCategorizers(wx.Frame):
+class TestCategorizers(LabGymWindow):
+    """Test a categorizer."""
+
     def __init__(self):
-        super(TestCategorizers, self).__init__(
-            parent=None, title="Test Categorizers", size=(1000, 240)
-        )
-        self.file_path = None  # the file path storing ground-truth examples
+        super().__init__(title="Test Categorizers", size=(1000, 240))
+        self.file_path = None
         self.model_path = os.path.join(the_absolute_current_path, "models")
         self.path_to_categorizer = None
-        self.out_path = None  # for storing testing reports
+        self.out_path = None
 
-        panel = wx.Panel(self)
-        boxsizer = wx.BoxSizer(wx.VERTICAL)
-
-        module_selectcategorizer = wx.BoxSizer(wx.HORIZONTAL)
-        button_selectcategorizer = wx.Button(
-            panel, label="Select a Categorizer\nto test", size=(300, 40)
-        )
-        button_selectcategorizer.Bind(wx.EVT_BUTTON, self.select_categorizer)
-        wx.Button.SetToolTip(
-            button_selectcategorizer,
+        self.text_selectcategorizer = self.module_text("None.")
+        self.add_module(
+            "Select a Categorizer\nto test",
+            self.select_categorizer,
             "The behavioral names in ground-truth dataset should exactly match those in the selected Categorizer.",
+            self.text_selectcategorizer,
         )
-        self.text_selectcategorizer = wx.StaticText(
-            panel, label="None.", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
-        )
-        module_selectcategorizer.Add(
-            button_selectcategorizer, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        module_selectcategorizer.Add(
-            self.text_selectcategorizer, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        boxsizer.Add(0, 10, 0)
-        boxsizer.Add(module_selectcategorizer, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        module_inputexamples = wx.BoxSizer(wx.HORIZONTAL)
-        button_inputexamples = wx.Button(
-            panel,
-            label="Select the folder that stores\nthe ground-truth behavior examples",
-            size=(300, 40),
-        )
-        button_inputexamples.Bind(wx.EVT_BUTTON, self.select_filepath)
-        wx.Button.SetToolTip(
-            button_inputexamples,
+        self.text_inputexamples = self.module_text("None.")
+        self.add_module(
+            "Select the folder that stores\nthe ground-truth behavior examples",
+            self.select_filepath,
             "This folder should contain all the sorted behavior examples. Each subfolder in this folder should contain behavior examples of a behavior type. The names of the subfolders are the ground-truth behavior names, which should match those in the selected Categorizer.",
+            self.text_inputexamples,
         )
-        self.text_inputexamples = wx.StaticText(
-            panel, label="None.", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
-        )
-        module_inputexamples.Add(
-            button_inputexamples, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        module_inputexamples.Add(
-            self.text_inputexamples, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        boxsizer.Add(module_inputexamples, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        module_report = wx.BoxSizer(wx.HORIZONTAL)
-        button_report = wx.Button(
-            panel, label="Select a folder to\nexport testing reports", size=(300, 40)
-        )
-        button_report.Bind(wx.EVT_BUTTON, self.select_reportpath)
-        wx.Button.SetToolTip(
-            button_report,
+        self.text_report = self.module_text("None.")
+        self.add_module(
+            "Select a folder to\nexport testing reports",
+            self.select_reportpath,
             "This is the folder to store the reports of testing results and metrics. It is optional.",
+            self.text_report,
         )
-        self.text_report = wx.StaticText(
-            panel, label="None.", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
-        )
-        module_report.Add(button_report, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        module_report.Add(self.text_report, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(module_report, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        testanddelete = wx.BoxSizer(wx.HORIZONTAL)
-        button_test = wx.Button(panel, label="Test the Categorizer", size=(300, 40))
+        test_and_delete = wx.BoxSizer(wx.HORIZONTAL)
+        button_test = wx.Button(
+            self.panel, label="Test the Categorizer", size=(300, 40)
+        )
         button_test.Bind(wx.EVT_BUTTON, self.test_categorizer)
         wx.Button.SetToolTip(
             button_test,
             "Test the selected Categorizer on the ground-truth behavior examples",
         )
-        button_delete = wx.Button(panel, label="Delete a Categorizer", size=(300, 40))
+
+        button_delete = wx.Button(
+            self.panel, label="Delete a Categorizer", size=(300, 40)
+        )
         button_delete.Bind(wx.EVT_BUTTON, self.remove_categorizer)
         wx.Button.SetToolTip(
             button_delete,
             "Permanently delete a Categorizer. The deletion CANNOT be restored.",
         )
-        testanddelete.Add(button_test, 0, wx.RIGHT, 50)
-        testanddelete.Add(button_delete, 0, wx.LEFT, 50)
-        boxsizer.Add(0, 5, 0)
-        boxsizer.Add(testanddelete, 0, wx.RIGHT | wx.ALIGN_RIGHT, 90)
-        boxsizer.Add(0, 10, 0)
+        test_and_delete.Add(button_test, 0, wx.RIGHT, 50)
+        test_and_delete.Add(button_delete, 0, wx.LEFT, 50)
+        self.boxsizer.Add(0, 5, 0)
+        self.boxsizer.Add(test_and_delete, 0, wx.RIGHT | wx.ALIGN_RIGHT, 90)
+        self.boxsizer.Add(0, 10, 0)
 
-        panel.SetSizer(boxsizer)
-
-        self.Centre()
-        self.Show(True)
+        self.display_window()
 
     def select_categorizer(self, event):
-        categorizers = [
-            i
-            for i in os.listdir(self.model_path)
-            if os.path.isdir(os.path.join(self.model_path, i))
-        ]
-        if "__pycache__" in categorizers:
-            categorizers.remove("__pycache__")
-        if "__init__" in categorizers:
-            categorizers.remove("__init__")
-        if "__init__.py" in categorizers:
-            categorizers.remove("__init__.py")
-        categorizers.sort()
-        if "Choose a new directory of the Categorizer" not in categorizers:
-            categorizers.append("Choose a new directory of the Categorizer")
+        """Select the categorizer to test."""
+        categorizers = get_categorizer_names()
+        LOAD_NEW_CATEGORIZER = "Choose a new directory of the Categorizer"
+        categorizers.append(LOAD_NEW_CATEGORIZER)
 
         dialog = wx.SingleChoiceDialog(
             self,
@@ -805,40 +755,43 @@ class TestCategorizers(wx.Frame):
             choices=categorizers,
         )
 
-        if dialog.ShowModal() == wx.ID_OK:
+        if dialog.ShowModal() != wx.ID_OK:
+            dialog.Destroy()
+            return
+        else:
             categorizer = dialog.GetStringSelection()
-            if categorizer == "Choose a new directory of the Categorizer":
-                dialog1 = wx.DirDialog(
-                    self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE
-                )
-                if dialog1.ShowModal() == wx.ID_OK:
-                    self.path_to_categorizer = dialog1.GetPaths()
-                else:
-                    self.path_to_categorizer = None
-                dialog1.Destroy()
-                self.text_selectcategorizer.SetLabel(
-                    "The path to the Categorizer to test is: "
-                    + self.path_to_categorizer
-                    + "."
-                )
-            else:
-                self.path_to_categorizer = os.path.join(self.model_path, categorizer)
-                self.text_selectcategorizer.SetLabel(
-                    "Categorizer to test: " + categorizer + "."
-                )
+            dialog.Destroy()
 
-        dialog.Destroy()
+        if categorizer == LOAD_NEW_CATEGORIZER:
+            dialog1 = wx.DirDialog(
+                self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE
+            )
+            if dialog1.ShowModal() != wx.ID_OK:
+                dialog1.Destroy()
+                return
+            else:
+                self.path_to_categorizer = dialog1.GetPaths()
+                dialog1.Destroy()
+
+            self.text_selectcategorizer.SetLabel(
+                f"The path to the Categorizer to test is: {self.path_to_categorizer}."
+            )
+        else:
+            self.path_to_categorizer = os.path.join(self.model_path, categorizer)
+            self.text_selectcategorizer.SetLabel(f"Categorizer to test: {categorizer}.")
 
     def select_filepath(self, event):
+        """Select the directory with ground-truth behavior examples."""
         dialog = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
         if dialog.ShowModal() == wx.ID_OK:
             self.file_path = dialog.GetPath()
             self.text_inputexamples.SetLabel(
-                "Path to ground-truth behavior examples: " + self.file_path + "."
+                f"Path to ground-truth behavior examples: {self.file_path}."
             )
         dialog.Destroy()
 
     def select_reportpath(self, event):
+        """Select the path to store testing reports."""
         dialog = wx.MessageDialog(
             self,
             "Export the testing reports?",
@@ -852,7 +805,7 @@ class TestCategorizers(wx.Frame):
             if dialog1.ShowModal() == wx.ID_OK:
                 self.out_path = dialog1.GetPath()
                 self.text_report.SetLabel(
-                    "Testing reports will be in: " + self.out_path + "."
+                    f"Testing reports will be in: {self.out_path}."
                 )
             dialog1.Destroy()
         else:
@@ -860,6 +813,7 @@ class TestCategorizers(wx.Frame):
         dialog.Destroy()
 
     def test_categorizer(self, event):
+        """Test a categorizer."""
         if self.file_path is None or self.path_to_categorizer is None:
             wx.MessageBox(
                 "No Categorizer selected / path to ground-truth behavior examples.",
@@ -873,18 +827,8 @@ class TestCategorizers(wx.Frame):
             )
 
     def remove_categorizer(self, event):
-        categorizers = [
-            i
-            for i in os.listdir(self.model_path)
-            if os.path.isdir(os.path.join(self.model_path, i))
-        ]
-        if "__pycache__" in categorizers:
-            categorizers.remove("__pycache__")
-        if "__init__" in categorizers:
-            categorizers.remove("__init__")
-        if "__init__.py" in categorizers:
-            categorizers.remove("__init__.py")
-        categorizers.sort()
+        """Delete the a categorizer."""
+        categorizers = get_categorizer_names()
 
         dialog = wx.SingleChoiceDialog(
             self,
@@ -896,11 +840,11 @@ class TestCategorizers(wx.Frame):
             categorizer = dialog.GetStringSelection()
             dialog1 = wx.MessageDialog(
                 self,
-                "Delete " + str(categorizer) + "?",
+                f"Delete {categorizer}?",
                 "CANNOT be restored!",
                 wx.YES_NO | wx.ICON_QUESTION,
             )
             if dialog1.ShowModal() == wx.ID_YES:
-                shutil.rmtree(os.path.join(self.model_path, categorizer))
+                delete_categorizer(categorizer)
             dialog1.Destroy()
         dialog.Destroy()
