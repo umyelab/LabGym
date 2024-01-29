@@ -510,6 +510,7 @@ class TrainCategorizers(LabGymWindow):
         self.text_trainingfolder.SetLabel(label_text)
 
     def specify_augmentation(self, event):
+        """Select augmentation methods."""
         dialog = wx.MessageDialog(
             self,
             'Use default augmentation methods?\nSelect "Yes" if dont know how to specify.',
@@ -517,8 +518,13 @@ class TrainCategorizers(LabGymWindow):
             wx.YES_NO | wx.ICON_QUESTION,
         )
         if dialog.ShowModal() == wx.ID_YES:
-            selected = "default"
-            self.aug_methods = ["default"]
+            self.aug_methods = [
+                "random rotation",
+                "horizontal flipping",
+                "vertical flipping",
+                "random brightening",
+                "random dimming",
+            ]
         else:
             aug_methods = [
                 "random rotation",
@@ -530,7 +536,6 @@ class TrainCategorizers(LabGymWindow):
                 "random rescaling",
                 "random deletion",
             ]
-            selected = ""
             dialog1 = wx.MultiChoiceDialog(
                 self,
                 message="Data augmentation methods",
@@ -539,25 +544,9 @@ class TrainCategorizers(LabGymWindow):
             )
             if dialog1.ShowModal() == wx.ID_OK:
                 self.aug_methods = [aug_methods[i] for i in dialog1.GetSelections()]
-                for i in dialog1.GetSelections():
-                    if selected == "":
-                        selected = selected + aug_methods[i]
-                    else:
-                        selected = selected + "," + aug_methods[i]
             else:
                 self.aug_methods = []
             dialog1.Destroy()
-        if len(self.aug_methods) <= 0:
-            selected = "none"
-        else:
-            if self.aug_methods[0] == "default":
-                self.aug_methods = [
-                    "random rotation",
-                    "horizontal flipping",
-                    "vertical flipping",
-                    "random brightening",
-                    "random dimming",
-                ]
         dialog.Destroy()
 
         dialog = wx.MessageDialog(
@@ -569,12 +558,12 @@ class TrainCategorizers(LabGymWindow):
         if dialog.ShowModal() == wx.ID_YES:
             self.augvalid = True
             self.text_augmentation.SetLabel(
-                "Augment both training and validation examples with: " + selected + "."
+                f"Augment both training and validation examples with: {', '.join(self.aug_methods) if self.aug_methods else 'none'}"
             )
         else:
             self.augvalid = False
             self.text_augmentation.SetLabel(
-                "Augment training examples with: " + selected + "."
+                f"Augment training examples with: {', '.join(self.aug_methods) if self.aug_methods else 'none'}"
             )
         dialog.Destroy()
 
