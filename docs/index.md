@@ -9,4 +9,5 @@
 :hidden:
 
 installation/index
+what-can-labgym-do
 ```

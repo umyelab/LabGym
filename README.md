@@ -28,6 +28,7 @@ For installation instructions and documentation, please see [https://labgym.read
 
 <p>&nbsp;</p>
 
+<!-- start what-can-labgym-do -->
 ## Identifies user-defined behaviors
 
 LabGym is equipped with three distinct modes of behavior identification to suit different scenarios:
@@ -75,6 +76,8 @@ LabGym outputs diverse spreadsheets that store the behavior parameters that it c
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Results_mining.jpg?raw=true)
 
 <p>&nbsp;</p>
+
+<!-- end what-can-labgym-do -->
 
 ## Accessible and User-Friendly
 
