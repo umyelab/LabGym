@@ -592,82 +592,83 @@ class TrainCategorizers(LabGymWindow):
             wx.MessageBox(
                 "No path to training examples.", "Error", wx.OK | wx.ICON_ERROR
             )
+            return
 
-        else:
-            do_nothing = False
+        while True:
+            dialog = wx.TextEntryDialog(
+                self,
+                "Enter a name for the Categorizer to train",
+                "Categorizer name",
+            )
+            if dialog.ShowModal() != wx.ID_OK:
+                break
 
-            stop = False
-            while stop is False:
-                dialog = wx.TextEntryDialog(
-                    self,
-                    "Enter a name for the Categorizer to train",
-                    "Categorizer name",
+            if dialog.GetValue().strip() == "":
+                wx.MessageBox(
+                    "Please enter a name.",
+                    "Error",
+                    wx.OK | wx.ICON_ERROR,
                 )
-                if dialog.ShowModal() == wx.ID_OK:
-                    if dialog.GetValue() != "":
-                        self.path_to_categorizer = os.path.join(
-                            self.model_path, dialog.GetValue()
-                        )
-                        if not os.path.isdir(self.path_to_categorizer):
-                            os.makedirs(self.path_to_categorizer)
-                            stop = True
-                        else:
-                            wx.MessageBox(
-                                "The name already exists.",
-                                "Error",
-                                wx.OK | wx.ICON_ERROR,
-                            )
-                else:
-                    do_nothing = True
-                    stop = True
-                dialog.Destroy()
+                continue
+            categorizer_name = dialog.GetValue()
+            dialog.Destroy()
+            if categorizer_name in get_categorizer_names():
+                wx.MessageBox(
+                    f"The Categorizer {categorizer_name} already exists!",
+                    "Error",
+                    wx.OK | wx.ICON_ERROR,
+                )
+                continue
 
-            if do_nothing is False:
-                if self.using_animation_analyzer is False:
-                    CA = Categorizers()
-                    if self.behavior_mode >= 3:
-                        self.length = self.std = 0
-                        self.include_bodyparts = False
-                    else:
-                        self.channel = 3
-                    CA.train_pattern_recognizer(
-                        self.data_path,
-                        self.path_to_categorizer,
-                        self.training_report_path,
-                        dim=self.dim_conv,
-                        channel=self.channel,
-                        time_step=self.length,
-                        level=self.level_conv,
-                        aug_methods=self.aug_methods,
-                        augvalid=self.augvalid,
-                        include_bodyparts=self.include_bodyparts,
-                        std=self.std,
-                        background_free=self.background_free,
-                        behavior_mode=self.behavior_mode,
-                        social_distance=self.social_distance,
-                    )
+            self.path_to_categorizer = os.path.join(self.model_path, dialog.GetValue())
+            os.makedirs(self.path_to_categorizer)
+
+            if self.using_animation_analyzer is False:
+                CA = Categorizers()
+                if self.behavior_mode == BehaviorMode.STATIC_IMAGES:
+                    self.length = self.std = 0
+                    self.include_bodyparts = False
                 else:
-                    if self.behavior_mode == 2:
-                        self.channel = 3
-                    CA = Categorizers()
-                    CA.train_combnet(
-                        self.data_path,
-                        self.path_to_categorizer,
-                        self.training_report_path,
-                        dim_tconv=self.dim_tconv,
-                        dim_conv=self.dim_conv,
-                        channel=self.channel,
-                        time_step=self.length,
-                        level_tconv=self.level_tconv,
-                        level_conv=self.level_conv,
-                        aug_methods=self.aug_methods,
-                        augvalid=self.augvalid,
-                        include_bodyparts=self.include_bodyparts,
-                        std=self.std,
-                        background_free=self.background_free,
-                        behavior_mode=self.behavior_mode,
-                        social_distance=self.social_distance,
-                    )
+                    self.channel = 3
+                CA.train_pattern_recognizer(
+                    self.data_path,
+                    self.path_to_categorizer,
+                    self.training_report_path,
+                    dim=self.dim_conv,
+                    channel=self.channel,
+                    time_step=self.length,
+                    level=self.level_conv,
+                    aug_methods=self.aug_methods,
+                    augvalid=self.augvalid,
+                    include_bodyparts=self.include_bodyparts,
+                    std=self.std,
+                    background_free=self.background_free,
+                    behavior_mode=self.behavior_mode,
+                    social_distance=self.social_distance,
+                )
+            else:
+                if self.behavior_mode == BehaviorMode.INTERACT_ADVANCED:
+                    self.channel = 3
+                CA = Categorizers()
+                CA.train_combnet(
+                    self.data_path,
+                    self.path_to_categorizer,
+                    self.training_report_path,
+                    dim_tconv=self.dim_tconv,
+                    dim_conv=self.dim_conv,
+                    channel=self.channel,
+                    time_step=self.length,
+                    level_tconv=self.level_tconv,
+                    level_conv=self.level_conv,
+                    aug_methods=self.aug_methods,
+                    augvalid=self.augvalid,
+                    include_bodyparts=self.include_bodyparts,
+                    std=self.std,
+                    background_free=self.background_free,
+                    behavior_mode=self.behavior_mode,
+                    social_distance=self.social_distance,
+                )
+            break
 
 
 class TestCategorizers(LabGymWindow):
