@@ -43,19 +43,20 @@ class TrainCategorizers(LabGymWindow):
         dim_tconv: The width of the Animation Analyzer.
         dim_conv: The width of the Pattern Recognizer.
         channel: The number of channels in ???
-        length: The number of frames in a single behavior example.
+        behavior_length: The number of frames corresponding to a single
+            behavior.
         aug_methods: A list of augmentation methods to use while training.
         augvalid: Whether or not to use augmentation for validation data.
         data_path: The path to all prepared training examples.
         model_path: The location of the available categorizers.
         path_to_categorizer: The path to the newly created categorizer.
-        out_path: The folder in which to store training reports.
+        training_report_path: The folder in which to store training reports.
         include_bodyparts: Whether or not to include body parts.
         std: ???
         example_width: The behavior example width after resizing, if required.
-        background_free: ???
+        background_free: Whether or not the animations contain backgrounds.
         social_distance: The social distance when detecting interactive
-            behaviors. (Units are ???)
+            behaviors. (Units ???)
     """
 
     def __init__(self):
@@ -69,7 +70,7 @@ class TrainCategorizers(LabGymWindow):
         self.dim_tconv = 32
         self.dim_conv = 32
         self.channel = 1
-        self.length = 15
+        self.behavior_length = 15
         self.aug_methods = []
         self.augvalid = True
         self.data_path = None
@@ -447,9 +448,9 @@ class TrainCategorizers(LabGymWindow):
             1000,
         )
         if dialog.ShowModal() == wx.ID_OK:
-            self.length = max(int(dialog.GetValue()), 3)
+            self.behavior_length = max(int(dialog.GetValue()), 3)
             self.text_length.SetLabel(
-                f"The duration of a behavior example is: {self.length}."
+                f"The duration of a behavior example is: {self.behavior_length}."
             )
         dialog.Destroy()
 
@@ -626,7 +627,7 @@ class TrainCategorizers(LabGymWindow):
             if self.using_animation_analyzer is False:
                 CA = Categorizers()
                 if self.behavior_mode == BehaviorMode.STATIC_IMAGES:
-                    self.length = self.std = 0
+                    self.behavior_length = self.std = 0
                     self.include_bodyparts = False
                 else:
                     self.channel = 3
@@ -636,7 +637,7 @@ class TrainCategorizers(LabGymWindow):
                     self.training_report_path,
                     dim=self.dim_conv,
                     channel=self.channel,
-                    time_step=self.length,
+                    time_step=self.behavior_length,
                     level=self.level_conv,
                     aug_methods=self.aug_methods,
                     augvalid=self.augvalid,
@@ -657,7 +658,7 @@ class TrainCategorizers(LabGymWindow):
                     dim_tconv=self.dim_tconv,
                     dim_conv=self.dim_conv,
                     channel=self.channel,
-                    time_step=self.length,
+                    time_step=self.behavior_length,
                     level_tconv=self.level_tconv,
                     level_conv=self.level_conv,
                     aug_methods=self.aug_methods,
