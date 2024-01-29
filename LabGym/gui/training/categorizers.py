@@ -77,7 +77,7 @@ class TrainCategorizers(LabGymWindow):
         self.path_to_categorizer = os.path.join(
             the_absolute_current_path, "models", "New_model"
         )
-        self.out_path = None
+        self.training_report_path = None
         self.include_bodyparts = False
         self.std = 0
         self.example_width = None
@@ -153,7 +153,7 @@ class TrainCategorizers(LabGymWindow):
         self.text_report = self.module_text("None.")
         self.add_module(
             "Select a folder to\nexport training reports",
-            self.select_reportpath,
+            self.select_report_path,
             "This is the folder to store the reports of training history and metrics. It is optional.",
             self.text_report,
         )
@@ -542,10 +542,9 @@ class TrainCategorizers(LabGymWindow):
                 caption="Augmentation methods",
                 choices=aug_methods,
             )
+            self.aug_methods = []
             if dialog1.ShowModal() == wx.ID_OK:
                 self.aug_methods = [aug_methods[i] for i in dialog1.GetSelections()]
-            else:
-                self.aug_methods = []
             dialog1.Destroy()
         dialog.Destroy()
 
@@ -567,7 +566,7 @@ class TrainCategorizers(LabGymWindow):
             )
         dialog.Destroy()
 
-    def select_reportpath(self, event):
+    def select_report_path(self, event):
         dialog = wx.MessageDialog(
             self,
             "Export the training reports?",
@@ -579,13 +578,13 @@ class TrainCategorizers(LabGymWindow):
                 self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE
             )
             if dialog2.ShowModal() == wx.ID_OK:
-                self.out_path = dialog2.GetPath()
+                self.training_report_path = dialog2.GetPath()
                 self.text_report.SetLabel(
-                    "Training reports will be in: " + self.out_path + "."
+                    f"Training reports will be in: {self.training_report_path}."
                 )
             dialog2.Destroy()
         else:
-            self.out_path = None
+            self.training_report_path = None
         dialog.Destroy()
 
     def train_categorizer(self, event):
@@ -634,7 +633,7 @@ class TrainCategorizers(LabGymWindow):
                     CA.train_pattern_recognizer(
                         self.data_path,
                         self.path_to_categorizer,
-                        self.out_path,
+                        self.training_report_path,
                         dim=self.dim_conv,
                         channel=self.channel,
                         time_step=self.length,
@@ -654,7 +653,7 @@ class TrainCategorizers(LabGymWindow):
                     CA.train_combnet(
                         self.data_path,
                         self.path_to_categorizer,
-                        self.out_path,
+                        self.training_report_path,
                         dim_tconv=self.dim_tconv,
                         dim_conv=self.dim_conv,
                         channel=self.channel,
