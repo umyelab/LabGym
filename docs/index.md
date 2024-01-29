@@ -8,5 +8,5 @@
 ```{toctree}
 :hidden:
 
-installation
+installation/index
 ```

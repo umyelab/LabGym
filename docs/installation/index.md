@@ -14,7 +14,7 @@ feel free to go ahead and do that.
 
 ```{toctree}
 
-installation/windows
-installation/macos
-installation/linux
+windows
+macos
+linux
 ```
