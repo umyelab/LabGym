@@ -10,4 +10,8 @@
 
 installation/index
 what-can-labgym-do
+walkthroughs/index
+features/index
+issues
+changelog
 ```
