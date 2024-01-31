@@ -163,11 +163,10 @@ LabGym employs two distinct methods for detecting animals or objects in differen
     2. Use free online annotation tools like Roboflow (https://roboflow.com) to annotate the outlines of animals or objects in these images. For annotation type, choose 'Instance Segmentation', and export the annotations in 'COCO instance segmentation' format, which generates a ‘*.json’ file. In **'Interactive advanced'** mode, focus on images where individuals collide and annotate these boundaries precisely. Exposing the **Detector** to a variety of collision scenarios during training can significantly minimize identity switching in subsequent analyses.
     3. Use the **‘Train Detectors’** button to input these annotated images and commence training your **Detectors**.
 
-<p>&nbsp;</p>
-
 ## Installation
 
-Please refer to the installation instructions at <https://labgym.readthedocs.io/en/latest/installation.html>.
+Please refer to the installation instructions in the 
+[documentation](https://labgym.readthedocs.io/en/latest/installation.html).
 
 To launch LabGym, open a Python interpreter as per the instructions above, then issue the following commands:
 
@@ -178,11 +177,7 @@ To launch LabGym, open a Python interpreter as per the instructions above, then 
 
 Now, the user interface is inititated and ready to use.
 
-<p>&nbsp;</p>
-
 ## Reporting Issues
 
-To report an issue with LabGym, follow the instructions at
-<https://labgym.readthedocs.io/en/latest/issues.html>.
-
-<p>&nbsp;</p>
+To report an issue with LabGym, refer to the walkthrough in the 
+[documentation](https://labgym.readthedocs.io/en/latest/issues.html).
