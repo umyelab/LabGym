@@ -165,11 +165,11 @@ LabGym employs two distinct methods for detecting animals or objects in differen
 
 <p>&nbsp;</p>
 
-# Installation
+## Installation
 
-Please refer to the installation instructions at [https://labgym.readthedocs.io/en/latest/installation.html](https://labgym.readthedocs.io/en/latest/installation.html).
+Please refer to the installation instructions at <https://labgym.readthedocs.io/en/latest/installation.html>.
 
-To launch LabGym, open a Python interpreter as per the instructons above, then issue the following commands:
+To launch LabGym, open a Python interpreter as per the instructions above, then issue the following commands:
 
 ```pycon
 >>> from LabGym import gui
@@ -180,10 +180,9 @@ Now, the user interface is inititated and ready to use.
 
 <p>&nbsp;</p>
 
-# If you encounter any issues when using LabGym:
+## Reporting Issues
 
-Refer to the open / closed issues or open a new issue or contact the author: Yujia Hu (henryhu@umich.edu).
-
-For instructions on how to contribute to LabGym, please see [CONTRIBUTING.md](./CONTRIBUTING.md).
+To report an issue with LabGym, follow the instructions at
+<https://labgym.readthedocs.io/en/latest/issues.html>.
 
 <p>&nbsp;</p>
