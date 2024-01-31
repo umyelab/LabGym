@@ -1,3 +1,3 @@
-# Static Image Analysis
+# Detector (Image)
 
 Coming soon!
