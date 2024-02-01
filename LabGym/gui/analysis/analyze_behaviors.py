@@ -108,84 +108,94 @@ class AnalyzeBehaviors(LabGymWindow):
         self.dispaly_window()
 
     def dispaly_window(self):
-        self.text_selectcategorizer=self.module_text("Default: no behavior classification, just track animals and quantify motion kinematcis.")
+        self.text_selectcategorizer = self.module_text(
+            "Default: no behavior classification, just track animals and quantify motion kinematcis."
+        )
         self.add_module(
-            button_label="Select a Categorizer for\nbheavior classification",
+            button_label="Select a Categorizer for\nbehavior classification",
             button_handler=self.select_categorizer,
             tool_tip="The fps of the videos to analyze should match that of the selected Categorizer. Uncertain level determines the threshold for the Categorizer to output an ‘NA’ for behavioral classification. See Extended Guide for details.",
-            text=self.text_selectcategorizer
+            text=self.text_selectcategorizer,
         )
 
-        self.text_inputvideos=self.module_text("None.")
+        self.text_inputvideos = self.module_text("None.")
         self.add_module(
             button_label="Select the video(s) / image(s)\nfor behavior analysis",
             button_handler=self.select_videos,
             tool_tip='Select one or more videos / images for a behavior analysis batch. If analyzing videos, one analysis batch will yield one raster plot showing the behavior events of all the animals in all selected videos. For "Static images" mode, each annotated images will be in this folder. See Extended Guide for details.',
-            text=self.text_inputvideos
+            text=self.text_inputvideos,
         )
-        
-        self.text_outputfolder=self.module_text("None.")
+
+        self.text_outputfolder = self.module_text("None.")
         self.add_module(
             button_label="Select a folder to store\nthe analysis results",
             button_handler=self.select_outpath,
             tool_tip='If analyzing videos, will create a subfolder for each video in the selected folder. Each subfolder is named after the file name of the video and stores the detailed analysis results for this video. For "Static images" mode, all results will be in this folder. See Extended Guide for details.',
-            text=self.text_outputfolder
+            text=self.text_outputfolder,
         )
-        
-        self.text_detection=self.module_text("Default: Background subtraction-based method.")
+
+        self.text_detection = self.module_text(
+            "Default: Background subtraction-based method."
+        )
         self.add_module(
             button_label="Specify the method to\ndetect animals or objects",
             button_handler=self.select_method,
             tool_tip="Background subtraction-based method is accurate and fast but requires static background and stable illumination in videos; Detectors-based method is accurate and versatile in any recording settings but is slow. See Extended Guide for details.",
-            text=self.text_detection
+            text=self.text_detection,
         )
-        
-        self.text_startanalyze=self.module_text("Default: at the beginning of the video(s).")
+
+        self.text_startanalyze = self.module_text(
+            "Default: at the beginning of the video(s)."
+        )
         self.add_module(
             button_label="Specify when the analysis\nshould begin (unit: second)",
             button_handler=self.specify_timing,
             tool_tip='Enter a beginning time point for all videos in one analysis batch or use "Decode from filenames" to let LabGym decode the different beginning time for different videos. See Extended Guide for details.',
-            text=self.text_startanalyze
+            text=self.text_startanalyze,
         )
-        
-        self.text_duration=self.module_text("Default: from the specified start time to the end of a video")
+
+        self.text_duration = self.module_text(
+            "Default: from the specified start time to the end of a video"
+        )
         self.add_module(
             button_label="Specify the analysis duration\n(unit: second)",
             button_handler=self.input_duration,
             tool_tip="The duration is the same for all the videos in a same analysis batch.",
-            text=self.text_duration
+            text=self.text_duration,
         )
-        
-        self.text_animalnumber=self.module_text("Default: 1.")
+
+        self.text_animalnumber = self.module_text("Default: 1.")
         self.add_module(
             button_label="Specify the number of animals\nin a video",
             button_handler=self.specify_animalnumber,
             tool_tip='Enter a number for all videos in one analysis batch or use "Decode from filenames" to let LabGym decode the different animal number for different videos. See Extended Guide for details.',
-            text=self.text_animalnumber
+            text=self.text_animalnumber,
         )
-        
-        self.text_selectbehaviors=self.module_text("Default: No Categorizer selected, no behavior selected.")
+
+        self.text_selectbehaviors = self.module_text(
+            "Default: No Categorizer selected, no behavior selected."
+        )
         self.add_module(
             button_label="Select the behaviors for\nannotations and plots",
             button_handler=self.select_behaviors,
             tool_tip="The behavior categories are determined by the selected Categorizer. Select which behaviors to show in the annotated videos / images and the raster plot (only for videos). See Extended Guide for details.",
-            text=self.text_selectbehaviors
+            text=self.text_selectbehaviors,
         )
-        
-        self.text_selectparameters=self.module_text("Default: None.")
+
+        self.text_selectparameters = self.module_text("Default: None.")
         self.add_module(
             button_label="Select the quantitative measurements\nfor each behavior",
             button_handler=self.select_parameters,
             tool_tip='If select "not to normalize distances", all distances will be output in pixels. If select "normalize distances", all distances will be normalized to the animal size. See Extended Guide for details.',
-            text=self.text_selectparameters
+            text=self.text_selectparameters,
         )
-        
+
         self.add_submit_button(
             label="Start to analyze the behaviors",
             handler=self.analyze_behaviors,
             tool_tip='If analyzing videos, will output a raster plot for all behavior events in all videos, an annotated video copy for each video, various spreadsheets storing quantification results for each selected behavior parameter. For "Static images" mode, will output annotated image copies and spreadsheet storing behavior count and probability.',
         )
-        
+
         self.display_window()
 
     def select_categorizer(self, event):
