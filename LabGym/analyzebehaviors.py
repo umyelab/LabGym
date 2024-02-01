@@ -215,8 +215,6 @@ class AnalyzeAnimal:
 
         if self.autofind_t:
             self.t = get_stimulation_time(self.path_to_video, self.delta)
-        else:
-            self.t = None
 
         self.animal_area = estimate_animal_area(
             self.path_to_video,
