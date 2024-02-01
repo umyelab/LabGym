@@ -28,6 +28,7 @@ import wx
 from LabGym.analyzebehaviors import AnalyzeAnimal
 from LabGym.analyzebehaviorsdetector import AnalyzeAnimalDetector
 from LabGym.tools import plot_evnets
+from ..utils import WX_VIDEO_WILDCARD, WX_IMAGE_WILDCARD, LabGymWindow
 
 the_absolute_current_path = str(Path(__file__).resolve().parent.parent.parent)
 
@@ -55,9 +56,9 @@ class ColorPicker(wx.Dialog):
         self.SetSizer(boxsizer)
 
 
-class AnalyzeBehaviors(wx.Frame):
+class AnalyzeBehaviors(LabGymWindow):
     def __init__(self):
-        super().__init__(parent=None, title="Analyze Behaviors", size=(1000, 510))
+        super().__init__(title="Analyze Behaviors", size=(1000, 600))
         self.behavior_mode = 0
         self.use_detector = False
         self.detector_path = None
@@ -107,231 +108,95 @@ class AnalyzeBehaviors(wx.Frame):
         self.dispaly_window()
 
     def dispaly_window(self):
-        panel = wx.Panel(self)
-        boxsizer = wx.BoxSizer(wx.VERTICAL)
+        self.text_selectcategorizer = self.module_text(
+            "Default: no behavior classification, just track animals and quantify motion kinematcis."
+        )
+        self.add_module(
+            button_label="Select a Categorizer for\nbehavior classification",
+            button_handler=self.select_categorizer,
+            tool_tip="The fps of the videos to analyze should match that of the selected Categorizer. Uncertain level determines the threshold for the Categorizer to output an ‘NA’ for behavioral classification. See Extended Guide for details.",
+            text=self.text_selectcategorizer,
+        )
 
-        module_selectcategorizer = wx.BoxSizer(wx.HORIZONTAL)
-        button_selectcategorizer = wx.Button(
-            panel,
-            label="Select a Categorizer for\nbehavior classification",
-            size=(300, 40),
+        self.text_inputvideos = self.module_text("None.")
+        self.add_module(
+            button_label="Select the video(s) / image(s)\nfor behavior analysis",
+            button_handler=self.select_videos,
+            tool_tip='Select one or more videos / images for a behavior analysis batch. If analyzing videos, one analysis batch will yield one raster plot showing the behavior events of all the animals in all selected videos. For "Static images" mode, each annotated images will be in this folder. See Extended Guide for details.',
+            text=self.text_inputvideos,
         )
-        button_selectcategorizer.Bind(wx.EVT_BUTTON, self.select_categorizer)
-        wx.Button.SetToolTip(
-            button_selectcategorizer,
-            "The fps of the videos to analyze should match that of the selected Categorizer. Uncertain level determines the threshold for the Categorizer to output an ‘NA’ for behavioral classification. See Extended Guide for details.",
-        )
-        self.text_selectcategorizer = wx.StaticText(
-            panel,
-            label="Default: no behavior classification, just track animals and quantify motion kinematcis.",
-            style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END,
-        )
-        module_selectcategorizer.Add(
-            button_selectcategorizer, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        module_selectcategorizer.Add(
-            self.text_selectcategorizer, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        boxsizer.Add(0, 10, 0)
-        boxsizer.Add(module_selectcategorizer, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        module_inputvideos = wx.BoxSizer(wx.HORIZONTAL)
-        button_inputvideos = wx.Button(
-            panel,
-            label="Select the video(s) / image(s)\nfor behavior analysis",
-            size=(300, 40),
+        self.text_outputfolder = self.module_text("None.")
+        self.add_module(
+            button_label="Select a folder to store\nthe analysis results",
+            button_handler=self.select_outpath,
+            tool_tip='If analyzing videos, will create a subfolder for each video in the selected folder. Each subfolder is named after the file name of the video and stores the detailed analysis results for this video. For "Static images" mode, all results will be in this folder. See Extended Guide for details.',
+            text=self.text_outputfolder,
         )
-        button_inputvideos.Bind(wx.EVT_BUTTON, self.select_videos)
-        wx.Button.SetToolTip(
-            button_inputvideos,
-            'Select one or more videos / images for a behavior analysis batch. If analyzing videos, one analysis batch will yield one raster plot showing the behavior events of all the animals in all selected videos. For "Static images" mode, each annotated images will be in this folder. See Extended Guide for details.',
-        )
-        self.text_inputvideos = wx.StaticText(
-            panel, label="None.", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
-        )
-        module_inputvideos.Add(
-            button_inputvideos, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        module_inputvideos.Add(
-            self.text_inputvideos, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        boxsizer.Add(module_inputvideos, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        module_outputfolder = wx.BoxSizer(wx.HORIZONTAL)
-        button_outputfolder = wx.Button(
-            panel,
-            label="Select a folder to store\nthe analysis results",
-            size=(300, 40),
+        self.text_detection = self.module_text(
+            "Default: Background subtraction-based method."
         )
-        button_outputfolder.Bind(wx.EVT_BUTTON, self.select_outpath)
-        wx.Button.SetToolTip(
-            button_outputfolder,
-            'If analyzing videos, will create a subfolder for each video in the selected folder. Each subfolder is named after the file name of the video and stores the detailed analysis results for this video. For "Static images" mode, all results will be in this folder. See Extended Guide for details.',
+        self.add_module(
+            button_label="Specify the method to\ndetect animals or objects",
+            button_handler=self.select_method,
+            tool_tip="Background subtraction-based method is accurate and fast but requires static background and stable illumination in videos; Detectors-based method is accurate and versatile in any recording settings but is slow. See Extended Guide for details.",
+            text=self.text_detection,
         )
-        self.text_outputfolder = wx.StaticText(
-            panel, label="None.", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
-        )
-        module_outputfolder.Add(
-            button_outputfolder, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        module_outputfolder.Add(
-            self.text_outputfolder, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        boxsizer.Add(module_outputfolder, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        module_detection = wx.BoxSizer(wx.HORIZONTAL)
-        button_detection = wx.Button(
-            panel,
-            label="Specify the method to\ndetect animals or objects",
-            size=(300, 40),
+        self.text_startanalyze = self.module_text(
+            "Default: at the beginning of the video(s)."
         )
-        button_detection.Bind(wx.EVT_BUTTON, self.select_method)
-        wx.Button.SetToolTip(
-            button_detection,
-            "Background subtraction-based method is accurate and fast but requires static background and stable illumination in videos; Detectors-based method is accurate and versatile in any recording settings but is slow. See Extended Guide for details.",
+        self.add_module(
+            button_label="Specify when the analysis\nshould begin (unit: second)",
+            button_handler=self.specify_timing,
+            tool_tip='Enter a beginning time point for all videos in one analysis batch or use "Decode from filenames" to let LabGym decode the different beginning time for different videos. See Extended Guide for details.',
+            text=self.text_startanalyze,
         )
-        self.text_detection = wx.StaticText(
-            panel,
-            label="Default: Background subtraction-based method.",
-            style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END,
-        )
-        module_detection.Add(button_detection, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        module_detection.Add(self.text_detection, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(module_detection, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        module_startanalyze = wx.BoxSizer(wx.HORIZONTAL)
-        button_startanalyze = wx.Button(
-            panel,
-            label="Specify when the analysis\nshould begin (unit: second)",
-            size=(300, 40),
+        self.text_duration = self.module_text(
+            "Default: from the specified start time to the end of a video"
         )
-        button_startanalyze.Bind(wx.EVT_BUTTON, self.specify_timing)
-        wx.Button.SetToolTip(
-            button_startanalyze,
-            'Enter a beginning time point for all videos in one analysis batch or use "Decode from filenames" to let LabGym decode the different beginning time for different videos. See Extended Guide for details.',
+        self.add_module(
+            button_label="Specify the analysis duration\n(unit: second)",
+            button_handler=self.input_duration,
+            tool_tip="The duration is the same for all the videos in a same analysis batch.",
+            text=self.text_duration,
         )
-        self.text_startanalyze = wx.StaticText(
-            panel,
-            label="Default: at the beginning of the video(s).",
-            style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END,
-        )
-        module_startanalyze.Add(
-            button_startanalyze, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        module_startanalyze.Add(
-            self.text_startanalyze, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        boxsizer.Add(module_startanalyze, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        module_duration = wx.BoxSizer(wx.HORIZONTAL)
-        button_duration = wx.Button(
-            panel, label="Specify the analysis duration\n(unit: second)", size=(300, 40)
+        self.text_animalnumber = self.module_text("Default: 1.")
+        self.add_module(
+            button_label="Specify the number of animals\nin a video",
+            button_handler=self.specify_animalnumber,
+            tool_tip='Enter a number for all videos in one analysis batch or use "Decode from filenames" to let LabGym decode the different animal number for different videos. See Extended Guide for details.',
+            text=self.text_animalnumber,
         )
-        button_duration.Bind(wx.EVT_BUTTON, self.input_duration)
-        wx.Button.SetToolTip(
-            button_duration,
-            "The duration is the same for all the videos in a same analysis batch.",
-        )
-        self.text_duration = wx.StaticText(
-            panel,
-            label="Default: from the specified beginning time to the end of a video.",
-            style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END,
-        )
-        module_duration.Add(button_duration, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        module_duration.Add(self.text_duration, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(module_duration, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        module_animalnumber = wx.BoxSizer(wx.HORIZONTAL)
-        button_animalnumber = wx.Button(
-            panel, label="Specify the number of animals\nin a video", size=(300, 40)
+        self.text_selectbehaviors = self.module_text(
+            "Default: No Categorizer selected, no behavior selected."
         )
-        button_animalnumber.Bind(wx.EVT_BUTTON, self.specify_animalnumber)
-        wx.Button.SetToolTip(
-            button_animalnumber,
-            'Enter a number for all videos in one analysis batch or use "Decode from filenames" to let LabGym decode the different animal number for different videos. See Extended Guide for details.',
+        self.add_module(
+            button_label="Select the behaviors for\nannotations and plots",
+            button_handler=self.select_behaviors,
+            tool_tip="The behavior categories are determined by the selected Categorizer. Select which behaviors to show in the annotated videos / images and the raster plot (only for videos). See Extended Guide for details.",
+            text=self.text_selectbehaviors,
         )
-        self.text_animalnumber = wx.StaticText(
-            panel, label="Default: 1.", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
-        )
-        module_animalnumber.Add(
-            button_animalnumber, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        module_animalnumber.Add(
-            self.text_animalnumber, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        boxsizer.Add(module_animalnumber, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        module_selectbehaviors = wx.BoxSizer(wx.HORIZONTAL)
-        button_selectbehaviors = wx.Button(
-            panel,
-            label="Select the behaviors for\nannotations and plots",
-            size=(300, 40),
+        self.text_selectparameters = self.module_text("Default: None.")
+        self.add_module(
+            button_label="Select the quantitative measurements\nfor each behavior",
+            button_handler=self.select_parameters,
+            tool_tip='If select "not to normalize distances", all distances will be output in pixels. If select "normalize distances", all distances will be normalized to the animal size. See Extended Guide for details.',
+            text=self.text_selectparameters,
         )
-        button_selectbehaviors.Bind(wx.EVT_BUTTON, self.select_behaviors)
-        wx.Button.SetToolTip(
-            button_selectbehaviors,
-            "The behavior categories are determined by the selected Categorizer. Select which behaviors to show in the annotated videos / images and the raster plot (only for videos). See Extended Guide for details.",
-        )
-        self.text_selectbehaviors = wx.StaticText(
-            panel,
-            label="Default: No Categorizer selected, no behavior selected.",
-            style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END,
-        )
-        module_selectbehaviors.Add(
-            button_selectbehaviors, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        module_selectbehaviors.Add(
-            self.text_selectbehaviors, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        boxsizer.Add(module_selectbehaviors, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        module_selectparameters = wx.BoxSizer(wx.HORIZONTAL)
-        button_selectparameters = wx.Button(
-            panel,
-            label="Select the quantitative measurements\nfor each behavior",
-            size=(300, 40),
+        self.add_submit_button(
+            label="Start to analyze the behaviors",
+            handler=self.analyze_behaviors,
+            tool_tip='If analyzing videos, will output a raster plot for all behavior events in all videos, an annotated video copy for each video, various spreadsheets storing quantification results for each selected behavior parameter. For "Static images" mode, will output annotated image copies and spreadsheet storing behavior count and probability.',
         )
-        button_selectparameters.Bind(wx.EVT_BUTTON, self.select_parameters)
-        wx.Button.SetToolTip(
-            button_selectparameters,
-            'If select "not to normalize distances", all distances will be output in pixels. If select "normalize distances", all distances will be normalized to the animal size. See Extended Guide for details.',
-        )
-        self.text_selectparameters = wx.StaticText(
-            panel, label="Default: none.", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
-        )
-        module_selectparameters.Add(
-            button_selectparameters, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        module_selectparameters.Add(
-            self.text_selectparameters, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        boxsizer.Add(module_selectparameters, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
-        boxsizer.Add(0, 5, 0)
 
-        button_analyze = wx.Button(
-            panel, label="Start to analyze the behaviors", size=(300, 40)
-        )
-        button_analyze.Bind(wx.EVT_BUTTON, self.analyze_behaviors)
-        wx.Button.SetToolTip(
-            button_analyze,
-            'If analyzing videos, will output a raster plot for all behavior events in all videos, an annotated video copy for each video, various spreadsheets storing quantification results for each selected behavior parameter. For "Static images" mode, will output annotated image copies and spreadsheet storing behavior count and probability.',
-        )
-        boxsizer.Add(0, 5, 0)
-        boxsizer.Add(button_analyze, 0, wx.RIGHT | wx.ALIGN_RIGHT, 90)
-        boxsizer.Add(0, 10, 0)
-
-        panel.SetSizer(boxsizer)
-
-        self.Centre()
-        self.Show(True)
+        self.display_window()
 
     def select_categorizer(self, event):
         if self.model_path is None:
@@ -521,9 +386,9 @@ class AnalyzeBehaviors(wx.Frame):
 
     def select_videos(self, event):
         if self.behavior_mode == 3:
-            wildcard = "Image files(*.jpg;*.jpeg;*.png;*.tiff;*.bmp)|*.jpg;*.JPG;*.jpeg;*.JPEG;*.png;*.PNG;*.tiff;*.TIFF;*.bmp;*.BMP"
+            wildcard = WX_IMAGE_WILDCARD
         else:
-            wildcard = "Video files(*.avi;*.mpg;*.mpeg;*.wmv;*.mp4;*.mkv;*.m4v;*.mov)|*.avi;*.mpg;*.mpeg;*.wmv;*.mp4;*.mkv;*.m4v;*.mov"
+            wildcard = WX_VIDEO_WILDCARD
 
         dialog = wx.FileDialog(
             self, "Select video(s) / image(s)", "", "", wildcard, style=wx.FD_MULTIPLE
