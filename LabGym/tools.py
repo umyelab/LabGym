@@ -23,7 +23,7 @@ import gc
 import operator
 import os
 from collections import deque
-from typing import Sequence, TypeAlias
+from typing import Sequence, Tuple, TypeAlias
 
 import cv2
 import numpy as np
@@ -39,9 +39,11 @@ from tensorflow.keras.preprocessing.image import img_to_array
 
 
 # Constants to store animal lighter vs darker than background
-ANIMAL_LIGHTER = 0
-ANIMAL_DARKER = 1
-HARD_TO_TELL = 2
+class AnimalVsBg:
+    ANIMAL_LIGHTER = 0
+    ANIMAL_DARKER = 1
+    HARD_TO_TELL = 2
+
 
 # Use Frame to refer to different representations of a frame
 Frame: TypeAlias = NDArray[np.uint8] | MatLike
@@ -50,7 +52,7 @@ Frame: TypeAlias = NDArray[np.uint8] | MatLike
 def _extract_background(
     frames: Sequence[MatLike],
     stable_illumination: bool = True,
-    animal_vs_bg: int = ANIMAL_LIGHTER,
+    animal_vs_bg: int = AnimalVsBg.ANIMAL_LIGHTER,
 ) -> Frame | None:
     """
     Extracts the background from the given list of frames.
@@ -79,7 +81,7 @@ def _extract_background(
     # Convert to ndarray
     frames_arr = np.array(frames, dtype="float32")
 
-    if animal_vs_bg == HARD_TO_TELL:
+    if animal_vs_bg == AnimalVsBg.HARD_TO_TELL:
         if len_frames <= 101:
             return np.uint8(np.median(frames_arr, axis=0))  # type: ignore
 
@@ -105,7 +107,7 @@ def _extract_background(
     if stable_illumination is True:
         return (
             np.uint8(frames_arr.max(0))
-            if animal_vs_bg == ANIMAL_DARKER
+            if animal_vs_bg == AnimalVsBg.ANIMAL_DARKER
             else np.uint8(frames_arr.min(0))
         )  # type:ignore
 
@@ -134,7 +136,7 @@ def _extract_background(
 
     return (
         np.uint8(frames_arr.max(0))
-        if animal_vs_bg == ANIMAL_DARKER
+        if animal_vs_bg == AnimalVsBg.ANIMAL_DARKER
         else np.uint8(frames_arr.min(0))
     )  # type: ignore
 
@@ -146,7 +148,7 @@ def extract_backgrounds_from_video(
     stable_illumination: bool = True,
     start_time: float = 0.0,
     end_time: float | None = None,
-    animal_vs_bg: int = ANIMAL_LIGHTER,
+    animal_vs_bg: int = AnimalVsBg.ANIMAL_LIGHTER,
 ) -> tuple[Frame, Frame, Frame]:
     """
     Extracts backgrounds from given video.
@@ -268,11 +270,11 @@ def extract_backgrounds_from_video(
                 backgrounds[bg_type] = background_options[bg_type][0]
             else:
                 options = np.array(background_options[bg_type], dtype="uint8")
-                if animal_vs_bg == ANIMAL_LIGHTER:
+                if animal_vs_bg == AnimalVsBg.ANIMAL_LIGHTER:
                     backgrounds[bg_type] = options.min(axis=0)
-                elif animal_vs_bg == ANIMAL_DARKER:
+                elif animal_vs_bg == AnimalVsBg.ANIMAL_DARKER:
                     backgrounds[bg_type] = options.max(axis=0)
-                elif animal_vs_bg == HARD_TO_TELL:
+                elif animal_vs_bg == AnimalVsBg.HARD_TO_TELL:
                     backgrounds[bg_type] = np.median(options, axis=0)
                 del options
                 gc.collect()
@@ -377,7 +379,7 @@ def estimate_animal_area(
     stim_t: float | None = None,
     start_time: float | None = None,
     duration: float = 10.0,
-    animal_vs_bg: int = ANIMAL_LIGHTER,
+    animal_vs_bg: int = AnimalVsBg.ANIMAL_LIGHTER,
     kernel_size: int = 3,
 ) -> float | None:
     """
@@ -446,7 +448,7 @@ def estimate_animal_area(
     background_high_estimation = background_high
 
     # Make animal lighter than background for morphological transformation
-    if animal_vs_bg == ANIMAL_DARKER:
+    if animal_vs_bg == AnimalVsBg.ANIMAL_DARKER:
         background_estimation = 255 - background_default  # type: ignore
         background_low_estimation = 255 - background_low  # type: ignore
         background_high_estimation = 255 - background_high  # type: ignore
@@ -472,7 +474,7 @@ def estimate_animal_area(
         frame = np.array(frame, dtype=np.uint8)
 
         # Make animal brighter than background for morphological transformation
-        if animal_vs_bg == ANIMAL_DARKER:
+        if animal_vs_bg == AnimalVsBg.ANIMAL_DARKER:
             frame = 255 - frame
 
         if lower_threshold is None or upper_threshold is None:
@@ -488,7 +490,7 @@ def estimate_animal_area(
             background = background_estimation
 
         # Subtract background and convert to grayscale
-        if animal_vs_bg == HARD_TO_TELL:
+        if animal_vs_bg == AnimalVsBg.HARD_TO_TELL:
             foreground = cv2.absdiff(frame, background)
         else:
             foreground = cv2.subtract(frame, background)
@@ -500,7 +502,7 @@ def estimate_animal_area(
         )
         kernel = np.ones((kernel_size, kernel_size), np.uint8)
         thred = cv2.morphologyEx(thred, cv2.MORPH_CLOSE, kernel)
-        if animal_vs_bg == HARD_TO_TELL:
+        if animal_vs_bg == AnimalVsBg.HARD_TO_TELL:
             kernel_erode_size = max(kernel_size - 4, 1)
             kernel_erode = np.ones((kernel_erode_size, kernel_erode_size), np.uint8)
             thred = cv2.erode(thred, kernel_erode)
@@ -1153,9 +1155,9 @@ def extract_frames(
 def preprocess_video(
     path_to_video: str,
     out_folder: str,
-    framewidth: int,
+    framewidth: int | None,
     trim_video: bool = False,
-    time_windows: list[list[float]] = [[0, 10]],
+    time_windows: list[Tuple[float, float]] = [(0, 10)],
     enhance_contrast: bool = True,
     contrast: float = 1.0,
     crop_frame: bool = True,
@@ -1221,7 +1223,7 @@ def preprocess_video(
     # Create VideoWriter with given parameters
     writer = cv2.VideoWriter(
         filename=os.path.join(out_folder, name + added_name + "_processed.avi"),
-        fourcc=cv2.VideoWriter_fourcc(*"MJPG"),
+        fourcc=cv2.VideoWriter_fourcc(*"MJPG"),  # type: ignore
         fps=fps / fps_reduction_factor,
         frameSize=(int(width), int(height)),
         isColor=True,
@@ -1251,18 +1253,18 @@ def preprocess_video(
         if crop_frame is True:
             frame = frame[top:bottom, left:right, :]
         if enhance_contrast is True:
-            frame = frame * contrast
+            frame = frame * contrast  # type: ignore
             frame[frame > 255] = 255
 
         # Add frame to video file
-        frame = np.uint8(frame)
+        frame = np.uint8(frame)  # type: ignore
         if trim_video is True:
             t = frame_count / fps
             for start, end in time_windows:
-                if float(start) <= t <= float(end):
-                    writer.write(frame)
+                if start <= t <= end:
+                    writer.write(frame)  # type: ignore
         else:
-            writer.write(frame)
+            writer.write(frame)  # type: ignore
 
     writer.release()
     capture.release()

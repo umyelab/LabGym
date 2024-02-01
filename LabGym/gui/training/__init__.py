@@ -16,4 +16,4 @@ USA
 Email: bingye@umich.edu
 """
 
-__version__ = "2.2.2"
+from .training_module import TrainingModule

@@ -60,6 +60,26 @@ from sklearn.preprocessing import LabelBinarizer
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 import pandas as pd
+from pathlib import Path
+import shutil
+
+
+CATEGORIZER_FOLDER = Path(__file__).resolve().parent / "models"
+
+
+def get_categorizer_names() -> list[str]:
+    """Return the names of all saved categorizers."""
+    ignore = ["__pycache__", "__init__", "__init.py__"]
+    return [
+        path.name
+        for path in CATEGORIZER_FOLDER.glob("*")
+        if path.is_dir() and path.name not in ignore
+    ]
+
+
+def delete_categorizer(categorizer_name: str):
+    """Permanently delete the given categorizer."""
+    shutil.rmtree(str(CATEGORIZER_FOLDER / categorizer_name))
 
 
 class Categorizers:
