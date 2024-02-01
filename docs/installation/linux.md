@@ -49,6 +49,3 @@ Using the Windows Subsystem for Linux (WSL), or a Linux machine, install LabGym 
    >>> gui.gui()
    ```
    If the LabGym GUI shows up, you have successfully installed LabGym!
-
-To close LabGym, enter `Ctrl+C` while on your terminal to terminate the process.
-
