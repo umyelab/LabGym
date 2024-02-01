@@ -20,39 +20,26 @@ import wx
 
 from .analyze_behaviors import AnalyzeBehaviors
 from .mine_results import MineResults
+from ..utils import LabGymWindow
 
 
-class AnalysisModule(wx.Frame):
+class AnalysisModule(LabGymWindow):
     def __init__(self):
-        super().__init__(parent=None, title="Analysis Module", size=(500, 220))
-        panel = wx.Panel(self)
-        boxsizer = wx.BoxSizer(wx.VERTICAL)
-        boxsizer.Add(0, 40, 0)
-
-        button_analyzebehaviors = wx.Button(
-            panel, label="Analyze Behaviors", size=(300, 40)
+        super().__init__(title="Analysis Module", size=(500, 220))
+        
+        self.add_submit_button(
+            label="Analyze Behaviors",
+            handler=self.analyze_behaviors,
+            tool_tip="Automatically track animals / objects of your interest, identify and quantify their behaviors in videos."
         )
-        button_analyzebehaviors.Bind(wx.EVT_BUTTON, self.analyze_behaviors)
-        wx.Button.SetToolTip(
-            button_analyzebehaviors,
-            "Automatically track animals / objects of your interest, identify and quantify their behaviors in videos.",
+        
+        self.add_submit_button(
+            label="Mine Results",
+            handler=self.mine_results,
+            tool_tip="Automatically mine the analysis results to display the data details that show statistically significant differences among groups of your selection."
         )
-        boxsizer.Add(button_analyzebehaviors, 0, wx.ALIGN_CENTER, 10)
-        boxsizer.Add(0, 20, 0)
 
-        button_mineresults = wx.Button(panel, label="Mine Results", size=(300, 40))
-        button_mineresults.Bind(wx.EVT_BUTTON, self.mine_results)
-        wx.Button.SetToolTip(
-            button_mineresults,
-            "Automatically mine the analysis results to display the data details that show statistically significant differences among groups of your selection.",
-        )
-        boxsizer.Add(button_mineresults, 0, wx.ALIGN_CENTER, 10)
-        boxsizer.Add(0, 30, 0)
-
-        panel.SetSizer(boxsizer)
-
-        self.Centre()
-        self.Show(True)
+        self.display_window()
 
     def analyze_behaviors(self, event):
         AnalyzeBehaviors()
