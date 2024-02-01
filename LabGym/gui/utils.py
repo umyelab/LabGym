@@ -41,7 +41,7 @@ class LabGymWindow(wx.Frame):
 
     Attributes:
         panel: A panel to contain everything.
-        boxsizer: A vertically-oriented BoxSizer in which the buttons are
+        boxsizer: A vertically-oriented BoxSizer in which the modules are
             placed.
     """
 
