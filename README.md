@@ -1,6 +1,8 @@
 # LabGym: quantifying user-defined behaviors
 
-![PyPI - Version](https://img.shields.io/pypi/v/LabGym)
+[![PyPI - Version](https://img.shields.io/pypi/v/LabGym)](https://pypi.org/project/LabGym/)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/LabGym)](https://pypi.org/project/LabGym/)
+[![Downloads](https://static.pepy.tech/badge/LabGym)](https://pepy.tech/project/LabGym)
 [![Documentation Status](https://readthedocs.org/projects/labgym/badge/?version=latest)](https://labgym.readthedocs.io/en/latest/?badge=latest)
 
 <!-- start elevator-pitch -->
