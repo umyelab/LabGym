@@ -118,7 +118,7 @@ class MainWindow(wx.Frame):
 
 def gui():
     app = wx.App()
-    MainWindow("LabGym " + __version__)
+    MainWindow(f"LabGym v{__version__}")
     print("The user interface initialized!")
     app.MainLoop()
 
