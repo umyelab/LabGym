@@ -1,6 +1,8 @@
 # LabGym: quantifying user-defined behaviors
 
-![PyPI - Version](https://img.shields.io/pypi/v/LabGym)
+[![PyPI - Version](https://img.shields.io/pypi/v/LabGym)](https://pypi.org/project/LabGym/)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/LabGym)](https://pypi.org/project/LabGym/)
+[![Downloads](https://static.pepy.tech/badge/LabGym)](https://pepy.tech/project/LabGym)
 [![Documentation Status](https://readthedocs.org/projects/labgym/badge/?version=latest)](https://labgym.readthedocs.io/en/latest/?badge=latest)
 
 <!-- start elevator-pitch -->
@@ -167,15 +169,6 @@ LabGym employs two distinct methods for detecting animals or objects in differen
 
 Please refer to the installation instructions in the 
 [documentation](https://labgym.readthedocs.io/en/latest/installation.html).
-
-To launch LabGym, open a Python interpreter as per the instructions above, then issue the following commands:
-
-```pycon
->>> from LabGym import gui
->>> gui.gui()
-```
-
-Now, the user interface is inititated and ready to use.
 
 ## Reporting Issues
 

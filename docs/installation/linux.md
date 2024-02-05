@@ -1,51 +1,65 @@
 # Linux
 
-Using the Windows Subsystem for Linux (WSL), or a Linux machine, install LabGym with the following instructions.
+Depending on which distribution of Linux you use, the process of installing
+packages will look slightly different. Select the appropriate distribution
+below and follow along from there. These instructions also work for the
+Windows Subsystem for Linux (WSL).
 
-1. Install miniconda.
+```{note}
+If you're using Arch Linux or one of its derivatives, we assume you have the 
+`yay` package manager installed to install dependencies from the AUR.
+```
+
+1. Update your system's package manager, then install `gcc`, `git`, and 
+   Python 3.10.
+
+   ````{tab} Ubuntu/Debian
+   ```console
+   $ sudo apt update
+   $ sudo apt install build-essential git python3.10
+   ```
+   ````
+
+   ````{tab} Arch
+   ```console
+   $ sudo pacman -Syu
+   $ sudo pacman -S gcc git
+   $ yay -S python310
+   ```
+   ````
+
+2. Install `pipx` by following 
+   [these instructions](https://pipx.pypa.io/stable/installation/). 
+   
+   To test your installation of `pipx`, close and reopen your terminal window,
+   then type the following command:
 
    ```console
-   $ sudo wget -c https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-   $ sudo chmod +x Miniconda3-latest-Linux-x86_64.sh
-   $ ./Miniconda3-latest-Linux-x86_64.sh
+   $ pipx --version
+   1.4.3
    ```
-   Press enter to read through the licensing until you get a line prompting you for a `yes/no`, enter `yes`.
+   If the version number prints successfully, then your installation is working
+   properly. Otherwise, try running the `pipx ensurepath` command again.
 
-2. Restart your shell.
-
-3. Create a virtual environment using miniconda.
+3. Install LabGym via `pipx`.
    
    ```console
-   $ conda create -n LabGym python=3.9.7
+   $ pipx install --python python3.10 LabGym
    ```
-   Enter `y` to proceed.
 
-4. Install LabGym in your virtual environment.
-   First, to avoid build errors, install tensorrt and LibGTK
+4. Install [Detectron2][] in the LabGym's virtual environment.
+   
    ```console
-   $ pip install tensorrt
-   $ sudo apt install libgtk-3-dev
+   $ pipx runpip LabGym install 'git+https://github.com/facebookresearch/detectron2.git'
    ```
 
-   Now to install LabGym proper.
-   ```console
-   $ python -m pip install LabGym
-   ```
-
-5. Install Detectron2 in your virtual environment.
+5. Launch LabGym.
 
    ```console
-   $ python -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
+   $ LabGym
    ```
+   
+   The GUI will take a few minutes to start up during the first launch. If the 
+   LabGym GUI shows up, you have successfully installed LabGym!
 
-6. Test out your installation by launching LabGym.
-
-   ```console
-   $ python
-   Python 3.9.7 (default, Sep 16 2021, 13:09:58)
-   [GCC 7.5.0] :: Anaconda, Inc. on linux
-   Type "help", "copyright", "credits" or "license" for more information.
-   >>> from LabGym import gui
-   >>> gui.gui()
-   ```
-   If the LabGym GUI shows up, you have successfully installed LabGym!
+[Detectron2]: https://github.com/facebookresearch/detectron2

@@ -16,6 +16,7 @@ author = "Yujia Hu"
 extensions = [
     "myst_parser",
     "sphinx_copybutton",
+    "sphinx_inline_tabs",
 ]
 
 templates_path = ["_templates"]

@@ -21,7 +21,7 @@ to install LabGym.
    % /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
    ```
 
-   ```{note}
+   ````{note}
    If you're on an Apple Silicon Mac, you will need to add Homebrew to PATH. To
    do this, enter the following command, then close and reopen your terminal
    window.
@@ -29,32 +29,46 @@ to install LabGym.
    ```console
    % echo 'eval $(/opt/homebrew/bin/brew shellenv)' >> ~/.zprofile
    ```
+   ````
 
 3. Use Homebrew to install Python 3.10.
    
    ```console
    % brew install python@3.10
    ```
+   
+4. Install `pipx` by following 
+   [these instructions](https://pipx.pypa.io/stable/installation/).
+   
+   To test your installation of `pipx`, close and reopen your terminal window,
+   then type the following command:
 
-4. Install LabGym via `pip`.
+   ```console
+   % pipx --version
+   1.4.3
+   ```
+   If the version number prints successfully, then your installation is working
+   properly. Otherwise, try running the `pipx ensurepath` command again.
+
+5. Install LabGym via `pipx`.
    
    ```console
-   % python3.10 -m pip install LabGym
+   % pipx install --python python3.10 LabGym
    ```
 
-5. Install Detectron2 via `pip`.
+6. Install [Detectron2][] in the LabGym's virtual environment.
+   
+   ```console
+   % pipx runpip LabGym install 'git+https://github.com/facebookresearch/detectron2.git'
+   ```
+
+7. Launch LabGym.
 
    ```console
-   % python3.10 -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
+   % LabGym
    ```
+   
+   The GUI will take a few minutes to start up during the first launch. If the 
+   LabGym GUI shows up, you have successfully installed LabGym!
 
-6. Test out your installation by launching LabGym.
-
-   ```console
-   % python3.10
-   Python 3.10.13 (main, Jun 14 2023, 18:28:58) [Clang 14.0.3 (clang-1403.0.22.14.1)] on darwin
-   Type "help", "copyright", "credits" or "license" for more information.
-   >>> from LabGym import gui
-   >>> gui.gui()
-   ```
-   If the LabGym GUI shows up, you have successfully installed LabGym!
+[Detectron2]: https://github.com/facebookresearch/detectron2
