@@ -23,7 +23,7 @@ import gc
 import operator
 import os
 from collections import deque
-from typing import Sequence, Tuple, TypeAlias
+from typing import Sequence, Tuple, Union
 
 import cv2
 import numpy as np
@@ -46,7 +46,7 @@ class AnimalVsBg:
 
 
 # Use Frame to refer to different representations of a frame
-Frame: TypeAlias = NDArray[np.uint8] | MatLike
+Frame = Union[NDArray[np.uint8], MatLike]
 
 
 def _extract_background(
