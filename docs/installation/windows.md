@@ -22,57 +22,56 @@ enter. All terminal commands going forward should be entered in this terminal.
 
    ![VS Build Tools Installer Screenshot][]
 
-3. Install [Python 3.9.7][]. Accept all default values from the installer.
+3. Install [Python 3.10][]. Scroll down to the bottom and click the `Windows
+   installer (64-bit)` option. Run the installer and accept all default
+   options.
 
-   LabGym only supports Python 3.9 and 3.10. Since your PC might have multiple
-   versions of Python installed, we highly recommend using the `py.exe`
-   launcher to ensure you're using the correct version of Python. `py.exe`
-   is installed by default with every Python installation, so to test your
-   Python installation, run the following command in a terminal:
+   To test your Python installation, run the following command. If the version
+   number prints out successfully, your Python installation is working.
 
    ```pwsh-session
-   > py -3.9 --version
-   Python 3.9.7
+   > py -3.10 --version
+   Python 3.10.10
    ```
 
-   ```{important}
-   In general, any time you see the command `python` in this documentation,
-   you should replace it with `py -3.9` to ensure you're using Python 3.9.
-   ```
+4. Install `pipx` by following 
+   [these instructions](https://pipx.pypa.io/stable/installation/).
+   
+   To test your installation of `pipx`, close and reopen your terminal window,
+   then type the following command:
 
-4. Install LabGym via `pip`.
+   ```pwsh-session
+   > pipx --version
+   1.4.3
+   ```
+   If the version number prints successfully, then your installation is working
+   properly. Otherwise, try running the `pipx ensurepath` command again.
+
+5. Install LabGym via `pipx`.
    
    ```pwsh-session
-   > py -3.9 -m pip install LabGym
+   > pipx install --python 3.10 LabGym
    ```
 
-5. Install Detectron2 via `pip`. 
+6. Install [Detectron2][] in the LabGym's virtual environment.
    
    ```pwsh-session
-   > py -3.9 -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
+   > pipx runpip LabGym install 'git+https://github.com/facebookresearch/detectron2.git'
    ```
 
-6. Launch LabGym.
+7. Launch LabGym.
 
    ```pwsh-session
-   > py -3.9
-   Python 3.9.7 (tags/v3.9.7:1016ef3, Aug 30 2021, 20:19:38) [MSC v.1929 64 bit (AMD64)] on win32
-   Type "help", "copyright", "credits" or "license" for more information.
-   >>>
+   > LabGym
    ```
-   In the Python interpreter, type the following commands. LabGym might take a
-   few minutes to start up upon first installation.
    
-   ```pycon
-   >>> from LabGym import gui
-   >>> gui.gui()
-   ```
+   The GUI will take a few minutes to start up during the first launch. If the 
+   LabGym GUI shows up, you have successfully installed LabGym!
 
-   If the LabGym GUI shows up, you have successfully installed LabGym! To exit
-   LabGym, close the GUI window that pops up.
 
 [Git]: https://git-scm.com/download/win
 [Visual Studio C++ Build Tools]: https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022
 [VS Build Tools Website Screenshot]: /_static/vs-build-tools-website.png
 [VS Build Tools Installer Screenshot]: /_static/vs-build-tools-installer.png
-[Python 3.9.7]: https://www.python.org/ftp/python/3.9.7/python-3.9.7-amd64.exe
+[Python 3.10]: https://www.python.org/downloads/release/python-31011/
+[Detectron2]: https://github.com/facebookresearch/detectron2
