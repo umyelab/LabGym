@@ -1,0 +1,77 @@
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+[project]
+name = "LabGym"
+description = "Quantify user-defined behaviors."
+authors = [
+    {name = "Yujia Hu", email = "henryhu@umich.edu"},
+    {name = "Kelly Goss", email = "khgoss@umich.edu"},
+    {name = "Isabelle Baker", email = "ibaker@umich.edu"},
+]
+dependencies = [
+    "tensorflow>=2.15.0",
+    "matplotlib>=3.8.2",
+    "opencv-contrib-python>=4.9.0.80",
+    "openpyxl>=3.1.2",
+    "xlsxwriter>=3.1.9",
+    "pandas>=2.1.4",
+    "scikit-learn>=1.3.2",
+    "scikit-image>=0.22.0",
+    "seaborn>=0.13.1",
+    "wxPython>=4.2.1",
+    "scikit-posthocs>=0.8.1",
+    "torch>=2.1.2",
+    "torchvision>=0.16.2",
+    "packaging>=23.2",
+]
+requires-python = ">=3.9,<3.11"
+readme = "README.md"
+license = {text = "GPL-3.0"}
+keywords = ["behavior analysis", "behavioral analysis", "user defined behaviors"]
+classifiers = [
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+]
+# LabGym's version number is defined in __init__.py in the variable __version__
+# to keep it defined in one place only.
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "http://github.com/umyelab/LabGym"
+Documentation = "https://labgym.readthedocs.io/en/latest/"
+Issues =  "http://github.com/umyelab/LabGym/issues"
+
+# When LabGym is run at the command line, the function main() in the file
+# LabGym/__main__.py will be called.
+[project.scripts]
+LabGym = "LabGym.__main__:main"
+
+[tool.pdm]
+distribution = true
+
+# This line tells PDM to search for the version number in __init__.py (see 
+# above comment).
+[tool.pdm.version]
+source = "file"
+path = "LabGym/__init__.py"
+
+[tool.pdm.dev-dependencies]
+docs = [
+    "sphinx>=7.2.6",
+    "sphinx-autobuild>=2021.3.14",
+    "sphinx-copybutton>=0.5.2",
+    "myst-parser>=2.0.0",
+    "furo>=2023.9.10",
+    "sphinx-inline-tabs>=2023.4.21",
+]
+
+# If using the Ruff formatter, ignoring rule F401 ensures that unused imports
+# are NOT deleted automatically, which is necessary for the __init__.py files.
+[tool.ruff]
+ignore = ["F401"]
