@@ -27,7 +27,7 @@ to install LabGym.
    window.
 
    ```console
-   % echo 'eval $(/opt/homebrew/bin/brew shellenv)' %% ~/.zprofile
+   % echo 'eval $(/opt/homebrew/bin/brew shellenv)' >> ~/.zprofile
    ```
    ````
 
