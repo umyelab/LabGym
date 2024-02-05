@@ -48,7 +48,7 @@ class MainWindow(wx.Frame):
         # Developers text
         self.developers_text = wx.StaticText(
             panel,
-            label="Developed by Yujia Hu, Kelly Goss, Isabelle Baker\n\nBing Ye Lab, Life Sciences Institute, University of Michigan",
+            label="Developed by Yujia Hu, Rohan Satapathy, M. Victor Struman, Kelly Goss, Isabelle Baker\n\nBing Ye Lab, Life Sciences Institute, University of Michigan",
             style=wx.ALIGN_CENTER | wx.ST_ELLIPSIZE_END,
         )
         boxsizer.Add(self.developers_text, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 5)
