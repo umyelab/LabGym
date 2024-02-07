@@ -35,7 +35,7 @@ def main() -> None:
                 "For the details of new changes, check https://github.com/umyelab/LabGym.\n"
             )
     except URLError:
-        print("Unable to find current version of LabGym!")
+        print("Unable to check for new versions of LabGym!")
         print("Please check https://github.com/umyelab/LabGym for updates.\n")
 
     gui.gui()
