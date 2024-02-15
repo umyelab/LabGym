@@ -87,6 +87,14 @@ If you're using Arch Linux or one of its derivatives, we assume you have the
    ```console
    $ pipx install --python python3.10 LabGym
    ```
+   
+   ```{note}
+   If you're on WSL and you run into issues with the installation of wxPython,
+   use [this resource](https://www.pixelstech.net/article/1599647177-Problem-and-Solution-for-Installing-wxPython-on-Ubuntu-20-04)
+   to install the necessary dependencies for wxPython. Then, rerun the above
+   command to install LabGym.
+   ```
+
 6. Install PyTorch in LabGym's virtual environment.
 
    ```pwsh-session
