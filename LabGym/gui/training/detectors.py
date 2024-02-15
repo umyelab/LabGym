@@ -25,12 +25,12 @@ from LabGym.analyzebehaviorsdetector import (
     delete_detector,
     get_animal_names,
     get_annotation_class_names,
+    get_detector_names,
     test_detector,
     train_detector,
-    get_detector_names,
 )
-from LabGym.tools import extract_frames
 from LabGym.gui.utils import WX_VIDEO_WILDCARD, LabGymWindow
+from LabGym.tools import extract_frames
 
 
 class GenerateImageExamples(LabGymWindow):

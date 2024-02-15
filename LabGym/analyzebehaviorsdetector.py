@@ -17,42 +17,43 @@ Email: bingye@umich.edu
 """
 
 
-from pathlib import Path
-import shutil
-from .tools import *
-import os
-import gc
-import cv2
-import json
-import torch
 import datetime
-import numpy as np
+import functools
+import gc
+import json
 import math
-from scipy.spatial import distance
+import operator
+import os
+import shutil
 from collections import deque
+from pathlib import Path
+
+import cv2
+import numpy as np
+import pandas as pd
 import tensorflow as tf
+import torch
+from scipy.spatial import distance
+from skimage import exposure
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array
-import pandas as pd
-import seaborn as sb
-from skimage import exposure
-import functools
-import operator
+
+from .tools import *
 
 try:
-    from detectron2.modeling import build_model
     from detectron2 import model_zoo
     from detectron2.checkpoint import DetectionCheckpointer
     from detectron2.config import get_cfg
     from detectron2.data import (
-        MetadataCatalog,
         DatasetCatalog,
+        MetadataCatalog,
         build_detection_test_loader,
     )
     from detectron2.data.datasets import register_coco_instances
-    from detectron2.engine import DefaultTrainer, DefaultPredictor
-    from detectron2.utils.visualizer import Visualizer
+    from detectron2.engine import DefaultPredictor, DefaultTrainer
     from detectron2.evaluation import COCOEvaluator, inference_on_dataset
+    from detectron2.modeling import build_model
+    from detectron2.utils.visualizer import Visualizer
 except:
     print("You need to install Detectron2 to use the Detector module in LabGym:")
     print("https://detectron2.readthedocs.io/en/latest/tutorials/install.html")

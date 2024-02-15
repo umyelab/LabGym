@@ -21,16 +21,16 @@ from typing import Callable
 import wx
 import wx.lib.agw.hyperlink
 
+from .behavior_examples import GenerateBehaviorExamples, SortBehaviorExamples
 from .categorizers import (
-    TrainCategorizers,
     TestCategorizers,
+    TrainCategorizers,
 )
 from .detectors import (
     GenerateImageExamples,
-    TrainDetectors,
     TestDetectors,
+    TrainDetectors,
 )
-from .behavior_examples import GenerateBehaviorExamples, SortBehaviorExamples
 
 
 class TrainingModule(wx.Frame):

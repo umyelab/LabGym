@@ -17,52 +17,49 @@ Email: bingye@umich.edu
 """
 
 
-from .tools import *
 import matplotlib
 
+from .tools import *
+
 matplotlib.use("Agg")
-import os
-import cv2
 import datetime
-import numpy as np
-import matplotlib.pyplot as plt
+import os
 import random
+import shutil
 from collections import deque
-from skimage import exposure, transform
-from skimage.transform import AffineTransform
+from pathlib import Path
+
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import scipy.ndimage as ndimage
 import tensorflow as tf
-from tensorflow.keras.preprocessing.image import img_to_array, load_img
+from skimage import exposure, transform
+from skimage.transform import AffineTransform
+from sklearn.metrics import classification_report
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelBinarizer
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 from tensorflow.keras.layers import (
-    Input,
-    TimeDistributed,
-    BatchNormalization,
-    MaxPooling2D,
+    LSTM,
     Activation,
-    ZeroPadding2D,
     Add,
-)
-from tensorflow.keras.layers import (
+    AveragePooling2D,
+    BatchNormalization,
     Conv2D,
+    Dense,
     Dropout,
     Flatten,
-    Dense,
-    LSTM,
+    Input,
+    MaxPooling2D,
+    TimeDistributed,
+    ZeroPadding2D,
     concatenate,
-    AveragePooling2D,
-    GlobalMaxPooling2D,
 )
-from tensorflow.keras.models import Model, Sequential, load_model
+from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.optimizers import SGD
-from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, ReduceLROnPlateau
-from tensorflow.keras.utils import plot_model
-from sklearn.preprocessing import LabelBinarizer
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import classification_report
-import pandas as pd
-from pathlib import Path
-import shutil
-
+from tensorflow.keras.preprocessing.image import img_to_array
 
 CATEGORIZER_FOLDER = Path(__file__).resolve().parent / "models"
 

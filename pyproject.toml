@@ -84,7 +84,6 @@ docs = [
     "sphinx-inline-tabs>=2023.4.21",
 ]
 
-# If using the Ruff formatter, ignoring rule F401 ensures that unused imports
-# are NOT deleted automatically, which is necessary for the __init__.py files.
-[tool.ruff]
-ignore = ["F401"]
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I001"]
+ignore-init-module-imports = true

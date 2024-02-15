@@ -17,21 +17,23 @@ Email: bingye@umich.edu
 """
 
 
-from .tools import *
-import os
-import gc
-import cv2
 import datetime
-import numpy as np
+import functools
+import gc
 import math
-from scipy.spatial import distance
+import operator
+import os
 from collections import deque
+
+import cv2
+import numpy as np
+import pandas as pd
 import tensorflow as tf
+from scipy.spatial import distance
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array
-import pandas as pd
-import functools
-import operator
+
+from .tools import *
 
 
 class AnalyzeAnimal:

@@ -5,8 +5,7 @@ from urllib.error import URLError
 
 from packaging import version
 
-from LabGym import gui
-from LabGym import __version__
+from LabGym import __version__, gui
 
 
 def main() -> None:
