@@ -39,7 +39,7 @@ from LabGym.gui.utils import (
 )
 
 
-THE_ABSOLUTE_CURRENT_PATH = str(Path(__file__).resolve().parent.parent)
+THE_ABSOLUTE_CURRENT_PATH = str(Path(__file__).resolve().parent.parent.parent)
 
 
 class GenerateBehaviorExamples(LabGymWindow):
