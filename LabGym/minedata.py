@@ -14,12 +14,11 @@ Email: bingye@umich.edu
 """
 
 
-import scipy
-from scipy import stats
-import scikit_posthocs as sp
-import pandas as pd
 import os
-import openpyxl
+
+import pandas as pd
+import scikit_posthocs as sp
+from scipy import stats
 
 
 class data_mining:

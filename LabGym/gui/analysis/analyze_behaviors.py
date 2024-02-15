@@ -27,8 +27,8 @@ import wx
 
 from LabGym.analyzebehaviors import AnalyzeAnimal
 from LabGym.analyzebehaviorsdetector import AnalyzeAnimalDetector
+from LabGym.gui.utils import WX_IMAGE_WILDCARD, WX_VIDEO_WILDCARD, LabGymWindow
 from LabGym.tools import plot_evnets
-from ..utils import WX_VIDEO_WILDCARD, WX_IMAGE_WILDCARD, LabGymWindow
 
 the_absolute_current_path = str(Path(__file__).resolve().parent.parent.parent)
 

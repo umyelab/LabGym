@@ -26,13 +26,13 @@ from collections import deque
 from typing import Sequence, Tuple, Union
 
 import cv2
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sb
 from cv2.typing import MatLike
-from matplotlib.colors import LinearSegmentedColormap, Normalize
 from matplotlib.colorbar import ColorbarBase
+from matplotlib.colors import LinearSegmentedColormap, Normalize
 from numpy.typing import NDArray
 from skimage import exposure
 from tensorflow.keras.preprocessing.image import img_to_array

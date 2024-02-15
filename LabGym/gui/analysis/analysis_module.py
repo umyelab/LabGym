@@ -16,27 +16,26 @@ USA
 Email: bingye@umich.edu
 """
 
-import wx
 
+from ..utils import LabGymWindow
 from .analyze_behaviors import AnalyzeBehaviors
 from .mine_results import MineResults
-from ..utils import LabGymWindow
 
 
 class AnalysisModule(LabGymWindow):
     def __init__(self):
         super().__init__(title="Analysis Module", size=(500, 220))
-        
+
         self.add_submit_button(
             label="Analyze Behaviors",
             handler=self.analyze_behaviors,
-            tool_tip="Automatically track animals / objects of your interest, identify and quantify their behaviors in videos."
+            tool_tip="Automatically track animals / objects of your interest, identify and quantify their behaviors in videos.",
         )
-        
+
         self.add_submit_button(
             label="Mine Results",
             handler=self.mine_results,
-            tool_tip="Automatically mine the analysis results to display the data details that show statistically significant differences among groups of your selection."
+            tool_tip="Automatically mine the analysis results to display the data details that show statistically significant differences among groups of your selection.",
         )
 
         self.display_window()

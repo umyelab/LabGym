@@ -25,7 +25,6 @@ import wx
 from LabGym.categorizers import Categorizers, delete_categorizer, get_categorizer_names
 from LabGym.gui.utils import BehaviorMode, LabGymWindow
 
-
 the_absolute_current_path = str(Path(__file__).resolve().parent.parent.parent)
 
 

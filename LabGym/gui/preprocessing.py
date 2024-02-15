@@ -20,10 +20,10 @@ Email: bingye@umich.edu
 import os
 from pathlib import Path
 from typing import Tuple
-import wx
 
 import cv2
 import numpy as np
+import wx
 
 from LabGym.tools import preprocess_video
 
