@@ -13,7 +13,10 @@ authors = [
     {name = "Isabelle Baker", email = "ibaker@umich.edu"},
 ]
 dependencies = [
-    "tensorflow>=2.15.0",
+    # Windows-native GPU support ended with TensorFlow 2.11, so use 2.10
+    # on Windows and any version on other platforms
+    "tensorflow>=2.10.1; platform_system != 'Windows'",
+    "tensorflow<2.11; platform_system == 'Windows'",
     "matplotlib>=3.8.2",
     "opencv-contrib-python>=4.9.0.80",
     "openpyxl>=3.1.2",
@@ -24,8 +27,15 @@ dependencies = [
     "seaborn>=0.13.1",
     "wxPython>=4.2.1",
     "scikit-posthocs>=0.8.1",
-    "torch>=2.1.2",
-    "torchvision>=0.16.2",
+    # torch and torchvision are pinned to support Detectron2.
+    # We need torch compiled with CUDA 11.8, which is only available from
+    # PyTorch's version of PyPI. On macOS, since there is no support for CUDA,
+    # we can install directly from PyPI.
+    # If we try to include the PyTorch repository URL in pyproject.toml, PyPI 
+    # won't accept LabGym for security reasons. So, users need to install torch 
+    # separately before building Detectron2 as per the documentation.
+    "torch==2.0.1 ; platform_system == 'Darwin'",
+    "torchvision==0.15.2 ; platform_system == 'Darwin'",
     "packaging>=23.2",
 ]
 requires-python = ">=3.9,<3.11"

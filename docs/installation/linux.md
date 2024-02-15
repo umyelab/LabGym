@@ -1,4 +1,4 @@
-# Linux
+# Linux/WSL
 
 Depending on which distribution of Linux you use, the process of installing
 packages will look slightly different. Select the appropriate distribution
@@ -13,7 +13,7 @@ If you're using Arch Linux or one of its derivatives, we assume you have the
 1. Update your system's package manager, then install `gcc`, `git`, and 
    Python 3.10.
 
-   ````{tab} Ubuntu/Debian
+   ````{tab} Ubuntu/Debian/WSL
    ```console
    $ sudo apt update
    $ sudo apt install build-essential git python3.10
@@ -27,8 +27,49 @@ If you're using Arch Linux or one of its derivatives, we assume you have the
    $ yay -S python310
    ```
    ````
+2. If you're using an Nvidia GPU, install CUDA Toolkit 11.8 and cuDNN.
 
-2. Install `pipx` by following 
+   First, install and/or update your GPU drivers at
+   [this link](https://www.nvidia.com/Download/index.aspx). Select your GPU
+   model and click "Search", then click "Download". After installing the
+   drivers, reboot your system to ensure they take effect.
+
+   Then, install [CUDA Toolkit 11.8](https://developer.nvidia.com/cuda-11-8-0-download-archive?target_os=Linux&target_arch=x86_64).
+   Select your version of Linux, then follow the instructions to install CUDA
+   for your operating system.
+
+   To verify your installation of CUDA, use the following command.
+
+   ```pwsh-session
+   > nvcc --version
+   nvcc: NVIDIA (R) Cuda compiler driver
+   Copyright (c) 2005-2022 NVIDIA Corporation
+   Built on Wed_Sep_21_10:41:10_Pacific_Daylight_Time_2022
+   Cuda compilation tools, release 11.8, V11.8.89
+   Build cuda_11.8.r11.8/compiler.31833905_0
+   ```
+
+   ```{note}
+   If you run into issues installing CUDA, check out these resources:
+    - [CUDA Installation Documentation](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#package-manager-installation)
+      (these instructions are for the latest version of CUDA, so make sure to 
+      refer to the previous link for instructions specific to CUDA 11.8)
+    - [Detailed instructions for Ubuntu](https://gist.github.com/MihailCosmin/affa6b1b71b43787e9228c25fe15aeba)
+      (ignore the PyTorch installation instructions at the bottom, as LabGym
+      requires specific versions of PyTorch specified below)
+    - [Detailed instructions for WSL](https://rachitsingh.com/notes/wsl-cuda/)
+      (ignore the TensorRT and Python packages instructions at the bottom)
+   ```
+
+   Finally, install cuDNN by following [these instructions](https://docs.nvidia.com/deeplearning/cudnn/installation/linux.html#installing-on-linux). 
+   Scroll down until you see instructions for your operating system, then
+   follow them. You will need to register an Nvidia Developer account, which 
+   you can do for free.
+
+   As of February 2024, the latest version is cuDNN 9.0.0, which is compatible
+   with CUDA 11.8.
+
+3. Install `pipx` by following 
    [these instructions](https://pipx.pypa.io/stable/installation/). 
    
    To test your installation of `pipx`, close and reopen your terminal window,
@@ -41,19 +82,38 @@ If you're using Arch Linux or one of its derivatives, we assume you have the
    If the version number prints successfully, then your installation is working
    properly. Otherwise, try running the `pipx ensurepath` command again.
 
-3. Install LabGym via `pipx`.
+4. Install LabGym via `pipx`.
    
    ```console
    $ pipx install --python python3.10 LabGym
    ```
+   
+   ```{note}
+   If you're on WSL and you run into issues with the installation of wxPython,
+   use [this resource](https://www.pixelstech.net/article/1599647177-Problem-and-Solution-for-Installing-wxPython-on-Ubuntu-20-04)
+   to install the necessary dependencies for wxPython. Then, rerun the above
+   command to install LabGym.
+   ```
 
-4. Install [Detectron2][] in the LabGym's virtual environment.
+6. Install PyTorch in LabGym's virtual environment.
+
+   ```pwsh-session
+   > pipx inject --index-url https://download.pytorch.org/whl/cu118 LabGym torch=2.0.1 torchvision=0.15.2
+   ```
+
+   If you are using LabGym without a GPU, use the following command instead.
+
+   ```pwsh-session
+   > pipx inject --index-url https://download.pytorch.org/whl/cpu LabGym torch=2.0.1 torchvision=0.15.2
+   ```
+
+5. Install [Detectron2][] in the LabGym's virtual environment.
    
    ```console
    $ pipx runpip LabGym install 'git+https://github.com/facebookresearch/detectron2.git'
    ```
 
-5. Launch LabGym.
+6. Launch LabGym.
 
    ```console
    $ LabGym
