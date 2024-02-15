@@ -4,6 +4,13 @@ To install LabGym on Windows, you will need to access the terminal. To do this,
 open the start menu by clicking the `Win` key, type "PowerShell", and hit
 enter. All terminal commands going forward should be entered in this terminal.
 
+```{warning}
+There is a known issue with LabGym that prevents it from running on Windows 11. 
+If you are on Windows 11, we suggest using 
+[Windows Subsystem for Linux (WSL)](https://learn.microsoft.com/en-us/windows/wsl/install) 
+and following along with the [Linux installation instructions](./linux).
+```
+
 1. Install [Git][]. 
 
    If you're unsure of which installation method to use, select the `64-bit Git
