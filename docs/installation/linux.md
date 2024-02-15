@@ -1,4 +1,4 @@
-# Linux/WSL2
+# Linux/WSL
 
 Depending on which distribution of Linux you use, the process of installing
 packages will look slightly different. Select the appropriate distribution
