@@ -7,6 +7,12 @@ dependencies installed and available on `PATH`:
  - Git
  - A C/C++ compiler (e.g. `gcc`, `clang`, or Microsoft Visual C++)
 
+If you are on a Windows or Linux system with an Nvidia GPU, you will need the
+following installed to enable GPU-accelerated training:
+
+ - CUDA Toolkit 11.8
+ - cuDNN
+
 We recommend that you follow the instructions below for your operating system
 to ensure that the installation goes smoothly. However, if your system
 configuration requires that you install these dependencies in a different way,
@@ -14,7 +20,7 @@ configuration requires that you install these dependencies in a different way,
 free to go ahead and do that.
 
 Regardless of your system configuration, we strongly recommend using 
-[`pipx`](https://pipx.pypa.io/stable/installation/) to install LabGym. if
+[`pipx`](https://pipx.pypa.io/stable/installation/) to install LabGym. If
 you use Python for other research tasks, you might have multiple version of
 Python installed, as well as versions of libraries like NumPy and TensorFlow
 that LabGym is incompatible with. Using `pipx` ensures that LabGym and its 

@@ -34,6 +34,47 @@ enter. All terminal commands going forward should be entered in this terminal.
    Python 3.10.10
    ```
 
+4. If you're using an Nvidia GPU, install CUDA Toolkit 11.8 and cuDNN.
+
+   First, install and/or update your GPU drivers at
+   [this link](https://www.nvidia.com/Download/index.aspx). Select your GPU
+   model and click "Search", then click "Download". After installing the
+   drivers, reboot your system to ensure they take effect.
+
+   Then, install [CUDA Toolkit 11.8](https://developer.nvidia.com/cuda-11-8-0-download-archive?target_os=Windows&target_arch=x86_64).
+   Select your version of Windows, select "exe (local)," then click "Download."
+
+   ```{warning}
+   If you're using Windows Subsystem for Linux (WSL), please refer to the 
+   [Linux](linux) install instructions.
+   ```
+
+   To verify your installation of CUDA, use the following command.
+
+   ```pwsh-session
+   > nvcc --version
+   nvcc: NVIDIA (R) Cuda compiler driver
+   Copyright (c) 2005-2022 NVIDIA Corporation
+   Built on Wed_Sep_21_10:41:10_Pacific_Daylight_Time_2022
+   Cuda compilation tools, release 11.8, V11.8.89
+   Build cuda_11.8.r11.8/compiler.31833905_0
+   ```
+
+   Finally, install [cuDNN](https://developer.nvidia.com/cudnn-downloads?target_os=Windows&target_arch=x86_64). 
+   You will need to register an Nvidia Developer account, which you can do for
+   free.
+
+   ```{important}
+   If you're using Windows 11, when installing cuDNN, select "Tarball" then 
+   "11" under CUDA Version. Then, follow
+   [these instructions](https://docs.nvidia.com/deeplearning/cudnn/installation/windows.html#installing-on-windows)
+   to install cuDNN from the `.tar.gz` file.
+   ```
+
+   As of February 2024, the latest version is cuDNN 9.0.0, which is compatible
+   with CUDA 11.8.
+
+
 4. Install `pipx` by following 
    [these instructions](https://pipx.pypa.io/stable/installation/).
    
@@ -53,7 +94,19 @@ enter. All terminal commands going forward should be entered in this terminal.
    > pipx install --python 3.10 LabGym
    ```
 
-6. Install [Detectron2][] in the LabGym's virtual environment.
+6. Install PyTorch in LabGym's virtual environment.
+
+   ```pwsh-session
+   > pipx inject --index-url https://download.pytorch.org/whl/cu118 LabGym torch=2.0.1 torchvision=0.15.2
+   ```
+
+   If you are using LabGym without a GPU, use the following command instead.
+
+   ```pwsh-session
+   > pipx inject --index-url https://download.pytorch.org/whl/cpu LabGym torch=2.0.1 torchvision=0.15.2
+   ```
+
+6. Install [Detectron2][] in LabGym's virtual environment.
    
    ```pwsh-session
    > pipx runpip LabGym install 'git+https://github.com/facebookresearch/detectron2.git'
