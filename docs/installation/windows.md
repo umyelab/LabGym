@@ -104,13 +104,13 @@ and following along with the [Linux installation instructions](./linux).
 6. Install PyTorch in LabGym's virtual environment.
 
    ```pwsh-session
-   > pipx inject --index-url https://download.pytorch.org/whl/cu118 LabGym torch=2.0.1 torchvision=0.15.2
+   > pipx inject --index-url https://download.pytorch.org/whl/cu118 LabGym torch==2.0.1 torchvision==0.15.2
    ```
 
    If you are using LabGym without a GPU, use the following command instead.
 
    ```pwsh-session
-   > pipx inject --index-url https://download.pytorch.org/whl/cpu LabGym torch=2.0.1 torchvision=0.15.2
+   > pipx inject --index-url https://download.pytorch.org/whl/cpu LabGym torch==2.0.1 torchvision==0.15.2
    ```
 
 6. Install [Detectron2][] in LabGym's virtual environment.
