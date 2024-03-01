@@ -2,7 +2,7 @@
 Copyright (C)
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext. 
+You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext.
 
 For license issues, please contact:
 
@@ -15,7 +15,6 @@ USA
 
 Email: bingye@umich.edu
 """
-
 
 import datetime
 import functools
@@ -566,9 +565,9 @@ class AnalyzeAnimalDetector:
                     unused_existing_indices.remove(index_in_existing)
                     unused_new_indices.remove(index_in_new)
                     if self.register_counts[animal_name][index_in_existing] is None:
-                        self.register_counts[animal_name][
-                            index_in_existing
-                        ] = frame_count_analyze
+                        self.register_counts[animal_name][index_in_existing] = (
+                            frame_count_analyze
+                        )
                     self.to_deregister[animal_name][index_in_existing] = 0
                     self.animal_contours[animal_name][index_in_existing][
                         frame_count_analyze
@@ -691,9 +690,9 @@ class AnalyzeAnimalDetector:
                                 self.register_counts[animal_name][index_in_existing]
                                 is None
                             ):
-                                self.register_counts[animal_name][
-                                    index_in_existing
-                                ] = frame_count_analyze
+                                self.register_counts[animal_name][index_in_existing] = (
+                                    frame_count_analyze
+                                )
                             self.to_deregister[animal_name][index_in_existing] = 0
                             contour = animal_contours[index_in_new]
                             self.animal_contours[animal_name][index_in_existing][
@@ -1941,29 +1940,29 @@ class AnalyzeAnimalDetector:
                                 ID = specific_behaviors[animal_name][behavior_name]
                                 if ID != i:
                                     temp = self.register_counts[animal_name][ID]
-                                    self.register_counts[animal_name][
-                                        ID
-                                    ] = self.register_counts[animal_name][i]
+                                    self.register_counts[animal_name][ID] = (
+                                        self.register_counts[animal_name][i]
+                                    )
                                     self.register_counts[animal_name][i] = temp
                                     temp = self.animal_centers[animal_name][ID][idx]
-                                    self.animal_centers[animal_name][ID][
-                                        idx
-                                    ] = self.animal_centers[animal_name][i][idx]
+                                    self.animal_centers[animal_name][ID][idx] = (
+                                        self.animal_centers[animal_name][i][idx]
+                                    )
                                     self.animal_centers[animal_name][i][idx] = temp
                                     temp = self.animal_contours[animal_name][ID][idx]
-                                    self.animal_contours[animal_name][ID][
-                                        idx
-                                    ] = self.animal_contours[animal_name][i][idx]
+                                    self.animal_contours[animal_name][ID][idx] = (
+                                        self.animal_contours[animal_name][i][idx]
+                                    )
                                     self.animal_contours[animal_name][i][idx] = temp
                                     temp = self.animal_heights[animal_name][ID][idx]
-                                    self.animal_heights[animal_name][ID][
-                                        idx
-                                    ] = self.animal_heights[animal_name][i][idx]
+                                    self.animal_heights[animal_name][ID][idx] = (
+                                        self.animal_heights[animal_name][i][idx]
+                                    )
                                     self.animal_heights[animal_name][i][idx] = temp
                                     temp = self.event_probability[animal_name][ID][idx]
-                                    self.event_probability[animal_name][ID][
-                                        idx
-                                    ] = self.event_probability[animal_name][i][idx]
+                                    self.event_probability[animal_name][ID][idx] = (
+                                        self.event_probability[animal_name][i][idx]
+                                    )
                                     self.event_probability[animal_name][i][idx] = temp
                                     temp = self.all_behavior_parameters[animal_name][
                                         behavior_name
