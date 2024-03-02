@@ -25,3 +25,10 @@ def tests(session: nox.Session) -> None:
     session.install("-e", ".")
     session.install("pytest")
     session.run("pytest")
+
+
+@nox.session(reuse_venv=True)
+def docs(session: nox.Session) -> None:
+    """Build the docs using the sphinx-autobuild server."""
+    session.install("-r", "docs/requirements.txt")
+    session.run("sphinx-autobuild", "docs", "docs/_build/html")
