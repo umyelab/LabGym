@@ -19,7 +19,7 @@ Email: bingye@umich.edu
 import nox
 
 
-@nox.session(python=["3.9", "3.10"])
+@nox.session(python=["3.9", "3.10"], reuse_venv=True)
 def tests(session: nox.Session) -> None:
     """Run the test suite."""
     session.install("-e", ".")
