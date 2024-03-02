@@ -17,7 +17,7 @@ Email: bingye@umich.edu
 """
 
 
-def test_import_gui():
+def test_import_gui() -> None:
     """Ensure that importing LabGym.gui works.
 
     Importing `gui` ensures that the interpreter reads every file in LabGym,
