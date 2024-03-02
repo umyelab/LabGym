@@ -190,3 +190,24 @@
    Launching LabGym through `python -m LabGym` runs the `__main__.py` file,
    which allows you to immediately see the results of your changes.
    ```
+
+10. Install [`nox`](https://nox.thea.codes/en/stable/), the development
+    workflow runner for LabGym.
+
+    ```console
+    $ python -m pip install nox
+    ```
+
+11. Install [Ruff](https://docs.astral.sh/ruff/), a linter and formatter for
+    Python. If you're using VS Code, you can install the 
+    [Ruff VS Code Extension](https://marketplace.visualstudio.com/items?itemName=charliermarsh.ruff).
+    
+    Then, configure your editor to format your code on save using Ruff. For 
+    example, on VS Code, you can add the following to your User `settings.json`:
+
+    ```json
+    "[python]": {
+       "editor.defaultFormatter": "charliermarsh.ruff"
+       "editor.formatOnSave": true
+    }
+    ```
