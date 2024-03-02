@@ -31,4 +31,5 @@ def tests(session: nox.Session) -> None:
 def docs(session: nox.Session) -> None:
     """Build the docs using the sphinx-autobuild server."""
     session.install("-r", "docs/requirements.txt")
+    session.run("make", "-C", "docs", "clean", external=True)
     session.run("sphinx-autobuild", "docs", "docs/_build/html")
