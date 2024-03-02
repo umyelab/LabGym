@@ -5,50 +5,9 @@ who wishes to make contributions to LabGym.
 
 ```{toctree}
 setup
+developing
+docs
 ```
-
-## Getting Set Up to Contribute
-
-1. Install Git from [https://git-scm.com/downloads](https://git-scm.com/downloads), then issue the following commands to properly configure Git.
-   ```console
-   git config --global user.name "First Last"
-   git config --global user.email "name@example.com"
-   git config --global core.editor editorname
-   ```
-
-2. Clone the repository. If you're using a fork of LabGym, replace the URL with that of your fork.
-   ```console
-   git clone https://github.com/umyelab/LabGym.git
-   ```
-
-3. Move into the LabGym directory and create a virtual environment. Replace the
-   `python` command with whichever command points to Python 3.9 or Python 3.10
-   on your system. Then, activate the virtual environment.
-   ```console
-   cd LabGym
-   python -m venv .venv
-   source .venv/bin/activate
-   ```
-
-4. Install LabGym's dependencies in the virtual environment. This command uses
-   `pip` to install all the dependencies listed in the `setup.py` file in the
-   current directory (hence the `.`), and installs LabGym in editable mode
-   (`-e`), which keeps the source files in place, allowing you to make changes
-   to the code.
-   ```console
-   python -m pip install -e .
-   ```
-
-5. Install detectron2 in the virtual environment.
-   ```console
-   python -m pip install "git+https://github.com/facebookresearch/detectron2.git"
-   ```
-
-6. Test your setup by launching LabGym. If the LabGym GUI shows up, your setup
-   is successful.
-   ```console
-   python -m LabGym
-   ```
 
 ## Adding a New Feature
 
