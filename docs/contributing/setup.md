@@ -181,12 +181,10 @@
 
    ```{note}
    Launching LabGym while developing is intentionally different than launching
-   LabGym as a user. 
-
-   If you wanted to launch LabGym using the `LabGym` command, you would need to
-   run `python -m pip install -e .` each time you made changes, which is
-   unnecessarily cumbersome.
-
+   LabGym as a user. If you wanted to launch LabGym using the `LabGym` command, 
+   you would need to run `python -m pip install -e .` each time you made 
+   changes.
+   
    Launching LabGym through `python -m LabGym` runs the `__main__.py` file,
    which allows you to immediately see the results of your changes.
    ```
