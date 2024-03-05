@@ -19,6 +19,6 @@ jobs:
       - name: Install GTK
         run: sudo apt-get install libgtk-3-dev
       - name: Run tests
-        run: nox -s tests
+        run: nox -s tests --verbose
             
         
