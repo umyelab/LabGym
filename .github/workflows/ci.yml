@@ -16,6 +16,8 @@ jobs:
         uses: wntrblm/nox@2024.03.02
         with:
           python-versions: "3.9, 3.10"
+      - name: Install GTK for wxPython
+        run: sudo apt-get install python-wxgtk3.0-dev
       - name: Run tests
         run: nox -s tests
             
