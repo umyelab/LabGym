@@ -2,7 +2,7 @@
 Copyright (C)
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext. 
+You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext.
 
 For license issues, please contact:
 
@@ -768,8 +768,8 @@ class AnalyzeBehaviors(LabGymWindow):
                             "Enter the batch size for faster processing",
                             "GPU is available in this device for Detectors.\nYou may use batch processing for faster speed.",
                             "Batch size",
-                            0,
-                            0,
+                            1,
+                            1,
                             500,
                         )
                         if dialog1.ShowModal() == wx.ID_OK:
@@ -779,6 +779,18 @@ class AnalyzeBehaviors(LabGymWindow):
                         dialog1.Destroy()
 
         dialog.Destroy()
+
+    @property
+    def detector_batch(self):
+        """The batch size to use when processing videos with a Detector."""
+        return self._detector_batch
+
+    @detector_batch.setter
+    def detector_batch(self, detector_batch: int):
+        """The batch size to use when processing videos with a Detector."""
+        if detector_batch <= 0:
+            raise ValueError("Batch size must be greater than or equal to 1.")
+        self._detector_batch = detector_batch
 
     def specify_timing(self, event):
         if self.behavior_mode >= 3:
