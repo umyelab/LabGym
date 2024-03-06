@@ -1320,15 +1320,14 @@ class BehaviorExampleSorter:
         if behavior not in self._behaviors:
             raise ValueError(f"Invalid behavior name {behavior}.")
 
-        example_path = Path(example)
-        (self.source / example_path.with_suffix(".jpg")).rename(
-            self.destination / behavior / example_path.with_suffix(".jpg")
+        (self.source / (example + ".jpg")).rename(
+            self.destination / behavior / (example + ".jpg")
         )
         if not self.IMAGES_ONLY:
-            (self.source / example_path.with_suffix(".avi")).rename(
-                self.destination / behavior / example_path.with_suffix(".avi")
+            (self.source / (example + ".avi")).rename(
+                self.destination / behavior / (example + ".avi")
             )
-        self._action_stack.append((behavior, example_path))
+        self._action_stack.append((behavior, example))
 
     def undo(self):
         """Undo the most recent sorting operation.
@@ -1339,13 +1338,13 @@ class BehaviorExampleSorter:
         if len(self._action_stack) == 0:
             raise IndexError("Nothing to undo.")
 
-        behavior, example_path = self._action_stack.pop()
-        (self.destination / behavior / example_path.with_suffix(".jpg")).rename(
-            self.source / example_path.with_suffix(".jpg")
+        behavior, example = self._action_stack.pop()
+        (self.destination / behavior / (example + ".jpg")).rename(
+            self.source / (example + ".jpg")
         )
         if not self.IMAGES_ONLY:
-            (self.destination / behavior / example_path.with_suffix(".avi")).rename(
-                self.source / example_path.with_suffix(".avi")
+            (self.destination / behavior / example + ".avi").rename(
+                self.source / (example + ".avi")
             )
 
     def next(self):
