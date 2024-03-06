@@ -2,7 +2,7 @@
 Copyright (C)
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext. 
+You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext.
 
 For license issues, please contact:
 
@@ -17,12 +17,14 @@ Email: bingye@umich.edu
 """
 
 import os
-import shutil
+from collections import deque
 from pathlib import Path
+from typing import Tuple
 
 import cv2
 import numpy as np
 import wx
+from cv2.typing import MatLike
 
 from LabGym.analyzebehaviors import AnalyzeAnimal
 from LabGym.analyzebehaviorsdetector import (
@@ -957,7 +959,6 @@ class SortBehaviorExamples(LabGymWindow):
         self.input_path = None
         self.result_path = None
         self.keys_behaviors = {}
-        self.keys_behaviorpaths = {}
 
         self.text_inputfolder = self.module_text("None.")
         self.add_module(
@@ -995,7 +996,7 @@ class SortBehaviorExamples(LabGymWindow):
         """Select folder with unsorted behavior examples."""
         dialog = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
         if dialog.ShowModal() == wx.ID_OK:
-            self.input_path = dialog.GetPath()
+            self.input_path = Path(dialog.GetPath())
             self.text_inputfolder.SetLabel(
                 f"Unsorted behavior examples are in: f{self.input_path}."
             )
@@ -1005,7 +1006,7 @@ class SortBehaviorExamples(LabGymWindow):
         """Select folder to store sorted behavior examples."""
         dialog = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
         if dialog.ShowModal() == wx.ID_OK:
-            self.result_path = dialog.GetPath()
+            self.result_path = Path(dialog.GetPath())
             self.text_outputfolder.SetLabel(
                 f"Sorted behavior examples will be in: {self.result_path}."
             )
@@ -1087,6 +1088,52 @@ class SortBehaviorExamples(LabGymWindow):
             )
             break
 
+    def _generate_behavior_preview(
+        self, pattern_image: MatLike, animation: cv2.VideoCapture | None = None
+    ) -> MatLike:
+        """Generate the behavior example display to show to the user."""
+
+        def put_example_text(img: MatLike, text: str, pos: Tuple[int, int]):
+            """Put the given text on the image at the given position."""
+            cv2.putText(
+                img,
+                text,
+                pos,
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.5,
+                (255, 255, 255),
+                1,
+            )
+
+        if animation:
+            ret, frame = animation.read()
+            if not ret:
+                animation.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                ret, frame = animation.read()
+
+            frame = cv2.resize(frame, (600, 600), interpolation=cv2.INTER_AREA)
+            combined = np.hstack((frame, pattern_image))
+            put_example_text(
+                combined,
+                f"frame count: {int(animation.get(cv2.CAP_PROP_FRAME_COUNT))}",
+                (10, 15),
+            )
+            x_begin = 550
+        else:
+            combined = pattern_image
+            x_begin = 5
+
+        # Add keyboard shortcut overlay
+        n = 1
+        for i in ["o: Prev", "p: Next", "q: Quit", "u: Undo"]:
+            put_example_text(combined, i, (x_begin, 15 * n))
+            n += 1
+        n += 1
+        for key, behavior in self.keys_behaviors.items():
+            put_example_text(combined, f"{key}: {behavior}", (x_begin, 15 * n))
+            n += 1
+        return combined
+
     def sort_behaviors(self, event):
         """Sort behavior examples."""
         if (
@@ -1101,204 +1148,210 @@ class SortBehaviorExamples(LabGymWindow):
             )
             return
 
-        # Create folders to sort behavior examples into
-        for key in self.keys_behaviors:
-            behavior_path = os.path.join(self.result_path, self.keys_behaviors[key])
-            self.keys_behaviorpaths[key] = behavior_path
-            os.makedirs(behavior_path, exist_ok=True)
+        try:
+            sorter = BehaviorExampleSorter(
+                source=self.input_path,
+                destination=self.result_path,
+                behaviors=list(self.keys_behaviors.values()),
+            )
+        except ValueError as err:
+            wx.MessageBox(str(err), "Error", wx.OK | wx.ICON_ERROR)
+            return
 
         cv2.namedWindow("Sorting Behavior Examples", cv2.WINDOW_NORMAL)
-        actions = []
-        index = 0
-        stop = False
+
         moved = False
-        only_image = False
-
-        # Check for whether using animations or only pattern images
-        check_animations = [
-            i for i in os.listdir(self.input_path) if i.endswith(".avi")
-        ]
-        if len(check_animations) == 0:
-            check_images = [
-                i for i in os.listdir(self.input_path) if i.endswith(".jpg")
-            ]
-            if len(check_images) == 0:
-                wx.MessageBox("No examples!", "Error", wx.OK | wx.ICON_ERROR)
-                stop = True
-            else:
-                only_image = True
-
+        stop = False
+        example_name = ""
+        behavior = ""
         while stop is False:
-            if moved is True:
+            if moved:
+                sorter.sort_example(example_name, behavior)
                 moved = False
-                if only_image is False:
-                    shutil.move(
-                        os.path.join(self.input_path, example_name + ".avi"),
-                        os.path.join(
-                            self.keys_behaviorpaths[shortcutkey],
-                            example_name + ".avi",
-                        ),
-                    )
-                shutil.move(
-                    os.path.join(self.input_path, example_name + ".jpg"),
-                    os.path.join(
-                        self.keys_behaviorpaths[shortcutkey], example_name + ".jpg"
-                    ),
-                )
 
             # Check for remaining animations/pattern images
-            if only_image is False:
-                animations = [
-                    i for i in os.listdir(self.input_path) if i.endswith(".avi")
-                ]
-                animations = sorted(
-                    animations,
-                    key=lambda name: int(name.split("_len")[0].split("_")[-1]),
+            if sorter.num_remaining_examples == 0:
+                wx.MessageBox(
+                    "Behavior example sorting completed!",
+                    "Completed!",
+                    wx.OK | wx.ICON_INFORMATION,
                 )
-            else:
-                animations = [
-                    i for i in os.listdir(self.input_path) if i.endswith(".jpg")
-                ]
-
-            if not (0 <= index < len(animations)):
-                if len(animations) == 0:
-                    wx.MessageBox(
-                        "Behavior example sorting completed!",
-                        "Completed!",
-                        wx.OK | wx.ICON_INFORMATION,
-                    )
-                    stop = True
-                else:
-                    wx.MessageBox(
-                        "This is the last behavior example!",
-                        "To the end.",
-                        wx.OK | wx.ICON_INFORMATION,
-                    )
-                    index = 0
+                stop = True
                 continue
 
             # Load the pattern image and animation
-            example_name = animations[index].split(".")[0]
             pattern_image = cv2.resize(
-                cv2.imread(os.path.join(self.input_path, example_name + ".jpg")),
+                cv2.imread(sorter.current_pattern_image_path),
                 (600, 600),
                 interpolation=cv2.INTER_AREA,
             )
-
-            if only_image is False:
-                frame_count = example_name.split("_len")[0].split("_")[-1]
-                animation = cv2.VideoCapture(
-                    os.path.join(self.input_path, example_name + ".avi")
-                )
+            if not sorter.IMAGES_ONLY:
+                animation = cv2.VideoCapture(sorter.current_animation_path)
                 fps = round(animation.get(cv2.CAP_PROP_FPS))
-                frame_count = int(animation.get(cv2.CAP_PROP_FRAME_COUNT))
 
             # This loop is for repeatedly displaying the animation frames
             while True:
-                # Create the image preview
-                if only_image is False:
-                    ret, frame = animation.read()
-                    if not ret:
-                        animation.set(cv2.CAP_PROP_POS_FRAMES, 0)
-                        continue
-                    frame = cv2.resize(frame, (600, 600), interpolation=cv2.INTER_AREA)
-                    combined = np.hstack((frame, pattern_image))
-                    cv2.putText(
-                        combined,
-                        f"frame count: {frame_count}",
-                        (10, 15),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        0.5,
-                        (255, 255, 255),
-                        1,
-                    )
-                    x_begin = 550
-                else:
-                    combined = pattern_image
-                    x_begin = 5
-
-                # Add keyboard shortcut overlay
-                n = 1
-                for i in ["o: Prev", "p: Next", "q: Quit", "u: Undo"]:
-                    cv2.putText(
-                        combined,
-                        i,
-                        (x_begin, 15 * n),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        0.5,
-                        (255, 255, 255),
-                        1,
-                    )
-                    n += 1
-                n += 1
-                for i in self.keys_behaviors:
-                    cv2.putText(
-                        combined,
-                        i + ": " + self.keys_behaviors[i],
-                        (x_begin, 15 * n),
-                        cv2.FONT_HERSHEY_SIMPLEX,
-                        0.5,
-                        (255, 255, 255),
-                        1,
-                    )
-                    n += 1
-
-                cv2.imshow("Sorting Behavior Examples", combined)
+                preview = self._generate_behavior_preview(
+                    pattern_image,
+                    animation if not sorter.IMAGES_ONLY else None,  # pyright: ignore
+                )
+                cv2.imshow("Sorting Behavior Examples", preview)
                 cv2.moveWindow("Sorting Behavior Examples", 50, 0)
 
-                if only_image is False:
-                    key = cv2.waitKey(int(1000 / fps)) & 0xFF
+                if not sorter.IMAGES_ONLY:
+                    pressed = cv2.waitKey(int(1000 / fps)) & 0xFF  # pyright: ignore
                 else:
-                    key = cv2.waitKey(1) & 0xFF
+                    pressed = cv2.waitKey(1) & 0xFF
 
-                for shortcutkey in self.keys_behaviorpaths:
-                    if key == ord(shortcutkey):
-                        example_name = animations[index].split(".")[0]
-                        actions.append([shortcutkey, example_name])
+                for key in self.keys_behaviors.keys():
+                    if pressed == ord(key):
+                        example_name = sorter.current_example
+                        behavior = self.keys_behaviors[key]
                         moved = True
                         break
                 if moved is True:
                     break
 
-                if key == ord("u"):
-                    if len(actions) == 0:
-                        wx.MessageBox(
-                            "Nothing to undo.", "Error", wx.OK | wx.ICON_ERROR
-                        )
+                if pressed == ord("u"):
+                    try:
+                        sorter.undo()
+                    except IndexError as err:
+                        wx.MessageBox(str(err), "Error", wx.OK | wx.ICON_ERROR)
                         continue
-
-                    shortcutkey, example_name = actions.pop()
-                    if only_image is False:
-                        shutil.move(
-                            os.path.join(
-                                self.keys_behaviorpaths[shortcutkey],
-                                example_name + ".avi",
-                            ),
-                            os.path.join(self.input_path, example_name + ".avi"),
-                        )
-                    shutil.move(
-                        os.path.join(
-                            self.keys_behaviorpaths[shortcutkey],
-                            example_name + ".jpg",
-                        ),
-                        os.path.join(self.input_path, example_name + ".jpg"),
-                    )
                     break
 
-                if key == ord("p"):
-                    index += 1
+                if pressed == ord("p"):
+                    sorter.next()
                     break
 
-                if key == ord("o"):
-                    if index > 0:
-                        index -= 1
+                if pressed == ord("o"):
+                    sorter.prev()
                     break
 
-                if key == ord("q"):
+                if pressed == ord("q"):
                     stop = True
                     break
 
-            if only_image is False:
-                animation.release()
+            if not sorter.IMAGES_ONLY:
+                animation.release()  # pyright: ignore
 
         cv2.destroyAllWindows()
+
+
+class BehaviorExampleSorter:
+    """A class to manage behavior example sorting."""
+
+    def __init__(self, source: Path, destination: Path, behaviors: list[str]) -> None:
+        """Initialize a BehaviorExampleSorter.
+
+        Args:
+            source: The path to the folder containing unsorted behavior
+                examples.
+            destination: The path to the folder that will contain sorted
+                behavior examples.
+            behaviors: A list of the behaviors to sort into.
+
+        Raises:
+            ValueError: Unable to find a valid set of behavior examples in the
+                source folder.
+        """
+        self.source = source
+        self.destination = destination
+
+        animations = sorted(list(self.source.glob("*.avi")))
+        pattern_images = sorted(list(self.source.glob("*.jpg")))
+        if len(animations) == 0 and len(pattern_images) == 0:
+            raise ValueError("Unable to find behavior examples!")
+
+        animation_example_names = [animation.stem for animation in animations]
+        pattern_image_example_names = [image.stem for image in pattern_images]
+        if sorted(animation_example_names) != sorted(pattern_image_example_names):
+            raise ValueError("Mismatched animations and pattern images!")
+
+        self.IMAGES_ONLY = len(animations) == 0
+
+        self._behaviors = behaviors
+        for behavior in self._behaviors:
+            (self.destination / behavior).mkdir(exist_ok=True)
+
+        self._action_stack = deque()
+        self._index = 0
+
+    @property
+    def current_animation_path(self) -> str:
+        """The path to the current animation."""
+        animations = sorted(list(self.source.glob("*.avi")))
+        return str(self.source / animations[self._index])
+
+    @property
+    def current_pattern_image_path(self) -> str:
+        """The path to the current pattern image."""
+        pattern_images = sorted(list(self.source.glob("*.jpg")))
+        return str(self.source / pattern_images[self._index])
+
+    @property
+    def current_example(self) -> str:
+        pattern_images = sorted(list(self.source.glob("*.jpg")))
+        return pattern_images[self._index].stem
+
+    @property
+    def _remaining_examples(self) -> list[str]:
+        """The names of the remaining unsorted behavior examples."""
+        return [example.stem for example in self.source.glob("*.jpg")]
+
+    @property
+    def num_remaining_examples(self) -> int:
+        """The number of remaining unsorted behavior examples."""
+        return len(self._remaining_examples)
+
+    def sort_example(self, example: str, behavior: str) -> None:
+        """Sort the given behavior example to the folder of the given behavior.
+
+        Args:
+            example: The name of the behavior example (without the file
+                extension) to sort.
+            behavior: The behavior corresponding to the given example.
+
+        Raises:
+            ValueError: Invalid behavior name or example name.
+        """
+        if example not in self._remaining_examples:
+            raise ValueError(f"Invalid behavior example {example}.")
+        if behavior not in self._behaviors:
+            raise ValueError(f"Invalid behavior name {behavior}.")
+
+        example_path = Path(example)
+        (self.source / example_path.with_suffix(".jpg")).rename(
+            self.destination / behavior / example_path.with_suffix(".jpg")
+        )
+        if not self.IMAGES_ONLY:
+            (self.source / example_path.with_suffix(".avi")).rename(
+                self.destination / behavior / example_path.with_suffix(".avi")
+            )
+        self._action_stack.append((behavior, example_path))
+
+    def undo(self):
+        """Undo the most recent sorting operation.
+
+        Raises:
+            IndexError: No operations left to undo.
+        """
+        if len(self._action_stack) == 0:
+            raise IndexError("Nothing to undo.")
+
+        behavior, example_path = self._action_stack.pop()
+        (self.destination / behavior / example_path.with_suffix(".jpg")).rename(
+            self.source / example_path.with_suffix(".jpg")
+        )
+        if not self.IMAGES_ONLY:
+            (self.destination / behavior / example_path.with_suffix(".avi")).rename(
+                self.source / example_path.with_suffix(".avi")
+            )
+
+    def next(self):
+        """Skip to the next behavior example."""
+        self._index = (self._index + 1) % self.num_remaining_examples
+
+    def prev(self):
+        """Go to the previous behavior example."""
+        self._index = max(0, self._index - 1)
