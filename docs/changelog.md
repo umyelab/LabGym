@@ -1,5 +1,62 @@
 # Changelog
 
+## v2.3.5
+### What's Changed
+* Add ruff format rules by @rohansatapathy in https://github.com/umyelab/LabGym/pull/110
+* Update installation instructions by @rohansatapathy in https://github.com/umyelab/LabGym/pull/114
+* Add automated test suite by @rohansatapathy in https://github.com/umyelab/LabGym/pull/115
+* Fix bug in sorting behavior file name by @rohansatapathy in https://github.com/umyelab/LabGym/pull/116
+* Fix detector batch size bug by @rohansatapathy in https://github.com/umyelab/LabGym/pull/117
+
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.3.4...v2.3.5>
+
+## v2.3.4
+### What's Changed
+* Fix `cv2.typing` import error by @rohansatapathy in https://github.com/umyelab/LabGym/pull/109
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.3.3...v2.3.4>
+
+## v2.3.3
+### What's Changed
+* Fix model path bug in `behavior_examples.py` by @rohansatapathy in https://github.com/umyelab/LabGym/pull/107
+* Update installation documentation by @rohansatapathy in https://github.com/umyelab/LabGym/pull/106
+* Release v2.3.3 by @rohansatapathy in https://github.com/umyelab/LabGym/pull/108
+
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.3.2...v2.3.3>
+
+## v2.3.2
+### What's Changed
+* Prevent crash when version checking fails by @rohansatapathy in https://github.com/umyelab/LabGym/pull/101
+* Update python-publish.yml by @rohansatapathy in https://github.com/umyelab/LabGym/pull/102
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.3.1...v2.3.2>
+
+## v2.3.1
+### New Features
+
+* The recommended way to install LabGym is now through `pipx`. Please see the [installation documentation](https://labgym.readthedocs.io/en/latest/installation/index.html) for more information.
+* It's now possible to start LabGym by using the `LabGym` command at the terminal! Now, there's no need to type `from LabGym import gui; gui.gui()` at the terminal.
+
+### What's Changed
+* Fix incompatibility issues with Python 3.9 by @rohansatapathy in https://github.com/umyelab/LabGym/pull/99
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.3.0...v2.3.1>
+
+## v2.3.0
+### New Features
+* The recommended way to install LabGym is now through `pipx`. Please see the [installation documentation](https://labgym.readthedocs.io/en/latest/installation/index.html) for more information.
+* It's now possible to start LabGym by using the `LabGym` command at the terminal! Now, there's no need to type `from LabGym import gui; gui.gui()` at the terminal.
+
+### What's Changed
+* Refactor codebase by @rohansatapathy in https://github.com/umyelab/LabGym/pull/70, https://github.com/umyelab/LabGym/pull/85, https://github.com/umyelab/LabGym/pull/93
+* Move documentation to <https://labgym.readthedocs.io> by @rohansatapathy in https://github.com/umyelab/LabGym/pull/71, https://github.com/umyelab/LabGym/pull/80, https://github.com/umyelab/LabGym/pull/84, https://github.com/umyelab/LabGym/pull/86, https://github.com/umyelab/LabGym/pull/88, https://github.com/umyelab/LabGym/pull/90, https://github.com/umyelab/LabGym/pull/91
+* Start LabGym using the `LabGym` command at the terminal by @rohansatapathy in https://github.com/umyelab/LabGym/pull/73, https://github.com/umyelab/LabGym/pull/96
+* Add option to downscale video FPS in preprocessing module by @rohansatapathy in https://github.com/umyelab/LabGym/pull/72, https://github.com/umyelab/LabGym/pull/77
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/commits/v2.3.0>
+
 ## v2.2
 
 1. Added functions of testing Detectors / Categorizers so that the accuracy of a trained Detector / Categorizer can be tested and reported.
