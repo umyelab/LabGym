@@ -22,6 +22,7 @@ extensions = [
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
+# Ignore line numbers, console prompt, and console output when using the copy button
 copybutton_exclude = ".linenos, .gp, .go"
 
 

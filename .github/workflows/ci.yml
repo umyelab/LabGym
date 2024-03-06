@@ -1,0 +1,22 @@
+name: CI
+
+on:
+  pull_request:
+  # Enable running CI from the GitHub GUI (see https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#workflow_dispatch)
+  workflow_dispatch:
+
+jobs:
+  tests:
+    name: Tests
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install Nox
+        uses: wntrblm/nox@2024.03.02
+        with:
+          python-versions: "3.9, 3.10"
+      - name: Run tests
+        run: nox -s tests --verbose
+            
+        

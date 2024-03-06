@@ -14,4 +14,5 @@ walkthroughs/index
 features/index
 issues
 changelog
+contributing/index
 ```
