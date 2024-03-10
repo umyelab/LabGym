@@ -25,8 +25,12 @@ import torch
 import wx
 
 from LabGym.analyzebehaviors import AnalyzeAnimal
-from LabGym.analyzebehaviorsdetector import DETECTOR_FOLDER, AnalyzeAnimalDetector
-from LabGym.categorizers import CATEGORIZER_FOLDER
+from LabGym.analyzebehaviorsdetector import (
+    DETECTOR_FOLDER,
+    AnalyzeAnimalDetector,
+    get_detector_names,
+)
+from LabGym.categorizers import CATEGORIZER_FOLDER, get_categorizer_names
 from LabGym.gui.utils import WX_IMAGE_WILDCARD, WX_VIDEO_WILDCARD, LabGymWindow
 from LabGym.tools import plot_evnets
 
@@ -195,17 +199,7 @@ class AnalyzeBehaviors(LabGymWindow):
         self.display_window()
 
     def select_categorizer(self, event):
-        categorizers = [
-            i
-            for i in os.listdir(str(CATEGORIZER_FOLDER))
-            if os.path.isdir(os.path.join(str(CATEGORIZER_FOLDER), i))
-        ]
-        if "__pycache__" in categorizers:
-            categorizers.remove("__pycache__")
-        if "__init__" in categorizers:
-            categorizers.remove("__init__")
-        if "__init__.py" in categorizers:
-            categorizers.remove("__init__.py")
+        categorizers = get_categorizer_names()
         categorizers.sort()
         if (
             "No behavior classification, just track animals and quantify motion kinematics"
@@ -655,17 +649,7 @@ class AnalyzeBehaviors(LabGymWindow):
                 self.use_detector = True
                 self.animal_number = {}
 
-                detectors = [
-                    i
-                    for i in os.listdir(str(DETECTOR_FOLDER))
-                    if os.path.isdir(os.path.join(str(DETECTOR_FOLDER), i))
-                ]
-                if "__pycache__" in detectors:
-                    detectors.remove("__pycache__")
-                if "__init__" in detectors:
-                    detectors.remove("__init__")
-                if "__init__.py" in detectors:
-                    detectors.remove("__init__.py")
+                detectors = get_detector_names()
                 detectors.sort()
                 if "Choose a new directory of the Detector" not in detectors:
                     detectors.append("Choose a new directory of the Detector")
