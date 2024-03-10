@@ -242,16 +242,16 @@ class AnalyzeBehaviors(LabGymWindow):
                     0,
                     100,
                 )
-                if dialog1.ShowModal() == wx.ID_OK:
+                if dialog1.ShowModal() != wx.ID_OK:
+                    dialog1.Destroy()
+                    return
+                else:
                     uncertain = dialog1.GetValue()
                     self.uncertain = uncertain / 100
-                dialog1.Destroy()
+                    dialog1.Destroy()
+
                 self.text_selectcategorizer.SetLabel(
-                    "The path to the Categorizer is: "
-                    + self.path_to_categorizer
-                    + " with uncertainty of "
-                    + str(uncertain)
-                    + "%."
+                    f"The path to the Categorizer is {self.path_to_categorizer} with uncertainty of {uncertain} %."
                 )
             elif (
                 categorizer
