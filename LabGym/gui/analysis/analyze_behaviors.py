@@ -18,7 +18,6 @@ Email: bingye@umich.edu
 
 import json
 import os
-from pathlib import Path
 
 import matplotlib as mpl
 import pandas as pd
@@ -26,11 +25,10 @@ import torch
 import wx
 
 from LabGym.analyzebehaviors import AnalyzeAnimal
-from LabGym.analyzebehaviorsdetector import AnalyzeAnimalDetector
+from LabGym.analyzebehaviorsdetector import DETECTOR_FOLDER, AnalyzeAnimalDetector
+from LabGym.categorizers import CATEGORIZER_FOLDER
 from LabGym.gui.utils import WX_IMAGE_WILDCARD, WX_VIDEO_WILDCARD, LabGymWindow
 from LabGym.tools import plot_evnets
-
-the_absolute_current_path = str(Path(__file__).resolve().parent.parent.parent)
 
 
 class ColorPicker(wx.Dialog):
@@ -61,7 +59,6 @@ class AnalyzeBehaviors(LabGymWindow):
         super().__init__(title="Analyze Behaviors", size=(1000, 600))
         self.behavior_mode = 0
         self.use_detector = False
-        self.detector_path = None
         self.path_to_detector = None
         self.detector_batch = 1
         self.detection_threshold = 0
@@ -69,7 +66,6 @@ class AnalyzeBehaviors(LabGymWindow):
         self.background_path = (
             None  # if not None, will load background images from path
         )
-        self.model_path = None  # the parent path of the Categorizers
         self.path_to_categorizer = None
         self.path_to_videos = None
         self.result_path = None
@@ -199,13 +195,10 @@ class AnalyzeBehaviors(LabGymWindow):
         self.display_window()
 
     def select_categorizer(self, event):
-        if self.model_path is None:
-            self.model_path = os.path.join(the_absolute_current_path, "models")
-
         categorizers = [
             i
-            for i in os.listdir(self.model_path)
-            if os.path.isdir(os.path.join(self.model_path, i))
+            for i in os.listdir(str(CATEGORIZER_FOLDER))
+            if os.path.isdir(os.path.join(str(CATEGORIZER_FOLDER), i))
         ]
         if "__pycache__" in categorizers:
             categorizers.remove("__pycache__")
@@ -288,7 +281,9 @@ class AnalyzeBehaviors(LabGymWindow):
                     "No behavior classification. Just track animals and quantify motion kinematics."
                 )
             else:
-                self.path_to_categorizer = os.path.join(self.model_path, categorizer)
+                self.path_to_categorizer = os.path.join(
+                    str(CATEGORIZER_FOLDER), categorizer
+                )
                 dialog1 = wx.NumberEntryDialog(
                     self,
                     "Enter the Categorizer's uncertainty level (0~100%)",
@@ -659,14 +654,11 @@ class AnalyzeBehaviors(LabGymWindow):
             else:
                 self.use_detector = True
                 self.animal_number = {}
-                self.detector_path = os.path.join(
-                    the_absolute_current_path, "detectors"
-                )
 
                 detectors = [
                     i
-                    for i in os.listdir(self.detector_path)
-                    if os.path.isdir(os.path.join(self.detector_path, i))
+                    for i in os.listdir(str(DETECTOR_FOLDER))
+                    if os.path.isdir(os.path.join(str(DETECTOR_FOLDER), i))
                 ]
                 if "__pycache__" in detectors:
                     detectors.remove("__pycache__")
@@ -695,7 +687,7 @@ class AnalyzeBehaviors(LabGymWindow):
                         dialog2.Destroy()
                     else:
                         self.path_to_detector = os.path.join(
-                            self.detector_path, detector
+                            str(DETECTOR_FOLDER), detector
                         )
                     with open(
                         os.path.join(self.path_to_detector, "model_parameters.txt")

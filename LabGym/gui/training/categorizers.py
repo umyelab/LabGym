@@ -2,7 +2,7 @@
 Copyright (C)
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext. 
+You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext.
 
 For license issues, please contact:
 
@@ -16,16 +16,17 @@ USA
 Email: bingye@umich.edu
 """
 
-
 import os
-from pathlib import Path
 
 import wx
 
-from LabGym.categorizers import Categorizers, delete_categorizer, get_categorizer_names
+from LabGym.categorizers import (
+    CATEGORIZER_FOLDER,
+    Categorizers,
+    delete_categorizer,
+    get_categorizer_names,
+)
 from LabGym.gui.utils import BehaviorMode, LabGymWindow
-
-the_absolute_current_path = str(Path(__file__).resolve().parent.parent.parent)
 
 
 class TrainCategorizers(LabGymWindow):
@@ -47,7 +48,6 @@ class TrainCategorizers(LabGymWindow):
         aug_methods: A list of augmentation methods to use while training.
         augvalid: Whether or not to use augmentation for validation data.
         data_path: The path to all prepared training examples.
-        model_path: The location of the available categorizers.
         path_to_categorizer: The path to the newly created categorizer.
         training_report_path: The folder in which to store training reports.
         include_bodyparts: Whether or not to include body parts.
@@ -73,10 +73,7 @@ class TrainCategorizers(LabGymWindow):
         self.aug_methods = []
         self.augvalid = True
         self.data_path = None
-        self.model_path = os.path.join(the_absolute_current_path, "models")
-        self.path_to_categorizer = os.path.join(
-            the_absolute_current_path, "models", "New_model"
-        )
+        self.path_to_categorizer = os.path.join(str(CATEGORIZER_FOLDER), "New_model")
         self.training_report_path = None
         self.include_bodyparts = False
         self.std = 0
@@ -620,7 +617,9 @@ class TrainCategorizers(LabGymWindow):
                 )
                 continue
 
-            self.path_to_categorizer = os.path.join(self.model_path, dialog.GetValue())
+            self.path_to_categorizer = os.path.join(
+                str(CATEGORIZER_FOLDER), dialog.GetValue()
+            )
             os.makedirs(self.path_to_categorizer)
 
             if self.using_animation_analyzer is False:
@@ -677,7 +676,6 @@ class TestCategorizers(LabGymWindow):
     def __init__(self):
         super().__init__(title="Test Categorizers", size=(1000, 240))
         self.file_path = None
-        self.model_path = os.path.join(the_absolute_current_path, "models")
         self.path_to_categorizer = None
         self.out_path = None
 
@@ -766,7 +764,9 @@ class TestCategorizers(LabGymWindow):
                 f"The path to the Categorizer to test is: {self.path_to_categorizer}."
             )
         else:
-            self.path_to_categorizer = os.path.join(self.model_path, categorizer)
+            self.path_to_categorizer = os.path.join(
+                str(CATEGORIZER_FOLDER), categorizer
+            )
             self.text_selectcategorizer.SetLabel(f"Categorizer to test: {categorizer}.")
 
     def select_filepath(self, event):

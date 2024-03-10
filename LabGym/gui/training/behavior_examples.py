@@ -30,6 +30,7 @@ from cv2.typing import MatLike
 
 from LabGym.analyzebehaviors import AnalyzeAnimal
 from LabGym.analyzebehaviorsdetector import (
+    DETECTOR_FOLDER,
     AnalyzeAnimalDetector,
     get_animal_names,
     get_detector_names,
@@ -42,8 +43,6 @@ from LabGym.gui.utils import (
 )
 from LabGym.tools import AnimalVsBg
 
-THE_ABSOLUTE_CURRENT_PATH = str(Path(__file__).resolve().parent.parent.parent)
-
 
 class GenerateBehaviorExamples(LabGymWindow):
     """Generate behavior examples for the user to sort."""
@@ -52,7 +51,6 @@ class GenerateBehaviorExamples(LabGymWindow):
         super().__init__(title="Generate Behavior Examples", size=(1000, 530))
         self.behavior_mode = BehaviorMode.NON_INTERACTIVE
         self.use_detector = False
-        self.detector_path = None
         self.path_to_detector = None
         self.detection_threshold = 0
         self.animal_kinds = []
@@ -439,7 +437,6 @@ class GenerateBehaviorExamples(LabGymWindow):
         """Configure Detector-based example generation."""
         self.use_detector = True
         self.animal_number = {}
-        self.detector_path = os.path.join(THE_ABSOLUTE_CURRENT_PATH, "detectors")
 
         detectors = get_detector_names()
         detectors.append("Choose a new directory of the Detector")
@@ -465,7 +462,7 @@ class GenerateBehaviorExamples(LabGymWindow):
                 self.path_to_detector = dialog2.GetPaths()
             dialog2.Destroy()
         else:
-            self.path_to_detector = os.path.join(self.detector_path, detector)
+            self.path_to_detector = os.path.join(str(DETECTOR_FOLDER), detector)
 
         animal_names = get_animal_names(detector)
         if len(animal_names) > 1:
