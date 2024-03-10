@@ -18,7 +18,6 @@ Email: bingye@umich.edu
 
 import json
 import os
-from pathlib import Path
 
 import matplotlib as mpl
 import pandas as pd
@@ -26,11 +25,14 @@ import torch
 import wx
 
 from LabGym.analyzebehaviors import AnalyzeAnimal
-from LabGym.analyzebehaviorsdetector import AnalyzeAnimalDetector
+from LabGym.analyzebehaviorsdetector import (
+    DETECTOR_FOLDER,
+    AnalyzeAnimalDetector,
+    get_detector_names,
+)
+from LabGym.categorizers import CATEGORIZER_FOLDER, get_categorizer_names
 from LabGym.gui.utils import WX_IMAGE_WILDCARD, WX_VIDEO_WILDCARD, LabGymWindow
 from LabGym.tools import plot_evnets
-
-the_absolute_current_path = str(Path(__file__).resolve().parent.parent.parent)
 
 
 class ColorPicker(wx.Dialog):
@@ -61,7 +63,6 @@ class AnalyzeBehaviors(LabGymWindow):
         super().__init__(title="Analyze Behaviors", size=(1000, 600))
         self.behavior_mode = 0
         self.use_detector = False
-        self.detector_path = None
         self.path_to_detector = None
         self.detector_batch = 1
         self.detection_threshold = 0
@@ -69,7 +70,6 @@ class AnalyzeBehaviors(LabGymWindow):
         self.background_path = (
             None  # if not None, will load background images from path
         )
-        self.model_path = None  # the parent path of the Categorizers
         self.path_to_categorizer = None
         self.path_to_videos = None
         self.result_path = None
@@ -199,20 +199,7 @@ class AnalyzeBehaviors(LabGymWindow):
         self.display_window()
 
     def select_categorizer(self, event):
-        if self.model_path is None:
-            self.model_path = os.path.join(the_absolute_current_path, "models")
-
-        categorizers = [
-            i
-            for i in os.listdir(self.model_path)
-            if os.path.isdir(os.path.join(self.model_path, i))
-        ]
-        if "__pycache__" in categorizers:
-            categorizers.remove("__pycache__")
-        if "__init__" in categorizers:
-            categorizers.remove("__init__")
-        if "__init__.py" in categorizers:
-            categorizers.remove("__init__.py")
+        categorizers = get_categorizer_names()
         categorizers.sort()
         if (
             "No behavior classification, just track animals and quantify motion kinematics"
@@ -249,16 +236,16 @@ class AnalyzeBehaviors(LabGymWindow):
                     0,
                     100,
                 )
-                if dialog1.ShowModal() == wx.ID_OK:
+                if dialog1.ShowModal() != wx.ID_OK:
+                    dialog1.Destroy()
+                    return
+                else:
                     uncertain = dialog1.GetValue()
                     self.uncertain = uncertain / 100
-                dialog1.Destroy()
+                    dialog1.Destroy()
+
                 self.text_selectcategorizer.SetLabel(
-                    "The path to the Categorizer is: "
-                    + self.path_to_categorizer
-                    + " with uncertainty of "
-                    + str(uncertain)
-                    + "%."
+                    f"The path to the Categorizer is {self.path_to_categorizer} with uncertainty of {uncertain} %."
                 )
             elif (
                 categorizer
@@ -288,7 +275,9 @@ class AnalyzeBehaviors(LabGymWindow):
                     "No behavior classification. Just track animals and quantify motion kinematics."
                 )
             else:
-                self.path_to_categorizer = os.path.join(self.model_path, categorizer)
+                self.path_to_categorizer = os.path.join(
+                    str(CATEGORIZER_FOLDER), categorizer
+                )
                 dialog1 = wx.NumberEntryDialog(
                     self,
                     "Enter the Categorizer's uncertainty level (0~100%)",
@@ -659,21 +648,8 @@ class AnalyzeBehaviors(LabGymWindow):
             else:
                 self.use_detector = True
                 self.animal_number = {}
-                self.detector_path = os.path.join(
-                    the_absolute_current_path, "detectors"
-                )
 
-                detectors = [
-                    i
-                    for i in os.listdir(self.detector_path)
-                    if os.path.isdir(os.path.join(self.detector_path, i))
-                ]
-                if "__pycache__" in detectors:
-                    detectors.remove("__pycache__")
-                if "__init__" in detectors:
-                    detectors.remove("__init__")
-                if "__init__.py" in detectors:
-                    detectors.remove("__init__.py")
+                detectors = get_detector_names()
                 detectors.sort()
                 if "Choose a new directory of the Detector" not in detectors:
                     detectors.append("Choose a new directory of the Detector")
@@ -695,7 +671,7 @@ class AnalyzeBehaviors(LabGymWindow):
                         dialog2.Destroy()
                     else:
                         self.path_to_detector = os.path.join(
-                            self.detector_path, detector
+                            str(DETECTOR_FOLDER), detector
                         )
                     with open(
                         os.path.join(self.path_to_detector, "model_parameters.txt")
