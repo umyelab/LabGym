@@ -87,9 +87,7 @@ class PreprocessingModule(LabGymWindow):
 
         # Contrast module
         # TODO: This feature increases brightness, not contrast (see tools.preprocess_video())
-        self.text_enhancecontrast = self.module_text(
-            "Default: not to enhance contrast."
-        )
+        self.text_enhancecontrast = self.module_text("Default: not to enhance contrast.")
         self.add_module(
             button_label="Specify whether to enhance\nthe contrast in videos",
             button_handler=self.enhance_contrasts,
@@ -174,14 +172,10 @@ class PreprocessingModule(LabGymWindow):
 
     def select_outpath(self, event):
         """Opens folder selection dialog for storing processed video."""
-        dialog = wx.DirDialog(
-            parent=self, message="Select a directory", style=wx.DD_DEFAULT_STYLE
-        )
+        dialog = wx.DirDialog(parent=self, message="Select a directory", style=wx.DD_DEFAULT_STYLE)
         if dialog.ShowModal() == wx.ID_OK:
             self.result_path = dialog.GetPath()
-            self.text_outputfolder.SetLabel(
-                f"Processed videos will be in: {self.result_path}."
-            )
+            self.text_outputfolder.SetLabel(f"Processed videos will be in: {self.result_path}.")
         dialog.Destroy()
 
     def input_duration(self, event):
@@ -538,9 +532,7 @@ class PreprocessingModule(LabGymWindow):
         """
         video = Path(video_path)
         parts = [
-            part
-            for part in video.stem.split("_")
-            if part.startswith("st") or part.startswith("ed")
+            part for part in video.stem.split("_") if part.startswith("st") or part.startswith("ed")
         ]
 
         windows = []
@@ -565,9 +557,7 @@ class PreprocessingModule(LabGymWindow):
         """Process videos given the current configuration."""
 
         if self.video_paths is None or self.result_path is None:
-            wx.MessageBox(
-                "No input video(s) / output folder.", "Error", wx.OK | wx.ICON_ERROR
-            )
+            wx.MessageBox("No input video(s) / output folder.", "Error", wx.OK | wx.ICON_ERROR)
             return
 
         print("Start to preprocess video(s)...")

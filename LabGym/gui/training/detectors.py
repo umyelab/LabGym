@@ -61,9 +61,7 @@ class GenerateImageExamples(LabGymWindow):
             self.text_outputfolder,
         )
 
-        self.text_startgenerate = self.module_text(
-            "Default: at the beginning of the video(s)."
-        )
+        self.text_startgenerate = self.module_text("Default: at the beginning of the video(s).")
         self.add_module(
             "Specify when generating image examples\nshould begin (unit: second)",
             self.specify_timing,
@@ -158,9 +156,7 @@ class GenerateImageExamples(LabGymWindow):
         dialog = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
         if dialog.ShowModal() == wx.ID_OK:
             self.result_path = dialog.GetPath()
-            self.text_outputfolder.SetLabel(
-                f"Generate image examples in: {self.result_path}."
-            )
+            self.text_outputfolder.SetLabel(f"Generate image examples in: {self.result_path}.")
         dialog.Destroy()
 
     def specify_timing(self, event):
@@ -210,9 +206,7 @@ class GenerateImageExamples(LabGymWindow):
             0,
             100000000000000,
         )
-        self.skip_redundant = (
-            int(dialog.GetValue()) if dialog.ShowModal() == wx.ID_OK else 1000
-        )
+        self.skip_redundant = int(dialog.GetValue()) if dialog.ShowModal() == wx.ID_OK else 1000
         self.text_skipredundant.SetLabel(
             f"Generate an image example every {self.skip_redundant} frames."
         )
@@ -387,9 +381,7 @@ class TrainDetectors(LabGymWindow):
         )
         if dialog.ShowModal() == wx.ID_OK:
             self.iteration_num = int(dialog.GetValue())
-            self.text_iterations.SetLabel(
-                f"Training iteration number: {self.iteration_num}."
-            )
+            self.text_iterations.SetLabel(f"Training iteration number: {self.iteration_num}.")
         dialog.Destroy()
 
     def train_detector(self, event):
@@ -494,9 +486,7 @@ class TestDetectors(LabGymWindow):
         testanddelete.Add(button_test, 0, wx.RIGHT, 5)
         testanddelete.Add(button_delete, 0, wx.LEFT, 5)
         self.boxsizer.Add(0, self.MODULE_TOP_MARGIN, 0)
-        self.boxsizer.Add(
-            testanddelete, 0, wx.RIGHT | wx.ALIGN_RIGHT, self.BOTTOM_MARGIN * 2
-        )
+        self.boxsizer.Add(testanddelete, 0, wx.RIGHT | wx.ALIGN_RIGHT, self.BOTTOM_MARGIN * 2)
         self.boxsizer.Add(0, self.BOTTOM_MARGIN, 0)
 
         self.display_window()

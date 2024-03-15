@@ -54,20 +54,14 @@ class MineResults(wx.Frame):
         self.text_inputfolder = wx.StaticText(
             panel, label="None.", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
         )
-        module_inputfolder.Add(
-            button_inputfolder, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        module_inputfolder.Add(
-            self.text_inputfolder, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
+        module_inputfolder.Add(button_inputfolder, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
+        module_inputfolder.Add(self.text_inputfolder, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
         boxsizer.Add(0, 10, 0)
         boxsizer.Add(module_inputfolder, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
         boxsizer.Add(0, 5, 0)
 
         module_selectcontrol = wx.BoxSizer(wx.HORIZONTAL)
-        button_selectcontrol = wx.Button(
-            panel, label="Select the\ncontrol group", size=(300, 40)
-        )
+        button_selectcontrol = wx.Button(panel, label="Select the\ncontrol group", size=(300, 40))
         button_selectcontrol.Bind(wx.EVT_BUTTON, self.select_control)
         wx.Button.SetToolTip(
             button_selectcontrol,
@@ -78,12 +72,8 @@ class MineResults(wx.Frame):
             label="Default: no control group.",
             style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END,
         )
-        module_selectcontrol.Add(
-            button_selectcontrol, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        module_selectcontrol.Add(
-            self.text_selectcontrol, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
+        module_selectcontrol.Add(button_selectcontrol, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
+        module_selectcontrol.Add(self.text_selectcontrol, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
         boxsizer.Add(module_selectcontrol, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
         boxsizer.Add(0, 5, 0)
 
@@ -101,12 +91,8 @@ class MineResults(wx.Frame):
         self.text_outputfolder = wx.StaticText(
             panel, label="None.", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
         )
-        module_outputfolder.Add(
-            button_outputfolder, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
-        module_outputfolder.Add(
-            self.text_outputfolder, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10
-        )
+        module_outputfolder.Add(button_outputfolder, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
+        module_outputfolder.Add(self.text_outputfolder, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
         boxsizer.Add(module_outputfolder, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
         boxsizer.Add(0, 5, 0)
 
@@ -139,13 +125,9 @@ class MineResults(wx.Frame):
         if dialog.ShowModal() == wx.ID_OK:
             self.file_path = dialog.GetPath()
             if self.paired is True:
-                self.text_inputfolder.SetLabel(
-                    "Paired input data is in: " + self.file_path + "."
-                )
+                self.text_inputfolder.SetLabel("Paired input data is in: " + self.file_path + ".")
             else:
-                self.text_inputfolder.SetLabel(
-                    "Unpaired input data is in: " + self.file_path + "."
-                )
+                self.text_inputfolder.SetLabel("Unpaired input data is in: " + self.file_path + ".")
         dialog.Destroy()
 
     def select_control(self, event):
@@ -162,9 +144,7 @@ class MineResults(wx.Frame):
         )
         if dialog.ShowModal() == wx.ID_OK:
             control_path = dialog.GetStringSelection()
-            self.text_selectcontrol.SetLabel(
-                "The control group is: " + control_path + "."
-            )
+            self.text_selectcontrol.SetLabel("The control group is: " + control_path + ".")
             self.control = self.read_folder(os.path.join(self.file_path, control_path))
             self.control_file_name = os.path.split(control_path)[1]
         else:
@@ -176,9 +156,7 @@ class MineResults(wx.Frame):
         dialog = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
         if dialog.ShowModal() == wx.ID_OK:
             self.result_path = dialog.GetPath()
-            self.text_outputfolder.SetLabel(
-                "Mining results are in: " + self.result_path + "."
-            )
+            self.text_outputfolder.SetLabel("Mining results are in: " + self.result_path + ".")
         dialog.Destroy()
 
     def read_folder(self, folder):
@@ -226,9 +204,7 @@ class MineResults(wx.Frame):
 
     def mine_data(self, event):
         if self.file_path is None or self.result_path is None:
-            wx.MessageBox(
-                "No input / output folder selected.", "Error", wx.OK | wx.ICON_ERROR
-            )
+            wx.MessageBox("No input / output folder selected.", "Error", wx.OK | wx.ICON_ERROR)
 
         else:
             dialog = wx.TextEntryDialog(

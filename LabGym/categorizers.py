@@ -97,9 +97,7 @@ class Categorizers:
 
     def rename_label(self, file_path, new_path, resize=None):
         folder_list = [
-            i
-            for i in os.listdir(file_path)
-            if os.path.isdir(os.path.join(file_path, i))
+            i for i in os.listdir(file_path) if os.path.isdir(os.path.join(file_path, i))
         ]
         print("Behavior names are: " + str(folder_list))
         previous_lenth = None
@@ -107,16 +105,12 @@ class Categorizers:
 
         for folder in folder_list:
             name_list = [
-                i
-                for i in os.listdir(os.path.join(file_path, folder))
-                if i.endswith(".avi")
+                i for i in os.listdir(os.path.join(file_path, folder)) if i.endswith(".avi")
             ]
 
             if len(name_list) == 0:
                 name_list = [
-                    i
-                    for i in os.listdir(os.path.join(file_path, folder))
-                    if i.endswith(".jpg")
+                    i for i in os.listdir(os.path.join(file_path, folder)) if i.endswith(".jpg")
                 ]
                 imagedata = True
 
@@ -128,16 +122,12 @@ class Categorizers:
                     )
                     image = cv2.imread(image)
                     if resize is not None:
-                        image = cv2.resize(
-                            image, (resize, resize), interpolation=cv2.INTER_AREA
-                        )
+                        image = cv2.resize(image, (resize, resize), interpolation=cv2.INTER_AREA)
                     cv2.imwrite(new_image, image)
 
                 else:
                     animation = os.path.join(file_path, folder, i)
-                    pattern_image = os.path.join(
-                        file_path, folder, os.path.splitext(i)[0] + ".jpg"
-                    )
+                    pattern_image = os.path.join(file_path, folder, os.path.splitext(i)[0] + ".jpg")
                     current_length = 0
 
                     new_animation = os.path.join(
@@ -353,9 +343,7 @@ class Categorizers:
                 if "del1" in m:
                     if time_step >= 30:
                         idx1 = random.randint(0, round(time_step / 3))
-                        idx2 = random.randint(
-                            round(time_step / 3) + 1, round(time_step * 2 / 3)
-                        )
+                        idx2 = random.randint(round(time_step / 3) + 1, round(time_step * 2 / 3))
                         to_delete = [idx1, idx2]
                     else:
                         to_delete = [random.randint(0, round(time_step / 3))]
@@ -383,11 +371,7 @@ class Categorizers:
                     if frames_length < time_step:
                         for diff in range(time_step - frames_length):
                             frames.append(np.zeros_like(original_frame))
-                        print(
-                            "Inconsistent duration of animation detected at: "
-                            + str(i)
-                            + "."
-                        )
+                        print("Inconsistent duration of animation detected at: " + str(i) + ".")
                         print(
                             "Zero padding has been used, which may decrease the training accuracy."
                         )
@@ -402,9 +386,7 @@ class Categorizers:
                             )
 
                             if background_free is True:
-                                frame_gray = cv2.cvtColor(
-                                    frame_contrast, cv2.COLOR_BGR2GRAY
-                                )
+                                frame_gray = cv2.cvtColor(frame_contrast, cv2.COLOR_BGR2GRAY)
                                 thred = cv2.threshold(
                                     frame_gray,
                                     0,
@@ -418,14 +400,10 @@ class Categorizers:
                                     blob = np.zeros_like(frame)
                                 else:
                                     if behavior_mode == 0:
-                                        contour = sorted(
-                                            cnts, key=cv2.contourArea, reverse=True
-                                        )[0]
+                                        contour = sorted(cnts, key=cv2.contourArea, reverse=True)[0]
                                         blob = extract_blob(frame, contour, channel=3)
                                     else:
-                                        (y_bt, y_tp, x_lf, x_rt) = crop_frame(
-                                            frame, cnts
-                                        )
+                                        (y_bt, y_tp, x_lf, x_rt) = crop_frame(frame, cnts)
                                         blob = frame_contrast[y_bt:y_tp, x_lf:x_rt]
                             else:
                                 blob = frame_contrast
@@ -442,9 +420,7 @@ class Categorizers:
                                 blob = np.uint8(np.clip(blob, 0, 255))
 
                             if angle is not None:
-                                blob = ndimage.rotate(
-                                    blob, angle, reshape=False, prefilter=False
-                                )
+                                blob = ndimage.rotate(blob, angle, reshape=False, prefilter=False)
 
                             if shear is not None:
                                 tf = AffineTransform(shear=shear)
@@ -473,9 +449,9 @@ class Categorizers:
                                 blob_scl = img_to_array(blob_scl)
                                 x = (blob_black.shape[1] - blob_scl.shape[1]) // 2
                                 y = (blob_black.shape[0] - blob_scl.shape[0]) // 2
-                                blob_black[
-                                    y : y + blob_scl.shape[0], x : x + blob_scl.shape[1]
-                                ] = blob_scl
+                                blob_black[y : y + blob_scl.shape[0], x : x + blob_scl.shape[1]] = (
+                                    blob_scl
+                                )
                                 blob = blob_black
 
                         if channel == 1:
@@ -501,27 +477,19 @@ class Categorizers:
                 if behavior_mode >= 3:
                     if beta is not None:
                         if background_free is True:
-                            pattern_image_gray = cv2.cvtColor(
-                                pattern_image, cv2.COLOR_BGR2GRAY
-                            )
+                            pattern_image_gray = cv2.cvtColor(pattern_image, cv2.COLOR_BGR2GRAY)
                             thred = cv2.threshold(
                                 pattern_image_gray,
                                 0,
                                 255,
                                 cv2.THRESH_BINARY + cv2.THRESH_OTSU,
                             )[1]
-                            cnts, _ = cv2.findContours(
-                                thred, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE
-                            )
+                            cnts, _ = cv2.findContours(thred, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
                             if len(cnts) == 0:
                                 pattern_image = np.zeros_like(pattern_image)
                             else:
-                                contour = sorted(
-                                    cnts, key=cv2.contourArea, reverse=True
-                                )[0]
-                                pattern_image = extract_blob(
-                                    pattern_image, contour, channel=3
-                                )
+                                contour = sorted(cnts, key=cv2.contourArea, reverse=True)[0]
+                                pattern_image = extract_blob(pattern_image, contour, channel=3)
                             pattern_image = pattern_image.astype("float")
                             pattern_image[pattern_image > 30] += beta
                         else:
@@ -570,9 +538,7 @@ class Categorizers:
 
                 if behavior_mode >= 3:
                     if channel == 1:
-                        pattern_image = cv2.cvtColor(
-                            np.uint8(pattern_image), cv2.COLOR_BGR2GRAY
-                        )
+                        pattern_image = cv2.cvtColor(np.uint8(pattern_image), cv2.COLOR_BGR2GRAY)
 
                 pattern_image = cv2.resize(
                     pattern_image, (dim_conv, dim_conv), interpolation=cv2.INTER_AREA
@@ -623,9 +589,7 @@ class Categorizers:
                         )(x)
                         x = BatchNormalization()(x)
                 else:
-                    x = Conv2D(
-                        filters, kernel_size=(3, 3), padding="same", activation="relu"
-                    )(x)
+                    x = Conv2D(filters, kernel_size=(3, 3), padding="same", activation="relu")(x)
                     x = BatchNormalization()(x)
             x = MaxPooling2D(pool_size=(2, 2))(x)
             filters = int(filters * 2)
@@ -744,9 +708,7 @@ class Categorizers:
             x = BatchNormalization()(x)
 
             if block is False:
-                shortcut = Conv2D(filters * 4, (1, 1), strides=(strides, strides))(
-                    shortcut
-                )
+                shortcut = Conv2D(filters * 4, (1, 1), strides=(strides, strides))(shortcut)
                 shortcut = BatchNormalization()(shortcut)
 
         x = Add()([x, shortcut])
@@ -773,9 +735,9 @@ class Categorizers:
 
         if basic is True:
             if block is False:
-                shortcut = TimeDistributed(
-                    Conv2D(filters, (1, 1), strides=(strides, strides))
-                )(shortcut)
+                shortcut = TimeDistributed(Conv2D(filters, (1, 1), strides=(strides, strides)))(
+                    shortcut
+                )
                 shortcut = TimeDistributed(BatchNormalization())(shortcut)
 
         else:
@@ -816,13 +778,9 @@ class Categorizers:
             for n in range(i):
                 if n == 0:
                     if layers.index(i) == 0:
-                        x = self.res_block(
-                            x, filters, strides=1, block=False, basic=basic
-                        )
+                        x = self.res_block(x, filters, strides=1, block=False, basic=basic)
                     else:
-                        x = self.res_block(
-                            x, filters, strides=2, block=False, basic=basic
-                        )
+                        x = self.res_block(x, filters, strides=2, block=False, basic=basic)
                 else:
                     x = self.res_block(x, filters, strides=1, block=True, basic=basic)
             filters = int(filters * 2)
@@ -844,9 +802,7 @@ class Categorizers:
 
             return model
 
-    def simple_tresnet(
-        self, inputs, filters, classes=3, level=5, with_classifier=False
-    ):
+    def simple_tresnet(self, inputs, filters, classes=3, level=5, with_classifier=False):
         x = TimeDistributed(ZeroPadding2D((3, 3)))(inputs)
         x = TimeDistributed(Conv2D(filters, (5, 5), strides=(2, 2)))(x)
         x = TimeDistributed(BatchNormalization())(x)
@@ -867,13 +823,9 @@ class Categorizers:
             for n in range(i):
                 if n == 0:
                     if layers.index(i) == 0:
-                        x = self.tres_block(
-                            x, filters, strides=1, block=False, basic=basic
-                        )
+                        x = self.tres_block(x, filters, strides=1, block=False, basic=basic)
                     else:
-                        x = self.tres_block(
-                            x, filters, strides=2, block=False, basic=basic
-                        )
+                        x = self.tres_block(x, filters, strides=2, block=False, basic=basic)
                 else:
                     x = self.tres_block(x, filters, strides=1, block=True, basic=basic)
             filters = int(filters * 2)
@@ -974,9 +926,7 @@ class Categorizers:
         else:
             predictions = Dense(classes, activation="softmax")(outputs)
 
-        model = Model(
-            inputs=[animation_inputs, pattern_image_inputs], outputs=predictions
-        )
+        model = Model(inputs=[animation_inputs, pattern_image_inputs], outputs=predictions)
 
         return model
 
@@ -1054,18 +1004,14 @@ class Categorizers:
             "social_distance": int(social_distance),
         }
         pd_parameters = pd.DataFrame.from_dict(parameters)
-        pd_parameters.to_csv(
-            os.path.join(model_path, "model_parameters.txt"), index=False
-        )
+        pd_parameters.to_csv(os.path.join(model_path, "model_parameters.txt"), index=False)
 
         (train_files, test_files, y1, y2) = train_test_split(
             path_files, labels, test_size=0.2, stratify=labels
         )
 
         print("Perform augmentation for the behavior examples...")
-        print(
-            "This might take hours or days, depending on the capacity of your computer."
-        )
+        print("This might take hours or days, depending on the capacity of your computer.")
         print(datetime.datetime.now())
 
         print("Start to augment training examples...")
@@ -1321,18 +1267,14 @@ class Categorizers:
             "social_distance": int(social_distance),
         }
         pd_parameters = pd.DataFrame.from_dict(parameters)
-        pd_parameters.to_csv(
-            os.path.join(model_path, "model_parameters.txt"), index=False
-        )
+        pd_parameters.to_csv(os.path.join(model_path, "model_parameters.txt"), index=False)
 
         (train_files, test_files, y1, y2) = train_test_split(
             path_files, labels, test_size=0.2, stratify=labels
         )
 
         print("Perform augmentation for the behavior examples...")
-        print(
-            "This might take hours or days, depending on the capacity of your computer."
-        )
+        print("This might take hours or days, depending on the capacity of your computer.")
         print(datetime.datetime.now())
 
         print("Start to augment training examples...")
@@ -1586,18 +1528,14 @@ class Categorizers:
             "social_distance": int(social_distance),
         }
         pd_parameters = pd.DataFrame.from_dict(parameters)
-        pd_parameters.to_csv(
-            os.path.join(model_path, "model_parameters.txt"), index=False
-        )
+        pd_parameters.to_csv(os.path.join(model_path, "model_parameters.txt"), index=False)
 
         (train_files, test_files, y1, y2) = train_test_split(
             path_files, labels, test_size=0.2, stratify=labels
         )
 
         print("Perform augmentation for the behavior examples...")
-        print(
-            "This might take hours or days, depending on the capacity of your computer."
-        )
+        print("This might take hours or days, depending on the capacity of your computer.")
         print(datetime.datetime.now())
 
         print("Start to augment training examples...")
@@ -1856,15 +1794,9 @@ class Categorizers:
                 + ")."
             )
         else:
-            print(
-                "The behavior mode of the Categorizer: Static images (non-interactive)."
-            )
+            print("The behavior mode of the Categorizer: Static images (non-interactive).")
         length = int(parameters["time_step"][0])
-        print(
-            "The length of a behavior example in the Categorizer: "
-            + str(length)
-            + " frames."
-        )
+        print("The length of a behavior example in the Categorizer: " + str(length) + " frames.")
         if int(parameters["inner_code"][0]) == 0:
             print(
                 "The Categorizer includes body parts in analysis with STD = "
@@ -1887,10 +1819,7 @@ class Categorizers:
         incorrect_behaviors = list(set(behaviornames) - set(classnames))
         incorrect_classes = list(set(classnames) - set(behaviornames))
         if len(incorrect_behaviors) > 0:
-            print(
-                "Mismatched behavior names in testing examples: "
-                + str(incorrect_behaviors)
-            )
+            print("Mismatched behavior names in testing examples: " + str(incorrect_behaviors))
         if len(incorrect_classes) > 0:
             print("Unused behavior names in the Categorizer: " + str(incorrect_classes))
 
@@ -1926,13 +1855,9 @@ class Categorizers:
                         capture.release()
 
                         for frame in frames:
-                            frame = np.uint8(
-                                exposure.rescale_intensity(frame, out_range=(0, 255))
-                            )
+                            frame = np.uint8(exposure.rescale_intensity(frame, out_range=(0, 255)))
                             if channel == 1:
-                                frame = cv2.cvtColor(
-                                    np.uint8(frame), cv2.COLOR_BGR2GRAY
-                                )
+                                frame = cv2.cvtColor(np.uint8(frame), cv2.COLOR_BGR2GRAY)
                             frame = cv2.resize(
                                 frame,
                                 (dim_tconv, dim_tconv),
@@ -1945,9 +1870,7 @@ class Categorizers:
 
                     if network != 1:
                         path_to_pattern_image = (
-                            os.path.splitext(
-                                os.path.join(groundtruth_path, behavior, i)
-                            )[0]
+                            os.path.splitext(os.path.join(groundtruth_path, behavior, i))[0]
                             + ".jpg"
                         )
                         pattern_image = cv2.imread(path_to_pattern_image)
@@ -1976,9 +1899,7 @@ class Categorizers:
                 predictions = model.predict([animations, pattern_images], batch_size=32)
 
             print(
-                classification_report(
-                    labels, predictions.argmax(axis=1), target_names=classnames
-                )
+                classification_report(labels, predictions.argmax(axis=1), target_names=classnames)
             )
             report = classification_report(
                 labels,

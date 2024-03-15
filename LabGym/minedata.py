@@ -34,9 +34,7 @@ class data_mining:
         self.control = control_in
         self.paired = paired_in
         self.pval = pval_in
-        self.writer = pd.ExcelWriter(
-            os.path.join(result_path_in, "data_mining_results.xlsx")
-        )
+        self.writer = pd.ExcelWriter(os.path.join(result_path_in, "data_mining_results.xlsx"))
         self.file_names = file_names_in
 
     def normal(self, dataset):
@@ -83,9 +81,7 @@ class data_mining:
                     stat_info = pd.DataFrame(
                         {"p-value": pvalues}, index=parameters
                     )  # parameter and associated p-value
-                    stat_info.to_excel(
-                        self.writer, sheet_name=behavior, startrow=startrow
-                    )
+                    stat_info.to_excel(self.writer, sheet_name=behavior, startrow=startrow)
 
                     significant_data = pd.DataFrame(
                         (setA, setB)
@@ -138,9 +134,7 @@ class data_mining:
                     stat_info = pd.DataFrame(
                         {"p-value": pvalues}, index=parameters
                     )  # parameter and associated p-value
-                    stat_info.to_excel(
-                        self.writer, sheet_name=behavior, startrow=startrow
-                    )
+                    stat_info.to_excel(self.writer, sheet_name=behavior, startrow=startrow)
 
                     significant_data = pd.DataFrame(
                         dataset
@@ -163,9 +157,7 @@ class data_mining:
                             dunnett.columns = self.file_names[1:]
                             dunnett.index = self.file_names[1:]
                             print("\t" * 2, "Dunnett's post-hoc results:")
-                            print(
-                                "\t" * 2 + dunnett.to_string().replace("\n", "\n\t\t")
-                            )
+                            print("\t" * 2 + dunnett.to_string().replace("\n", "\n\t\t"))
 
                             posthoc_name = "Dunnett"
                             posthoc = pd.DataFrame(dunnett)

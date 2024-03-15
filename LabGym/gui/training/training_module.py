@@ -100,9 +100,7 @@ class TrainingModule(wx.Frame):
         self.Centre()
         self.Show(True)
 
-    def add_button(
-        self, button_label: str, button_handler: Callable, button_tool_tip: str
-    ):
+    def add_button(self, button_label: str, button_handler: Callable, button_tool_tip: str):
         """
         Adds a button to the main sizer.
 

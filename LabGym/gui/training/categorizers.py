@@ -175,9 +175,7 @@ class TrainCategorizers(LabGymWindow):
 
     def select_renamed_example_folder(self, event):
         """Select directory to store renamed behavior examples."""
-        dialog = wx.DirDialog(
-            self, "Select a new directory", "", style=wx.DD_DEFAULT_STYLE
-        )
+        dialog = wx.DirDialog(self, "Select a new directory", "", style=wx.DD_DEFAULT_STYLE)
         if dialog.ShowModal() == wx.ID_OK:
             self.renamed_example_folder = dialog.GetPath()
             self.text_renameexample.SetLabel(
@@ -344,14 +342,12 @@ class TrainCategorizers(LabGymWindow):
         elif self.behavior_mode == BehaviorMode.INTERACT_BASIC:
             label_text += " to identify interactive behaviors of the group."
         elif self.behavior_mode == BehaviorMode.INTERACT_ADVANCED:
-            label_text += (
-                " to identify interactive behaviors of the individual and groups."
-            )
-            label_text += (
-                f" Social Distance: {self.social_distance} folds of animal diameter."
-            )
+            label_text += " to identify interactive behaviors of the individual and groups."
+            label_text += f" Social Distance: {self.social_distance} folds of animal diameter."
         else:
-            label_text += " to identify non-interactive behaviors of each individual in static images."
+            label_text += (
+                " to identify non-interactive behaviors of each individual in static images."
+            )
 
         self.text_categorizertype.SetLabel(label_text)
 
@@ -571,9 +567,7 @@ class TrainCategorizers(LabGymWindow):
             wx.YES_NO | wx.ICON_QUESTION,
         )
         if dialog.ShowModal() == wx.ID_YES:
-            dialog2 = wx.DirDialog(
-                self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE
-            )
+            dialog2 = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
             if dialog2.ShowModal() == wx.ID_OK:
                 self.training_report_path = dialog2.GetPath()
                 self.text_report.SetLabel(
@@ -586,9 +580,7 @@ class TrainCategorizers(LabGymWindow):
 
     def train_categorizer(self, event):
         if self.data_path is None:
-            wx.MessageBox(
-                "No path to training examples.", "Error", wx.OK | wx.ICON_ERROR
-            )
+            wx.MessageBox("No path to training examples.", "Error", wx.OK | wx.ICON_ERROR)
             return
 
         while True:
@@ -617,9 +609,7 @@ class TrainCategorizers(LabGymWindow):
                 )
                 continue
 
-            self.path_to_categorizer = os.path.join(
-                str(CATEGORIZER_FOLDER), dialog.GetValue()
-            )
+            self.path_to_categorizer = os.path.join(str(CATEGORIZER_FOLDER), dialog.GetValue())
             os.makedirs(self.path_to_categorizer)
 
             if self.using_animation_analyzer is False:
@@ -704,18 +694,14 @@ class TestCategorizers(LabGymWindow):
         )
 
         test_and_delete = wx.BoxSizer(wx.HORIZONTAL)
-        button_test = wx.Button(
-            self.panel, label="Test the Categorizer", size=(300, 40)
-        )
+        button_test = wx.Button(self.panel, label="Test the Categorizer", size=(300, 40))
         button_test.Bind(wx.EVT_BUTTON, self.test_categorizer)
         wx.Button.SetToolTip(
             button_test,
             "Test the selected Categorizer on the ground-truth behavior examples",
         )
 
-        button_delete = wx.Button(
-            self.panel, label="Delete a Categorizer", size=(300, 40)
-        )
+        button_delete = wx.Button(self.panel, label="Delete a Categorizer", size=(300, 40))
         button_delete.Bind(wx.EVT_BUTTON, self.remove_categorizer)
         wx.Button.SetToolTip(
             button_delete,
@@ -750,9 +736,7 @@ class TestCategorizers(LabGymWindow):
             dialog.Destroy()
 
         if categorizer == LOAD_NEW_CATEGORIZER:
-            dialog1 = wx.DirDialog(
-                self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE
-            )
+            dialog1 = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
             if dialog1.ShowModal() != wx.ID_OK:
                 dialog1.Destroy()
                 return
@@ -764,9 +748,7 @@ class TestCategorizers(LabGymWindow):
                 f"The path to the Categorizer to test is: {self.path_to_categorizer}."
             )
         else:
-            self.path_to_categorizer = os.path.join(
-                str(CATEGORIZER_FOLDER), categorizer
-            )
+            self.path_to_categorizer = os.path.join(str(CATEGORIZER_FOLDER), categorizer)
             self.text_selectcategorizer.SetLabel(f"Categorizer to test: {categorizer}.")
 
     def select_filepath(self, event):
@@ -788,14 +770,10 @@ class TestCategorizers(LabGymWindow):
             wx.YES_NO | wx.ICON_QUESTION,
         )
         if dialog.ShowModal() == wx.ID_YES:
-            dialog1 = wx.DirDialog(
-                self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE
-            )
+            dialog1 = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
             if dialog1.ShowModal() == wx.ID_OK:
                 self.out_path = dialog1.GetPath()
-                self.text_report.SetLabel(
-                    f"Testing reports will be in: {self.out_path}."
-                )
+                self.text_report.SetLabel(f"Testing reports will be in: {self.out_path}.")
             dialog1.Destroy()
         else:
             self.out_path = None
@@ -811,9 +789,7 @@ class TestCategorizers(LabGymWindow):
             )
         else:
             CA = Categorizers()
-            CA.test_categorizer(
-                self.file_path, self.path_to_categorizer, result_path=self.out_path
-            )
+            CA.test_categorizer(self.file_path, self.path_to_categorizer, result_path=self.out_path)
 
     def remove_categorizer(self, event):
         """Delete the a categorizer."""

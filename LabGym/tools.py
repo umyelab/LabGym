@@ -189,9 +189,7 @@ def extract_backgrounds_from_video(
     upper_threshold = None
 
     if start_time >= duration:
-        print(
-            "The beginning time for background extraction is later than the end of the video!"
-        )
+        print("The beginning time for background extraction is later than the end of the video!")
         print(
             "Will use the 1st second of the video as the beginning time for background extraction!"
         )
@@ -214,9 +212,7 @@ def extract_backgrounds_from_video(
         _, frame = capture.read()
 
         reached_start = frame_number >= start_time * fps
-        reached_end = (
-            end_time is not None and frame_number >= end_time * fps or frame is None
-        )
+        reached_end = end_time is not None and frame_number >= end_time * fps or frame is None
 
         if reached_end:
             break
@@ -248,9 +244,7 @@ def extract_backgrounds_from_video(
         for bg_type in BG_TYPES:
             if counts[bg_type] == 1001:
                 counts[bg_type] = 1
-                background = _extract_background(
-                    frames[bg_type], stable_illumination, animal_vs_bg
-                )
+                background = _extract_background(frames[bg_type], stable_illumination, animal_vs_bg)
                 if background is not None:
                     background_options[bg_type].append(background)
 
@@ -260,9 +254,7 @@ def extract_backgrounds_from_video(
         if len(background_options[bg_type]) > 0:
             # Process any remaining frames
             if counts[bg_type] > 600:
-                background = _extract_background(
-                    frames[bg_type], stable_illumination, animal_vs_bg
-                )
+                background = _extract_background(frames[bg_type], stable_illumination, animal_vs_bg)
                 if background is not None:
                     background_options[bg_type].append(background)
 
@@ -461,9 +453,7 @@ def estimate_animal_area(
         _, frame = capture.read()
 
         reached_start = frame_number >= start_time * fps
-        reached_end = (
-            end_time is not None and frame_number >= end_time * fps or frame is None
-        )
+        reached_end = end_time is not None and frame_number >= end_time * fps or frame is None
         if reached_end:
             break
         if not reached_start:
@@ -498,9 +488,7 @@ def estimate_animal_area(
         foreground = cv2.cvtColor(foreground, cv2.COLOR_BGR2GRAY)
 
         # Extract contours from frame
-        _, thred = cv2.threshold(
-            foreground, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU
-        )
+        _, thred = cv2.threshold(foreground, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
         kernel = np.ones((kernel_size, kernel_size), np.uint8)
         thred = cv2.morphologyEx(thred, cv2.MORPH_CLOSE, kernel)
         if animal_vs_bg == AnimalVsBg.HARD_TO_TELL:
@@ -591,9 +579,7 @@ def extract_blob(frame, contour, channel=1):
     return blob
 
 
-def extract_blob_background(
-    frame, contours, contour=None, channel=1, background_free=False
-):
+def extract_blob_background(frame, contours, contour=None, channel=1, background_free=False):
     (y_bt, y_tp, x_lf, x_rt) = crop_frame(frame, contours)
     if background_free is True:
         mask = np.zeros_like(frame)
@@ -678,9 +664,7 @@ def contour_frame(
 
     foreground = cv2.cvtColor(foreground, cv2.COLOR_BGR2GRAY)
     thred = cv2.threshold(foreground, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
-    thred = cv2.morphologyEx(
-        thred, cv2.MORPH_CLOSE, np.ones((kernel, kernel), np.uint8)
-    )
+    thred = cv2.morphologyEx(thred, cv2.MORPH_CLOSE, np.ones((kernel, kernel), np.uint8))
     if animal_vs_bg == 2:
         kernel_erode = max(kernel - 4, 1)
         thred = cv2.erode(thred, np.ones((kernel_erode, kernel_erode), np.uint8))
@@ -750,41 +734,25 @@ def generate_patternimage(frame, outlines, inners=None, std=0):
                 d = n * int((255 * 4 / length))
                 cv2.drawContours(background_outlines, [outline], 0, (255, d, 0), p_size)
                 if inners is not None:
-                    cv2.drawContours(
-                        background_inners, inners[n], -1, (255, d, 0), p_size
-                    )
+                    cv2.drawContours(background_inners, inners[n], -1, (255, d, 0), p_size)
             elif n < length / 2:
                 d = int((n - length / 4) * (255 * 4 / length))
-                cv2.drawContours(
-                    background_outlines, [outline], 0, (255, 255, d), p_size
-                )
+                cv2.drawContours(background_outlines, [outline], 0, (255, 255, d), p_size)
                 if inners is not None:
-                    cv2.drawContours(
-                        background_inners, inners[n], -1, (255, 255, d), p_size
-                    )
+                    cv2.drawContours(background_inners, inners[n], -1, (255, 255, d), p_size)
             elif n < 3 * length / 4:
                 d = int((n - length / 2) * (255 * 4 / length))
-                cv2.drawContours(
-                    background_outlines, [outline], 0, (255, 255 - d, 255), p_size
-                )
+                cv2.drawContours(background_outlines, [outline], 0, (255, 255 - d, 255), p_size)
                 if inners is not None:
-                    cv2.drawContours(
-                        background_inners, inners[n], -1, (255, 255 - d, 255), p_size
-                    )
+                    cv2.drawContours(background_inners, inners[n], -1, (255, 255 - d, 255), p_size)
             else:
                 d = int((n - 3 * length / 4) * (255 * 4 / length))
-                cv2.drawContours(
-                    background_outlines, [outline], 0, (255 - d, 0, 255), p_size
-                )
+                cv2.drawContours(background_outlines, [outline], 0, (255 - d, 0, 255), p_size)
                 if inners is not None:
-                    cv2.drawContours(
-                        background_inners, inners[n], -1, (255 - d, 0, 255), p_size
-                    )
+                    cv2.drawContours(background_inners, inners[n], -1, (255 - d, 0, 255), p_size)
 
             if inners is not None:
-                cv2.drawContours(
-                    background_outers, [outline], 0, (255, 255, 255), int(2 * p_size)
-                )
+                cv2.drawContours(background_outers, [outline], 0, (255, 255, 255), int(2 * p_size))
 
     outlines_image = background_outlines[y_bt:y_tp, x_lf:x_rt]
 
@@ -808,9 +776,7 @@ def generate_patternimage(frame, outlines, inners=None, std=0):
     return pattern_image
 
 
-def generate_patternimage_all(
-    frame, y_bt, y_tp, x_lf, x_rt, outlines_list, inners_list, std=0
-):
+def generate_patternimage_all(frame, y_bt, y_tp, x_lf, x_rt, outlines_list, inners_list, std=0):
     inners_length = len(inners_list[0])
 
     if inners_length > 0:
@@ -844,34 +810,22 @@ def generate_patternimage_all(
             cv2.drawContours(background_outlines, outlines, -1, (255, 255, d), p_size)
             if inners_length > 0:
                 for inners in inners_list[n]:
-                    cv2.drawContours(
-                        background_inners, inners, -1, (255, 255, d), p_size
-                    )
+                    cv2.drawContours(background_inners, inners, -1, (255, 255, d), p_size)
         elif n < 3 * length / 4:
             d = int((n - length / 2) * (255 * 4 / length))
-            cv2.drawContours(
-                background_outlines, outlines, -1, (255, 255 - d, 255), p_size
-            )
+            cv2.drawContours(background_outlines, outlines, -1, (255, 255 - d, 255), p_size)
             if inners_length > 0:
                 for inners in inners_list[n]:
-                    cv2.drawContours(
-                        background_inners, inners, -1, (255, 255 - d, 255), p_size
-                    )
+                    cv2.drawContours(background_inners, inners, -1, (255, 255 - d, 255), p_size)
         else:
             d = int((n - 3 * length / 4) * (255 * 4 / length))
-            cv2.drawContours(
-                background_outlines, outlines, -1, (255 - d, 0, 255), p_size
-            )
+            cv2.drawContours(background_outlines, outlines, -1, (255 - d, 0, 255), p_size)
             if inners_length > 0:
                 for inners in inners_list[n]:
-                    cv2.drawContours(
-                        background_inners, inners, -1, (255 - d, 0, 255), p_size
-                    )
+                    cv2.drawContours(background_inners, inners, -1, (255 - d, 0, 255), p_size)
 
         if inners_length > 0:
-            cv2.drawContours(
-                background_outers, outlines, -1, (255, 255, 255), int(2 * p_size)
-            )
+            cv2.drawContours(background_outers, outlines, -1, (255, 255, 255), int(2 * p_size))
 
     outlines_image = background_outlines[y_bt:y_tp, x_lf:x_rt]
 
@@ -918,26 +872,20 @@ def generate_patternimage_interact(
         other_outline = other_outlines[n]
         if len(other_outline) > 0:
             if other_outline[0] is not None:
-                cv2.drawContours(
-                    background_outlines, other_outline, -1, (150, 150, 150), p_size
-                )
+                cv2.drawContours(background_outlines, other_outline, -1, (150, 150, 150), p_size)
 
         if outline is not None:
             if inners is not None:
                 inner = inners[n]
                 other_inner = functools.reduce(operator.iconcat, other_inners[n], [])
                 if other_inner is not None:
-                    cv2.drawContours(
-                        background_inners, other_inner, -1, (150, 150, 150), p_size
-                    )
+                    cv2.drawContours(background_inners, other_inner, -1, (150, 150, 150), p_size)
                 if std > 0:
                     background_std = np.zeros_like(frame)
                     if inner is not None:
                         cv2.drawContours(background_std, inner, -1, (255, 255, 255), -1)
                     if other_inner is not None:
-                        cv2.drawContours(
-                            background_std, other_inner, -1, (255, 255, 255), -1
-                        )
+                        cv2.drawContours(background_std, other_inner, -1, (255, 255, 255), -1)
                     backgrounds_std.append(background_std)
             else:
                 inner = None
@@ -949,36 +897,22 @@ def generate_patternimage_interact(
                     cv2.drawContours(background_inners, inner, -1, (255, d, 0), p_size)
             elif n < length / 2:
                 d = int((n - length / 4) * (255 * 4 / length))
-                cv2.drawContours(
-                    background_outlines, [outline], 0, (255, 255, d), p_size
-                )
+                cv2.drawContours(background_outlines, [outline], 0, (255, 255, d), p_size)
                 if inner is not None:
-                    cv2.drawContours(
-                        background_inners, inner, -1, (255, 255, d), p_size
-                    )
+                    cv2.drawContours(background_inners, inner, -1, (255, 255, d), p_size)
             elif n < 3 * length / 4:
                 d = int((n - length / 2) * (255 * 4 / length))
-                cv2.drawContours(
-                    background_outlines, [outline], 0, (255, 255 - d, 255), p_size
-                )
+                cv2.drawContours(background_outlines, [outline], 0, (255, 255 - d, 255), p_size)
                 if inner is not None:
-                    cv2.drawContours(
-                        background_inners, inner, -1, (255, 255 - d, 255), p_size
-                    )
+                    cv2.drawContours(background_inners, inner, -1, (255, 255 - d, 255), p_size)
             else:
                 d = int((n - 3 * length / 4) * (255 * 4 / length))
-                cv2.drawContours(
-                    background_outlines, [outline], 0, (255 - d, 0, 255), p_size
-                )
+                cv2.drawContours(background_outlines, [outline], 0, (255 - d, 0, 255), p_size)
                 if inner is not None:
-                    cv2.drawContours(
-                        background_inners, inner, -1, (255 - d, 0, 255), p_size
-                    )
+                    cv2.drawContours(background_inners, inner, -1, (255 - d, 0, 255), p_size)
 
             if inners is not None:
-                cv2.drawContours(
-                    background_outers, [outline], 0, (255, 255, 255), int(2 * p_size)
-                )
+                cv2.drawContours(background_outers, [outline], 0, (255, 255, 255), int(2 * p_size))
                 if len(other_outline) > 0:
                     if other_outline[0] is not None:
                         cv2.drawContours(
@@ -1060,9 +994,7 @@ def plot_evnets(
 
         all_data = np.array(all_data)
         masks = np.array(masks)
-        dataframe = pd.DataFrame(
-            all_data, columns=[float("{:.1f}".format(i)) for i in time_points]
-        )
+        dataframe = pd.DataFrame(all_data, columns=[float("{:.1f}".format(i)) for i in time_points])
 
         heatmap = sb.heatmap(
             dataframe,
@@ -1138,9 +1070,7 @@ def extract_frames(
                     )
 
                 cv2.imwrite(
-                    os.path.join(
-                        out_path, video_name + "_" + str(frame_count_generate) + ".jpg"
-                    ),
+                    os.path.join(out_path, video_name + "_" + str(frame_count_generate) + ".jpg"),
                     frame,
                 )
 

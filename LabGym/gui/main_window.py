@@ -71,9 +71,7 @@ class MainWindow(wx.Frame):
 
         # Main modules
         modules = wx.BoxSizer(wx.HORIZONTAL)
-        preprocessing_button = wx.Button(
-            panel, label="Preprocessing Module", size=(200, 40)
-        )
+        preprocessing_button = wx.Button(panel, label="Preprocessing Module", size=(200, 40))
         preprocessing_button.Bind(wx.EVT_BUTTON, self.open_preprocessing_module)
         wx.Button.SetToolTip(
             preprocessing_button,

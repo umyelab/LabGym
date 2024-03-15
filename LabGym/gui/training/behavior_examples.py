@@ -103,9 +103,7 @@ class GenerateBehaviorExamples(LabGymWindow):
             self.text_outputfolder,
         )
 
-        self.text_detection = self.module_text(
-            "Default: Background subtraction-based method."
-        )
+        self.text_detection = self.module_text("Default: Background subtraction-based method.")
         self.add_module(
             "Specify the method to\ndetect animals or objects",
             self.select_method,
@@ -113,9 +111,7 @@ class GenerateBehaviorExamples(LabGymWindow):
             self.text_detection,
         )
 
-        self.text_startgenerate = self.module_text(
-            "Default: at the beginning of the video(s)."
-        )
+        self.text_startgenerate = self.module_text("Default: at the beginning of the video(s).")
         self.add_module(
             "Specify when generating behavior examples\nshould begin (unit: second)",
             self.specify_timing,
@@ -186,9 +182,7 @@ class GenerateBehaviorExamples(LabGymWindow):
         )
         if dialog.ShowModal() != wx.ID_OK:
             self.behavior_mode = BehaviorMode.NON_INTERACTIVE
-            self.text_specifymode.SetLabel(
-                f"Behavior mode: {behavior_modes[self.behavior_mode]}."
-            )
+            self.text_specifymode.SetLabel(f"Behavior mode: {behavior_modes[self.behavior_mode]}.")
             dialog.Destroy()
             return
 
@@ -303,9 +297,7 @@ class GenerateBehaviorExamples(LabGymWindow):
         dialog = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
         if dialog.ShowModal() == wx.ID_OK:
             self.result_path = dialog.GetPath()
-            self.text_outputfolder.SetLabel(
-                f"Generate behavior examples in: {self.result_path}."
-            )
+            self.text_outputfolder.SetLabel(f"Generate behavior examples in: {self.result_path}.")
         dialog.Destroy()
 
     def _configure_background_subtraction(self):
@@ -455,9 +447,7 @@ class GenerateBehaviorExamples(LabGymWindow):
             select_detector_dialog.Destroy()
 
         if detector == "Choose a new directory of the Detector":
-            dialog2 = wx.DirDialog(
-                self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE
-            )
+            dialog2 = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
             if dialog2.ShowModal() == wx.ID_OK:
                 self.path_to_detector = dialog2.GetPaths()
             dialog2.Destroy()
@@ -510,7 +500,9 @@ class GenerateBehaviorExamples(LabGymWindow):
     def select_method(self, event):
         """Select method to generate contours for behavior examples."""
         DETECTOR = "Use trained Detectors (versatile but slow)"
-        BACKGROUND_SUBTRACTION = "Subtract background (fast but requires static background & stable illumination)"
+        BACKGROUND_SUBTRACTION = (
+            "Subtract background (fast but requires static background & stable illumination)"
+        )
         methods = [DETECTOR]
         if self.behavior_mode in [
             BehaviorMode.NON_INTERACTIVE,
@@ -765,9 +757,7 @@ class GenerateBehaviorExamples(LabGymWindow):
             )
         else:
             self.skip_redundant = 1
-            self.text_skipredundant.SetLabel(
-                "Generate a pair of example at every frame."
-            )
+            self.text_skipredundant.SetLabel("Generate a pair of example at every frame.")
         dialog.Destroy()
 
     def generate_data(self, event):
@@ -791,9 +781,7 @@ class GenerateBehaviorExamples(LabGymWindow):
 
         if self.behavior_mode == BehaviorMode.STATIC_IMAGES:
             if self.path_to_detector is None:
-                wx.MessageBox(
-                    "You need to select a Detector.", "Error", wx.OK | wx.ICON_ERROR
-                )
+                wx.MessageBox("You need to select a Detector.", "Error", wx.OK | wx.ICON_ERROR)
                 return
             else:
                 AAD = AnalyzeAnimalDetector()
@@ -1045,14 +1033,10 @@ class SortBehaviorExamples(LabGymWindow):
             behavior_name = pair.split("-")[1]
 
             if len(key) != 1:
-                raise ValueError(
-                    f"Invalid key '{key}'. Key must be a single character."
-                )
+                raise ValueError(f"Invalid key '{key}'. Key must be a single character.")
 
             if key.lower() in RESERVED_KEYS:
-                raise ValueError(
-                    f"Key '{key}' is reserved. Please use a different key."
-                )
+                raise ValueError(f"Key '{key}' is reserved. Please use a different key.")
 
             self.keys_behaviors[key] = behavior_name
 
@@ -1082,9 +1066,7 @@ class SortBehaviorExamples(LabGymWindow):
                 )
                 continue
 
-            self.text_keynames.SetLabel(
-                f"The key-behaviorname pairs: {key_behavior_pairs}."
-            )
+            self.text_keynames.SetLabel(f"The key-behaviorname pairs: {key_behavior_pairs}.")
             break
 
     def _generate_behavior_preview(
@@ -1135,11 +1117,7 @@ class SortBehaviorExamples(LabGymWindow):
 
     def sort_behaviors(self, event):
         """Sort behavior examples."""
-        if (
-            self.input_path is None
-            or self.result_path is None
-            or not self.keys_behaviors
-        ):
+        if self.input_path is None or self.result_path is None or not self.keys_behaviors:
             wx.MessageBox(
                 "No input / output folder or shortcut key - behavior name pair specified.",
                 "Error",
@@ -1319,9 +1297,7 @@ class BehaviorExampleSorter:
         if behavior not in self._behaviors:
             raise ValueError(f"Invalid behavior name {behavior}.")
 
-        (self.source / (example + ".jpg")).rename(
-            self.destination / behavior / (example + ".jpg")
-        )
+        (self.source / (example + ".jpg")).rename(self.destination / behavior / (example + ".jpg"))
         if not self.IMAGES_ONLY:
             (self.source / (example + ".avi")).rename(
                 self.destination / behavior / (example + ".avi")
@@ -1338,9 +1314,7 @@ class BehaviorExampleSorter:
             raise IndexError("Nothing to undo.")
 
         behavior, example = self._action_stack.pop()
-        (self.destination / behavior / (example + ".jpg")).rename(
-            self.source / (example + ".jpg")
-        )
+        (self.destination / behavior / (example + ".jpg")).rename(self.source / (example + ".jpg"))
         if not self.IMAGES_ONLY:
             (self.destination / behavior / example + ".avi").rename(
                 self.source / (example + ".avi")

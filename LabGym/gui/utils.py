@@ -78,9 +78,7 @@ class LabGymWindow(wx.Frame):
 
     def module_text(self, label: str) -> wx.StaticText:
         """Return a wx.StaticText instance with the given label."""
-        return wx.StaticText(
-            self.panel, label=label, style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
-        )
+        return wx.StaticText(self.panel, label=label, style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END)
 
     def add_submit_button(self, label: str, handler: Callable, tool_tip: str):
         """Add a submit button.
