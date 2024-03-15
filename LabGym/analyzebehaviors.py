@@ -2,7 +2,7 @@
 Copyright (C)
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext. 
+You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext.
 
 For license issues, please contact:
 
@@ -15,7 +15,6 @@ USA
 
 Email: bingye@umich.edu
 """
-
 
 import datetime
 import functools
@@ -111,9 +110,7 @@ class AnalyzeAnimal:
         self.path_to_video = path_to_video
         self.basename = os.path.basename(self.path_to_video)
         self.framewidth = framewidth
-        self.results_path = os.path.join(
-            results_path, os.path.splitext(self.basename)[0]
-        )
+        self.results_path = os.path.join(results_path, os.path.splitext(self.basename)[0])
         self.animal_number = animal_number
         self.dim_tconv = dim_tconv
         self.dim_conv = dim_conv
@@ -132,9 +129,7 @@ class AnalyzeAnimal:
         self.count_to_deregister = self.fps * 2
 
         if self.duration <= 0:
-            self.total_analysis_framecount = (
-                int(capture.get(cv2.CAP_PROP_FRAME_COUNT)) + 1
-            )
+            self.total_analysis_framecount = int(capture.get(cv2.CAP_PROP_FRAME_COUNT)) + 1
         else:
             self.total_analysis_framecount = int(self.fps * self.duration) + 1
 
@@ -144,24 +139,12 @@ class AnalyzeAnimal:
         capture.release()
 
         print("Video fps: " + str(self.fps))
-        print(
-            "The original video framesize: "
-            + str(int(frame.shape[0]))
-            + " X "
-            + str(int(frame.shape[1]))
-        )
+        print("The original video framesize: " + str(int(frame.shape[0])) + " X " + str(int(frame.shape[1])))
 
         if self.framewidth is not None:
             self.frameheight = int(frame.shape[0] * self.framewidth / frame.shape[1])
-            self.background = cv2.resize(
-                frame, (self.framewidth, self.frameheight), interpolation=cv2.INTER_AREA
-            )
-            print(
-                "The resized video framesize: "
-                + str(self.frameheight)
-                + " X "
-                + str(self.framewidth)
-            )
+            self.background = cv2.resize(frame, (self.framewidth, self.frameheight), interpolation=cv2.INTER_AREA)
+            print("The resized video framesize: " + str(self.frameheight) + " X " + str(self.framewidth))
         else:
             self.background = frame
 
@@ -208,12 +191,8 @@ class AnalyzeAnimal:
         self.background_low = backgrounds[1]
         self.background_high = backgrounds[2]
         cv2.imwrite(os.path.join(self.results_path, "background.jpg"), self.background)
-        cv2.imwrite(
-            os.path.join(self.results_path, "background_low.jpg"), self.background_low
-        )
-        cv2.imwrite(
-            os.path.join(self.results_path, "background_high.jpg"), self.background_high
-        )
+        cv2.imwrite(os.path.join(self.results_path, "background_low.jpg"), self.background_low)
+        cv2.imwrite(os.path.join(self.results_path, "background_high.jpg"), self.background_high)
 
         if self.autofind_t:
             self.t = get_stimulation_time(self.path_to_video, self.delta)
@@ -236,9 +215,7 @@ class AnalyzeAnimal:
         if self.categorize_behavior is True:
             for behavior_name in names_and_colors:
                 self.all_behavior_parameters[behavior_name] = {}
-                self.all_behavior_parameters[behavior_name]["color"] = names_and_colors[
-                    behavior_name
-                ]
+                self.all_behavior_parameters[behavior_name]["color"] = names_and_colors[behavior_name]
                 for parameter_name in [
                     "acceleration",
                     "count",
@@ -307,9 +284,7 @@ class AnalyzeAnimal:
 
         print("Preparation completed!")
 
-    def track_animal(
-        self, frame_count_analyze, contours, centers, heights, inners=None, blobs=None
-    ):
+    def track_animal(self, frame_count_analyze, contours, centers, heights, inners=None, blobs=None):
         unused_existing_indices = list(self.animal_existingcenters)
         existing_centers = list(self.animal_existingcenters.values())
         unused_new_indices = list(range(len(centers)))
@@ -327,15 +302,11 @@ class AnalyzeAnimal:
                     if self.register_counts[index_in_existing] is None:
                         self.register_counts[index_in_existing] = frame_count_analyze
                     self.to_deregister[index_in_existing] = 0
-                    self.animal_contours[index_in_existing][
-                        frame_count_analyze
-                    ] = contours[index_in_new]
+                    self.animal_contours[index_in_existing][frame_count_analyze] = contours[index_in_new]
                     center = centers[index_in_new]
                     self.animal_centers[index_in_existing][frame_count_analyze] = center
                     self.animal_existingcenters[index_in_existing] = center
-                    self.animal_heights[index_in_existing][
-                        frame_count_analyze
-                    ] = heights[index_in_new]
+                    self.animal_heights[index_in_existing][frame_count_analyze] = heights[index_in_new]
                     if self.animation_analyzer is True:
                         blob = blobs[index_in_new]
                         blob = img_to_array(
@@ -346,19 +317,15 @@ class AnalyzeAnimal:
                             )
                         )
                         self.animal_blobs[index_in_existing].append(blob)
-                        self.animations[index_in_existing][
-                            frame_count_analyze
-                        ] = np.array(self.animal_blobs[index_in_existing])
-                    if self.include_bodyparts is True:
-                        self.animal_inners[index_in_existing].append(
-                            inners[index_in_new]
+                        self.animations[index_in_existing][frame_count_analyze] = np.array(
+                            self.animal_blobs[index_in_existing]
                         )
+                    if self.include_bodyparts is True:
+                        self.animal_inners[index_in_existing].append(inners[index_in_new])
                         pattern_image = generate_patternimage(
                             self.background,
                             self.animal_contours[index_in_existing][
-                                max(
-                                    0, (frame_count_analyze - self.length + 1)
-                                ) : frame_count_analyze + 1
+                                max(0, (frame_count_analyze - self.length + 1)) : frame_count_analyze + 1
                             ],
                             inners=self.animal_inners[index_in_existing],
                             std=self.std,
@@ -367,9 +334,7 @@ class AnalyzeAnimal:
                         pattern_image = generate_patternimage(
                             self.background,
                             self.animal_contours[index_in_existing][
-                                max(
-                                    0, (frame_count_analyze - self.length + 1)
-                                ) : frame_count_analyze + 1
+                                max(0, (frame_count_analyze - self.length + 1)) : frame_count_analyze + 1
                             ],
                             inners=None,
                             std=0,
@@ -379,9 +344,7 @@ class AnalyzeAnimal:
                         (self.dim_conv, self.dim_conv),
                         interpolation=cv2.INTER_AREA,
                     )
-                    self.pattern_images[index_in_existing][
-                        frame_count_analyze
-                    ] = np.array(pattern_image)
+                    self.pattern_images[index_in_existing][frame_count_analyze] = np.array(pattern_image)
 
         if len(unused_existing_indices) > 0:
             for i in unused_existing_indices:
@@ -527,11 +490,7 @@ class AnalyzeAnimal:
                                             self.animal_contours[i][
                                                 max(
                                                     0,
-                                                    (
-                                                        frame_count_analyze
-                                                        - self.length
-                                                        + 1
-                                                    ),
+                                                    (frame_count_analyze - self.length + 1),
                                                 ) : frame_count_analyze + 1
                                             ],
                                             contour=None,
@@ -544,9 +503,7 @@ class AnalyzeAnimal:
                                             interpolation=cv2.INTER_AREA,
                                         )
                                     animation.append(img_to_array(blob))
-                                self.animations[i][frame_count_analyze] = np.array(
-                                    animation
-                                )
+                                self.animations[i][frame_count_analyze] = np.array(animation)
 
                 frame_count_analyze += 1
 
@@ -588,11 +545,7 @@ class AnalyzeAnimal:
         temp_inners = deque(maxlen=self.length)
         animation = (
             deque(
-                [
-                    np.zeros(
-                        (self.dim_tconv, self.dim_tconv, self.channel), dtype="uint8"
-                    )
-                ],
+                [np.zeros((self.dim_tconv, self.dim_tconv, self.channel), dtype="uint8")],
                 maxlen=self.length,
             )
             * self.length
@@ -664,9 +617,7 @@ class AnalyzeAnimal:
                         self.register_counts[0] = frame_count_analyze
                     self.animal_contours[0][frame_count_analyze] = contours
 
-                    (y_bt, y_tp, x_lf, x_rt) = crop_frame(
-                        frame, functools.reduce(operator.iconcat, temp_contours, [])
-                    )
+                    (y_bt, y_tp, x_lf, x_rt) = crop_frame(frame, functools.reduce(operator.iconcat, temp_contours, []))
                     self.animal_centers[0][frame_count_analyze] = (x_lf + 5, y_bt + 10)
 
                     pattern_image = generate_patternimage_all(
@@ -691,9 +642,7 @@ class AnalyzeAnimal:
                         for i, f in enumerate(temp_frames):
                             if (
                                 self.animal_contours[0][
-                                    max(
-                                        0, (frame_count_analyze - self.length + 1)
-                                    ) : frame_count_analyze + 1
+                                    max(0, (frame_count_analyze - self.length + 1)) : frame_count_analyze + 1
                                 ][n]
                                 is None
                             ):
@@ -718,9 +667,7 @@ class AnalyzeAnimal:
                                 interpolation=cv2.INTER_AREA,
                             )
                             animation.append(img_to_array(blob))
-                            self.animations[0][frame_count_analyze] = np.array(
-                                animation
-                            )
+                            self.animations[0][frame_count_analyze] = np.array(animation)
 
                 frame_count_analyze += 1
 
@@ -803,12 +750,8 @@ class AnalyzeAnimal:
 
         with tf.device("CPU"):
             if self.animation_analyzer is True:
-                animations = tf.convert_to_tensor(
-                    np.array(animations, dtype="float32") / 255.0
-                )
-            pattern_images = tf.convert_to_tensor(
-                np.array(pattern_images, dtype="float32") / 255.0
-            )
+                animations = tf.convert_to_tensor(np.array(animations, dtype="float32") / 255.0)
+            pattern_images = tf.convert_to_tensor(np.array(pattern_images, dtype="float32") / 255.0)
 
         if self.animation_analyzer is True:
             inputs = [animations, pattern_images]
@@ -820,9 +763,7 @@ class AnalyzeAnimal:
 
         for behavior_name in self.all_behavior_parameters:
             for i in IDs:
-                self.all_behavior_parameters[behavior_name]["probability"][i] = [
-                    np.nan
-                ] * len(self.all_time)
+                self.all_behavior_parameters[behavior_name]["probability"][i] = [np.nan] * len(self.all_time)
                 self.event_probability[i] = [["NA", -1]] * len(self.all_time)
 
         idx = 0
@@ -845,12 +786,8 @@ class AnalyzeAnimal:
                                 else:
                                     probability = prediction[0]
                             else:
-                                probability = prediction[
-                                    behavior_names.index(behavior_name)
-                                ]
-                            self.all_behavior_parameters[behavior_name]["probability"][
-                                n
-                            ][i] = probability
+                                probability = prediction[behavior_names.index(behavior_name)]
+                            self.all_behavior_parameters[behavior_name]["probability"][n][i] = probability
                         if len(behavior_names) == 2:
                             if prediction[0] > 0.5:
                                 if prediction[0] - (1 - prediction[0]) > uncertain:
@@ -865,10 +802,7 @@ class AnalyzeAnimal:
                                         1 - prediction[0],
                                     ]
                         else:
-                            if (
-                                sorted(prediction)[-1] - sorted(prediction)[-2]
-                                > uncertain
-                            ):
+                            if sorted(prediction)[-1] - sorted(prediction)[-2] > uncertain:
                                 self.event_probability[n][i] = [
                                     behavior_names[np.argmax(prediction)],
                                     max(prediction),
@@ -886,12 +820,8 @@ class AnalyzeAnimal:
         print("Annotating video...")
         print(datetime.datetime.now())
 
-        text_scl = max(
-            min(self.background.shape[0], self.background.shape[1]) / 960, 0.5
-        )
-        text_tk = max(
-            1, int(min(self.background.shape[0], self.background.shape[1]) / 960)
-        )
+        text_scl = max(min(self.background.shape[0], self.background.shape[1]) / 960, 0.5)
+        text_tk = max(1, int(min(self.background.shape[0], self.background.shape[1]) / 960))
 
         if self.categorize_behavior is True:
             colors = {}
@@ -899,9 +829,7 @@ class AnalyzeAnimal:
                 if self.all_behavior_parameters[behavior_name]["color"][1][0] != "#":
                     colors[behavior_name] = (255, 255, 255)
                 else:
-                    hex_color = self.all_behavior_parameters[behavior_name]["color"][
-                        1
-                    ].lstrip("#")
+                    hex_color = self.all_behavior_parameters[behavior_name]["color"][1].lstrip("#")
                     color = tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
                     colors[behavior_name] = color[::-1]
 
@@ -985,18 +913,11 @@ class AnalyzeAnimal:
                                     )
 
                                 if self.categorize_behavior is True:
-                                    if (
-                                        self.event_probability[i][frame_count_analyze][
-                                            0
-                                        ]
-                                        == "NA"
-                                    ):
+                                    if self.event_probability[i][frame_count_analyze][0] == "NA":
                                         if interact_all is True:
                                             cv2.drawContours(
                                                 frame,
-                                                self.animal_contours[i][
-                                                    frame_count_analyze
-                                                ],
+                                                self.animal_contours[i][frame_count_analyze],
                                                 -1,
                                                 (255, 255, 255),
                                                 1,
@@ -1004,11 +925,7 @@ class AnalyzeAnimal:
                                         else:
                                             cv2.drawContours(
                                                 frame,
-                                                [
-                                                    self.animal_contours[i][
-                                                        frame_count_analyze
-                                                    ]
-                                                ],
+                                                [self.animal_contours[i][frame_count_analyze]],
                                                 0,
                                                 (255, 255, 255),
                                                 1,
@@ -1023,32 +940,16 @@ class AnalyzeAnimal:
                                             text_tk,
                                         )
                                     else:
-                                        name = self.event_probability[i][
-                                            frame_count_analyze
-                                        ][0]
+                                        name = self.event_probability[i][frame_count_analyze][0]
                                         probability = (
-                                            str(
-                                                round(
-                                                    self.event_probability[i][
-                                                        frame_count_analyze
-                                                    ][1]
-                                                    * 100
-                                                )
-                                            )
-                                            + "%"
+                                            str(round(self.event_probability[i][frame_count_analyze][1] * 100)) + "%"
                                         )
                                         if name in colors:
-                                            color = colors[
-                                                self.event_probability[i][
-                                                    frame_count_analyze
-                                                ][0]
-                                            ]
+                                            color = colors[self.event_probability[i][frame_count_analyze][0]]
                                             if interact_all is True:
                                                 cv2.drawContours(
                                                     frame,
-                                                    self.animal_contours[i][
-                                                        frame_count_analyze
-                                                    ],
+                                                    self.animal_contours[i][frame_count_analyze],
                                                     -1,
                                                     color,
                                                     1,
@@ -1056,11 +957,7 @@ class AnalyzeAnimal:
                                             else:
                                                 cv2.drawContours(
                                                     frame,
-                                                    [
-                                                        self.animal_contours[i][
-                                                            frame_count_analyze
-                                                        ]
-                                                    ],
+                                                    [self.animal_contours[i][frame_count_analyze]],
                                                     0,
                                                     color,
                                                     1,
@@ -1078,9 +975,7 @@ class AnalyzeAnimal:
                                             if interact_all is True:
                                                 cv2.drawContours(
                                                     frame,
-                                                    self.animal_contours[i][
-                                                        frame_count_analyze
-                                                    ],
+                                                    self.animal_contours[i][frame_count_analyze],
                                                     -1,
                                                     (255, 255, 255),
                                                     1,
@@ -1088,11 +983,7 @@ class AnalyzeAnimal:
                                             else:
                                                 cv2.drawContours(
                                                     frame,
-                                                    [
-                                                        self.animal_contours[i][
-                                                            frame_count_analyze
-                                                        ]
-                                                    ],
+                                                    [self.animal_contours[i][frame_count_analyze]],
                                                     0,
                                                     (255, 255, 255),
                                                     1,
@@ -1161,18 +1052,14 @@ class AnalyzeAnimal:
 
                 for parameter_name in all_parameters:
                     for i in self.event_probability:
-                        self.all_behavior_parameters[behavior_name][parameter_name][
-                            i
-                        ] = [np.nan] * len(self.all_time)
+                        self.all_behavior_parameters[behavior_name][parameter_name][i] = [np.nan] * len(self.all_time)
 
         else:
             for i in self.animal_contours:
                 if "4 locomotion parameters" in parameter_to_analyze:
                     self.all_behavior_parameters["distance"][i] = 0.0
                 for parameter_name in all_parameters:
-                    self.all_behavior_parameters[parameter_name][i] = [np.nan] * len(
-                        self.all_time
-                    )
+                    self.all_behavior_parameters[parameter_name][i] = [np.nan] * len(self.all_time)
 
         if len(parameter_to_analyze) > 0:
             for i in self.animal_contours:
@@ -1185,57 +1072,36 @@ class AnalyzeAnimal:
                         if behavior_name != "NA":
                             if "count" in parameter_to_analyze:
                                 if behavior_name != self.event_probability[i][n - 1][0]:
-                                    self.all_behavior_parameters[behavior_name][
-                                        "count"
-                                    ][i] += 1
+                                    self.all_behavior_parameters[behavior_name]["count"][i] += 1
 
                             if "duration" in parameter_to_analyze:
-                                self.all_behavior_parameters[behavior_name]["duration"][
-                                    i
-                                ] += round(1 / self.fps, 2)
+                                self.all_behavior_parameters[behavior_name]["duration"][i] += round(1 / self.fps, 2)
 
                             if "latency" in parameter_to_analyze:
-                                if (
-                                    self.all_behavior_parameters[behavior_name][
-                                        "latency"
-                                    ][i]
-                                    == "NA"
-                                ):
-                                    self.all_behavior_parameters[behavior_name][
-                                        "latency"
-                                    ][i] = self.all_time[n]
+                                if self.all_behavior_parameters[behavior_name]["latency"][i] == "NA":
+                                    self.all_behavior_parameters[behavior_name]["latency"][i] = self.all_time[n]
 
                             if "3 length parameters" in parameter_to_analyze:
                                 heights_diffs = []
-                                for h in self.animal_heights[i][
-                                    n - self.length + 1 : n + 1
-                                ]:
+                                for h in self.animal_heights[i][n - self.length + 1 : n + 1]:
                                     if h is None or self.animal_heights[i][n] is None:
                                         height_diff = 0.0
                                     else:
-                                        height_diff = (
-                                            abs(h - self.animal_heights[i][n]) / h
-                                        )
+                                        height_diff = abs(h - self.animal_heights[i][n]) / h
                                     heights_diffs.append(height_diff)
                                 magnitude_length = max(heights_diffs)
-                                vigor_length = magnitude_length / (
-                                    (self.length - np.argmax(heights_diffs)) / self.fps
-                                )
-                                intensity_length = sum(heights_diffs) / (
-                                    self.length / self.fps
-                                )
+                                vigor_length = magnitude_length / ((self.length - np.argmax(heights_diffs)) / self.fps)
+                                intensity_length = sum(heights_diffs) / (self.length / self.fps)
                                 if magnitude_length > 0:
-                                    self.all_behavior_parameters[behavior_name][
-                                        "magnitude_length"
-                                    ][i][n] = magnitude_length
+                                    self.all_behavior_parameters[behavior_name]["magnitude_length"][i][n] = (
+                                        magnitude_length
+                                    )
                                 if vigor_length > 0:
-                                    self.all_behavior_parameters[behavior_name][
-                                        "vigor_length"
-                                    ][i][n] = vigor_length
+                                    self.all_behavior_parameters[behavior_name]["vigor_length"][i][n] = vigor_length
                                 if intensity_length > 0:
-                                    self.all_behavior_parameters[behavior_name][
-                                        "intensity_length"
-                                    ][i][n] = intensity_length
+                                    self.all_behavior_parameters[behavior_name]["intensity_length"][i][n] = (
+                                        intensity_length
+                                    )
 
                             if "4 locomotion parameters" in parameter_to_analyze:
                                 distance_traveled = 0.0
@@ -1256,30 +1122,21 @@ class AnalyzeAnimal:
                                 end_center = self.animal_centers[i][n]
                                 if end_center is not None:
                                     displacements = []
-                                    for ct in self.animal_centers[i][
-                                        n - self.length + 1 : n + 1
-                                    ]:
+                                    for ct in self.animal_centers[i][n - self.length + 1 : n + 1]:
                                         if ct is None:
                                             displacements.append(0)
                                         else:
-                                            displacements.append(
-                                                math.dist(end_center, ct)
-                                            )
+                                            displacements.append(math.dist(end_center, ct))
                                     displacement = max(displacements)
                                     if normalize_distance is True:
                                         displacement = displacement / calibrator
-                                    velocity = displacement / (
-                                        (self.length - np.argmax(displacements))
-                                        / self.fps
-                                    )
-                                    self.all_behavior_parameters[behavior_name][
-                                        "velocity"
-                                    ][i][n] = velocity
+                                    velocity = displacement / ((self.length - np.argmax(displacements)) / self.fps)
+                                    self.all_behavior_parameters[behavior_name]["velocity"][i][n] = velocity
                                 velocities_max = []
                                 velocities_min = []
-                                for v in self.all_behavior_parameters[behavior_name][
-                                    "velocity"
-                                ][i][n - self.length + 1 : n + 1]:
+                                for v in self.all_behavior_parameters[behavior_name]["velocity"][i][
+                                    n - self.length + 1 : n + 1
+                                ]:
                                     if v != np.nan:
                                         velocities_max.append(v)
                                         velocities_min.append(v)
@@ -1289,46 +1146,26 @@ class AnalyzeAnimal:
                                 vmax = max(velocities_max)
                                 vmin = min(velocities_min)
                                 if vmax != -float("inf") and vmin != float("inf"):
-                                    if np.argmax(velocities_max) != np.argmin(
-                                        velocities_min
-                                    ):
-                                        t = (
-                                            abs(
-                                                np.argmax(velocities_max)
-                                                - np.argmin(velocities_min)
-                                            )
-                                            / self.fps
-                                        )
-                                        self.all_behavior_parameters[behavior_name][
-                                            "acceleration"
-                                        ][i][n] = (vmax - vmin) / t
-                                self.all_behavior_parameters[behavior_name]["distance"][
-                                    i
-                                ] += distance_traveled
-                                self.all_behavior_parameters[behavior_name]["speed"][i][
-                                    n
-                                ] = speed
+                                    if np.argmax(velocities_max) != np.argmin(velocities_min):
+                                        t = abs(np.argmax(velocities_max) - np.argmin(velocities_min)) / self.fps
+                                        self.all_behavior_parameters[behavior_name]["acceleration"][i][n] = (
+                                            vmax - vmin
+                                        ) / t
+                                self.all_behavior_parameters[behavior_name]["distance"][i] += distance_traveled
+                                self.all_behavior_parameters[behavior_name]["speed"][i][n] = speed
 
                             if "3 areal parameters" in parameter_to_analyze:
                                 mask = np.zeros_like(self.background)
                                 contour = self.animal_contours[i][n]
                                 if contour is not None:
-                                    cv2.drawContours(
-                                        mask, [contour], 0, (255, 255, 255), -1
-                                    )
+                                    cv2.drawContours(mask, [contour], 0, (255, 255, 255), -1)
                                     mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
                                     area_diffs = []
-                                    for ct in self.animal_contours[i][
-                                        n - self.length + 1 : n + 1
-                                    ]:
+                                    for ct in self.animal_contours[i][n - self.length + 1 : n + 1]:
                                         if ct is not None:
                                             prev_mask = np.zeros_like(self.background)
-                                            cv2.drawContours(
-                                                prev_mask, [ct], 0, (255, 255, 255), -1
-                                            )
-                                            prev_mask = cv2.cvtColor(
-                                                prev_mask, cv2.COLOR_BGR2GRAY
-                                            )
+                                            cv2.drawContours(prev_mask, [ct], 0, (255, 255, 255), -1)
+                                            prev_mask = cv2.cvtColor(prev_mask, cv2.COLOR_BGR2GRAY)
                                             xlf1, ybt1, w, h = cv2.boundingRect(contour)
                                             xrt1 = xlf1 + w
                                             ytp1 = ybt1 + h
@@ -1343,62 +1180,41 @@ class AnalyzeAnimal:
                                             prev_mask = prev_mask[ybt:ytp, xlf:xrt]
                                             diff = cv2.bitwise_xor(prev_mask, curr_mask)
                                             # diff[diff!=0]=255
-                                            area_diff = (np.sum(diff) / 255) / (
-                                                np.sum(prev_mask) / 255
-                                            )
+                                            area_diff = (np.sum(diff) / 255) / (np.sum(prev_mask) / 255)
                                             area_diffs.append(area_diff)
                                     if len(area_diffs) > 0:
                                         magnitude_area = max(area_diffs)
-                                        vigor_area = magnitude_area / (
-                                            (self.length - np.argmax(area_diffs))
-                                            / self.fps
-                                        )
-                                        intensity_area = sum(area_diffs) / (
-                                            self.length / self.fps
-                                        )
+                                        vigor_area = magnitude_area / ((self.length - np.argmax(area_diffs)) / self.fps)
+                                        intensity_area = sum(area_diffs) / (self.length / self.fps)
                                         if magnitude_area > 0:
-                                            self.all_behavior_parameters[behavior_name][
-                                                "magnitude_area"
-                                            ][i][n] = magnitude_area
+                                            self.all_behavior_parameters[behavior_name]["magnitude_area"][i][n] = (
+                                                magnitude_area
+                                            )
                                         if vigor_area > 0:
-                                            self.all_behavior_parameters[behavior_name][
-                                                "vigor_area"
-                                            ][i][n] = vigor_area
+                                            self.all_behavior_parameters[behavior_name]["vigor_area"][i][n] = vigor_area
                                         if intensity_area > 0:
-                                            self.all_behavior_parameters[behavior_name][
-                                                "intensity_area"
-                                            ][i][n] = intensity_area
+                                            self.all_behavior_parameters[behavior_name]["intensity_area"][i][n] = (
+                                                intensity_area
+                                            )
 
                     else:
                         if "3 length parameters" in parameter_to_analyze:
                             heights_diffs = []
-                            for h in self.animal_heights[i][
-                                n - self.length + 1 : n + 1
-                            ]:
+                            for h in self.animal_heights[i][n - self.length + 1 : n + 1]:
                                 if h is None or self.animal_heights[i][n] is None:
                                     height_diff = 0.0
                                 else:
                                     height_diff = abs(h - self.animal_heights[i][n]) / h
                                 heights_diffs.append(height_diff)
                             magnitude_length = max(heights_diffs)
-                            vigor_length = magnitude_length / (
-                                (self.length - np.argmax(heights_diffs)) / self.fps
-                            )
-                            intensity_length = sum(heights_diffs) / (
-                                self.length / self.fps
-                            )
+                            vigor_length = magnitude_length / ((self.length - np.argmax(heights_diffs)) / self.fps)
+                            intensity_length = sum(heights_diffs) / (self.length / self.fps)
                             if magnitude_length > 0:
-                                self.all_behavior_parameters["magnitude_length"][i][
-                                    n
-                                ] = magnitude_length
+                                self.all_behavior_parameters["magnitude_length"][i][n] = magnitude_length
                             if vigor_length > 0:
-                                self.all_behavior_parameters["vigor_length"][i][
-                                    n
-                                ] = vigor_length
+                                self.all_behavior_parameters["vigor_length"][i][n] = vigor_length
                             if intensity_length > 0:
-                                self.all_behavior_parameters["intensity_length"][i][
-                                    n
-                                ] = intensity_length
+                                self.all_behavior_parameters["intensity_length"][i][n] = intensity_length
 
                         if "4 locomotion parameters" in parameter_to_analyze:
                             distance_traveled = 0.0
@@ -1419,9 +1235,7 @@ class AnalyzeAnimal:
                             end_center = self.animal_centers[i][n]
                             if end_center is not None:
                                 displacements = []
-                                for ct in self.animal_centers[i][
-                                    n - self.length + 1 : n + 1
-                                ]:
+                                for ct in self.animal_centers[i][n - self.length + 1 : n + 1]:
                                     if ct is None:
                                         displacements.append(0)
                                     else:
@@ -1429,17 +1243,11 @@ class AnalyzeAnimal:
                                 displacement = max(displacements)
                                 if normalize_distance is True:
                                     displacement = displacement / calibrator
-                                velocity = displacement / (
-                                    (self.length - np.argmax(displacements)) / self.fps
-                                )
-                                self.all_behavior_parameters["velocity"][i][
-                                    n
-                                ] = velocity
+                                velocity = displacement / ((self.length - np.argmax(displacements)) / self.fps)
+                                self.all_behavior_parameters["velocity"][i][n] = velocity
                             velocities_max = []
                             velocities_min = []
-                            for v in self.all_behavior_parameters["velocity"][i][
-                                n - self.length + 1 : n + 1
-                            ]:
+                            for v in self.all_behavior_parameters["velocity"][i][n - self.length + 1 : n + 1]:
                                 if v != np.nan:
                                     velocities_max.append(v)
                                     velocities_min.append(v)
@@ -1449,44 +1257,24 @@ class AnalyzeAnimal:
                             vmax = max(velocities_max)
                             vmin = min(velocities_min)
                             if vmax != -float("inf") and vmin != float("inf"):
-                                if np.argmax(velocities_max) != np.argmin(
-                                    velocities_min
-                                ):
-                                    t = (
-                                        abs(
-                                            np.argmax(velocities_max)
-                                            - np.argmin(velocities_min)
-                                        )
-                                        / self.fps
-                                    )
-                                    self.all_behavior_parameters["acceleration"][i][
-                                        n
-                                    ] = (vmax - vmin) / t
-                            self.all_behavior_parameters["distance"][
-                                i
-                            ] += distance_traveled
+                                if np.argmax(velocities_max) != np.argmin(velocities_min):
+                                    t = abs(np.argmax(velocities_max) - np.argmin(velocities_min)) / self.fps
+                                    self.all_behavior_parameters["acceleration"][i][n] = (vmax - vmin) / t
+                            self.all_behavior_parameters["distance"][i] += distance_traveled
                             self.all_behavior_parameters["speed"][i][n] = speed
 
                         if "3 areal parameters" in parameter_to_analyze:
                             mask = np.zeros_like(self.background)
                             contour = self.animal_contours[i][n]
                             if contour is not None:
-                                cv2.drawContours(
-                                    mask, [contour], 0, (255, 255, 255), -1
-                                )
+                                cv2.drawContours(mask, [contour], 0, (255, 255, 255), -1)
                                 mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
                                 area_diffs = []
-                                for ct in self.animal_contours[i][
-                                    n - self.length + 1 : n + 1
-                                ]:
+                                for ct in self.animal_contours[i][n - self.length + 1 : n + 1]:
                                     if ct is not None:
                                         prev_mask = np.zeros_like(self.background)
-                                        cv2.drawContours(
-                                            prev_mask, [ct], 0, (255, 255, 255), -1
-                                        )
-                                        prev_mask = cv2.cvtColor(
-                                            prev_mask, cv2.COLOR_BGR2GRAY
-                                        )
+                                        cv2.drawContours(prev_mask, [ct], 0, (255, 255, 255), -1)
+                                        prev_mask = cv2.cvtColor(prev_mask, cv2.COLOR_BGR2GRAY)
                                         xlf1, ybt1, w, h = cv2.boundingRect(contour)
                                         xrt1 = xlf1 + w
                                         ytp1 = ybt1 + h
@@ -1501,61 +1289,35 @@ class AnalyzeAnimal:
                                         prev_mask = prev_mask[ybt:ytp, xlf:xrt]
                                         diff = cv2.bitwise_xor(prev_mask, curr_mask)
                                         # diff[diff!=0]=255
-                                        area_diff = (np.sum(diff) / 255) / (
-                                            np.sum(prev_mask) / 255
-                                        )
+                                        area_diff = (np.sum(diff) / 255) / (np.sum(prev_mask) / 255)
                                         area_diffs.append(area_diff)
                                 if len(area_diffs) > 0:
                                     magnitude_area = max(area_diffs)
-                                    vigor_area = magnitude_area / (
-                                        (self.length - np.argmax(area_diffs)) / self.fps
-                                    )
-                                    intensity_area = sum(area_diffs) / (
-                                        self.length / self.fps
-                                    )
+                                    vigor_area = magnitude_area / ((self.length - np.argmax(area_diffs)) / self.fps)
+                                    intensity_area = sum(area_diffs) / (self.length / self.fps)
                                     if magnitude_area > 0:
-                                        self.all_behavior_parameters["magnitude_area"][
-                                            i
-                                        ][n] = magnitude_area
+                                        self.all_behavior_parameters["magnitude_area"][i][n] = magnitude_area
                                     if vigor_area > 0:
-                                        self.all_behavior_parameters["vigor_area"][i][
-                                            n
-                                        ] = vigor_area
+                                        self.all_behavior_parameters["vigor_area"][i][n] = vigor_area
                                     if intensity_area > 0:
-                                        self.all_behavior_parameters["intensity_area"][
-                                            i
-                                        ][n] = intensity_area
+                                        self.all_behavior_parameters["intensity_area"][i][n] = intensity_area
 
                     n += 1
 
                 if self.categorize_behavior is True:
                     if "duration" in parameter_to_analyze:
                         for behavior_name in self.all_behavior_parameters:
-                            if (
-                                self.all_behavior_parameters[behavior_name]["duration"][
-                                    i
-                                ]
-                                != 0.0
-                            ):
-                                self.all_behavior_parameters[behavior_name]["duration"][
-                                    i
-                                ] += round(self.length / self.fps, 2)
+                            if self.all_behavior_parameters[behavior_name]["duration"][i] != 0.0:
+                                self.all_behavior_parameters[behavior_name]["duration"][i] += round(
+                                    self.length / self.fps, 2
+                                )
                             else:
-                                self.all_behavior_parameters[behavior_name]["duration"][
-                                    i
-                                ] = "NA"
+                                self.all_behavior_parameters[behavior_name]["duration"][i] = "NA"
 
                     if "4 locomotion parameters" in parameter_to_analyze:
                         for behavior_name in self.all_behavior_parameters:
-                            if (
-                                self.all_behavior_parameters[behavior_name]["distance"][
-                                    i
-                                ]
-                                == 0.0
-                            ):
-                                self.all_behavior_parameters[behavior_name]["distance"][
-                                    i
-                                ] = "NA"
+                            if self.all_behavior_parameters[behavior_name]["distance"][i] == 0.0:
+                                self.all_behavior_parameters[behavior_name]["distance"][i] = "NA"
 
     def export_results(self, normalize_distance=True, parameter_to_analyze=[]):
         print("Quantifying behaviors...")
@@ -1599,9 +1361,7 @@ class AnalyzeAnimal:
 
         if self.categorize_behavior is True:
             for behavior_name in self.all_behavior_parameters:
-                os.makedirs(
-                    os.path.join(self.results_path, behavior_name), exist_ok=True
-                )
+                os.makedirs(os.path.join(self.results_path, behavior_name), exist_ok=True)
 
                 summary = []
 
@@ -1609,9 +1369,7 @@ class AnalyzeAnimal:
                     if parameter_name in ["count", "duration", "distance", "latency"]:
                         summary.append(
                             pd.DataFrame.from_dict(
-                                self.all_behavior_parameters[behavior_name][
-                                    parameter_name
-                                ],
+                                self.all_behavior_parameters[behavior_name][parameter_name],
                                 orient="index",
                                 columns=[parameter_name],
                             ).reset_index(drop=True)
@@ -1657,9 +1415,7 @@ class AnalyzeAnimal:
 
                 if len(summary) >= 1:
                     pd.concat(summary, axis=1).to_excel(
-                        os.path.join(
-                            self.results_path, behavior_name, "all_summary.xlsx"
-                        ),
+                        os.path.join(self.results_path, behavior_name, "all_summary.xlsx"),
                         float_format="%.2f",
                         index_label="ID/parameter",
                     )
@@ -1736,9 +1492,7 @@ class AnalyzeAnimal:
         temp_frames = deque(maxlen=self.length)
 
         for i in range(self.animal_number):
-            os.makedirs(
-                os.path.join(self.results_path, "examples", str(i)), exist_ok=True
-            )
+            os.makedirs(os.path.join(self.results_path, "examples", str(i)), exist_ok=True)
 
         if self.t is not None and self.length is not None:
             start_t = round((self.t - self.length / self.fps), 2)
@@ -1791,18 +1545,13 @@ class AnalyzeAnimal:
                         blobs=None,
                     )
 
-                    if (
-                        frame_count_analyze >= self.length
-                        and frame_count_analyze % skip_redundant == 0
-                    ):
+                    if frame_count_analyze >= self.length and frame_count_analyze % skip_redundant == 0:
                         for n in self.animal_centers:
                             h = w = 0
                             animation = []
                             for i, f in enumerate(temp_frames):
                                 contour = self.animal_contours[n][
-                                    frame_count_analyze
-                                    - self.length
-                                    + 1 : frame_count_analyze + 1
+                                    frame_count_analyze - self.length + 1 : frame_count_analyze + 1
                                 ][i]
                                 if contour is None:
                                     blob = np.zeros_like(f)
@@ -1810,9 +1559,7 @@ class AnalyzeAnimal:
                                     blob = extract_blob_background(
                                         f,
                                         self.animal_contours[n][
-                                            frame_count_analyze
-                                            - self.length
-                                            + 1 : frame_count_analyze + 1
+                                            frame_count_analyze - self.length + 1 : frame_count_analyze + 1
                                         ],
                                         contour=contour,
                                         channel=3,
@@ -1850,9 +1597,7 @@ class AnalyzeAnimal:
                                     pattern_image = generate_patternimage(
                                         self.background,
                                         self.animal_contours[n][
-                                            frame_count_analyze
-                                            - self.length
-                                            + 1 : frame_count_analyze + 1
+                                            frame_count_analyze - self.length + 1 : frame_count_analyze + 1
                                         ],
                                         inners=self.animal_inners[n],
                                         std=self.std,
@@ -1881,9 +1626,7 @@ class AnalyzeAnimal:
                                     pattern_image = generate_patternimage(
                                         self.background,
                                         self.animal_contours[n][
-                                            frame_count_analyze
-                                            - self.length
-                                            + 1 : frame_count_analyze + 1
+                                            frame_count_analyze - self.length + 1 : frame_count_analyze + 1
                                         ],
                                         inners=None,
                                         std=0,
@@ -1910,11 +1653,7 @@ class AnalyzeAnimal:
                                     True,
                                 )
                                 for blob in animation:
-                                    writer.write(
-                                        cv2.resize(
-                                            blob, (w, h), interpolation=cv2.INTER_AREA
-                                        )
-                                    )
+                                    writer.write(cv2.resize(blob, (w, h), interpolation=cv2.INTER_AREA))
                                 writer.release()
 
                                 cv2.imwrite(path_pattern_image, pattern_image)
@@ -1995,10 +1734,7 @@ class AnalyzeAnimal:
                     temp_contours.append(contours)
                     temp_inners.append(inners)
 
-                    if (
-                        frame_count_analyze >= self.length
-                        and frame_count_analyze % skip_redundant == 0
-                    ):
+                    if frame_count_analyze >= self.length and frame_count_analyze % skip_redundant == 0:
                         (y_bt, y_tp, x_lf, x_rt) = crop_frame(
                             frame, functools.reduce(operator.iconcat, temp_contours, [])
                         )
@@ -2081,12 +1817,8 @@ class AnalyzeAnimal:
                                     std=0,
                                 )
 
-                            path_animation = os.path.join(
-                                self.results_path, "examples", "0", animation_name
-                            )
-                            path_pattern_image = os.path.join(
-                                self.results_path, "examples", "0", pattern_image_name
-                            )
+                            path_animation = os.path.join(self.results_path, "examples", "0", animation_name)
+                            path_pattern_image = os.path.join(self.results_path, "examples", "0", pattern_image_name)
 
                             writer = cv2.VideoWriter(
                                 path_animation,
@@ -2096,11 +1828,7 @@ class AnalyzeAnimal:
                                 True,
                             )
                             for blob in animation:
-                                writer.write(
-                                    cv2.resize(
-                                        blob, (w, h), interpolation=cv2.INTER_AREA
-                                    )
-                                )
+                                writer.write(cv2.resize(blob, (w, h), interpolation=cv2.INTER_AREA))
                             writer.release()
 
                             cv2.imwrite(path_pattern_image, pattern_image)

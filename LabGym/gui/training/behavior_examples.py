@@ -103,9 +103,7 @@ class GenerateBehaviorExamples(LabGymWindow):
             self.text_outputfolder,
         )
 
-        self.text_detection = self.module_text(
-            "Default: Background subtraction-based method."
-        )
+        self.text_detection = self.module_text("Default: Background subtraction-based method.")
         self.add_module(
             "Specify the method to\ndetect animals or objects",
             self.select_method,
@@ -113,9 +111,7 @@ class GenerateBehaviorExamples(LabGymWindow):
             self.text_detection,
         )
 
-        self.text_startgenerate = self.module_text(
-            "Default: at the beginning of the video(s)."
-        )
+        self.text_startgenerate = self.module_text("Default: at the beginning of the video(s).")
         self.add_module(
             "Specify when generating behavior examples\nshould begin (unit: second)",
             self.specify_timing,
@@ -123,9 +119,7 @@ class GenerateBehaviorExamples(LabGymWindow):
             self.text_startgenerate,
         )
 
-        self.text_duration = self.module_text(
-            "Default: from the specified beginning time to the end of a video."
-        )
+        self.text_duration = self.module_text("Default: from the specified beginning time to the end of a video.")
         self.add_module(
             "Specify how long generating examples\nshould last (unit: second)",
             self.input_duration,
@@ -186,9 +180,7 @@ class GenerateBehaviorExamples(LabGymWindow):
         )
         if dialog.ShowModal() != wx.ID_OK:
             self.behavior_mode = BehaviorMode.NON_INTERACTIVE
-            self.text_specifymode.SetLabel(
-                f"Behavior mode: {behavior_modes[self.behavior_mode]}."
-            )
+            self.text_specifymode.SetLabel(f"Behavior mode: {behavior_modes[self.behavior_mode]}.")
             dialog.Destroy()
             return
 
@@ -223,15 +215,11 @@ class GenerateBehaviorExamples(LabGymWindow):
             self.text_startgenerate.SetLabel(
                 'No need to specify this since the selected behavior mode is "Static images".'
             )
-            self.text_duration.SetLabel(
-                'No need to specify this since the selected behavior mode is "Static images".'
-            )
+            self.text_duration.SetLabel('No need to specify this since the selected behavior mode is "Static images".')
             self.text_animalnumber.SetLabel(
                 'No need to specify this since the selected behavior mode is "Static images".'
             )
-            self.text_length.SetLabel(
-                'No need to specify this since the selected behavior mode is "Static images".'
-            )
+            self.text_length.SetLabel('No need to specify this since the selected behavior mode is "Static images".')
             self.text_skipredundant.SetLabel(
                 'No need to specify this since the selected behavior mode is "Static images".'
             )
@@ -249,9 +237,7 @@ class GenerateBehaviorExamples(LabGymWindow):
         else:
             wildcard = WX_VIDEO_WILDCARD
 
-        dialog = wx.FileDialog(
-            self, "Select video(s) / image(s)", "", "", wildcard, style=wx.FD_MULTIPLE
-        )
+        dialog = wx.FileDialog(self, "Select video(s) / image(s)", "", "", wildcard, style=wx.FD_MULTIPLE)
         if dialog.ShowModal() != wx.ID_OK:
             dialog.Destroy()
             return
@@ -303,9 +289,7 @@ class GenerateBehaviorExamples(LabGymWindow):
         dialog = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
         if dialog.ShowModal() == wx.ID_OK:
             self.result_path = dialog.GetPath()
-            self.text_outputfolder.SetLabel(
-                f"Generate behavior examples in: {self.result_path}."
-            )
+            self.text_outputfolder.SetLabel(f"Generate behavior examples in: {self.result_path}.")
         dialog.Destroy()
 
     def _configure_background_subtraction(self):
@@ -345,9 +329,7 @@ class GenerateBehaviorExamples(LabGymWindow):
             wx.YES_NO | wx.ICON_QUESTION,
         )
         if dialog2.ShowModal() == wx.ID_YES:
-            start_time_dialog = wx.DirDialog(
-                self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE
-            )
+            start_time_dialog = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
             if start_time_dialog.ShowModal() == wx.ID_OK:
                 self.background_path = start_time_dialog.GetPath()
             start_time_dialog.Destroy()
@@ -392,9 +374,7 @@ class GenerateBehaviorExamples(LabGymWindow):
             return
         elif extraction_method == extraction_methods[1]:
             self.decode_extraction = True
-            self.text_detection.SetLabel(
-                f"{label_text}, using time window decoded from filenames '_xst_' and '_xet_'."
-            )
+            self.text_detection.SetLabel(f"{label_text}, using time window decoded from filenames '_xst_' and '_xet_'.")
             return
 
         # Prompt for extraction time window
@@ -455,9 +435,7 @@ class GenerateBehaviorExamples(LabGymWindow):
             select_detector_dialog.Destroy()
 
         if detector == "Choose a new directory of the Detector":
-            dialog2 = wx.DirDialog(
-                self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE
-            )
+            dialog2 = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
             if dialog2.ShowModal() == wx.ID_OK:
                 self.path_to_detector = dialog2.GetPaths()
             dialog2.Destroy()
@@ -503,9 +481,7 @@ class GenerateBehaviorExamples(LabGymWindow):
             self.text_animalnumber.SetLabel(
                 f"The number of {self.animal_kinds} is: {list(self.animal_number.values())}."
             )
-            self.text_detection.SetLabel(
-                f"Detector: {detector}; The animals/objects: {self.animal_kinds}."
-            )
+            self.text_detection.SetLabel(f"Detector: {detector}; The animals/objects: {self.animal_kinds}.")
 
     def select_method(self, event):
         """Select method to generate contours for behavior examples."""
@@ -603,9 +579,7 @@ class GenerateBehaviorExamples(LabGymWindow):
             )
             if dialog2.ShowModal() == wx.ID_OK:
                 self.t = max(float(dialog2.GetValue()), 0)
-                self.text_startgenerate.SetLabel(
-                    f"Start to generate behavior examples at the: {self.t} second."
-                )
+                self.text_startgenerate.SetLabel(f"Start to generate behavior examples at the: {self.t} second.")
             dialog2.Destroy()
 
     def input_duration(self, event):
@@ -630,9 +604,7 @@ class GenerateBehaviorExamples(LabGymWindow):
         if dialog.ShowModal() == wx.ID_OK:
             self.duration = int(dialog.GetValue())
             if self.duration != 0:
-                self.text_duration.SetLabel(
-                    f"The generation of behavior examples lasts for {self.duration} seconds."
-                )
+                self.text_duration.SetLabel(f"The generation of behavior examples lasts for {self.duration} seconds.")
             else:
                 self.text_duration.SetLabel(
                     "The generation of behavior examples lasts for the entire duration of a video."
@@ -708,9 +680,7 @@ class GenerateBehaviorExamples(LabGymWindow):
                 self.animal_number = int(dialog1.GetValue())
             else:
                 self.animal_number = 1
-            self.text_animalnumber.SetLabel(
-                f"The total number of animals in a video is {self.animal_number}."
-            )
+            self.text_animalnumber.SetLabel(f"The total number of animals in a video is {self.animal_number}.")
             dialog1.Destroy()
 
     def input_length(self, event):
@@ -734,9 +704,7 @@ class GenerateBehaviorExamples(LabGymWindow):
         )
         if dialog.ShowModal() == wx.ID_OK:
             self.length = max(int(dialog.GetValue()), 3)
-            self.text_length.SetLabel(
-                f"The duration of a behavior example is: {self.length} frames."
-            )
+            self.text_length.SetLabel(f"The duration of a behavior example is: {self.length} frames.")
         dialog.Destroy()
 
     def specify_redundant(self, event):
@@ -760,14 +728,10 @@ class GenerateBehaviorExamples(LabGymWindow):
         )
         if dialog.ShowModal() == wx.ID_OK:
             self.skip_redundant = int(dialog.GetValue())
-            self.text_skipredundant.SetLabel(
-                f"Generate a pair of example every {self.skip_redundant} frames."
-            )
+            self.text_skipredundant.SetLabel(f"Generate a pair of example every {self.skip_redundant} frames.")
         else:
             self.skip_redundant = 1
-            self.text_skipredundant.SetLabel(
-                "Generate a pair of example at every frame."
-            )
+            self.text_skipredundant.SetLabel("Generate a pair of example at every frame.")
         dialog.Destroy()
 
     def generate_data(self, event):
@@ -791,9 +755,7 @@ class GenerateBehaviorExamples(LabGymWindow):
 
         if self.behavior_mode == BehaviorMode.STATIC_IMAGES:
             if self.path_to_detector is None:
-                wx.MessageBox(
-                    "You need to select a Detector.", "Error", wx.OK | wx.ICON_ERROR
-                )
+                wx.MessageBox("You need to select a Detector.", "Error", wx.OK | wx.ICON_ERROR)
                 return
             else:
                 AAD = AnalyzeAnimalDetector()
@@ -996,9 +958,7 @@ class SortBehaviorExamples(LabGymWindow):
         dialog = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
         if dialog.ShowModal() == wx.ID_OK:
             self.input_path = Path(dialog.GetPath())
-            self.text_inputfolder.SetLabel(
-                f"Unsorted behavior examples are in: f{self.input_path}."
-            )
+            self.text_inputfolder.SetLabel(f"Unsorted behavior examples are in: f{self.input_path}.")
         dialog.Destroy()
 
     def output_folder(self, event):
@@ -1006,9 +966,7 @@ class SortBehaviorExamples(LabGymWindow):
         dialog = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
         if dialog.ShowModal() == wx.ID_OK:
             self.result_path = Path(dialog.GetPath())
-            self.text_outputfolder.SetLabel(
-                f"Sorted behavior examples will be in: {self.result_path}."
-            )
+            self.text_outputfolder.SetLabel(f"Sorted behavior examples will be in: {self.result_path}.")
         dialog.Destroy()
 
     def parse_key_behavior_pairs(self, key_behavior_pairs: str):
@@ -1045,14 +1003,10 @@ class SortBehaviorExamples(LabGymWindow):
             behavior_name = pair.split("-")[1]
 
             if len(key) != 1:
-                raise ValueError(
-                    f"Invalid key '{key}'. Key must be a single character."
-                )
+                raise ValueError(f"Invalid key '{key}'. Key must be a single character.")
 
             if key.lower() in RESERVED_KEYS:
-                raise ValueError(
-                    f"Key '{key}' is reserved. Please use a different key."
-                )
+                raise ValueError(f"Key '{key}' is reserved. Please use a different key.")
 
             self.keys_behaviors[key] = behavior_name
 
@@ -1082,14 +1036,10 @@ class SortBehaviorExamples(LabGymWindow):
                 )
                 continue
 
-            self.text_keynames.SetLabel(
-                f"The key-behaviorname pairs: {key_behavior_pairs}."
-            )
+            self.text_keynames.SetLabel(f"The key-behaviorname pairs: {key_behavior_pairs}.")
             break
 
-    def _generate_behavior_preview(
-        self, pattern_image: MatLike, animation: cv2.VideoCapture | None = None
-    ) -> MatLike:
+    def _generate_behavior_preview(self, pattern_image: MatLike, animation: cv2.VideoCapture | None = None) -> MatLike:
         """Generate the behavior example display to show to the user."""
 
         def put_example_text(img: MatLike, text: str, pos: Tuple[int, int]):
@@ -1135,11 +1085,7 @@ class SortBehaviorExamples(LabGymWindow):
 
     def sort_behaviors(self, event):
         """Sort behavior examples."""
-        if (
-            self.input_path is None
-            or self.result_path is None
-            or not self.keys_behaviors
-        ):
+        if self.input_path is None or self.result_path is None or not self.keys_behaviors:
             wx.MessageBox(
                 "No input / output folder or shortcut key - behavior name pair specified.",
                 "Error",
@@ -1319,13 +1265,9 @@ class BehaviorExampleSorter:
         if behavior not in self._behaviors:
             raise ValueError(f"Invalid behavior name {behavior}.")
 
-        (self.source / (example + ".jpg")).rename(
-            self.destination / behavior / (example + ".jpg")
-        )
+        (self.source / (example + ".jpg")).rename(self.destination / behavior / (example + ".jpg"))
         if not self.IMAGES_ONLY:
-            (self.source / (example + ".avi")).rename(
-                self.destination / behavior / (example + ".avi")
-            )
+            (self.source / (example + ".avi")).rename(self.destination / behavior / (example + ".avi"))
         self._action_stack.append((behavior, example))
 
     def undo(self):
@@ -1338,13 +1280,9 @@ class BehaviorExampleSorter:
             raise IndexError("Nothing to undo.")
 
         behavior, example = self._action_stack.pop()
-        (self.destination / behavior / (example + ".jpg")).rename(
-            self.source / (example + ".jpg")
-        )
+        (self.destination / behavior / (example + ".jpg")).rename(self.source / (example + ".jpg"))
         if not self.IMAGES_ONLY:
-            (self.destination / behavior / example + ".avi").rename(
-                self.source / (example + ".avi")
-            )
+            (self.destination / behavior / example + ".avi").rename(self.source / (example + ".avi"))
 
     def next(self):
         """Skip to the next behavior example."""

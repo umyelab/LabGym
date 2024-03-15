@@ -2,7 +2,7 @@
 Copyright (C)
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext. 
+You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext.
 
 For license issues, please contact:
 
@@ -15,7 +15,6 @@ USA
 
 Email: bingye@umich.edu
 """
-
 
 import wx
 import wx.lib.agw.hyperlink
@@ -56,9 +55,7 @@ class MainWindow(wx.Frame):
 
         # Links to GitHub and extended user guide
         links = wx.BoxSizer(wx.HORIZONTAL)
-        homepage = wx.lib.agw.hyperlink.HyperLinkCtrl(
-            panel, 0, "Home Page", URL="https://github.com/umyelab/LabGym"
-        )
+        homepage = wx.lib.agw.hyperlink.HyperLinkCtrl(panel, 0, "Home Page", URL="https://github.com/umyelab/LabGym")
         userguide = wx.lib.agw.hyperlink.HyperLinkCtrl(
             panel,
             0,
@@ -72,9 +69,7 @@ class MainWindow(wx.Frame):
 
         # Main modules
         modules = wx.BoxSizer(wx.HORIZONTAL)
-        preprocessing_button = wx.Button(
-            panel, label="Preprocessing Module", size=(200, 40)
-        )
+        preprocessing_button = wx.Button(panel, label="Preprocessing Module", size=(200, 40))
         preprocessing_button.Bind(wx.EVT_BUTTON, self.open_preprocessing_module)
         wx.Button.SetToolTip(
             preprocessing_button,

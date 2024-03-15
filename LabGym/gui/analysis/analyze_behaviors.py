@@ -67,9 +67,7 @@ class AnalyzeBehaviors(LabGymWindow):
         self.detector_batch = 1
         self.detection_threshold = 0
         self.animal_kinds = []
-        self.background_path = (
-            None  # if not None, will load background images from path
-        )
+        self.background_path = None  # if not None, will load background images from path
         self.path_to_categorizer = None
         self.path_to_videos = None
         self.result_path = None
@@ -89,7 +87,9 @@ class AnalyzeBehaviors(LabGymWindow):
         self.dim_conv = 8
         self.channel = 1
         self.length = 15
-        self.animal_vs_bg = 0  # 0: animals birghter than the background; 1: animals darker than the background; 2: hard to tell
+        self.animal_vs_bg = (
+            0  # 0: animals birghter than the background; 1: animals darker than the background; 2: hard to tell
+        )
         self.stable_illumination = True
         self.animation_analyzer = True
         self.animal_to_include = []
@@ -134,9 +134,7 @@ class AnalyzeBehaviors(LabGymWindow):
             text=self.text_outputfolder,
         )
 
-        self.text_detection = self.module_text(
-            "Default: Background subtraction-based method."
-        )
+        self.text_detection = self.module_text("Default: Background subtraction-based method.")
         self.add_module(
             button_label="Specify the method to\ndetect animals or objects",
             button_handler=self.select_method,
@@ -144,9 +142,7 @@ class AnalyzeBehaviors(LabGymWindow):
             text=self.text_detection,
         )
 
-        self.text_startanalyze = self.module_text(
-            "Default: at the beginning of the video(s)."
-        )
+        self.text_startanalyze = self.module_text("Default: at the beginning of the video(s).")
         self.add_module(
             button_label="Specify when the analysis\nshould begin (unit: second)",
             button_handler=self.specify_timing,
@@ -154,9 +150,7 @@ class AnalyzeBehaviors(LabGymWindow):
             text=self.text_startanalyze,
         )
 
-        self.text_duration = self.module_text(
-            "Default: from the specified start time to the end of a video"
-        )
+        self.text_duration = self.module_text("Default: from the specified start time to the end of a video")
         self.add_module(
             button_label="Specify the analysis duration\n(unit: second)",
             button_handler=self.input_duration,
@@ -172,9 +166,7 @@ class AnalyzeBehaviors(LabGymWindow):
             text=self.text_animalnumber,
         )
 
-        self.text_selectbehaviors = self.module_text(
-            "Default: No Categorizer selected, no behavior selected."
-        )
+        self.text_selectbehaviors = self.module_text("Default: No Categorizer selected, no behavior selected.")
         self.add_module(
             button_label="Select the behaviors for\nannotations and plots",
             button_handler=self.select_behaviors,
@@ -201,13 +193,8 @@ class AnalyzeBehaviors(LabGymWindow):
     def select_categorizer(self, event):
         categorizers = get_categorizer_names()
         categorizers.sort()
-        if (
-            "No behavior classification, just track animals and quantify motion kinematics"
-            not in categorizers
-        ):
-            categorizers.append(
-                "No behavior classification, just track animals and quantify motion kinematics"
-            )
+        if "No behavior classification, just track animals and quantify motion kinematics" not in categorizers:
+            categorizers.append("No behavior classification, just track animals and quantify motion kinematics")
         if "Choose a new directory of the Categorizer" not in categorizers:
             categorizers.append("Choose a new directory of the Categorizer")
 
@@ -221,9 +208,7 @@ class AnalyzeBehaviors(LabGymWindow):
         if dialog.ShowModal() == wx.ID_OK:
             categorizer = dialog.GetStringSelection()
             if categorizer == "Choose a new directory of the Categorizer":
-                dialog1 = wx.DirDialog(
-                    self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE
-                )
+                dialog1 = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
                 if dialog1.ShowModal() == wx.ID_OK:
                     self.path_to_categorizer = dialog1.GetPaths()
                 dialog1.Destroy()
@@ -247,10 +232,7 @@ class AnalyzeBehaviors(LabGymWindow):
                 self.text_selectcategorizer.SetLabel(
                     f"The path to the Categorizer is {self.path_to_categorizer} with uncertainty of {uncertain} %."
                 )
-            elif (
-                categorizer
-                == "No behavior classification, just track animals and quantify motion kinematics"
-            ):
+            elif categorizer == "No behavior classification, just track animals and quantify motion kinematics":
                 self.path_to_categorizer = None
                 dialog1 = wx.NumberEntryDialog(
                     self,
@@ -275,9 +257,7 @@ class AnalyzeBehaviors(LabGymWindow):
                     "No behavior classification. Just track animals and quantify motion kinematics."
                 )
             else:
-                self.path_to_categorizer = os.path.join(
-                    str(CATEGORIZER_FOLDER), categorizer
-                )
+                self.path_to_categorizer = os.path.join(str(CATEGORIZER_FOLDER), categorizer)
                 dialog1 = wx.NumberEntryDialog(
                     self,
                     "Enter the Categorizer's uncertainty level (0~100%)",
@@ -291,20 +271,12 @@ class AnalyzeBehaviors(LabGymWindow):
                     uncertain = dialog1.GetValue()
                     self.uncertain = uncertain / 100
                     self.text_selectcategorizer.SetLabel(
-                        "Categorizer: "
-                        + categorizer
-                        + " with uncertainty of "
-                        + str(uncertain)
-                        + "%."
+                        "Categorizer: " + categorizer + " with uncertainty of " + str(uncertain) + "%."
                     )
-            self.text_selectbehaviors.SetLabel(
-                "All the behaviors in the selected Categorizer with default colors."
-            )
+            self.text_selectbehaviors.SetLabel("All the behaviors in the selected Categorizer with default colors.")
 
             if self.path_to_categorizer is not None:
-                parameters = pd.read_csv(
-                    os.path.join(self.path_to_categorizer, "model_parameters.txt")
-                )
+                parameters = pd.read_csv(os.path.join(self.path_to_categorizer, "model_parameters.txt"))
                 complete_colors = list(mpl.colors.cnames.values())
                 colors = []
                 for c in complete_colors:
@@ -379,9 +351,7 @@ class AnalyzeBehaviors(LabGymWindow):
         else:
             wildcard = WX_VIDEO_WILDCARD
 
-        dialog = wx.FileDialog(
-            self, "Select video(s) / image(s)", "", "", wildcard, style=wx.FD_MULTIPLE
-        )
+        dialog = wx.FileDialog(self, "Select video(s) / image(s)", "", "", wildcard, style=wx.FD_MULTIPLE)
         if dialog.ShowModal() == wx.ID_OK:
             self.path_to_videos = dialog.GetPaths()
             self.path_to_videos.sort()
@@ -441,9 +411,7 @@ class AnalyzeBehaviors(LabGymWindow):
         dialog = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
         if dialog.ShowModal() == wx.ID_OK:
             self.result_path = dialog.GetPath()
-            self.text_outputfolder.SetLabel(
-                "Results will be in: " + self.result_path + "."
-            )
+            self.text_outputfolder.SetLabel("Results will be in: " + self.result_path + ".")
         dialog.Destroy()
 
     def select_method(self, event):
@@ -465,10 +433,7 @@ class AnalyzeBehaviors(LabGymWindow):
         if dialog.ShowModal() == wx.ID_OK:
             method = dialog.GetStringSelection()
 
-            if (
-                method
-                == "Subtract background (fast but requires static background & stable illumination)"
-            ):
+            if method == "Subtract background (fast but requires static background & stable illumination)":
                 self.use_detector = False
 
                 contrasts = [
@@ -498,9 +463,7 @@ class AnalyzeBehaviors(LabGymWindow):
                         wx.YES_NO | wx.ICON_QUESTION,
                     )
                     if dialog2.ShowModal() == wx.ID_YES:
-                        dialog3 = wx.DirDialog(
-                            self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE
-                        )
+                        dialog3 = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
                         if dialog3.ShowModal() == wx.ID_OK:
                             self.background_path = dialog3.GetPath()
                         dialog3.Destroy()
@@ -534,10 +497,7 @@ class AnalyzeBehaviors(LabGymWindow):
                         )
                         if dialog2.ShowModal() == wx.ID_OK:
                             ex_method = dialog2.GetStringSelection()
-                            if (
-                                ex_method
-                                == "Use the entire duration (default but NOT recommended)"
-                            ):
+                            if ex_method == "Use the entire duration (default but NOT recommended)":
                                 self.decode_extraction = False
                                 if self.animal_vs_bg == 0:
                                     self.text_detection.SetLabel(
@@ -551,10 +511,7 @@ class AnalyzeBehaviors(LabGymWindow):
                                     self.text_detection.SetLabel(
                                         "Background subtraction: animal partially brighter/darker, using the entire duration."
                                     )
-                            elif (
-                                ex_method
-                                == 'Decode from filenames: "_xst_" and "_xet_"'
-                            ):
+                            elif ex_method == 'Decode from filenames: "_xst_" and "_xet_"':
                                 self.decode_extraction = True
                                 if self.animal_vs_bg == 0:
                                     self.text_detection.SetLabel(
@@ -663,19 +620,13 @@ class AnalyzeBehaviors(LabGymWindow):
                 if dialog1.ShowModal() == wx.ID_OK:
                     detector = dialog1.GetStringSelection()
                     if detector == "Choose a new directory of the Detector":
-                        dialog2 = wx.DirDialog(
-                            self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE
-                        )
+                        dialog2 = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
                         if dialog2.ShowModal() == wx.ID_OK:
                             self.path_to_detector = dialog2.GetPaths()
                         dialog2.Destroy()
                     else:
-                        self.path_to_detector = os.path.join(
-                            str(DETECTOR_FOLDER), detector
-                        )
-                    with open(
-                        os.path.join(self.path_to_detector, "model_parameters.txt")
-                    ) as f:
+                        self.path_to_detector = os.path.join(str(DETECTOR_FOLDER), detector)
+                    with open(os.path.join(self.path_to_detector, "model_parameters.txt")) as f:
                         model_parameters = f.read()
                     animal_names = json.loads(model_parameters)["animal_names"]
                     if len(animal_names) > 1:
@@ -686,9 +637,7 @@ class AnalyzeBehaviors(LabGymWindow):
                             choices=animal_names,
                         )
                         if dialog2.ShowModal() == wx.ID_OK:
-                            self.animal_kinds = [
-                                animal_names[i] for i in dialog2.GetSelections()
-                            ]
+                            self.animal_kinds = [animal_names[i] for i in dialog2.GetSelections()]
                         else:
                             self.animal_kinds = animal_names
                         dialog2.Destroy()
@@ -728,12 +677,7 @@ class AnalyzeBehaviors(LabGymWindow):
                             + "."
                         )
                         self.text_detection.SetLabel(
-                            "Detector: "
-                            + detector
-                            + "; "
-                            + "The animals/objects: "
-                            + str(self.animal_kinds)
-                            + "."
+                            "Detector: " + detector + "; " + "The animals/objects: " + str(self.animal_kinds) + "."
                         )
                 dialog1.Destroy()
 
@@ -835,9 +779,7 @@ class AnalyzeBehaviors(LabGymWindow):
                         self.t = float(dialog2.GetValue())
                         if self.t < 0:
                             self.t = 0
-                        self.text_startanalyze.SetLabel(
-                            "Analysis will begin at the: " + str(self.t) + " second."
-                        )
+                        self.text_startanalyze.SetLabel("Analysis will begin at the: " + str(self.t) + " second.")
                     dialog2.Destroy()
             dialog.Destroy()
 
@@ -862,9 +804,7 @@ class AnalyzeBehaviors(LabGymWindow):
             if dialog.ShowModal() == wx.ID_OK:
                 self.duration = int(dialog.GetValue())
                 if self.duration != 0:
-                    self.text_duration.SetLabel(
-                        "The analysis duration is " + str(self.duration) + " seconds."
-                    )
+                    self.text_duration.SetLabel("The analysis duration is " + str(self.duration) + " seconds.")
                 else:
                     self.text_duration.SetLabel(
                         "The analysis duration is from the specified beginning time to the end of a video."
@@ -905,9 +845,7 @@ class AnalyzeBehaviors(LabGymWindow):
                                 100,
                             )
                             if dialog1.ShowModal() == wx.ID_OK:
-                                self.animal_number[animal_name] = int(
-                                    dialog1.GetValue()
-                                )
+                                self.animal_number[animal_name] = int(dialog1.GetValue())
                             else:
                                 self.animal_number[animal_name] = 1
                             dialog1.Destroy()
@@ -933,9 +871,7 @@ class AnalyzeBehaviors(LabGymWindow):
                         else:
                             self.animal_number = 1
                         self.text_animalnumber.SetLabel(
-                            "The total number of animals in a video is "
-                            + str(self.animal_number)
-                            + "."
+                            "The total number of animals in a video is " + str(self.animal_number) + "."
                         )
                         dialog1.Destroy()
                 else:
@@ -962,9 +898,7 @@ class AnalyzeBehaviors(LabGymWindow):
                     choices=self.animal_kinds,
                 )
                 if dialog.ShowModal() == wx.ID_OK:
-                    self.animal_to_include = [
-                        self.animal_kinds[i] for i in dialog.GetSelections()
-                    ]
+                    self.animal_to_include = [self.animal_kinds[i] for i in dialog.GetSelections()]
                 else:
                     self.animal_to_include = self.animal_kinds
                 dialog.Destroy()
@@ -979,8 +913,7 @@ class AnalyzeBehaviors(LabGymWindow):
             )
             if dialog.ShowModal() == wx.ID_OK:
                 self.behavior_to_include = [
-                    list(self.behaviornames_and_colors.keys())[i]
-                    for i in dialog.GetSelections()
+                    list(self.behaviornames_and_colors.keys())[i] for i in dialog.GetSelections()
                 ]
             else:
                 self.behavior_to_include = list(self.behaviornames_and_colors.keys())
@@ -1002,23 +935,16 @@ class AnalyzeBehaviors(LabGymWindow):
                     for animal_name in self.animal_kinds:
                         dialog1 = wx.MultiChoiceDialog(
                             self,
-                            message="Select individual-specific behaviors for "
-                            + str(animal_name),
-                            caption="Individual-specific behaviors for "
-                            + str(animal_name),
+                            message="Select individual-specific behaviors for " + str(animal_name),
+                            caption="Individual-specific behaviors for " + str(animal_name),
                             choices=self.behavior_to_include,
                         )
                         if dialog1.ShowModal() == wx.ID_OK:
                             self.specific_behaviors[animal_name] = {}
                             self.correct_ID = True
-                            specific_behaviors = [
-                                self.behavior_to_include[i]
-                                for i in dialog1.GetSelections()
-                            ]
+                            specific_behaviors = [self.behavior_to_include[i] for i in dialog1.GetSelections()]
                             for specific_behavior in specific_behaviors:
-                                self.specific_behaviors[animal_name][
-                                    specific_behavior
-                                ] = None
+                                self.specific_behaviors[animal_name][specific_behavior] = None
                         dialog1.Destroy()
                 else:
                     self.correct_ID = False
@@ -1055,9 +981,7 @@ class AnalyzeBehaviors(LabGymWindow):
                     else:
                         if n < len(colors):
                             names_colors[self.behavior_to_include[n]] = colors[n][1]
-                            self.behaviornames_and_colors[
-                                self.behavior_to_include[n]
-                            ] = colors[n]
+                            self.behaviornames_and_colors[self.behavior_to_include[n]] = colors[n]
                     dialog2.Destroy()
                     n += 1
                 if self.correct_ID is True:
@@ -1069,16 +993,12 @@ class AnalyzeBehaviors(LabGymWindow):
                         + "."
                     )
                 else:
-                    self.text_selectbehaviors.SetLabel(
-                        "Selected: " + str(list(names_colors.keys())) + "."
-                    )
+                    self.text_selectbehaviors.SetLabel("Selected: " + str(list(names_colors.keys())) + ".")
             else:
                 for color in colors:
                     index = colors.index(color)
                     if index < len(self.behavior_to_include):
-                        behavior_name = list(self.behaviornames_and_colors.keys())[
-                            index
-                        ]
+                        behavior_name = list(self.behaviornames_and_colors.keys())[index]
                         self.behaviornames_and_colors[behavior_name] = color
                 if self.correct_ID is True:
                     self.text_selectbehaviors.SetLabel(
@@ -1090,9 +1010,7 @@ class AnalyzeBehaviors(LabGymWindow):
                     )
                 else:
                     self.text_selectbehaviors.SetLabel(
-                        "Selected: "
-                        + str(self.behavior_to_include)
-                        + " with default colors."
+                        "Selected: " + str(self.behavior_to_include) + " with default colors."
                     )
             dialog.Destroy()
 
@@ -1144,9 +1062,7 @@ class AnalyzeBehaviors(LabGymWindow):
                 choices=parameters,
             )
             if dialog.ShowModal() == wx.ID_OK:
-                self.parameter_to_analyze = [
-                    parameters[i] for i in dialog.GetSelections()
-                ]
+                self.parameter_to_analyze = [parameters[i] for i in dialog.GetSelections()]
             else:
                 self.parameter_to_analyze = []
             dialog.Destroy()
@@ -1166,29 +1082,21 @@ class AnalyzeBehaviors(LabGymWindow):
                     if dialog.ShowModal() == wx.ID_YES:
                         self.normalize_distance = True
                         self.text_selectparameters.SetLabel(
-                            "Selected: "
-                            + str(self.parameter_to_analyze)
-                            + "; with normalization of distance."
+                            "Selected: " + str(self.parameter_to_analyze) + "; with normalization of distance."
                         )
                     else:
                         self.normalize_distance = False
                         self.text_selectparameters.SetLabel(
-                            "Selected: "
-                            + str(self.parameter_to_analyze)
-                            + "; NO normalization of distance."
+                            "Selected: " + str(self.parameter_to_analyze) + "; NO normalization of distance."
                         )
                     dialog.Destroy()
                 else:
                     self.normalize_distance = False
-                    self.text_selectparameters.SetLabel(
-                        "Selected: " + str(self.parameter_to_analyze) + "."
-                    )
+                    self.text_selectparameters.SetLabel("Selected: " + str(self.parameter_to_analyze) + ".")
 
     def analyze_behaviors(self, event):
         if self.path_to_videos is None or self.result_path is None:
-            wx.MessageBox(
-                "No input video(s) / result folder.", "Error", wx.OK | wx.ICON_ERROR
-            )
+            wx.MessageBox("No input video(s) / result folder.", "Error", wx.OK | wx.ICON_ERROR)
 
         else:
             if self.behavior_mode >= 3:
@@ -1234,18 +1142,14 @@ class AnalyzeBehaviors(LabGymWindow):
                     self.behavior_to_include = []
                 else:
                     if self.behavior_to_include[0] == "all":
-                        self.behavior_to_include = list(
-                            self.behaviornames_and_colors.keys()
-                        )
+                        self.behavior_to_include = list(self.behaviornames_and_colors.keys())
 
                 for i in self.path_to_videos:
                     filename = os.path.splitext(os.path.basename(i))[0].split("_")
                     if self.decode_animalnumber is True:
                         if self.use_detector is True:
                             self.animal_number = {}
-                            number = [
-                                x[1:] for x in filename if len(x) > 1 and x[0] == "n"
-                            ]
+                            number = [x[1:] for x in filename if len(x) > 1 and x[0] == "n"]
                             for a, animal_name in enumerate(self.animal_kinds):
                                 self.animal_number[animal_name] = int(number[a])
                         else:
@@ -1311,14 +1215,10 @@ class AnalyzeBehaviors(LabGymWindow):
                             AA.craft_data()
                             interact_all = False
                         else:
-                            AA.acquire_information_interact_basic(
-                                background_free=self.background_free
-                            )
+                            AA.acquire_information_interact_basic(background_free=self.background_free)
                             interact_all = True
                         if self.path_to_categorizer is not None:
-                            AA.categorize_behaviors(
-                                self.path_to_categorizer, uncertain=self.uncertain
-                            )
+                            AA.categorize_behaviors(self.path_to_categorizer, uncertain=self.uncertain)
                         AA.annotate_video(
                             self.behavior_to_include,
                             show_legend=self.show_legend,
@@ -1364,9 +1264,7 @@ class AnalyzeBehaviors(LabGymWindow):
                         if self.behavior_mode != 1:
                             AAD.craft_data()
                         if self.path_to_categorizer is not None:
-                            AAD.categorize_behaviors(
-                                self.path_to_categorizer, uncertain=self.uncertain
-                            )
+                            AAD.categorize_behaviors(self.path_to_categorizer, uncertain=self.uncertain)
                         if self.correct_ID is True:
                             AAD.correct_identity(self.specific_behaviors)
                         AAD.annotate_video(
@@ -1382,19 +1280,15 @@ class AnalyzeBehaviors(LabGymWindow):
                         if self.path_to_categorizer is not None:
                             for animal_name in self.animal_kinds:
                                 for n in AAD.event_probability[animal_name]:
-                                    all_events[animal_name][
-                                        len(all_events[animal_name])
-                                    ] = AAD.event_probability[animal_name][n]
-                                    all_lengths.append(
-                                        len(AAD.event_probability[animal_name][n])
-                                    )
+                                    all_events[animal_name][len(all_events[animal_name])] = AAD.event_probability[
+                                        animal_name
+                                    ][n]
+                                    all_lengths.append(len(AAD.event_probability[animal_name][n]))
 
                 if self.path_to_categorizer is not None:
                     if self.use_detector is False:
                         for n in all_events:
-                            event_data[len(event_data)] = all_events[n][
-                                : min(all_lengths)
-                            ]
+                            event_data[len(event_data)] = all_events[n][: min(all_lengths)]
                         time_points = AA.all_time[: min(all_lengths)]
                         all_events_df = pd.DataFrame(event_data, index=time_points)
                         all_events_df.to_excel(
@@ -1412,9 +1306,7 @@ class AnalyzeBehaviors(LabGymWindow):
                             height=0,
                         )
                         folders = [
-                            i
-                            for i in os.listdir(self.result_path)
-                            if os.path.isdir(os.path.join(self.result_path, i))
+                            i for i in os.listdir(self.result_path) if os.path.isdir(os.path.join(self.result_path, i))
                         ]
                         folders.sort()
                         for behavior_name in self.behaviornames_and_colors:
@@ -1427,9 +1319,7 @@ class AnalyzeBehaviors(LabGymWindow):
                                     "all_summary.xlsx",
                                 )
                                 if os.path.exists(individual_summary) is True:
-                                    all_summary.append(
-                                        pd.read_excel(individual_summary)
-                                    )
+                                    all_summary.append(pd.read_excel(individual_summary))
                             if len(all_summary) >= 1:
                                 all_summary = pd.concat(all_summary, ignore_index=True)
                                 all_summary.to_excel(
@@ -1444,12 +1334,8 @@ class AnalyzeBehaviors(LabGymWindow):
                     else:
                         for animal_name in self.animal_to_include:
                             for n in all_events[animal_name]:
-                                event_data[len(event_data)] = all_events[animal_name][
-                                    n
-                                ][: min(all_lengths)]
-                            event_data[len(event_data)] = [["NA", -1]] * min(
-                                all_lengths
-                            )
+                                event_data[len(event_data)] = all_events[animal_name][n][: min(all_lengths)]
+                            event_data[len(event_data)] = [["NA", -1]] * min(all_lengths)
                         del event_data[len(event_data) - 1]
                         time_points = AAD.all_time[: min(all_lengths)]
                         all_events_df = pd.DataFrame(event_data, index=time_points)
@@ -1468,9 +1354,7 @@ class AnalyzeBehaviors(LabGymWindow):
                             height=0,
                         )
                         folders = [
-                            i
-                            for i in os.listdir(self.result_path)
-                            if os.path.isdir(os.path.join(self.result_path, i))
+                            i for i in os.listdir(self.result_path) if os.path.isdir(os.path.join(self.result_path, i))
                         ]
                         folders.sort()
                         for animal_name in self.animal_kinds:
@@ -1484,20 +1368,13 @@ class AnalyzeBehaviors(LabGymWindow):
                                         animal_name + "_all_summary.xlsx",
                                     )
                                     if os.path.exists(individual_summary) is True:
-                                        all_summary.append(
-                                            pd.read_excel(individual_summary)
-                                        )
+                                        all_summary.append(pd.read_excel(individual_summary))
                                 if len(all_summary) >= 1:
-                                    all_summary = pd.concat(
-                                        all_summary, ignore_index=True
-                                    )
+                                    all_summary = pd.concat(all_summary, ignore_index=True)
                                     all_summary.to_excel(
                                         os.path.join(
                                             self.result_path,
-                                            animal_name
-                                            + "_"
-                                            + behavior_name
-                                            + "_summary.xlsx",
+                                            animal_name + "_" + behavior_name + "_summary.xlsx",
                                         ),
                                         float_format="%.2f",
                                         index_label="ID/parameter",

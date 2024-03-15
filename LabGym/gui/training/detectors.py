@@ -2,7 +2,7 @@
 Copyright (C)
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext. 
+You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext.
 
 For license issues, please contact:
 
@@ -15,7 +15,6 @@ USA
 
 Email: bingye@umich.edu
 """
-
 
 import os
 
@@ -62,9 +61,7 @@ class GenerateImageExamples(LabGymWindow):
             self.text_outputfolder,
         )
 
-        self.text_startgenerate = self.module_text(
-            "Default: at the beginning of the video(s)."
-        )
+        self.text_startgenerate = self.module_text("Default: at the beginning of the video(s).")
         self.add_module(
             "Specify when generating image examples\nshould begin (unit: second)",
             self.specify_timing,
@@ -72,9 +69,7 @@ class GenerateImageExamples(LabGymWindow):
             self.text_startgenerate,
         )
 
-        self.text_duration = self.module_text(
-            "Default: from the specified beginning time to the end of a video."
-        )
+        self.text_duration = self.module_text("Default: from the specified beginning time to the end of a video.")
         self.add_module(
             "Specify how long generating examples\nshould last (unit: second)",
             self.input_duration,
@@ -82,9 +77,7 @@ class GenerateImageExamples(LabGymWindow):
             self.text_duration,
         )
 
-        self.text_skipredundant = self.module_text(
-            "Default: generate an image example every 1000 frames."
-        )
+        self.text_skipredundant = self.module_text("Default: generate an image example every 1000 frames.")
         self.add_module(
             "Specify how many frames to skip when\ngenerating two consecutive images",
             self.specify_redundant,
@@ -102,9 +95,7 @@ class GenerateImageExamples(LabGymWindow):
 
     def select_videos(self, event):
         """Open dialogs to select videos to generate images from."""
-        video_select_dialog = wx.FileDialog(
-            self, "Select video(s)", "", "", WX_VIDEO_WILDCARD, style=wx.FD_MULTIPLE
-        )
+        video_select_dialog = wx.FileDialog(self, "Select video(s)", "", "", WX_VIDEO_WILDCARD, style=wx.FD_MULTIPLE)
         if video_select_dialog.ShowModal() != wx.ID_OK:
             video_select_dialog.Destroy()
             return
@@ -159,9 +150,7 @@ class GenerateImageExamples(LabGymWindow):
         dialog = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
         if dialog.ShowModal() == wx.ID_OK:
             self.result_path = dialog.GetPath()
-            self.text_outputfolder.SetLabel(
-                f"Generate image examples in: {self.result_path}."
-            )
+            self.text_outputfolder.SetLabel(f"Generate image examples in: {self.result_path}.")
         dialog.Destroy()
 
     def specify_timing(self, event):
@@ -177,9 +166,7 @@ class GenerateImageExamples(LabGymWindow):
         )
         if dialog.ShowModal() == wx.ID_OK:
             self.t = max(float(dialog.GetValue()), 0)
-            self.text_startgenerate.SetLabel(
-                f"Start to generate image examples at the: {str(self.t)} second."
-            )
+            self.text_startgenerate.SetLabel(f"Start to generate image examples at the: {str(self.t)} second.")
         dialog.Destroy()
 
     def input_duration(self, event):
@@ -195,9 +182,7 @@ class GenerateImageExamples(LabGymWindow):
         )
         if dialog.ShowModal() == wx.ID_OK:
             self.duration = int(dialog.GetValue())
-            self.text_duration.SetLabel(
-                f"The generation of image examples lasts for {self.duration} seconds."
-            )
+            self.text_duration.SetLabel(f"The generation of image examples lasts for {self.duration} seconds.")
         dialog.Destroy()
 
     def specify_redundant(self, event):
@@ -211,12 +196,8 @@ class GenerateImageExamples(LabGymWindow):
             0,
             100000000000000,
         )
-        self.skip_redundant = (
-            int(dialog.GetValue()) if dialog.ShowModal() == wx.ID_OK else 1000
-        )
-        self.text_skipredundant.SetLabel(
-            f"Generate an image example every {self.skip_redundant} frames."
-        )
+        self.skip_redundant = int(dialog.GetValue()) if dialog.ShowModal() == wx.ID_OK else 1000
+        self.text_skipredundant.SetLabel(f"Generate an image example every {self.skip_redundant} frames.")
         dialog.Destroy()
 
     def generate_images(self, event):
@@ -306,9 +287,7 @@ class TrainDetectors(LabGymWindow):
         dialog = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
         if dialog.ShowModal() == wx.ID_OK:
             self.path_to_trainingimages = dialog.GetPath()
-            self.text_selectimages.SetLabel(
-                f"Path to training images: {self.path_to_trainingimages}."
-            )
+            self.text_selectimages.SetLabel(f"Path to training images: {self.path_to_trainingimages}.")
         dialog.Destroy()
 
     def select_annotation(self, event):
@@ -323,9 +302,7 @@ class TrainDetectors(LabGymWindow):
         if dialog.ShowModal() == wx.ID_OK:
             self.path_to_annotation = dialog.GetPath()
             class_names = get_annotation_class_names(self.path_to_annotation)
-            self.text_selectannotation.SetLabel(
-                f"Animal/object categories in annotation file: {class_names}."
-            )
+            self.text_selectannotation.SetLabel(f"Animal/object categories in annotation file: {class_names}.")
         dialog.Destroy()
 
     @property
@@ -364,9 +341,7 @@ class TrainDetectors(LabGymWindow):
 
         try:
             self.inference_size = int(dialog.GetValue())
-            self.text_inferencingsize.SetLabel(
-                "Inferencing frame size: " + str(self.inference_size) + "."
-            )
+            self.text_inferencingsize.SetLabel("Inferencing frame size: " + str(self.inference_size) + ".")
         except ValueError as err:
             wx.MessageBox(
                 str(err),
@@ -388,9 +363,7 @@ class TrainDetectors(LabGymWindow):
         )
         if dialog.ShowModal() == wx.ID_OK:
             self.iteration_num = int(dialog.GetValue())
-            self.text_iterations.SetLabel(
-                f"Training iteration number: {self.iteration_num}."
-            )
+            self.text_iterations.SetLabel(f"Training iteration number: {self.iteration_num}.")
         dialog.Destroy()
 
     def train_detector(self, event):
@@ -404,9 +377,7 @@ class TrainDetectors(LabGymWindow):
             return
 
         while True:
-            dialog = wx.TextEntryDialog(
-                self, "Enter a name for the Detector to train", "Detector name"
-            )
+            dialog = wx.TextEntryDialog(self, "Enter a name for the Detector to train", "Detector name")
             if dialog.ShowModal() != wx.ID_OK:
                 break
 
@@ -495,9 +466,7 @@ class TestDetectors(LabGymWindow):
         testanddelete.Add(button_test, 0, wx.RIGHT, 5)
         testanddelete.Add(button_delete, 0, wx.LEFT, 5)
         self.boxsizer.Add(0, self.MODULE_TOP_MARGIN, 0)
-        self.boxsizer.Add(
-            testanddelete, 0, wx.RIGHT | wx.ALIGN_RIGHT, self.BOTTOM_MARGIN * 2
-        )
+        self.boxsizer.Add(testanddelete, 0, wx.RIGHT | wx.ALIGN_RIGHT, self.BOTTOM_MARGIN * 2)
         self.boxsizer.Add(0, self.BOTTOM_MARGIN, 0)
 
         self.display_window()
@@ -523,9 +492,7 @@ class TestDetectors(LabGymWindow):
         dialog = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
         if dialog.ShowModal() == wx.ID_OK:
             self.path_to_testingimages = dialog.GetPath()
-            self.text_selectimages.SetLabel(
-                f"Path to testing images: {self.path_to_testingimages}."
-            )
+            self.text_selectimages.SetLabel(f"Path to testing images: {self.path_to_testingimages}.")
         dialog.Destroy()
 
     def select_annotation(self, event):
@@ -540,9 +507,7 @@ class TestDetectors(LabGymWindow):
         if dialog.ShowModal() == wx.ID_OK:
             self.path_to_annotation = dialog.GetPath()
             class_names = get_annotation_class_names(self.path_to_annotation)
-            self.text_selectannotation.SetLabel(
-                f"Animal/object categories in annotation file: {class_names}."
-            )
+            self.text_selectannotation.SetLabel(f"Animal/object categories in annotation file: {class_names}.")
         dialog.Destroy()
 
     def select_results_folder(self, event):
@@ -550,9 +515,7 @@ class TestDetectors(LabGymWindow):
         dialog = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
         if dialog.ShowModal() == wx.ID_OK:
             self.results_folder = dialog.GetPath()
-            self.text_select_results_folder.SetLabel(
-                f"Testing results stored in: {self.results_folder}."
-            )
+            self.text_select_results_folder.SetLabel(f"Testing results stored in: {self.results_folder}.")
         dialog.Destroy()
 
     def test_detector(self, event):

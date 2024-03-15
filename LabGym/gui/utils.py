@@ -2,7 +2,7 @@
 Copyright (C)
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext. 
+You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext.
 
 For license issues, please contact:
 
@@ -20,8 +20,12 @@ from typing import Callable, Tuple
 
 import wx
 
-WX_VIDEO_WILDCARD = "Video files(*.avi;*.mpg;*.mpeg;*.wmv;*.mp4;*.mkv;*.m4v;*.mov)|*.avi;*.mpg;*.mpeg;*.wmv;*.mp4;*.mkv;*.m4v;*.mov"
-WX_IMAGE_WILDCARD = "Image files(*.jpg;*.jpeg;*.png;*.tiff;*.bmp)|*.jpg;*.JPG;*.jpeg;*.JPEG;*.png;*.PNG;*.tiff;*.TIFF;*.bmp;*.BMP"
+WX_VIDEO_WILDCARD = (
+    "Video files(*.avi;*.mpg;*.mpeg;*.wmv;*.mp4;*.mkv;*.m4v;*.mov)|*.avi;*.mpg;*.mpeg;*.wmv;*.mp4;*.mkv;*.m4v;*.mov"
+)
+WX_IMAGE_WILDCARD = (
+    "Image files(*.jpg;*.jpeg;*.png;*.tiff;*.bmp)|*.jpg;*.JPG;*.jpeg;*.JPEG;*.png;*.PNG;*.tiff;*.TIFF;*.bmp;*.BMP"
+)
 
 
 class LabGymWindow(wx.Frame):
@@ -78,9 +82,7 @@ class LabGymWindow(wx.Frame):
 
     def module_text(self, label: str) -> wx.StaticText:
         """Return a wx.StaticText instance with the given label."""
-        return wx.StaticText(
-            self.panel, label=label, style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
-        )
+        return wx.StaticText(self.panel, label=label, style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END)
 
     def add_submit_button(self, label: str, handler: Callable, tool_tip: str):
         """Add a submit button.

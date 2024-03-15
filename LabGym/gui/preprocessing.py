@@ -2,7 +2,7 @@
 Copyright (C)
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext. 
+You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext.
 
 For license issues, please contact:
 
@@ -15,7 +15,6 @@ USA
 
 Email: bingye@umich.edu
 """
-
 
 import os
 from pathlib import Path
@@ -88,9 +87,7 @@ class PreprocessingModule(LabGymWindow):
 
         # Contrast module
         # TODO: This feature increases brightness, not contrast (see tools.preprocess_video())
-        self.text_enhancecontrast = self.module_text(
-            "Default: not to enhance contrast."
-        )
+        self.text_enhancecontrast = self.module_text("Default: not to enhance contrast.")
         self.add_module(
             button_label="Specify whether to enhance\nthe contrast in videos",
             button_handler=self.enhance_contrasts,
@@ -175,14 +172,10 @@ class PreprocessingModule(LabGymWindow):
 
     def select_outpath(self, event):
         """Opens folder selection dialog for storing processed video."""
-        dialog = wx.DirDialog(
-            parent=self, message="Select a directory", style=wx.DD_DEFAULT_STYLE
-        )
+        dialog = wx.DirDialog(parent=self, message="Select a directory", style=wx.DD_DEFAULT_STYLE)
         if dialog.ShowModal() == wx.ID_OK:
             self.result_path = dialog.GetPath()
-            self.text_outputfolder.SetLabel(
-                f"Processed videos will be in: {self.result_path}."
-            )
+            self.text_outputfolder.SetLabel(f"Processed videos will be in: {self.result_path}.")
         dialog.Destroy()
 
     def input_duration(self, event):
@@ -242,9 +235,7 @@ class PreprocessingModule(LabGymWindow):
         try:
             window_input: str = windows_dialog.GetValue()
             self.time_windows = self.parse_time_window_str(window_input)
-            self.text_duration.SetLabel(
-                f"The time windows to form the new, trimmed video: {self.time_windows}."
-            )
+            self.text_duration.SetLabel(f"The time windows to form the new, trimmed video: {self.time_windows}.")
         except ValueError as err:
             self.trim_video = False
             self.text_duration.SetLabel("Not to trim the videos.")
@@ -457,9 +448,7 @@ class PreprocessingModule(LabGymWindow):
                 continue
 
             self.enhance_contrast = True
-            self.text_enhancecontrast.SetLabel(
-                f"The contrast enhancement fold change is: {self.contrast}."
-            )
+            self.text_enhancecontrast.SetLabel(f"The contrast enhancement fold change is: {self.contrast}.")
             confirm.Destroy()
             dialog.Destroy()
             cv2.destroyAllWindows()
@@ -538,11 +527,7 @@ class PreprocessingModule(LabGymWindow):
             ValueError: There was an error parsing the file path.
         """
         video = Path(video_path)
-        parts = [
-            part
-            for part in video.stem.split("_")
-            if part.startswith("st") or part.startswith("ed")
-        ]
+        parts = [part for part in video.stem.split("_") if part.startswith("st") or part.startswith("ed")]
 
         windows = []
         for i in range(0, len(parts), 2):
@@ -566,9 +551,7 @@ class PreprocessingModule(LabGymWindow):
         """Process videos given the current configuration."""
 
         if self.video_paths is None or self.result_path is None:
-            wx.MessageBox(
-                "No input video(s) / output folder.", "Error", wx.OK | wx.ICON_ERROR
-            )
+            wx.MessageBox("No input video(s) / output folder.", "Error", wx.OK | wx.ICON_ERROR)
             return
 
         print("Start to preprocess video(s)...")
