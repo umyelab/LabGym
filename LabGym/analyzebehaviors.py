@@ -2,7 +2,7 @@
 Copyright (C)
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext. 
+You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext.
 
 For license issues, please contact:
 
@@ -15,7 +15,6 @@ USA
 
 Email: bingye@umich.edu
 """
-
 
 import datetime
 import functools
@@ -327,15 +326,15 @@ class AnalyzeAnimal:
                     if self.register_counts[index_in_existing] is None:
                         self.register_counts[index_in_existing] = frame_count_analyze
                     self.to_deregister[index_in_existing] = 0
-                    self.animal_contours[index_in_existing][
-                        frame_count_analyze
-                    ] = contours[index_in_new]
+                    self.animal_contours[index_in_existing][frame_count_analyze] = (
+                        contours[index_in_new]
+                    )
                     center = centers[index_in_new]
                     self.animal_centers[index_in_existing][frame_count_analyze] = center
                     self.animal_existingcenters[index_in_existing] = center
-                    self.animal_heights[index_in_existing][
-                        frame_count_analyze
-                    ] = heights[index_in_new]
+                    self.animal_heights[index_in_existing][frame_count_analyze] = (
+                        heights[index_in_new]
+                    )
                     if self.animation_analyzer is True:
                         blob = blobs[index_in_new]
                         blob = img_to_array(
@@ -346,9 +345,9 @@ class AnalyzeAnimal:
                             )
                         )
                         self.animal_blobs[index_in_existing].append(blob)
-                        self.animations[index_in_existing][
-                            frame_count_analyze
-                        ] = np.array(self.animal_blobs[index_in_existing])
+                        self.animations[index_in_existing][frame_count_analyze] = (
+                            np.array(self.animal_blobs[index_in_existing])
+                        )
                     if self.include_bodyparts is True:
                         self.animal_inners[index_in_existing].append(
                             inners[index_in_new]
@@ -379,9 +378,9 @@ class AnalyzeAnimal:
                         (self.dim_conv, self.dim_conv),
                         interpolation=cv2.INTER_AREA,
                     )
-                    self.pattern_images[index_in_existing][
-                        frame_count_analyze
-                    ] = np.array(pattern_image)
+                    self.pattern_images[index_in_existing][frame_count_analyze] = (
+                        np.array(pattern_image)
+                    )
 
         if len(unused_existing_indices) > 0:
             for i in unused_existing_indices:
@@ -1392,9 +1391,9 @@ class AnalyzeAnimal:
                                     n
                                 ] = magnitude_length
                             if vigor_length > 0:
-                                self.all_behavior_parameters["vigor_length"][i][
-                                    n
-                                ] = vigor_length
+                                self.all_behavior_parameters["vigor_length"][i][n] = (
+                                    vigor_length
+                                )
                             if intensity_length > 0:
                                 self.all_behavior_parameters["intensity_length"][i][
                                     n
@@ -1432,9 +1431,9 @@ class AnalyzeAnimal:
                                 velocity = displacement / (
                                     (self.length - np.argmax(displacements)) / self.fps
                                 )
-                                self.all_behavior_parameters["velocity"][i][
-                                    n
-                                ] = velocity
+                                self.all_behavior_parameters["velocity"][i][n] = (
+                                    velocity
+                                )
                             velocities_max = []
                             velocities_min = []
                             for v in self.all_behavior_parameters["velocity"][i][
@@ -1462,9 +1461,9 @@ class AnalyzeAnimal:
                                     self.all_behavior_parameters["acceleration"][i][
                                         n
                                     ] = (vmax - vmin) / t
-                            self.all_behavior_parameters["distance"][
-                                i
-                            ] += distance_traveled
+                            self.all_behavior_parameters["distance"][i] += (
+                                distance_traveled
+                            )
                             self.all_behavior_parameters["speed"][i][n] = speed
 
                         if "3 areal parameters" in parameter_to_analyze:
