@@ -96,9 +96,7 @@ def _extract_background(
             check_frames.append(abs(mean - mean_overall) + frames_temp.std(0))
         frames_mean = np.array(frames_mean, dtype="float32")
         check_frames = np.array(check_frames, dtype="float32")
-        background = np.uint8(
-            np.take_along_axis(frames_mean, np.argsort(check_frames, axis=0), axis=0)[0]
-        )
+        background = np.uint8(np.take_along_axis(frames_mean, np.argsort(check_frames, axis=0), axis=0)[0])
         del frames_mean
         del check_frames
         del frames_temp
@@ -106,11 +104,7 @@ def _extract_background(
         return background  # type: ignore
 
     if stable_illumination is True:
-        return (
-            np.uint8(frames_arr.max(0))
-            if animal_vs_bg == AnimalVsBg.ANIMAL_DARKER
-            else np.uint8(frames_arr.min(0))
-        )  # type:ignore
+        return np.uint8(frames_arr.max(0)) if animal_vs_bg == AnimalVsBg.ANIMAL_DARKER else np.uint8(frames_arr.min(0))  # type:ignore
 
     if len_frames > 101:
         frames_mean = []
@@ -126,20 +120,14 @@ def _extract_background(
                 check_frames.append(mean + frames_temp.std(0))
         frames_mean = np.array(frames_mean, dtype="float32")
         check_frames = np.array(check_frames, dtype="float32")
-        background = np.uint8(
-            np.take_along_axis(frames_mean, np.argsort(check_frames, axis=0), axis=0)[0]
-        )
+        background = np.uint8(np.take_along_axis(frames_mean, np.argsort(check_frames, axis=0), axis=0)[0])
         del frames_mean
         del check_frames
         del frames_temp
         gc.collect()
         return background  # type: ignore
 
-    return (
-        np.uint8(frames_arr.max(0))
-        if animal_vs_bg == AnimalVsBg.ANIMAL_DARKER
-        else np.uint8(frames_arr.min(0))
-    )  # type: ignore
+    return np.uint8(frames_arr.max(0)) if animal_vs_bg == AnimalVsBg.ANIMAL_DARKER else np.uint8(frames_arr.min(0))  # type: ignore
 
 
 def extract_backgrounds_from_video(
@@ -190,9 +178,7 @@ def extract_backgrounds_from_video(
 
     if start_time >= duration:
         print("The beginning time for background extraction is later than the end of the video!")
-        print(
-            "Will use the 1st second of the video as the beginning time for background extraction!"
-        )
+        print("Will use the 1st second of the video as the beginning time for background extraction!")
         start_time = 0
     if start_time == end_time:
         end_time = start_time + 1
@@ -272,9 +258,7 @@ def extract_backgrounds_from_video(
                 del options
                 gc.collect()
         else:
-            backgrounds[bg_type] = _extract_background(
-                frames[bg_type], stable_illumination, animal_vs_bg
-            )
+            backgrounds[bg_type] = _extract_background(frames[bg_type], stable_illumination, animal_vs_bg)
 
     if backgrounds["default"] is None:
         background = initial_frame
@@ -288,9 +272,7 @@ def extract_backgrounds_from_video(
     return (backgrounds["default"], backgrounds["low"], backgrounds["high"])  # type: ignore
 
 
-def load_backgrounds_from_folder(
-    folder: str, frame_size: tuple[int, int] | None = None
-) -> tuple[Frame, Frame, Frame]:
+def load_backgrounds_from_folder(folder: str, frame_size: tuple[int, int] | None = None) -> tuple[Frame, Frame, Frame]:
     """
     Loads background images from given folder, resizing them if required.
 
@@ -518,14 +500,10 @@ def estimate_animal_area(
 
 
 def crop_frame(frame, contours):
-    lfbt = np.array(
-        [contours[i].min(0) for i in range(len(contours)) if contours[i] is not None]
-    ).min(0)[0]
+    lfbt = np.array([contours[i].min(0) for i in range(len(contours)) if contours[i] is not None]).min(0)[0]
     x_lf = lfbt[0]
     y_bt = lfbt[1]
-    rttp = np.array(
-        [contours[i].max(0) for i in range(len(contours)) if contours[i] is not None]
-    ).max(0)[0]
+    rttp = np.array([contours[i].max(0) for i in range(len(contours)) if contours[i] is not None]).max(0)[0]
     x_rt = rttp[0]
     y_tp = rttp[1]
 
@@ -597,9 +575,7 @@ def extract_blob_background(frame, contours, contour=None, channel=1, background
     return blob
 
 
-def extract_blob_all(
-    frame, y_bt, y_tp, x_lf, x_rt, contours=None, channel=1, background_free=False
-):
+def extract_blob_all(frame, y_bt, y_tp, x_lf, x_rt, contours=None, channel=1, background_free=False):
     if background_free is True:
         mask = np.zeros_like(frame)
         cv2.drawContours(mask, contours, -1, (255, 255, 255), -1)
@@ -849,9 +825,7 @@ def generate_patternimage_all(frame, y_bt, y_tp, x_lf, x_rt, outlines_list, inne
     return pattern_image
 
 
-def generate_patternimage_interact(
-    frame, outlines, other_outlines, inners=None, other_inners=None, std=0
-):
+def generate_patternimage_interact(frame, outlines, other_outlines, inners=None, other_inners=None, std=0):
     total_outlines = functools.reduce(operator.iconcat, other_outlines, [])
     total_outlines += outlines
     (y_bt, y_tp, x_lf, x_rt) = crop_frame(frame, total_outlines)
@@ -1034,9 +1008,7 @@ def plot_evnets(
     print("The raster plot stored in: " + str(result_path))
 
 
-def extract_frames(
-    path_to_video, out_path, framewidth=None, start_t=0, duration=0, skip_redundant=1000
-):
+def extract_frames(path_to_video, out_path, framewidth=None, start_t=0, duration=0, skip_redundant=1000):
     capture = cv2.VideoCapture(path_to_video)
     fps = round(capture.get(cv2.CAP_PROP_FPS))
     full_duration = capture.get(cv2.CAP_PROP_FRAME_COUNT) / fps
@@ -1065,9 +1037,7 @@ def extract_frames(
             if frame_count_generate % skip_redundant == 0:
                 if framewidth is not None:
                     frameheight = int(frame.shape[0] * framewidth / frame.shape[1])
-                    frame = cv2.resize(
-                        frame, (framewidth, frameheight), interpolation=cv2.INTER_AREA
-                    )
+                    frame = cv2.resize(frame, (framewidth, frameheight), interpolation=cv2.INTER_AREA)
 
                 cv2.imwrite(
                     os.path.join(out_path, video_name + "_" + str(frame_count_generate) + ".jpg"),

@@ -55,9 +55,7 @@ class MainWindow(wx.Frame):
 
         # Links to GitHub and extended user guide
         links = wx.BoxSizer(wx.HORIZONTAL)
-        homepage = wx.lib.agw.hyperlink.HyperLinkCtrl(
-            panel, 0, "Home Page", URL="https://github.com/umyelab/LabGym"
-        )
+        homepage = wx.lib.agw.hyperlink.HyperLinkCtrl(panel, 0, "Home Page", URL="https://github.com/umyelab/LabGym")
         userguide = wx.lib.agw.hyperlink.HyperLinkCtrl(
             panel,
             0,

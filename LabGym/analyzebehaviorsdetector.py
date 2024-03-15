@@ -64,9 +64,7 @@ DETECTOR_FOLDER = Path(__file__).resolve().parent / "detectors"
 def get_detector_names() -> list[str]:
     """Return the names of all saved detectors."""
     ignore = ["__pycache__", "__init__", "__init.py__"]
-    return [
-        path.name for path in DETECTOR_FOLDER.glob("*") if path.is_dir() and path.name not in ignore
-    ]
+    return [path.name for path in DETECTOR_FOLDER.glob("*") if path.is_dir() and path.name not in ignore]
 
 
 def get_animal_names(detector_name: str) -> list[str]:
@@ -139,16 +137,12 @@ def train_detector(
     print("Animal names in annotation file: " + str(model_parameters_dict["animal_names"]))
 
     cfg = get_cfg()
-    cfg.merge_from_file(
-        model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")
-    )
+    cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
     cfg.OUTPUT_DIR = path_to_detector
     cfg.DATASETS.TRAIN = ("LabGym_detector_train",)
     cfg.DATASETS.TEST = ()
     cfg.DATALOADER.NUM_WORKERS = 4
-    cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url(
-        "COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"
-    )
+    cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")
     cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 128
     cfg.MODEL.ROI_HEADS.NUM_CLASSES = int(len(classnames))
     cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
@@ -365,24 +359,12 @@ class AnalyzeAnimalDetector:
         capture.release()
 
         print("Video fps: " + str(self.fps))
-        print(
-            "The original video framesize: "
-            + str(int(frame.shape[0]))
-            + " X "
-            + str(int(frame.shape[1]))
-        )
+        print("The original video framesize: " + str(int(frame.shape[0])) + " X " + str(int(frame.shape[1])))
 
         if self.framewidth is not None:
             self.frameheight = int(frame.shape[0] * self.framewidth / frame.shape[1])
-            self.background = cv2.resize(
-                frame, (self.framewidth, self.frameheight), interpolation=cv2.INTER_AREA
-            )
-            print(
-                "The resized video framesize: "
-                + str(self.frameheight)
-                + " X "
-                + str(self.framewidth)
-            )
+            self.background = cv2.resize(frame, (self.framewidth, self.frameheight), interpolation=cv2.INTER_AREA)
+            print("The resized video framesize: " + str(self.frameheight) + " X " + str(self.framewidth))
         else:
             self.background = frame
         self.temp_frames = deque(maxlen=self.length)
@@ -396,9 +378,7 @@ class AnalyzeAnimalDetector:
                 self.all_behavior_parameters[animal_name] = {}
                 for behavior_name in names_and_colors:
                     self.all_behavior_parameters[animal_name][behavior_name] = {}
-                    self.all_behavior_parameters[animal_name][behavior_name]["color"] = (
-                        names_and_colors[behavior_name]
-                    )
+                    self.all_behavior_parameters[animal_name][behavior_name]["color"] = names_and_colors[behavior_name]
                     for parameter_name in [
                         "acceleration",
                         "count",
@@ -415,9 +395,7 @@ class AnalyzeAnimalDetector:
                         "vigor_area",
                         "vigor_length",
                     ]:
-                        self.all_behavior_parameters[animal_name][behavior_name][
-                            parameter_name
-                        ] = {}
+                        self.all_behavior_parameters[animal_name][behavior_name][parameter_name] = {}
             else:
                 self.dim_conv = 8
                 self.animation_analyzer = False
@@ -529,17 +507,11 @@ class AnalyzeAnimalDetector:
                     if self.register_counts[animal_name][index_in_existing] is None:
                         self.register_counts[animal_name][index_in_existing] = frame_count_analyze
                     self.to_deregister[animal_name][index_in_existing] = 0
-                    self.animal_contours[animal_name][index_in_existing][frame_count_analyze] = (
-                        contours[index_in_new]
-                    )
+                    self.animal_contours[animal_name][index_in_existing][frame_count_analyze] = contours[index_in_new]
                     center = centers[index_in_new]
-                    self.animal_centers[animal_name][index_in_existing][frame_count_analyze] = (
-                        center
-                    )
+                    self.animal_centers[animal_name][index_in_existing][frame_count_analyze] = center
                     self.animal_existingcenters[animal_name][index_in_existing] = center
-                    self.animal_heights[animal_name][index_in_existing][frame_count_analyze] = (
-                        heights[index_in_new]
-                    )
+                    self.animal_heights[animal_name][index_in_existing][frame_count_analyze] = heights[index_in_new]
                     if self.animation_analyzer is True:
                         blob = img_to_array(
                             cv2.resize(
@@ -549,19 +521,15 @@ class AnalyzeAnimalDetector:
                             )
                         )
                         self.animal_blobs[animal_name][index_in_existing].append(blob)
-                        self.animations[animal_name][index_in_existing][frame_count_analyze] = (
-                            np.array(self.animal_blobs[animal_name][index_in_existing])
+                        self.animations[animal_name][index_in_existing][frame_count_analyze] = np.array(
+                            self.animal_blobs[animal_name][index_in_existing]
                         )
                     if self.include_bodyparts is True:
-                        self.animal_inners[animal_name][index_in_existing].append(
-                            inners[index_in_new]
-                        )
+                        self.animal_inners[animal_name][index_in_existing].append(inners[index_in_new])
                         pattern_image = generate_patternimage(
                             self.background,
                             self.animal_contours[animal_name][index_in_existing][
-                                max(
-                                    0, (frame_count_analyze - self.length + 1)
-                                ) : frame_count_analyze + 1
+                                max(0, (frame_count_analyze - self.length + 1)) : frame_count_analyze + 1
                             ],
                             inners=self.animal_inners[animal_name][index_in_existing],
                             std=self.std,
@@ -570,9 +538,7 @@ class AnalyzeAnimalDetector:
                         pattern_image = generate_patternimage(
                             self.background,
                             self.animal_contours[animal_name][index_in_existing][
-                                max(
-                                    0, (frame_count_analyze - self.length + 1)
-                                ) : frame_count_analyze + 1
+                                max(0, (frame_count_analyze - self.length + 1)) : frame_count_analyze + 1
                             ],
                             inners=None,
                             std=0,
@@ -582,9 +548,7 @@ class AnalyzeAnimalDetector:
                         (self.dim_conv, self.dim_conv),
                         interpolation=cv2.INTER_AREA,
                     )
-                    self.pattern_images[animal_name][index_in_existing][frame_count_analyze] = (
-                        np.array(pattern_image)
-                    )
+                    self.pattern_images[animal_name][index_in_existing][frame_count_analyze] = np.array(pattern_image)
 
         if len(unused_existing_indices) > 0:
             for i in unused_existing_indices:
@@ -643,22 +607,16 @@ class AnalyzeAnimalDetector:
                             unused_existing_indices.remove(index_in_existing)
                             unused_new_indices.remove(index_in_new)
                             if self.register_counts[animal_name][index_in_existing] is None:
-                                self.register_counts[animal_name][index_in_existing] = (
-                                    frame_count_analyze
-                                )
+                                self.register_counts[animal_name][index_in_existing] = frame_count_analyze
                             self.to_deregister[animal_name][index_in_existing] = 0
                             contour = animal_contours[index_in_new]
-                            self.animal_contours[animal_name][index_in_existing][
-                                frame_count_analyze
-                            ] = contour
+                            self.animal_contours[animal_name][index_in_existing][frame_count_analyze] = contour
                             center = animal_centers[index_in_new]
-                            self.animal_centers[animal_name][index_in_existing][
-                                frame_count_analyze
-                            ] = center
+                            self.animal_centers[animal_name][index_in_existing][frame_count_analyze] = center
                             self.animal_existingcenters[animal_name][index_in_existing] = center
-                            self.animal_heights[animal_name][index_in_existing][
-                                frame_count_analyze
-                            ] = animal_heights[index_in_new]
+                            self.animal_heights[animal_name][index_in_existing][frame_count_analyze] = animal_heights[
+                                index_in_new
+                            ]
                             self.animal_other_contours[animal_name][index_in_existing].append(
                                 animal_other_contours[index_in_new]
                             )
@@ -671,37 +629,29 @@ class AnalyzeAnimalDetector:
                                     )
                                 )
                                 self.animal_blobs[animal_name][index_in_existing].append(blob)
-                                self.animations[animal_name][index_in_existing][
-                                    frame_count_analyze
-                                ] = np.array(self.animal_blobs[animal_name][index_in_existing])
-                            if self.include_bodyparts is True:
-                                self.animal_inners[animal_name][index_in_existing].append(
-                                    animal_inners[index_in_new]
+                                self.animations[animal_name][index_in_existing][frame_count_analyze] = np.array(
+                                    self.animal_blobs[animal_name][index_in_existing]
                                 )
+                            if self.include_bodyparts is True:
+                                self.animal_inners[animal_name][index_in_existing].append(animal_inners[index_in_new])
                                 self.animal_other_inners[animal_name][index_in_existing].append(
                                     animal_other_inners[index_in_new]
                                 )
                                 pattern_image = generate_patternimage_interact(
                                     self.background,
                                     self.animal_contours[animal_name][index_in_existing][
-                                        max(
-                                            0, (frame_count_analyze - self.length + 1)
-                                        ) : frame_count_analyze + 1
+                                        max(0, (frame_count_analyze - self.length + 1)) : frame_count_analyze + 1
                                     ],
                                     self.animal_other_contours[animal_name][index_in_existing],
                                     inners=self.animal_inners[animal_name][index_in_existing],
-                                    other_inners=self.animal_other_inners[animal_name][
-                                        index_in_existing
-                                    ],
+                                    other_inners=self.animal_other_inners[animal_name][index_in_existing],
                                     std=self.std,
                                 )
                             else:
                                 pattern_image = generate_patternimage_interact(
                                     self.background,
                                     self.animal_contours[animal_name][index_in_existing][
-                                        max(
-                                            0, (frame_count_analyze - self.length + 1)
-                                        ) : frame_count_analyze + 1
+                                        max(0, (frame_count_analyze - self.length + 1)) : frame_count_analyze + 1
                                     ],
                                     self.animal_other_contours[animal_name][index_in_existing],
                                     inners=None,
@@ -713,9 +663,9 @@ class AnalyzeAnimalDetector:
                                 (self.dim_conv, self.dim_conv),
                                 interpolation=cv2.INTER_AREA,
                             )
-                            self.pattern_images[animal_name][index_in_existing][
-                                frame_count_analyze
-                            ] = np.array(pattern_image)
+                            self.pattern_images[animal_name][index_in_existing][frame_count_analyze] = np.array(
+                                pattern_image
+                            )
 
                 if len(unused_existing_indices) > 0:
                     for i in unused_existing_indices:
@@ -748,9 +698,7 @@ class AnalyzeAnimalDetector:
         background_free=True,
         animation=None,
     ):
-        tensor_frames = [
-            torch.as_tensor(frame.astype("float32").transpose(2, 0, 1)) for frame in frames
-        ]
+        tensor_frames = [torch.as_tensor(frame.astype("float32").transpose(2, 0, 1)) for frame in frames]
         inputs = [{"image": tensor_frame} for tensor_frame in tensor_frames]
 
         with torch.no_grad():
@@ -784,11 +732,7 @@ class AnalyzeAnimalDetector:
                 exclusion_mask = np.zeros(len(masks), dtype=bool)
                 exclusion_mask[
                     np.where(
-                        (
-                            np.sum(np.logical_and(masks[:, None], masks), axis=(2, 3))
-                            / mask_area[:, None]
-                            > 0.8
-                        )
+                        (np.sum(np.logical_and(masks[:, None], masks), axis=(2, 3)) / mask_area[:, None] > 0.8)
                         & (mask_area[:, None] < mask_area[None, :])
                     )[0]
                 ] = True
@@ -807,12 +751,8 @@ class AnalyzeAnimalDetector:
                     blobs = []
 
                     animal_number = int(self.animal_number[animal_name])
-                    animal_masks = [
-                        masks[a] for a, name in enumerate(classes) if name == animal_name
-                    ]
-                    animal_scores = [
-                        scores[a] for a, name in enumerate(classes) if name == animal_name
-                    ]
+                    animal_masks = [masks[a] for a, name in enumerate(classes) if name == animal_name]
+                    animal_scores = [scores[a] for a, name in enumerate(classes) if name == animal_name]
 
                     if len(animal_masks) == 0:
                         for i in self.animal_centers[animal_name]:
@@ -828,9 +768,7 @@ class AnalyzeAnimalDetector:
 
                     else:
                         if len(animal_scores) > animal_number * 2:
-                            sorted_scores_indices = np.argsort(animal_scores)[
-                                -int(animal_number * 2) :
-                            ]
+                            sorted_scores_indices = np.argsort(animal_scores)[-int(animal_number * 2) :]
                             animal_masks = [animal_masks[x] for x in sorted_scores_indices]
                         for mask in animal_masks:
                             mask = cv2.morphologyEx(
@@ -852,9 +790,7 @@ class AnalyzeAnimalDetector:
                         if self.animal_area[animal_name] is None:
                             self.animal_area[animal_name] = area
                         else:
-                            self.animal_area[animal_name] = (
-                                self.animal_area[animal_name] + area
-                            ) / 2
+                            self.animal_area[animal_name] = (self.animal_area[animal_name] + area) / 2
                         for x in sorted_area_indices:
                             mask = goodmasks[x]
                             cnt = goodcontours[x]
@@ -885,9 +821,7 @@ class AnalyzeAnimalDetector:
                                     x_lf = max(x - difference - 1, 0)
                                     x_rt = min(x + w + difference + 1, self.background.shape[1])
                                 blob = masked_frame[y_bt:y_tp, x_lf:x_rt]
-                                blob = np.uint8(
-                                    exposure.rescale_intensity(blob, out_range=(0, 255))
-                                )
+                                blob = np.uint8(exposure.rescale_intensity(blob, out_range=(0, 255)))
                                 if self.channel == 1:
                                     blob = cv2.cvtColor(blob, cv2.COLOR_BGR2GRAY)
                                     blob = img_to_array(blob)
@@ -917,11 +851,7 @@ class AnalyzeAnimalDetector:
                                                     + batch_count
                                                     - self.length
                                                     + 1,
-                                                ) : frame_count_analyze
-                                                + 1
-                                                - batch_size
-                                                + batch_count
-                                                + 1
+                                                ) : frame_count_analyze + 1 - batch_size + batch_count + 1
                                             ][n]
                                             is None
                                         ):
@@ -945,11 +875,7 @@ class AnalyzeAnimalDetector:
                                                         + batch_count
                                                         - self.length
                                                         + 1,
-                                                    ) : frame_count_analyze
-                                                    + 1
-                                                    - batch_size
-                                                    + batch_count
-                                                    + 1
+                                                    ) : frame_count_analyze + 1 - batch_size + batch_count + 1
                                                 ],
                                                 contour=None,
                                                 channel=self.channel,
@@ -966,9 +892,7 @@ class AnalyzeAnimalDetector:
                                     ] = np.array(animation)
 
     def detect_track_interact(self, frames, batch_size, frame_count_analyze, background_free=True):
-        tensor_frames = [
-            torch.as_tensor(frame.astype("float32").transpose(2, 0, 1)) for frame in frames
-        ]
+        tensor_frames = [torch.as_tensor(frame.astype("float32").transpose(2, 0, 1)) for frame in frames]
         inputs = [{"image": tensor_frame} for tensor_frame in tensor_frames]
 
         with torch.no_grad():
@@ -1004,11 +928,7 @@ class AnalyzeAnimalDetector:
                 exclusion_mask = np.zeros(len(masks), dtype=bool)
                 exclusion_mask[
                     np.where(
-                        (
-                            np.sum(np.logical_and(masks[:, None], masks), axis=(2, 3))
-                            / mask_area[:, None]
-                            > 0.8
-                        )
+                        (np.sum(np.logical_and(masks[:, None], masks), axis=(2, 3)) / mask_area[:, None] > 0.8)
                         & (mask_area[:, None] < mask_area[None, :])
                     )[0]
                 ] = True
@@ -1029,12 +949,8 @@ class AnalyzeAnimalDetector:
                     goodmasks = []
                     goodcontours = []
                     animal_number = int(self.animal_number[animal_name])
-                    animal_masks = [
-                        masks[a] for a, name in enumerate(classes) if name == animal_name
-                    ]
-                    animal_scores = [
-                        scores[a] for a, name in enumerate(classes) if name == animal_name
-                    ]
+                    animal_masks = [masks[a] for a, name in enumerate(classes) if name == animal_name]
+                    animal_scores = [scores[a] for a, name in enumerate(classes) if name == animal_name]
 
                     if len(animal_masks) == 0:
                         self.animal_present[animal_name] = 0
@@ -1052,9 +968,7 @@ class AnalyzeAnimalDetector:
                                 self.animal_other_inners[animal_name][i].append([None])
                     else:
                         if len(animal_scores) > animal_number * 2:
-                            sorted_scores_indices = np.argsort(animal_scores)[
-                                -int(animal_number * 2) :
-                            ]
+                            sorted_scores_indices = np.argsort(animal_scores)[-int(animal_number * 2) :]
                             animal_masks = [animal_masks[x] for x in sorted_scores_indices]
                         for mask in animal_masks:
                             mask = cv2.morphologyEx(
@@ -1077,9 +991,7 @@ class AnalyzeAnimalDetector:
                         if self.animal_area[animal_name] is None:
                             self.animal_area[animal_name] = area
                         else:
-                            self.animal_area[animal_name] = (
-                                self.animal_area[animal_name] + area
-                            ) / 2
+                            self.animal_area[animal_name] = (self.animal_area[animal_name] + area) / 2
                         average_area.append(self.animal_area[animal_name])
                         for x in sorted_area_indices:
                             mask = goodmasks[x]
@@ -1100,14 +1012,11 @@ class AnalyzeAnimalDetector:
 
                 if len(all_centers) > 1:
                     centers_array = np.array(all_centers)
-                    distances_squared = np.sum(
-                        (centers_array[:, None] - centers_array) ** 2, axis=2
-                    )
+                    distances_squared = np.sum((centers_array[:, None] - centers_array) ** 2, axis=2)
                     determine = np.logical_and(
                         distances_squared > 0,
                         distances_squared
-                        < (math.sqrt(sum(average_area) / len(average_area)) * self.social_distance)
-                        ** 2,
+                        < (math.sqrt(sum(average_area) / len(average_area)) * self.social_distance) ** 2,
                     )
                     other_contours = [
                         [all_contours[x] for x, determ in enumerate(determine[y]) if determ]
@@ -1122,9 +1031,7 @@ class AnalyzeAnimalDetector:
                         other_inners = None
                     if self.animation_analyzer is True:
                         other_masks = [
-                            np.bitwise_or.reduce(np.stack(np.array(all_masks)[determine[x]]))
-                            if len(c) > 0
-                            else None
+                            np.bitwise_or.reduce(np.stack(np.array(all_masks)[determine[x]])) if len(c) > 0 else None
                             for x, c in enumerate(other_contours)
                         ]
                         for i, other_mask in enumerate(other_masks):
@@ -1140,13 +1047,9 @@ class AnalyzeAnimalDetector:
                                         cv2.COLOR_GRAY2BGR,
                                     )
                                     blob = cv2.add(blob, other_blob)
-                                    blob = np.uint8(
-                                        exposure.rescale_intensity(blob, out_range=(0, 255))
-                                    )
+                                    blob = np.uint8(exposure.rescale_intensity(blob, out_range=(0, 255)))
                             else:
-                                blob = np.uint8(
-                                    exposure.rescale_intensity(frame, out_range=(0, 255))
-                                )
+                                blob = np.uint8(exposure.rescale_intensity(frame, out_range=(0, 255)))
                             cv2.drawContours(blob, [contour], 0, (255, 0, 255), 2)
                             all_blobs.append(blob[y_bt:y_tp, x_lf:x_rt])
 
@@ -1274,13 +1177,7 @@ class AnalyzeAnimalDetector:
         capture.release()
 
         for animal_name in self.animal_kinds:
-            print(
-                "The area of "
-                + str(animal_name)
-                + " is: "
-                + str(self.animal_area[animal_name])
-                + "."
-            )
+            print("The area of " + str(animal_name) + " is: " + str(self.animal_area[animal_name]) + ".")
 
         print("Information acquisition completed!")
 
@@ -1359,10 +1256,7 @@ class AnalyzeAnimalDetector:
                 if batch_count == batch_size:
                     batch_count = 0
 
-                    tensor_frames = [
-                        torch.as_tensor(frame.astype("float32").transpose(2, 0, 1))
-                        for frame in batch
-                    ]
+                    tensor_frames = [torch.as_tensor(frame.astype("float32").transpose(2, 0, 1)) for frame in batch]
                     inputs = [{"image": tensor_frame} for tensor_frame in tensor_frames]
 
                     with torch.no_grad():
@@ -1377,9 +1271,7 @@ class AnalyzeAnimalDetector:
                         scores = instances.scores.numpy()
 
                         if len(masks) == 0:
-                            self.skipped_frames.append(
-                                frame_count_analyze + 1 - batch_size + batch_count
-                            )
+                            self.skipped_frames.append(frame_count_analyze + 1 - batch_size + batch_count)
 
                             temp_contours.append(None)
                             temp_inners.append(None)
@@ -1391,9 +1283,7 @@ class AnalyzeAnimalDetector:
                             )
 
                         else:
-                            self.register_counts[name][0] = (
-                                frame_count_analyze + 1 - batch_size + batch_count
-                            )
+                            self.register_counts[name][0] = frame_count_analyze + 1 - batch_size + batch_count
 
                             mask_area = np.sum(np.array(masks), axis=(1, 2))
                             exclusion_mask = np.zeros(len(masks), dtype=bool)
@@ -1411,13 +1301,9 @@ class AnalyzeAnimalDetector:
                                 )[0]
                             ] = True
                             masks = [m for m, exclude in zip(masks, exclusion_mask) if not exclude]
-                            classes = [
-                                c for c, exclude in zip(classes, exclusion_mask) if not exclude
-                            ]
+                            classes = [c for c, exclude in zip(classes, exclusion_mask) if not exclude]
                             classes = [self.animal_mapping[str(x)] for x in classes]
-                            scores = [
-                                s for s, exclude in zip(scores, exclusion_mask) if not exclude
-                            ]
+                            scores = [s for s, exclude in zip(scores, exclusion_mask) if not exclude]
 
                             contours = []
                             inners = []
@@ -1426,20 +1312,12 @@ class AnalyzeAnimalDetector:
                                 goodcontours = []
                                 goodmasks = []
                                 animal_number = int(self.animal_number[animal_name])
-                                animal_masks = [
-                                    masks[a] for a, n in enumerate(classes) if n == animal_name
-                                ]
-                                animal_scores = [
-                                    scores[a] for a, n in enumerate(classes) if n == animal_name
-                                ]
+                                animal_masks = [masks[a] for a, n in enumerate(classes) if n == animal_name]
+                                animal_scores = [scores[a] for a, n in enumerate(classes) if n == animal_name]
                                 if len(animal_masks) > 0:
                                     if len(animal_scores) > animal_number * 2:
-                                        sorted_scores_indices = np.argsort(animal_scores)[
-                                            -int(animal_number * 2) :
-                                        ]
-                                        animal_masks = [
-                                            animal_masks[x] for x in sorted_scores_indices
-                                        ]
+                                        sorted_scores_indices = np.argsort(animal_scores)[-int(animal_number * 2) :]
+                                        animal_masks = [animal_masks[x] for x in sorted_scores_indices]
                                     for mask in animal_masks:
                                         mask = cv2.morphologyEx(
                                             mask,
@@ -1451,27 +1329,19 @@ class AnalyzeAnimalDetector:
                                             cv2.RETR_EXTERNAL,
                                             cv2.CHAIN_APPROX_NONE,
                                         )
-                                        goodcontours.append(
-                                            sorted(cnts, key=cv2.contourArea, reverse=True)[0]
-                                        )
+                                        goodcontours.append(sorted(cnts, key=cv2.contourArea, reverse=True)[0])
                                         goodmasks.append(mask)
                                     areas = [cv2.contourArea(ct) for ct in goodcontours]
-                                    sorted_area_indices = np.argsort(np.array(areas))[
-                                        -animal_number:
-                                    ]
+                                    sorted_area_indices = np.argsort(np.array(areas))[-animal_number:]
                                     for x in sorted_area_indices:
                                         cnt = goodcontours[x]
                                         mask = goodmasks[x]
                                         contours.append(cnt)
                                         if self.include_bodyparts is True:
-                                            masked_frame = (
-                                                cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) * mask
-                                            )
+                                            masked_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY) * mask
                                             inners.append(get_inner(masked_frame, cnt))
 
-                            self.animal_contours[name][0][
-                                frame_count_analyze + 1 - batch_size + batch_count
-                            ] = contours
+                            self.animal_contours[name][0][frame_count_analyze + 1 - batch_size + batch_count] = contours
 
                             temp_contours.append(contours)
                             temp_inners.append(inners)
@@ -1480,9 +1350,10 @@ class AnalyzeAnimalDetector:
                                 functools.reduce(operator.iconcat, temp_contours, []),
                             )
 
-                            self.animal_centers[name][0][
-                                frame_count_analyze + 1 - batch_size + batch_count
-                            ] = (x_lf + 20, y_bt + 10)
+                            self.animal_centers[name][0][frame_count_analyze + 1 - batch_size + batch_count] = (
+                                x_lf + 20,
+                                y_bt + 10,
+                            )
 
                             pattern_image = generate_patternimage_all(
                                 frame,
@@ -1494,9 +1365,7 @@ class AnalyzeAnimalDetector:
                                 temp_inners,
                                 std=self.std,
                             )
-                            self.pattern_images[name][0][
-                                frame_count_analyze + 1 - batch_size + batch_count
-                            ] = np.array(
+                            self.pattern_images[name][0][frame_count_analyze + 1 - batch_size + batch_count] = np.array(
                                 cv2.resize(
                                     pattern_image,
                                     (self.dim_conv, self.dim_conv),
@@ -1509,17 +1378,8 @@ class AnalyzeAnimalDetector:
                                         self.animal_contours[name][0][
                                             max(
                                                 0,
-                                                frame_count_analyze
-                                                + 1
-                                                - batch_size
-                                                + batch_count
-                                                - self.length
-                                                + 1,
-                                            ) : frame_count_analyze
-                                            + 1
-                                            - batch_size
-                                            + batch_count
-                                            + 1
+                                                frame_count_analyze + 1 - batch_size + batch_count - self.length + 1,
+                                            ) : frame_count_analyze + 1 - batch_size + batch_count + 1
                                         ][i]
                                         is None
                                     ):
@@ -1548,9 +1408,9 @@ class AnalyzeAnimalDetector:
                                             interpolation=cv2.INTER_AREA,
                                         )
                                     animation.append(img_to_array(blob))
-                                    self.animations[name][0][
-                                        frame_count_analyze + 1 - batch_size + batch_count
-                                    ] = np.array(animation)
+                                    self.animations[name][0][frame_count_analyze + 1 - batch_size + batch_count] = (
+                                        np.array(animation)
+                                    )
 
                     batch = []
 
@@ -1649,9 +1509,7 @@ class AnalyzeAnimalDetector:
             with tf.device("CPU"):
                 if self.animation_analyzer is True:
                     animations = tf.convert_to_tensor(np.array(animations, dtype="float32") / 255.0)
-                pattern_images = tf.convert_to_tensor(
-                    np.array(pattern_images, dtype="float32") / 255.0
-                )
+                pattern_images = tf.convert_to_tensor(np.array(pattern_images, dtype="float32") / 255.0)
 
             if self.animation_analyzer is True:
                 inputs = [animations, pattern_images]
@@ -1662,9 +1520,9 @@ class AnalyzeAnimalDetector:
 
             for behavior_name in self.all_behavior_parameters[animal_name]:
                 for i in IDs:
-                    self.all_behavior_parameters[animal_name][behavior_name]["probability"][i] = [
-                        np.nan
-                    ] * len(self.all_time)
+                    self.all_behavior_parameters[animal_name][behavior_name]["probability"][i] = [np.nan] * len(
+                        self.all_time
+                    )
                     self.event_probability[animal_name][i] = [["NA", -1]] * len(self.all_time)
 
             idx = 0
@@ -1688,9 +1546,9 @@ class AnalyzeAnimalDetector:
                                         probability = prediction[0]
                                 else:
                                     probability = prediction[name_index]
-                                self.all_behavior_parameters[animal_name][behavior_name][
-                                    "probability"
-                                ][n][i] = probability
+                                self.all_behavior_parameters[animal_name][behavior_name]["probability"][n][i] = (
+                                    probability
+                                )
                             if len(behavior_names) == 2:
                                 if prediction[0] > 0.5:
                                     if prediction[0] - (1 - prediction[0]) > uncertain:
@@ -1735,41 +1593,33 @@ class AnalyzeAnimalDetector:
                                 ID = specific_behaviors[animal_name][behavior_name]
                                 if ID != i:
                                     temp = self.register_counts[animal_name][ID]
-                                    self.register_counts[animal_name][ID] = self.register_counts[
-                                        animal_name
-                                    ][i]
+                                    self.register_counts[animal_name][ID] = self.register_counts[animal_name][i]
                                     self.register_counts[animal_name][i] = temp
                                     temp = self.animal_centers[animal_name][ID][idx]
-                                    self.animal_centers[animal_name][ID][idx] = self.animal_centers[
-                                        animal_name
-                                    ][i][idx]
+                                    self.animal_centers[animal_name][ID][idx] = self.animal_centers[animal_name][i][idx]
                                     self.animal_centers[animal_name][i][idx] = temp
                                     temp = self.animal_contours[animal_name][ID][idx]
-                                    self.animal_contours[animal_name][ID][idx] = (
-                                        self.animal_contours[animal_name][i][idx]
-                                    )
+                                    self.animal_contours[animal_name][ID][idx] = self.animal_contours[animal_name][i][
+                                        idx
+                                    ]
                                     self.animal_contours[animal_name][i][idx] = temp
                                     temp = self.animal_heights[animal_name][ID][idx]
-                                    self.animal_heights[animal_name][ID][idx] = self.animal_heights[
-                                        animal_name
-                                    ][i][idx]
+                                    self.animal_heights[animal_name][ID][idx] = self.animal_heights[animal_name][i][idx]
                                     self.animal_heights[animal_name][i][idx] = temp
                                     temp = self.event_probability[animal_name][ID][idx]
-                                    self.event_probability[animal_name][ID][idx] = (
-                                        self.event_probability[animal_name][i][idx]
-                                    )
+                                    self.event_probability[animal_name][ID][idx] = self.event_probability[animal_name][
+                                        i
+                                    ][idx]
                                     self.event_probability[animal_name][i][idx] = temp
-                                    temp = self.all_behavior_parameters[animal_name][behavior_name][
-                                        "probability"
-                                    ][ID][idx]
-                                    self.all_behavior_parameters[animal_name][behavior_name][
-                                        "probability"
-                                    ][ID][idx] = self.all_behavior_parameters[animal_name][
-                                        behavior_name
-                                    ]["probability"][i][idx]
-                                    self.all_behavior_parameters[animal_name][behavior_name][
-                                        "probability"
-                                    ][i][idx] = temp
+                                    temp = self.all_behavior_parameters[animal_name][behavior_name]["probability"][ID][
+                                        idx
+                                    ]
+                                    self.all_behavior_parameters[animal_name][behavior_name]["probability"][ID][idx] = (
+                                        self.all_behavior_parameters[animal_name][behavior_name]["probability"][i][idx]
+                                    )
+                                    self.all_behavior_parameters[animal_name][behavior_name]["probability"][i][idx] = (
+                                        temp
+                                    )
 
         print("Identity correction completed!")
 
@@ -1783,15 +1633,12 @@ class AnalyzeAnimalDetector:
         if self.categorize_behavior is True:
             colors = {}
             for behavior_name in self.all_behavior_parameters[self.animal_kinds[0]]:
-                if (
-                    self.all_behavior_parameters[self.animal_kinds[0]][behavior_name]["color"][1][0]
-                    != "#"
-                ):
+                if self.all_behavior_parameters[self.animal_kinds[0]][behavior_name]["color"][1][0] != "#":
                     colors[behavior_name] = (255, 255, 255)
                 else:
-                    hex_color = self.all_behavior_parameters[self.animal_kinds[0]][behavior_name][
-                        "color"
-                    ][1].lstrip("#")
+                    hex_color = self.all_behavior_parameters[self.animal_kinds[0]][behavior_name]["color"][1].lstrip(
+                        "#"
+                    )
                     color = tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
                     colors[behavior_name] = color[::-1]
 
@@ -1853,10 +1700,7 @@ class AnalyzeAnimalDetector:
                     for animal_name in animal_to_include:
                         for i in self.animal_contours[animal_name]:
                             if frame_count_analyze < len(self.animal_contours[animal_name][i]):
-                                if (
-                                    self.animal_contours[animal_name][i][frame_count_analyze]
-                                    is not None
-                                ):
+                                if self.animal_contours[animal_name][i][frame_count_analyze] is not None:
                                     cx = self.animal_centers[animal_name][i][frame_count_analyze][0]
                                     cy = self.animal_centers[animal_name][i][frame_count_analyze][1]
 
@@ -1880,18 +1724,11 @@ class AnalyzeAnimalDetector:
                                                 (255, 255, 255),
                                                 text_tk,
                                             )
-                                        if (
-                                            self.event_probability[animal_name][i][
-                                                frame_count_analyze
-                                            ][0]
-                                            == "NA"
-                                        ):
+                                        if self.event_probability[animal_name][i][frame_count_analyze][0] == "NA":
                                             if self.behavior_mode == 1:
                                                 cv2.drawContours(
                                                     frame,
-                                                    self.animal_contours[animal_name][i][
-                                                        frame_count_analyze
-                                                    ],
+                                                    self.animal_contours[animal_name][i][frame_count_analyze],
                                                     -1,
                                                     (255, 255, 255),
                                                     1,
@@ -1899,11 +1736,7 @@ class AnalyzeAnimalDetector:
                                             else:
                                                 cv2.drawContours(
                                                     frame,
-                                                    [
-                                                        self.animal_contours[animal_name][i][
-                                                            frame_count_analyze
-                                                        ]
-                                                    ],
+                                                    [self.animal_contours[animal_name][i][frame_count_analyze]],
                                                     0,
                                                     (255, 255, 255),
                                                     1,
@@ -1918,15 +1751,11 @@ class AnalyzeAnimalDetector:
                                                 text_tk,
                                             )
                                         else:
-                                            name = self.event_probability[animal_name][i][
-                                                frame_count_analyze
-                                            ][0]
+                                            name = self.event_probability[animal_name][i][frame_count_analyze][0]
                                             probability = (
                                                 str(
                                                     round(
-                                                        self.event_probability[animal_name][i][
-                                                            frame_count_analyze
-                                                        ][1]
+                                                        self.event_probability[animal_name][i][frame_count_analyze][1]
                                                         * 100
                                                     )
                                                 )
@@ -1934,16 +1763,12 @@ class AnalyzeAnimalDetector:
                                             )
                                             if name in colors:
                                                 color = colors[
-                                                    self.event_probability[animal_name][i][
-                                                        frame_count_analyze
-                                                    ][0]
+                                                    self.event_probability[animal_name][i][frame_count_analyze][0]
                                                 ]
                                                 if self.behavior_mode == 1:
                                                     cv2.drawContours(
                                                         frame,
-                                                        self.animal_contours[animal_name][i][
-                                                            frame_count_analyze
-                                                        ],
+                                                        self.animal_contours[animal_name][i][frame_count_analyze],
                                                         -1,
                                                         color,
                                                         1,
@@ -1951,11 +1776,7 @@ class AnalyzeAnimalDetector:
                                                 else:
                                                     cv2.drawContours(
                                                         frame,
-                                                        [
-                                                            self.animal_contours[animal_name][i][
-                                                                frame_count_analyze
-                                                            ]
-                                                        ],
+                                                        [self.animal_contours[animal_name][i][frame_count_analyze]],
                                                         0,
                                                         color,
                                                         1,
@@ -1973,9 +1794,7 @@ class AnalyzeAnimalDetector:
                                                 if self.behavior_mode == 1:
                                                     cv2.drawContours(
                                                         frame,
-                                                        self.animal_contours[animal_name][i][
-                                                            frame_count_analyze
-                                                        ],
+                                                        self.animal_contours[animal_name][i][frame_count_analyze],
                                                         -1,
                                                         (255, 255, 255),
                                                         1,
@@ -1983,11 +1802,7 @@ class AnalyzeAnimalDetector:
                                                 else:
                                                     cv2.drawContours(
                                                         frame,
-                                                        [
-                                                            self.animal_contours[animal_name][i][
-                                                                frame_count_analyze
-                                                            ]
-                                                        ],
+                                                        [self.animal_contours[animal_name][i][frame_count_analyze]],
                                                         0,
                                                         (255, 255, 255),
                                                         1,
@@ -2013,11 +1828,7 @@ class AnalyzeAnimalDetector:
                                         )
                                         cv2.drawContours(
                                             frame,
-                                            [
-                                                self.animal_contours[animal_name][i][
-                                                    frame_count_analyze
-                                                ]
-                                            ],
+                                            [self.animal_contours[animal_name][i][frame_count_analyze]],
                                             0,
                                             (255, 255, 255),
                                             1,
@@ -2060,31 +1871,23 @@ class AnalyzeAnimalDetector:
                         if "count" in parameter_to_analyze:
                             self.all_behavior_parameters[animal_name][behavior_name]["count"][i] = 0
                         if "duration" in parameter_to_analyze:
-                            self.all_behavior_parameters[animal_name][behavior_name]["duration"][
-                                i
-                            ] = 0.0
+                            self.all_behavior_parameters[animal_name][behavior_name]["duration"][i] = 0.0
                         if "4 locomotion parameters" in parameter_to_analyze:
-                            self.all_behavior_parameters[animal_name][behavior_name]["distance"][
-                                i
-                            ] = 0.0
+                            self.all_behavior_parameters[animal_name][behavior_name]["distance"][i] = 0.0
                         if "latency" in parameter_to_analyze:
-                            self.all_behavior_parameters[animal_name][behavior_name]["latency"][
-                                i
-                            ] = "NA"
+                            self.all_behavior_parameters[animal_name][behavior_name]["latency"][i] = "NA"
                     for parameter_name in all_parameters:
                         for i in self.event_probability[animal_name]:
-                            self.all_behavior_parameters[animal_name][behavior_name][
-                                parameter_name
-                            ][i] = [np.nan] * len(self.all_time)
+                            self.all_behavior_parameters[animal_name][behavior_name][parameter_name][i] = [
+                                np.nan
+                            ] * len(self.all_time)
         else:
             for animal_name in self.animal_kinds:
                 for i in self.animal_contours[animal_name]:
                     if "4 locomotion parameters" in parameter_to_analyze:
                         self.all_behavior_parameters[animal_name]["distance"][i] = 0.0
                     for parameter_name in all_parameters:
-                        self.all_behavior_parameters[animal_name][parameter_name][i] = [
-                            np.nan
-                        ] * len(self.all_time)
+                        self.all_behavior_parameters[animal_name][parameter_name][i] = [np.nan] * len(self.all_time)
 
         if len(parameter_to_analyze) > 0:
             for animal_name in self.animal_kinds:
@@ -2097,44 +1900,27 @@ class AnalyzeAnimalDetector:
 
                             if behavior_name != "NA":
                                 if "count" in parameter_to_analyze:
-                                    if (
-                                        behavior_name
-                                        != self.event_probability[animal_name][i][n - 1][0]
-                                    ):
-                                        self.all_behavior_parameters[animal_name][behavior_name][
-                                            "count"
-                                        ][i] += 1
+                                    if behavior_name != self.event_probability[animal_name][i][n - 1][0]:
+                                        self.all_behavior_parameters[animal_name][behavior_name]["count"][i] += 1
 
                                 if "duration" in parameter_to_analyze:
-                                    self.all_behavior_parameters[animal_name][behavior_name][
-                                        "duration"
-                                    ][i] += round(1 / self.fps, 2)
+                                    self.all_behavior_parameters[animal_name][behavior_name]["duration"][i] += round(
+                                        1 / self.fps, 2
+                                    )
 
                                 if "latency" in parameter_to_analyze:
-                                    if (
-                                        self.all_behavior_parameters[animal_name][behavior_name][
-                                            "latency"
-                                        ][i]
-                                        == "NA"
-                                    ):
-                                        self.all_behavior_parameters[animal_name][behavior_name][
-                                            "latency"
-                                        ][i] = self.all_time[n]
+                                    if self.all_behavior_parameters[animal_name][behavior_name]["latency"][i] == "NA":
+                                        self.all_behavior_parameters[animal_name][behavior_name]["latency"][i] = (
+                                            self.all_time[n]
+                                        )
 
                                 if "3 length parameters" in parameter_to_analyze:
                                     heights_diffs = []
-                                    for h in self.animal_heights[animal_name][i][
-                                        n - self.length + 1 : n + 1
-                                    ]:
-                                        if (
-                                            h is None
-                                            or self.animal_heights[animal_name][i][n] is None
-                                        ):
+                                    for h in self.animal_heights[animal_name][i][n - self.length + 1 : n + 1]:
+                                        if h is None or self.animal_heights[animal_name][i][n] is None:
                                             height_diff = 0.0
                                         else:
-                                            height_diff = (
-                                                abs(h - self.animal_heights[animal_name][i][n]) / h
-                                            )
+                                            height_diff = abs(h - self.animal_heights[animal_name][i][n]) / h
                                         heights_diffs.append(height_diff)
                                     magnitude_length = max(heights_diffs)
                                     vigor_length = magnitude_length / (
@@ -2142,17 +1928,17 @@ class AnalyzeAnimalDetector:
                                     )
                                     intensity_length = sum(heights_diffs) / (self.length / self.fps)
                                     if magnitude_length > 0:
-                                        self.all_behavior_parameters[animal_name][behavior_name][
-                                            "magnitude_length"
-                                        ][i][n] = magnitude_length
+                                        self.all_behavior_parameters[animal_name][behavior_name]["magnitude_length"][i][
+                                            n
+                                        ] = magnitude_length
                                     if vigor_length > 0:
-                                        self.all_behavior_parameters[animal_name][behavior_name][
-                                            "vigor_length"
-                                        ][i][n] = vigor_length
+                                        self.all_behavior_parameters[animal_name][behavior_name]["vigor_length"][i][
+                                            n
+                                        ] = vigor_length
                                     if intensity_length > 0:
-                                        self.all_behavior_parameters[animal_name][behavior_name][
-                                            "intensity_length"
-                                        ][i][n] = intensity_length
+                                        self.all_behavior_parameters[animal_name][behavior_name]["intensity_length"][i][
+                                            n
+                                        ] = intensity_length
 
                                 if "4 locomotion parameters" in parameter_to_analyze:
                                     distance_traveled = 0.0
@@ -2173,9 +1959,7 @@ class AnalyzeAnimalDetector:
                                     end_center = self.animal_centers[animal_name][i][n]
                                     if end_center is not None:
                                         displacements = []
-                                        for ct in self.animal_centers[animal_name][i][
-                                            n - self.length + 1 : n + 1
-                                        ]:
+                                        for ct in self.animal_centers[animal_name][i][n - self.length + 1 : n + 1]:
                                             if ct is None:
                                                 displacements.append(0)
                                             else:
@@ -2183,17 +1967,15 @@ class AnalyzeAnimalDetector:
                                         displacement = max(displacements)
                                         if normalize_distance is True:
                                             displacement = displacement / calibrator
-                                        velocity = displacement / (
-                                            (self.length - np.argmax(displacements)) / self.fps
+                                        velocity = displacement / ((self.length - np.argmax(displacements)) / self.fps)
+                                        self.all_behavior_parameters[animal_name][behavior_name]["velocity"][i][n] = (
+                                            velocity
                                         )
-                                        self.all_behavior_parameters[animal_name][behavior_name][
-                                            "velocity"
-                                        ][i][n] = velocity
                                     velocities_max = []
                                     velocities_min = []
-                                    for v in self.all_behavior_parameters[animal_name][
-                                        behavior_name
-                                    ]["velocity"][i][n - self.length + 1 : n + 1]:
+                                    for v in self.all_behavior_parameters[animal_name][behavior_name]["velocity"][i][
+                                        n - self.length + 1 : n + 1
+                                    ]:
                                         if v != np.nan:
                                             velocities_max.append(v)
                                             velocities_min.append(v)
@@ -2204,22 +1986,14 @@ class AnalyzeAnimalDetector:
                                     vmin = min(velocities_min)
                                     if vmax != -float("inf") and vmin != float("inf"):
                                         if np.argmax(velocities_max) != np.argmin(velocities_min):
-                                            t = (
-                                                abs(
-                                                    np.argmax(velocities_max)
-                                                    - np.argmin(velocities_min)
-                                                )
-                                                / self.fps
-                                            )
-                                            self.all_behavior_parameters[animal_name][
-                                                behavior_name
-                                            ]["acceleration"][i][n] = (vmax - vmin) / t
-                                    self.all_behavior_parameters[animal_name][behavior_name][
-                                        "distance"
-                                    ][i] += distance_traveled
-                                    self.all_behavior_parameters[animal_name][behavior_name][
-                                        "speed"
-                                    ][i][n] = speed
+                                            t = abs(np.argmax(velocities_max) - np.argmin(velocities_min)) / self.fps
+                                            self.all_behavior_parameters[animal_name][behavior_name]["acceleration"][i][
+                                                n
+                                            ] = (vmax - vmin) / t
+                                    self.all_behavior_parameters[animal_name][behavior_name]["distance"][i] += (
+                                        distance_traveled
+                                    )
+                                    self.all_behavior_parameters[animal_name][behavior_name]["speed"][i][n] = speed
 
                                 if "3 areal parameters" in parameter_to_analyze:
                                     mask = np.zeros_like(self.background)
@@ -2228,9 +2002,7 @@ class AnalyzeAnimalDetector:
                                         cv2.drawContours(mask, [contour], 0, (255, 255, 255), -1)
                                         mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
                                         area_diffs = []
-                                        for ct in self.animal_contours[animal_name][i][
-                                            n - self.length + 1 : n + 1
-                                        ]:
+                                        for ct in self.animal_contours[animal_name][i][n - self.length + 1 : n + 1]:
                                             if ct is not None:
                                                 prev_mask = np.zeros_like(self.background)
                                                 cv2.drawContours(
@@ -2240,9 +2012,7 @@ class AnalyzeAnimalDetector:
                                                     (255, 255, 255),
                                                     -1,
                                                 )
-                                                prev_mask = cv2.cvtColor(
-                                                    prev_mask, cv2.COLOR_BGR2GRAY
-                                                )
+                                                prev_mask = cv2.cvtColor(prev_mask, cv2.COLOR_BGR2GRAY)
                                                 xlf1, ybt1, w, h = cv2.boundingRect(contour)
                                                 xrt1 = xlf1 + w
                                                 ytp1 = ybt1 + h
@@ -2257,61 +2027,49 @@ class AnalyzeAnimalDetector:
                                                 prev_mask = prev_mask[ybt:ytp, xlf:xrt]
                                                 diff = cv2.bitwise_xor(prev_mask, curr_mask)
                                                 # diff[diff!=0]=255
-                                                area_diff = (np.sum(diff) / 255) / (
-                                                    np.sum(prev_mask) / 255
-                                                )
+                                                area_diff = (np.sum(diff) / 255) / (np.sum(prev_mask) / 255)
                                                 area_diffs.append(area_diff)
                                         if len(area_diffs) > 0:
                                             magnitude_area = max(area_diffs)
                                             vigor_area = magnitude_area / (
                                                 (self.length - np.argmax(area_diffs)) / self.fps
                                             )
-                                            intensity_area = sum(area_diffs) / (
-                                                self.length / self.fps
-                                            )
+                                            intensity_area = sum(area_diffs) / (self.length / self.fps)
                                             if magnitude_area > 0:
-                                                self.all_behavior_parameters[animal_name][
-                                                    behavior_name
-                                                ]["magnitude_area"][i][n] = magnitude_area
+                                                self.all_behavior_parameters[animal_name][behavior_name][
+                                                    "magnitude_area"
+                                                ][i][n] = magnitude_area
                                             if vigor_area > 0:
-                                                self.all_behavior_parameters[animal_name][
-                                                    behavior_name
-                                                ]["vigor_area"][i][n] = vigor_area
+                                                self.all_behavior_parameters[animal_name][behavior_name]["vigor_area"][
+                                                    i
+                                                ][n] = vigor_area
                                             if intensity_area > 0:
-                                                self.all_behavior_parameters[animal_name][
-                                                    behavior_name
-                                                ]["intensity_area"][i][n] = intensity_area
+                                                self.all_behavior_parameters[animal_name][behavior_name][
+                                                    "intensity_area"
+                                                ][i][n] = intensity_area
 
                         else:
                             if "3 length parameters" in parameter_to_analyze:
                                 heights_diffs = []
-                                for h in self.animal_heights[animal_name][i][
-                                    n - self.length + 1 : n + 1
-                                ]:
+                                for h in self.animal_heights[animal_name][i][n - self.length + 1 : n + 1]:
                                     if h is None or self.animal_heights[animal_name][i][n] is None:
                                         height_diff = 0.0
                                     else:
-                                        height_diff = (
-                                            abs(h - self.animal_heights[animal_name][i][n]) / h
-                                        )
+                                        height_diff = abs(h - self.animal_heights[animal_name][i][n]) / h
                                     heights_diffs.append(height_diff)
                                 magnitude_length = max(heights_diffs)
-                                vigor_length = magnitude_length / (
-                                    (self.length - np.argmax(heights_diffs)) / self.fps
-                                )
+                                vigor_length = magnitude_length / ((self.length - np.argmax(heights_diffs)) / self.fps)
                                 intensity_length = sum(heights_diffs) / (self.length / self.fps)
                                 if magnitude_length > 0:
-                                    self.all_behavior_parameters[animal_name]["magnitude_length"][
-                                        i
-                                    ][n] = magnitude_length
+                                    self.all_behavior_parameters[animal_name]["magnitude_length"][i][n] = (
+                                        magnitude_length
+                                    )
                                 if vigor_length > 0:
-                                    self.all_behavior_parameters[animal_name]["vigor_length"][i][
-                                        n
-                                    ] = vigor_length
+                                    self.all_behavior_parameters[animal_name]["vigor_length"][i][n] = vigor_length
                                 if intensity_length > 0:
-                                    self.all_behavior_parameters[animal_name]["intensity_length"][
-                                        i
-                                    ][n] = intensity_length
+                                    self.all_behavior_parameters[animal_name]["intensity_length"][i][n] = (
+                                        intensity_length
+                                    )
 
                             if "4 locomotion parameters" in parameter_to_analyze:
                                 distance_traveled = 0.0
@@ -2332,9 +2090,7 @@ class AnalyzeAnimalDetector:
                                 end_center = self.animal_centers[animal_name][i][n]
                                 if end_center is not None:
                                     displacements = []
-                                    for ct in self.animal_centers[animal_name][i][
-                                        n - self.length + 1 : n + 1
-                                    ]:
+                                    for ct in self.animal_centers[animal_name][i][n - self.length + 1 : n + 1]:
                                         if ct is None:
                                             displacements.append(0)
                                         else:
@@ -2342,12 +2098,8 @@ class AnalyzeAnimalDetector:
                                     displacement = max(displacements)
                                     if normalize_distance is True:
                                         displacement = displacement / calibrator
-                                    velocity = displacement / (
-                                        (self.length - np.argmax(displacements)) / self.fps
-                                    )
-                                    self.all_behavior_parameters[animal_name]["velocity"][i][n] = (
-                                        velocity
-                                    )
+                                    velocity = displacement / ((self.length - np.argmax(displacements)) / self.fps)
+                                    self.all_behavior_parameters[animal_name]["velocity"][i][n] = velocity
                                 velocities_max = []
                                 velocities_min = []
                                 for v in self.all_behavior_parameters[animal_name]["velocity"][i][
@@ -2363,19 +2115,11 @@ class AnalyzeAnimalDetector:
                                 vmin = min(velocities_min)
                                 if vmax != -float("inf") and vmin != float("inf"):
                                     if np.argmax(velocities_max) != np.argmin(velocities_min):
-                                        t = (
-                                            abs(
-                                                np.argmax(velocities_max)
-                                                - np.argmin(velocities_min)
-                                            )
-                                            / self.fps
-                                        )
-                                        self.all_behavior_parameters[animal_name]["acceleration"][
-                                            i
-                                        ][n] = (vmax - vmin) / t
-                                self.all_behavior_parameters[animal_name]["distance"][i] += (
-                                    distance_traveled
-                                )
+                                        t = abs(np.argmax(velocities_max) - np.argmin(velocities_min)) / self.fps
+                                        self.all_behavior_parameters[animal_name]["acceleration"][i][n] = (
+                                            vmax - vmin
+                                        ) / t
+                                self.all_behavior_parameters[animal_name]["distance"][i] += distance_traveled
                                 self.all_behavior_parameters[animal_name]["speed"][i][n] = speed
 
                             if "3 areal parameters" in parameter_to_analyze:
@@ -2385,14 +2129,10 @@ class AnalyzeAnimalDetector:
                                     cv2.drawContours(mask, [contour], 0, (255, 255, 255), -1)
                                     mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
                                     area_diffs = []
-                                    for ct in self.animal_contours[animal_name][i][
-                                        n - self.length + 1 : n + 1
-                                    ]:
+                                    for ct in self.animal_contours[animal_name][i][n - self.length + 1 : n + 1]:
                                         if ct is not None:
                                             prev_mask = np.zeros_like(self.background)
-                                            cv2.drawContours(
-                                                prev_mask, [ct], 0, (255, 255, 255), -1
-                                            )
+                                            cv2.drawContours(prev_mask, [ct], 0, (255, 255, 255), -1)
                                             prev_mask = cv2.cvtColor(prev_mask, cv2.COLOR_BGR2GRAY)
                                             xlf1, ybt1, w, h = cv2.boundingRect(contour)
                                             xrt1 = xlf1 + w
@@ -2408,59 +2148,39 @@ class AnalyzeAnimalDetector:
                                             prev_mask = prev_mask[ybt:ytp, xlf:xrt]
                                             diff = cv2.bitwise_xor(prev_mask, curr_mask)
                                             # diff[diff!=0]=255
-                                            area_diff = (np.sum(diff) / 255) / (
-                                                np.sum(prev_mask) / 255
-                                            )
+                                            area_diff = (np.sum(diff) / 255) / (np.sum(prev_mask) / 255)
                                             area_diffs.append(area_diff)
                                     if len(area_diffs) > 0:
                                         magnitude_area = max(area_diffs)
-                                        vigor_area = magnitude_area / (
-                                            (self.length - np.argmax(area_diffs)) / self.fps
-                                        )
+                                        vigor_area = magnitude_area / ((self.length - np.argmax(area_diffs)) / self.fps)
                                         intensity_area = sum(area_diffs) / (self.length / self.fps)
                                         if magnitude_area > 0:
-                                            self.all_behavior_parameters[animal_name][
-                                                "magnitude_area"
-                                            ][i][n] = magnitude_area
+                                            self.all_behavior_parameters[animal_name]["magnitude_area"][i][n] = (
+                                                magnitude_area
+                                            )
                                         if vigor_area > 0:
-                                            self.all_behavior_parameters[animal_name]["vigor_area"][
-                                                i
-                                            ][n] = vigor_area
+                                            self.all_behavior_parameters[animal_name]["vigor_area"][i][n] = vigor_area
                                         if intensity_area > 0:
-                                            self.all_behavior_parameters[animal_name][
-                                                "intensity_area"
-                                            ][i][n] = intensity_area
+                                            self.all_behavior_parameters[animal_name]["intensity_area"][i][n] = (
+                                                intensity_area
+                                            )
 
                         n += 1
 
                     if self.categorize_behavior is True:
                         if "duration" in parameter_to_analyze:
                             for behavior_name in self.all_behavior_parameters[animal_name]:
-                                if (
-                                    self.all_behavior_parameters[animal_name][behavior_name][
-                                        "duration"
-                                    ][i]
-                                    != 0.0
-                                ):
-                                    self.all_behavior_parameters[animal_name][behavior_name][
-                                        "duration"
-                                    ][i] += round(self.length / self.fps, 2)
+                                if self.all_behavior_parameters[animal_name][behavior_name]["duration"][i] != 0.0:
+                                    self.all_behavior_parameters[animal_name][behavior_name]["duration"][i] += round(
+                                        self.length / self.fps, 2
+                                    )
                                 else:
-                                    self.all_behavior_parameters[animal_name][behavior_name][
-                                        "duration"
-                                    ][i] = "NA"
+                                    self.all_behavior_parameters[animal_name][behavior_name]["duration"][i] = "NA"
 
                         if "4 locomotion parameters" in parameter_to_analyze:
                             for behavior_name in self.all_behavior_parameters[animal_name]:
-                                if (
-                                    self.all_behavior_parameters[animal_name][behavior_name][
-                                        "distance"
-                                    ][i]
-                                    == 0.0
-                                ):
-                                    self.all_behavior_parameters[animal_name][behavior_name][
-                                        "distance"
-                                    ][i] = "NA"
+                                if self.all_behavior_parameters[animal_name][behavior_name]["distance"][i] == 0.0:
+                                    self.all_behavior_parameters[animal_name][behavior_name]["distance"][i] = "NA"
 
     def export_results(self, normalize_distance=True, parameter_to_analyze=[]):
         print("Quantifying behaviors...")
@@ -2522,18 +2242,14 @@ class AnalyzeAnimalDetector:
                         ]:
                             summary.append(
                                 pd.DataFrame.from_dict(
-                                    self.all_behavior_parameters[animal_name][behavior_name][
-                                        parameter_name
-                                    ],
+                                    self.all_behavior_parameters[animal_name][behavior_name][parameter_name],
                                     orient="index",
                                     columns=[parameter_name],
                                 ).reset_index(drop=True)
                             )
                         else:
                             individual_df = pd.DataFrame.from_dict(
-                                self.all_behavior_parameters[animal_name][behavior_name][
-                                    parameter_name
-                                ],
+                                self.all_behavior_parameters[animal_name][behavior_name][parameter_name],
                                 orient="index",
                                 columns=self.all_time,
                             )
@@ -2557,9 +2273,7 @@ class AnalyzeAnimalDetector:
                                     .rename(columns={0: parameter_name + "_min"})
                                 )
                             individual_df = pd.DataFrame(
-                                self.all_behavior_parameters[animal_name][behavior_name][
-                                    parameter_name
-                                ],
+                                self.all_behavior_parameters[animal_name][behavior_name][parameter_name],
                                 index=self.all_time,
                             )
                             individual_df.to_excel(
@@ -2687,10 +2401,7 @@ class AnalyzeAnimalDetector:
                 )
 
                 for animal_name in self.animal_kinds:
-                    if (
-                        frame_count_analyze >= self.length
-                        and frame_count_analyze % skip_redundant == 0
-                    ):
+                    if frame_count_analyze >= self.length and frame_count_analyze % skip_redundant == 0:
                         for n in self.animal_centers[animal_name]:
                             h = w = 0
 
@@ -2704,9 +2415,7 @@ class AnalyzeAnimalDetector:
                                     blob = extract_blob_background(
                                         f,
                                         self.animal_contours[animal_name][n][
-                                            frame_count_analyze
-                                            - self.length
-                                            + 1 : frame_count_analyze + 1
+                                            frame_count_analyze - self.length + 1 : frame_count_analyze + 1
                                         ],
                                         contour=contour,
                                         channel=3,
@@ -2748,9 +2457,7 @@ class AnalyzeAnimalDetector:
                                     pattern_image = generate_patternimage(
                                         self.background,
                                         self.animal_contours[animal_name][n][
-                                            frame_count_analyze
-                                            - self.length
-                                            + 1 : frame_count_analyze + 1
+                                            frame_count_analyze - self.length + 1 : frame_count_analyze + 1
                                         ],
                                         inners=self.animal_inners[animal_name][n],
                                         std=self.std,
@@ -2783,9 +2490,7 @@ class AnalyzeAnimalDetector:
                                     pattern_image = generate_patternimage(
                                         self.background,
                                         self.animal_contours[animal_name][n][
-                                            frame_count_analyze
-                                            - self.length
-                                            + 1 : frame_count_analyze + 1
+                                            frame_count_analyze - self.length + 1 : frame_count_analyze + 1
                                         ],
                                         inners=None,
                                         std=0,
@@ -2810,9 +2515,7 @@ class AnalyzeAnimalDetector:
                                     True,
                                 )
                                 for blob in animation:
-                                    writer.write(
-                                        cv2.resize(blob, (w, h), interpolation=cv2.INTER_AREA)
-                                    )
+                                    writer.write(cv2.resize(blob, (w, h), interpolation=cv2.INTER_AREA))
                                 writer.release()
 
                                 cv2.imwrite(path_pattern_image, pattern_image)
@@ -2878,11 +2581,7 @@ class AnalyzeAnimalDetector:
                     exclusion_mask = np.zeros(len(masks), dtype=bool)
                     exclusion_mask[
                         np.where(
-                            (
-                                np.sum(np.logical_and(masks[:, None], masks), axis=(2, 3))
-                                / mask_area[:, None]
-                                > 0.8
-                            )
+                            (np.sum(np.logical_and(masks[:, None], masks), axis=(2, 3)) / mask_area[:, None] > 0.8)
                             & (mask_area[:, None] < mask_area[None, :])
                         )[0]
                     ] = True
@@ -2898,17 +2597,11 @@ class AnalyzeAnimalDetector:
                         goodcontours = []
                         goodmasks = []
                         animal_number = int(self.animal_number[animal_name])
-                        animal_masks = [
-                            masks[a] for a, name in enumerate(classes) if name == animal_name
-                        ]
-                        animal_scores = [
-                            scores[a] for a, name in enumerate(classes) if name == animal_name
-                        ]
+                        animal_masks = [masks[a] for a, name in enumerate(classes) if name == animal_name]
+                        animal_scores = [scores[a] for a, name in enumerate(classes) if name == animal_name]
                         if len(animal_masks) > 0:
                             if len(animal_scores) > animal_number * 2:
-                                sorted_scores_indices = np.argsort(animal_scores)[
-                                    -int(animal_number * 2) :
-                                ]
+                                sorted_scores_indices = np.argsort(animal_scores)[-int(animal_number * 2) :]
                                 animal_masks = [animal_masks[x] for x in sorted_scores_indices]
                             for mask in animal_masks:
                                 mask = cv2.morphologyEx(
@@ -2921,9 +2614,7 @@ class AnalyzeAnimalDetector:
                                     cv2.RETR_EXTERNAL,
                                     cv2.CHAIN_APPROX_NONE,
                                 )
-                                goodcontours.append(
-                                    sorted(cnts, key=cv2.contourArea, reverse=True)[0]
-                                )
+                                goodcontours.append(sorted(cnts, key=cv2.contourArea, reverse=True)[0])
                                 goodmasks.append(mask)
                             areas = [cv2.contourArea(ct) for ct in goodcontours]
                             sorted_area_indices = np.argsort(np.array(areas))[-animal_number:]
@@ -2938,10 +2629,7 @@ class AnalyzeAnimalDetector:
                     temp_contours.append(contours)
                     temp_inners.append(inners)
 
-                    if (
-                        frame_count_analyze >= self.length
-                        and frame_count_analyze % skip_redundant == 0
-                    ):
+                    if frame_count_analyze >= self.length and frame_count_analyze % skip_redundant == 0:
                         (y_bt, y_tp, x_lf, x_rt) = crop_frame(
                             self.background,
                             functools.reduce(operator.iconcat, temp_contours, []),
@@ -3027,9 +2715,7 @@ class AnalyzeAnimalDetector:
                                 )
 
                             path_animation = os.path.join(self.results_path, "0", animation_name)
-                            path_pattern_image = os.path.join(
-                                self.results_path, "0", pattern_image_name
-                            )
+                            path_pattern_image = os.path.join(self.results_path, "0", pattern_image_name)
 
                             writer = cv2.VideoWriter(
                                 path_animation,
@@ -3124,11 +2810,7 @@ class AnalyzeAnimalDetector:
                     exclusion_mask = np.zeros(len(masks), dtype=bool)
                     exclusion_mask[
                         np.where(
-                            (
-                                np.sum(np.logical_and(masks[:, None], masks), axis=(2, 3))
-                                / mask_area[:, None]
-                                > 0.8
-                            )
+                            (np.sum(np.logical_and(masks[:, None], masks), axis=(2, 3)) / mask_area[:, None] > 0.8)
                             & (mask_area[:, None] < mask_area[None, :])
                         )[0]
                     ] = True
@@ -3148,12 +2830,8 @@ class AnalyzeAnimalDetector:
                         goodmasks = []
                         goodcontours = []
                         animal_number = int(self.animal_number[animal_name])
-                        animal_masks = [
-                            masks[a] for a, name in enumerate(classes) if name == animal_name
-                        ]
-                        animal_scores = [
-                            scores[a] for a, name in enumerate(classes) if name == animal_name
-                        ]
+                        animal_masks = [masks[a] for a, name in enumerate(classes) if name == animal_name]
+                        animal_scores = [scores[a] for a, name in enumerate(classes) if name == animal_name]
 
                         if len(animal_masks) == 0:
                             self.animal_present[animal_name] = 0
@@ -3167,9 +2845,7 @@ class AnalyzeAnimalDetector:
                                     self.animal_other_inners[animal_name][i].append([None])
                         else:
                             if len(animal_scores) > animal_number * 2:
-                                sorted_scores_indices = np.argsort(animal_scores)[
-                                    -int(animal_number * 2) :
-                                ]
+                                sorted_scores_indices = np.argsort(animal_scores)[-int(animal_number * 2) :]
                                 animal_masks = [animal_masks[x] for x in sorted_scores_indices]
                             for mask in animal_masks:
                                 mask = cv2.morphologyEx(
@@ -3183,9 +2859,7 @@ class AnalyzeAnimalDetector:
                                     cv2.RETR_EXTERNAL,
                                     cv2.CHAIN_APPROX_NONE,
                                 )
-                                goodcontours.append(
-                                    sorted(cnts, key=cv2.contourArea, reverse=True)[0]
-                                )
+                                goodcontours.append(sorted(cnts, key=cv2.contourArea, reverse=True)[0])
                             areas = [cv2.contourArea(ct) for ct in goodcontours]
                             sorted_area_indices = np.argsort(np.array(areas))[-animal_number:]
                             self.animal_present[animal_name] = len(sorted_area_indices)
@@ -3194,9 +2868,7 @@ class AnalyzeAnimalDetector:
                             if self.animal_area[animal_name] is None:
                                 self.animal_area[animal_name] = area
                             else:
-                                self.animal_area[animal_name] = (
-                                    self.animal_area[animal_name] + area
-                                ) / 2
+                                self.animal_area[animal_name] = (self.animal_area[animal_name] + area) / 2
                             average_area.append(self.animal_area[animal_name])
                             for x in sorted_area_indices:
                                 mask = goodmasks[x]
@@ -3215,17 +2887,11 @@ class AnalyzeAnimalDetector:
 
                     if len(all_centers) > 1:
                         centers_array = np.array(all_centers)
-                        distances_squared = np.sum(
-                            (centers_array[:, None] - centers_array) ** 2, axis=2
-                        )
+                        distances_squared = np.sum((centers_array[:, None] - centers_array) ** 2, axis=2)
                         determine = np.logical_and(
                             distances_squared > 0,
                             distances_squared
-                            < (
-                                math.sqrt(sum(average_area) / len(average_area))
-                                * self.social_distance
-                            )
-                            ** 2,
+                            < (math.sqrt(sum(average_area) / len(average_area)) * self.social_distance) ** 2,
                         )
                         other_contours = [
                             [all_contours[x] for x, determ in enumerate(determine[y]) if determ]
@@ -3237,9 +2903,7 @@ class AnalyzeAnimalDetector:
                                 for y, c in enumerate(all_centers)
                             ]
                         other_masks = [
-                            np.bitwise_or.reduce(np.stack(np.array(all_masks)[determine[x]]))
-                            if len(c) > 0
-                            else None
+                            np.bitwise_or.reduce(np.stack(np.array(all_masks)[determine[x]])) if len(c) > 0 else None
                             for x, c in enumerate(other_contours)
                         ]
                         for i, other_mask in enumerate(other_masks):
@@ -3251,13 +2915,9 @@ class AnalyzeAnimalDetector:
                                         cv2.COLOR_GRAY2BGR,
                                     )
                                     blob = cv2.add(blob, other_blob)
-                                    blob = np.uint8(
-                                        exposure.rescale_intensity(blob, out_range=(0, 255))
-                                    )
+                                    blob = np.uint8(exposure.rescale_intensity(blob, out_range=(0, 255)))
                             else:
-                                blob = np.uint8(
-                                    exposure.rescale_intensity(frame, out_range=(0, 255))
-                                )
+                                blob = np.uint8(exposure.rescale_intensity(frame, out_range=(0, 255)))
                             cv2.drawContours(blob, [all_contours[i]], 0, (255, 0, 255), 2)
                             all_blobs.append(blob)
 
@@ -3268,13 +2928,9 @@ class AnalyzeAnimalDetector:
                                 other_inners = [[None]]
                             if background_free is True:
                                 blob = frame * cv2.cvtColor(all_masks[0], cv2.COLOR_GRAY2BGR)
-                                blob = np.uint8(
-                                    exposure.rescale_intensity(blob, out_range=(0, 255))
-                                )
+                                blob = np.uint8(exposure.rescale_intensity(blob, out_range=(0, 255)))
                             else:
-                                blob = np.uint8(
-                                    exposure.rescale_intensity(frame, out_range=(0, 255))
-                                )
+                                blob = np.uint8(exposure.rescale_intensity(frame, out_range=(0, 255)))
                             cv2.drawContours(blob, [all_contours[0]], 0, (255, 0, 255), 2)
                             all_blobs.append(blob)
 
@@ -3293,13 +2949,9 @@ class AnalyzeAnimalDetector:
                                 animal_other_inners = other_inners[n:animal_length]
 
                             unused_existing_indices = list(self.animal_existingcenters[animal_name])
-                            existing_centers = list(
-                                self.animal_existingcenters[animal_name].values()
-                            )
+                            existing_centers = list(self.animal_existingcenters[animal_name].values())
                             unused_new_indices = list(range(len(animal_centers)))
-                            dt_flattened = distance.cdist(
-                                existing_centers, animal_centers
-                            ).flatten()
+                            dt_flattened = distance.cdist(existing_centers, animal_centers).flatten()
                             dt_sort_index = dt_flattened.argsort()
                             length = len(animal_centers)
 
@@ -3312,37 +2964,28 @@ class AnalyzeAnimalDetector:
                                         unused_new_indices.remove(index_in_new)
                                         self.to_deregister[animal_name][index_in_existing] = 0
                                         contour = animal_contours[index_in_new]
-                                        self.animal_contours[animal_name][index_in_existing].append(
-                                            contour
-                                        )
+                                        self.animal_contours[animal_name][index_in_existing].append(contour)
                                         center = animal_centers[index_in_new]
-                                        self.animal_centers[animal_name][index_in_existing].append(
-                                            center
+                                        self.animal_centers[animal_name][index_in_existing].append(center)
+                                        self.animal_existingcenters[animal_name][index_in_existing] = center
+                                        self.animal_other_contours[animal_name][index_in_existing].append(
+                                            animal_other_contours[index_in_new]
                                         )
-                                        self.animal_existingcenters[animal_name][
-                                            index_in_existing
-                                        ] = center
-                                        self.animal_other_contours[animal_name][
-                                            index_in_existing
-                                        ].append(animal_other_contours[index_in_new])
 
                                         self.animal_blobs[animal_name][index_in_existing].append(
                                             animal_blobs[index_in_new]
                                         )
                                         if self.include_bodyparts is True:
-                                            self.animal_inners[animal_name][
-                                                index_in_existing
-                                            ].append(animal_inners[index_in_new])
-                                            self.animal_other_inners[animal_name][
-                                                index_in_existing
-                                            ].append(animal_other_inners[index_in_new])
+                                            self.animal_inners[animal_name][index_in_existing].append(
+                                                animal_inners[index_in_new]
+                                            )
+                                            self.animal_other_inners[animal_name][index_in_existing].append(
+                                                animal_other_inners[index_in_new]
+                                            )
 
                             if len(unused_existing_indices) > 0:
                                 for i in unused_existing_indices:
-                                    if (
-                                        self.to_deregister[animal_name][i]
-                                        <= self.count_to_deregister
-                                    ):
+                                    if self.to_deregister[animal_name][i] <= self.count_to_deregister:
                                         self.to_deregister[animal_name][i] += 1
                                     else:
                                         self.animal_existingcenters[animal_name][i] = (
@@ -3372,9 +3015,7 @@ class AnalyzeAnimalDetector:
                                 total_contours = [i for i in total_contours if i is not None]
 
                                 if len(total_contours) > 0:
-                                    (y_bt, y_tp, x_lf, x_rt) = crop_frame(
-                                        self.background, total_contours
-                                    )
+                                    (y_bt, y_tp, x_lf, x_rt) = crop_frame(self.background, total_contours)
 
                                     h = w = 0
 
@@ -3430,9 +3071,7 @@ class AnalyzeAnimalDetector:
                                                 self.animal_contours[animal_name][n],
                                                 self.animal_other_contours[animal_name][n],
                                                 inners=self.animal_inners[animal_name][n],
-                                                other_inners=self.animal_other_inners[animal_name][
-                                                    n
-                                                ],
+                                                other_inners=self.animal_other_inners[animal_name][n],
                                                 std=self.std,
                                             )
                                         else:
@@ -3589,9 +3228,7 @@ class AnalyzeAnimalDetector:
                 for behavior_name in names_and_colors:
                     for animal_name in animal_kinds:
                         if animal_name in animal_to_include:
-                            animal_information[behavior_name][animal_name]["probability"][
-                                image_name
-                            ] = [[]]
+                            animal_information[behavior_name][animal_name]["probability"][image_name] = [[]]
                             animal_information[behavior_name][animal_name]["count"][image_name] = 0
 
             if imagewidth is not None:
@@ -3632,11 +3269,7 @@ class AnalyzeAnimalDetector:
                 exclusion_mask = np.zeros(len(masks), dtype=bool)
                 exclusion_mask[
                     np.where(
-                        (
-                            np.sum(np.logical_and(masks[:, None], masks), axis=(2, 3))
-                            / mask_area[:, None]
-                            > 0.8
-                        )
+                        (np.sum(np.logical_and(masks[:, None], masks), axis=(2, 3)) / mask_area[:, None] > 0.8)
                         & (mask_area[:, None] < mask_area[None, :])
                     )[0]
                 ] = True
@@ -3653,9 +3286,7 @@ class AnalyzeAnimalDetector:
                 for n, mask in enumerate(masks):
                     score = scores[n]
                     if score > detection_threshold:
-                        mask = cv2.morphologyEx(
-                            mask, cv2.MORPH_CLOSE, np.ones((kernel, kernel), np.uint8)
-                        )
+                        mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, np.ones((kernel, kernel), np.uint8))
                         cnts, _ = cv2.findContours(
                             (mask * 255).astype(np.uint8),
                             cv2.RETR_EXTERNAL,
@@ -3687,9 +3318,7 @@ class AnalyzeAnimalDetector:
                                 blob,
                             )
                         else:
-                            blob = cv2.resize(
-                                blob, (dim_conv, dim_conv), interpolation=cv2.INTER_AREA
-                            )
+                            blob = cv2.resize(blob, (dim_conv, dim_conv), interpolation=cv2.INTER_AREA)
                             if channel == 1:
                                 blob = cv2.cvtColor(blob, cv2.COLOR_BGR2GRAY)
                             blobs.append(img_to_array(blob))
@@ -3712,16 +3341,14 @@ class AnalyzeAnimalDetector:
                                         probability = prediction[0]
                                 else:
                                     probability = prediction[name_index]
-                                animal_information[behavior_name][animal_name]["probability"][
-                                    image_name
-                                ][0].append(probability)
+                                animal_information[behavior_name][animal_name]["probability"][image_name][0].append(
+                                    probability
+                                )
                             behavior_names = list(names_and_colors.keys())
                             if len(behavior_names) == 2:
                                 if prediction[0] > 0.5:
                                     if prediction[0] - (1 - prediction[0]) > uncertain:
-                                        animal_information[behavior_names[1]][animal_name]["count"][
-                                            image_name
-                                        ] += 1
+                                        animal_information[behavior_names[1]][animal_name]["count"][image_name] += 1
                                         if behavior_names[1] in colors:
                                             cv2.drawContours(
                                                 image,
@@ -3732,9 +3359,7 @@ class AnalyzeAnimalDetector:
                                             )
                                 if prediction[0] < 0.5:
                                     if (1 - prediction[0]) - prediction[0] > uncertain:
-                                        animal_information[behavior_names[0]][animal_name]["count"][
-                                            image_name
-                                        ] += 1
+                                        animal_information[behavior_names[0]][animal_name]["count"][image_name] += 1
                                         if behavior_names[0] in colors:
                                             cv2.drawContours(
                                                 image,
@@ -3745,9 +3370,9 @@ class AnalyzeAnimalDetector:
                                             )
                             else:
                                 if sorted(prediction)[-1] - sorted(prediction)[-2] > uncertain:
-                                    animal_information[behavior_names[np.argmax(prediction)]][
-                                        animal_name
-                                    ]["count"][image_name] += 1
+                                    animal_information[behavior_names[np.argmax(prediction)]][animal_name]["count"][
+                                        image_name
+                                    ] += 1
                                     cv2.drawContours(
                                         image,
                                         [contours[idx]],
@@ -3786,9 +3411,7 @@ class AnalyzeAnimalDetector:
         else:
             for behavior_name in names_and_colors:
                 for animal_name in animal_to_include:
-                    names = np.array(
-                        list(animal_information[behavior_name][animal_name]["count"].keys())
-                    )
+                    names = np.array(list(animal_information[behavior_name][animal_name]["count"].keys()))
                     results_df = pd.DataFrame.from_dict(
                         animal_information[behavior_name][animal_name]["count"],
                         orient="index",

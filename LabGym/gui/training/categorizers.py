@@ -113,9 +113,7 @@ class TrainCategorizers(LabGymWindow):
             self.text_categorizertype,
         )
 
-        self.text_categorizershape = self.module_text(
-            "Default: (width,height,channel) is (32,32,1) / (32,32,3)."
-        )
+        self.text_categorizershape = self.module_text("Default: (width,height,channel) is (32,32,1) / (32,32,3).")
         self.add_module(
             "Specify the input shape for\nAnimation Analyzer / Pattern Recognizer",
             self.set_categorizer_shape,
@@ -168,9 +166,7 @@ class TrainCategorizers(LabGymWindow):
         dialog = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
         if dialog.ShowModal() == wx.ID_OK:
             self.behavior_example_folder = dialog.GetPath()
-            self.text_inputexamples.SetLabel(
-                f"Path to sorted behavior examples: {self.behavior_example_folder}."
-            )
+            self.text_inputexamples.SetLabel(f"Path to sorted behavior examples: {self.behavior_example_folder}.")
         dialog.Destroy()
 
     def select_renamed_example_folder(self, event):
@@ -178,9 +174,7 @@ class TrainCategorizers(LabGymWindow):
         dialog = wx.DirDialog(self, "Select a new directory", "", style=wx.DD_DEFAULT_STYLE)
         if dialog.ShowModal() == wx.ID_OK:
             self.renamed_example_folder = dialog.GetPath()
-            self.text_renameexample.SetLabel(
-                f"Will copy and rename the examples to: {self.renamed_example_folder}."
-            )
+            self.text_renameexample.SetLabel(f"Will copy and rename the examples to: {self.renamed_example_folder}.")
         dialog.Destroy()
 
         dialog = wx.MessageDialog(
@@ -274,13 +268,9 @@ class TrainCategorizers(LabGymWindow):
                     self.social_distance = float("inf")
                 distance_dialog.Destroy()
         elif self.behavior_mode == BehaviorMode.STATIC_IMAGES:
-            self.text_length.SetLabel(
-                'No need to specify this since the selected behavior mode is "Static images".'
-            )
+            self.text_length.SetLabel('No need to specify this since the selected behavior mode is "Static images".')
 
-        PATTERN_RECOGNIZER_ONLY = (
-            "Categorizer (Pattern Recognizer only) (faster / a little less accurate)"
-        )
+        PATTERN_RECOGNIZER_ONLY = "Categorizer (Pattern Recognizer only) (faster / a little less accurate)"
         BOTH = "Categorizer (Animation Analyzer + Pattern Recognizer)"
         categorizer_types = [PATTERN_RECOGNIZER_ONLY]
         if self.behavior_mode != BehaviorMode.STATIC_IMAGES:
@@ -345,9 +335,7 @@ class TrainCategorizers(LabGymWindow):
             label_text += " to identify interactive behaviors of the individual and groups."
             label_text += f" Social Distance: {self.social_distance} folds of animal diameter."
         else:
-            label_text += (
-                " to identify non-interactive behaviors of each individual in static images."
-            )
+            label_text += " to identify non-interactive behaviors of each individual in static images."
 
         self.text_categorizertype.SetLabel(label_text)
 
@@ -441,9 +429,7 @@ class TrainCategorizers(LabGymWindow):
         )
         if dialog.ShowModal() == wx.ID_OK:
             self.behavior_length = max(int(dialog.GetValue()), 3)
-            self.text_length.SetLabel(
-                f"The duration of a behavior example is: {self.behavior_length}."
-            )
+            self.text_length.SetLabel(f"The duration of a behavior example is: {self.behavior_length}.")
         dialog.Destroy()
 
     def select_training_examples(self, event):
@@ -570,9 +556,7 @@ class TrainCategorizers(LabGymWindow):
             dialog2 = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
             if dialog2.ShowModal() == wx.ID_OK:
                 self.training_report_path = dialog2.GetPath()
-                self.text_report.SetLabel(
-                    f"Training reports will be in: {self.training_report_path}."
-                )
+                self.text_report.SetLabel(f"Training reports will be in: {self.training_report_path}.")
             dialog2.Destroy()
         else:
             self.training_report_path = None
@@ -744,9 +728,7 @@ class TestCategorizers(LabGymWindow):
                 self.path_to_categorizer = dialog1.GetPaths()
                 dialog1.Destroy()
 
-            self.text_selectcategorizer.SetLabel(
-                f"The path to the Categorizer to test is: {self.path_to_categorizer}."
-            )
+            self.text_selectcategorizer.SetLabel(f"The path to the Categorizer to test is: {self.path_to_categorizer}.")
         else:
             self.path_to_categorizer = os.path.join(str(CATEGORIZER_FOLDER), categorizer)
             self.text_selectcategorizer.SetLabel(f"Categorizer to test: {categorizer}.")
@@ -756,9 +738,7 @@ class TestCategorizers(LabGymWindow):
         dialog = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
         if dialog.ShowModal() == wx.ID_OK:
             self.file_path = dialog.GetPath()
-            self.text_inputexamples.SetLabel(
-                f"Path to ground-truth behavior examples: {self.file_path}."
-            )
+            self.text_inputexamples.SetLabel(f"Path to ground-truth behavior examples: {self.file_path}.")
         dialog.Destroy()
 
     def select_reportpath(self, event):

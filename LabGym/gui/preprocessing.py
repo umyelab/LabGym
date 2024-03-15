@@ -235,9 +235,7 @@ class PreprocessingModule(LabGymWindow):
         try:
             window_input: str = windows_dialog.GetValue()
             self.time_windows = self.parse_time_window_str(window_input)
-            self.text_duration.SetLabel(
-                f"The time windows to form the new, trimmed video: {self.time_windows}."
-            )
+            self.text_duration.SetLabel(f"The time windows to form the new, trimmed video: {self.time_windows}.")
         except ValueError as err:
             self.trim_video = False
             self.text_duration.SetLabel("Not to trim the videos.")
@@ -450,9 +448,7 @@ class PreprocessingModule(LabGymWindow):
                 continue
 
             self.enhance_contrast = True
-            self.text_enhancecontrast.SetLabel(
-                f"The contrast enhancement fold change is: {self.contrast}."
-            )
+            self.text_enhancecontrast.SetLabel(f"The contrast enhancement fold change is: {self.contrast}.")
             confirm.Destroy()
             dialog.Destroy()
             cv2.destroyAllWindows()
@@ -531,9 +527,7 @@ class PreprocessingModule(LabGymWindow):
             ValueError: There was an error parsing the file path.
         """
         video = Path(video_path)
-        parts = [
-            part for part in video.stem.split("_") if part.startswith("st") or part.startswith("ed")
-        ]
+        parts = [part for part in video.stem.split("_") if part.startswith("st") or part.startswith("ed")]
 
         windows = []
         for i in range(0, len(parts), 2):

@@ -78,18 +78,14 @@ class data_mining:
                     parameters.append(parameter)
                     pvalues.append(result.pvalue)
 
-                    stat_info = pd.DataFrame(
-                        {"p-value": pvalues}, index=parameters
-                    )  # parameter and associated p-value
+                    stat_info = pd.DataFrame({"p-value": pvalues}, index=parameters)  # parameter and associated p-value
                     stat_info.to_excel(self.writer, sheet_name=behavior, startrow=startrow)
 
                     significant_data = pd.DataFrame(
                         (setA, setB)
                     ).transpose()  # print out the datasets with significant findings
                     significant_data.columns = self.file_names
-                    significant_data.to_excel(
-                        self.writer, sheet_name=behavior, startrow=startrow, startcol=3
-                    )
+                    significant_data.to_excel(self.writer, sheet_name=behavior, startrow=startrow, startcol=3)
 
                     sheet = self.writer.sheets[behavior]
                     sheet.write_string(startrow, 0, test)
@@ -131,18 +127,14 @@ class data_mining:
                     pvalues.append(result.pvalue)
                     parameters.append(parameter)
 
-                    stat_info = pd.DataFrame(
-                        {"p-value": pvalues}, index=parameters
-                    )  # parameter and associated p-value
+                    stat_info = pd.DataFrame({"p-value": pvalues}, index=parameters)  # parameter and associated p-value
                     stat_info.to_excel(self.writer, sheet_name=behavior, startrow=startrow)
 
                     significant_data = pd.DataFrame(
                         dataset
                     ).transpose()  # print out the datasets with significant findings
                     significant_data.columns = self.file_names
-                    significant_data.to_excel(
-                        self.writer, sheet_name=behavior, startrow=startrow, startcol=8
-                    )
+                    significant_data.to_excel(self.writer, sheet_name=behavior, startrow=startrow, startcol=8)
 
                     if test == "ANOVA":
                         if self.control == None:
@@ -171,9 +163,7 @@ class data_mining:
                         posthoc_name = "Dunn"
                         posthoc = pd.DataFrame(dunn)
 
-                    posthoc.to_excel(
-                        self.writer, sheet_name=behavior, startrow=startrow, startcol=3
-                    )
+                    posthoc.to_excel(self.writer, sheet_name=behavior, startrow=startrow, startcol=3)
                     sheet = self.writer.sheets[behavior]
                     sheet.write_string(startrow, 0, test)
                     sheet.write_string(startrow, 3, posthoc_name + "'s post-hoc")

@@ -43,17 +43,13 @@ class MineResults(wx.Frame):
         boxsizer = wx.BoxSizer(wx.VERTICAL)
 
         module_inputfolder = wx.BoxSizer(wx.HORIZONTAL)
-        button_inputfolder = wx.Button(
-            panel, label="Select the folder that stores\nthe data files", size=(300, 40)
-        )
+        button_inputfolder = wx.Button(panel, label="Select the folder that stores\nthe data files", size=(300, 40))
         button_inputfolder.Bind(wx.EVT_BUTTON, self.select_filepath)
         wx.Button.SetToolTip(
             button_inputfolder,
             "Put all folders that store analysis results (each folder contains one raster plot) for control / experimental groups into this folder.",
         )
-        self.text_inputfolder = wx.StaticText(
-            panel, label="None.", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
-        )
+        self.text_inputfolder = wx.StaticText(panel, label="None.", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END)
         module_inputfolder.Add(button_inputfolder, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
         module_inputfolder.Add(self.text_inputfolder, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
         boxsizer.Add(0, 10, 0)
@@ -88,9 +84,7 @@ class MineResults(wx.Frame):
             button_outputfolder,
             "A spreadsheet containing all data mining results will be stored in this folder.",
         )
-        self.text_outputfolder = wx.StaticText(
-            panel, label="None.", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END
-        )
+        self.text_outputfolder = wx.StaticText(panel, label="None.", style=wx.ALIGN_LEFT | wx.ST_ELLIPSIZE_END)
         module_outputfolder.Add(button_outputfolder, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
         module_outputfolder.Add(self.text_outputfolder, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
         boxsizer.Add(module_outputfolder, 0, wx.LEFT | wx.RIGHT | wx.EXPAND, 10)
@@ -112,9 +106,7 @@ class MineResults(wx.Frame):
         self.Show(True)
 
     def select_filepath(self, event):
-        dialog = wx.MessageDialog(
-            self, "Is the data paired?", "Paired data?", wx.YES_NO | wx.ICON_QUESTION
-        )
+        dialog = wx.MessageDialog(self, "Is the data paired?", "Paired data?", wx.YES_NO | wx.ICON_QUESTION)
         if dialog.ShowModal() == wx.ID_YES:
             self.paired = True
         else:
@@ -135,11 +127,7 @@ class MineResults(wx.Frame):
             self,
             "Select the folder for the control group.",
             "Ignore if you wish to compare all groups",
-            choices=[
-                i
-                for i in os.listdir(self.file_path)
-                if os.path.isdir(os.path.join(self.file_path, i))
-            ],
+            choices=[i for i in os.listdir(self.file_path) if os.path.isdir(os.path.join(self.file_path, i))],
             style=wx.DD_DEFAULT_STYLE,
         )
         if dialog.ShowModal() == wx.ID_OK:
@@ -164,11 +152,7 @@ class MineResults(wx.Frame):
         filelist = {}
         df = {}
         for i in os.listdir(folder):
-            if (
-                i.endswith("_summary.xlsx")
-                or i.endswith("_summary.xls")
-                or i.endswith("_summary.XLS")
-            ):
+            if i.endswith("_summary.xlsx") or i.endswith("_summary.xls") or i.endswith("_summary.XLS"):
                 behavior_name = i.split("_")[-2]
                 filelist[behavior_name] = os.path.join(folder, i)
         if len(filelist) == 0:

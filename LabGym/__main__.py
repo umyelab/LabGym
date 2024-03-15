@@ -22,9 +22,7 @@ def main() -> None:
             else:
                 upgrade_command = "python3 -m pip install --upgrade LabGym"
 
-            print(
-                f"You are using LabGym {current_version}, but version {latest_version} is available."
-            )
+            print(f"You are using LabGym {current_version}, but version {latest_version} is available.")
             print(f"Consider upgrading LabGym by using the command '{upgrade_command}'.")
             print("For the details of new changes, check https://github.com/umyelab/LabGym.\n")
     except URLError:
