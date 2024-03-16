@@ -1193,3 +1193,9 @@ def get_dropped_frames(n: int, reduction_factor: float) -> list[int]:
     num_dropped_frames = int(n * (1 - 1 / reduction_factor))
     block_size = n / (n * (1 - 1 / reduction_factor) - 1)
     return [round(block_size * i) for i in range(num_dropped_frames)]
+
+
+class DetectronImportError(ImportError):
+    """Raised when unable to import Detectron2."""
+
+    pass

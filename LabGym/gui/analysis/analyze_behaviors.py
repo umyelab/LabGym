@@ -25,12 +25,9 @@ import torch
 import wx
 
 from LabGym.analyzebehaviors import AnalyzeAnimal
-from LabGym.analyzebehaviorsdetector import (
-    DETECTOR_FOLDER,
-    AnalyzeAnimalDetector,
-    get_detector_names,
-)
+from LabGym.analyzebehaviorsdetector import AnalyzeAnimalDetector
 from LabGym.categorizers import CATEGORIZER_FOLDER, get_categorizer_names
+from LabGym.detector import Detector, get_detector_names
 from LabGym.gui.utils import WX_IMAGE_WILDCARD, WX_VIDEO_WILDCARD, LabGymWindow
 from LabGym.tools import plot_evnets
 
@@ -618,15 +615,15 @@ class AnalyzeBehaviors(LabGymWindow):
                     choices=detectors,
                 )
                 if dialog1.ShowModal() == wx.ID_OK:
-                    detector = dialog1.GetStringSelection()
-                    if detector == "Choose a new directory of the Detector":
+                    detector_name = dialog1.GetStringSelection()
+                    if detector_name == "Choose a new directory of the Detector":
                         dialog2 = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
                         if dialog2.ShowModal() == wx.ID_OK:
-                            self.path_to_detector = dialog2.GetPaths()
+                            self.detector = Detector(path=dialog2.GetPath())
                         dialog2.Destroy()
                     else:
-                        self.path_to_detector = os.path.join(str(DETECTOR_FOLDER), detector)
-                    with open(os.path.join(self.path_to_detector, "model_parameters.txt")) as f:
+                        self.detector = Detector(name=detector_name)
+                    with open(self.detector.path / "model_parameters.txt") as f:
                         model_parameters = f.read()
                     animal_names = json.loads(model_parameters)["animal_names"]
                     if len(animal_names) > 1:
@@ -658,7 +655,7 @@ class AnalyzeBehaviors(LabGymWindow):
                             self.detection_threshold = detection_threshold / 100
                         self.text_detection.SetLabel(
                             "Detector: "
-                            + detector
+                            + detector_name
                             + " (detection threshold: "
                             + str(detection_threshold)
                             + "%); The animals/objects: "
@@ -677,7 +674,7 @@ class AnalyzeBehaviors(LabGymWindow):
                             + "."
                         )
                         self.text_detection.SetLabel(
-                            "Detector: " + detector + "; " + "The animals/objects: " + str(self.animal_kinds) + "."
+                            "Detector: " + detector_name + "; " + "The animals/objects: " + str(self.animal_kinds) + "."
                         )
                 dialog1.Destroy()
 
@@ -1109,7 +1106,7 @@ class AnalyzeBehaviors(LabGymWindow):
                 else:
                     AAD = AnalyzeAnimalDetector()
                     AAD.analyze_images_individuals(
-                        self.path_to_detector,
+                        str(self.detector.path),
                         self.path_to_videos,
                         self.result_path,
                         self.animal_kinds,
@@ -1237,7 +1234,7 @@ class AnalyzeBehaviors(LabGymWindow):
                     else:
                         AAD = AnalyzeAnimalDetector()
                         AAD.prepare_analysis(
-                            self.path_to_detector,
+                            str(self.detector.path),
                             i,
                             self.result_path,
                             self.animal_number,
