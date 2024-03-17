@@ -16,6 +16,8 @@ USA
 Email: bingye@umich.edu
 """
 
+from LabGym.tools import DetectronImportError
+
 
 def test_import_gui() -> None:
     """Ensure that importing LabGym.gui works.
@@ -24,4 +26,7 @@ def test_import_gui() -> None:
     which will catch basic syntax errors and compatibility errors between
     Python 3.9 and 3.10.
     """
-    from LabGym import gui  # noqa: F401
+    try:
+        from LabGym import gui  # noqa: F401
+    except DetectronImportError:
+        print("Detectron2 not installed! This is expected behavior.")
