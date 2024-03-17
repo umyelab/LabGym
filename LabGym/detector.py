@@ -75,33 +75,43 @@ class Detector:
             raise ValueError("Must specify either name or path, but not both.")
 
     @property
-    def model_parameters(self) -> dict:
+    def model_parameters(self) -> dict | None:
         """The model parameters dictionary."""
 
         # Only load the model parameters file once
         if self._model_parameters is None:
             model_parameters_file = self.path / "model_parameters.txt"
-            with open(model_parameters_file) as f:
-                self._model_parameters = json.loads(f.read())
+            try:
+                with open(model_parameters_file) as f:
+                    self._model_parameters = json.loads(f.read())
+            except FileNotFoundError:
+                # Detector hasn't been created yet
+                return None
         return self._model_parameters
 
     @property
-    def animal_mapping(self) -> dict[str, str]:
+    def animal_mapping(self) -> dict[str, str] | None:
         """The mapping between ID numbers and animal names.
 
         Note that the ID numbers are stored as strings, not ints, so
         it will be necessary to convert types.
         """
+        if self.model_parameters is None:
+            return None
         return self.model_parameters["animal_mapping"]
 
     @property
-    def animal_names(self) -> list[str]:
+    def animal_names(self) -> list[str] | None:
         """The names of the animals/objects associated with this Detector."""
+        if self.model_parameters is None:
+            return None
         return self.model_parameters["animal_names"]
 
     @property
-    def inferencing_framesize(self) -> int:
+    def inferencing_framesize(self) -> int | None:
         """The inferencing frame size of the Detector."""
+        if self.model_parameters is None:
+            return None
         return int(self.model_parameters["inferencing_framesize"])
 
     @property
