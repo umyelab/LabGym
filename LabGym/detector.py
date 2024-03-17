@@ -74,10 +74,6 @@ class Detector:
         else:
             raise ValueError("Must specify either name or path, but not both.")
 
-    def __str__(self) -> str:
-        """Return the name of the Detector."""
-        return self.path.name
-
     @property
     def model_parameters(self) -> dict:
         """The model parameters dictionary."""
@@ -119,6 +115,14 @@ class Detector:
             DetectionCheckpointer(self._model).load(str(self.path / "model_final.pth"))
             self._model.eval()
         return self._model
+
+    def __str__(self) -> str:
+        """Return the name of the Detector."""
+        return self.path.name
+
+    def __call__(self, *args, **kw):
+        """Run the Detector on the given inputs."""
+        return self.model(*args, **kw)
 
     def train(
         self,
