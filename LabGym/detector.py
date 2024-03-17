@@ -16,6 +16,8 @@ USA
 Email: bingye@umich.edu
 """
 
+from __future__ import annotations
+
 import json
 import os
 import shutil
@@ -23,6 +25,8 @@ from pathlib import Path
 
 import cv2
 import torch
+from detectron2.modeling import build_model
+from torch import nn
 
 from LabGym.tools import DetectronImportError
 
@@ -56,6 +60,11 @@ class Detector:
     """
 
     def __init__(self, name: str | None = None, path: str | None = None) -> None:
+        # Load the model parameters and model only once (see model_parameters()
+        # and model() for more information).
+        self._model_parameters = None
+        self._model: nn.Module | None = None
+
         if name is None and path is not None:
             self.path = Path(path)
             if not self.path.is_dir():
@@ -70,12 +79,46 @@ class Detector:
         return self.path.name
 
     @property
+    def model_parameters(self) -> dict:
+        """The model parameters dictionary."""
+
+        # Only load the model parameters file once
+        if self._model_parameters is None:
+            model_parameters_file = self.path / "model_parameters.txt"
+            with open(model_parameters_file) as f:
+                self._model_parameters = json.loads(f.read())
+        return self._model_parameters
+
+    @property
+    def animal_mapping(self) -> dict[str, str]:
+        """The mapping between ID numbers and animal names.
+
+        Note that the ID numbers are stored as strings, not ints, so
+        it will be necessary to convert types.
+        """
+        return self.model_parameters["animal_mapping"]
+
+    @property
     def animal_names(self) -> list[str]:
-        """The names of the animals associated with this Detector."""
-        animal_mapping = self.path / "model_parameters.txt"
-        with open(animal_mapping) as f:
-            model_parameters = f.read()
-        return json.loads(model_parameters)["animal_names"]
+        """The names of the animals/objects associated with this Detector."""
+        return self.model_parameters["animal_names"]
+
+    @property
+    def inferencing_framesize(self) -> int:
+        """The inferencing frame size of the Detector."""
+        return int(self.model_parameters["inferencing_framesize"])
+
+    @property
+    def model(self) -> nn.Module:
+        """The Detector model."""
+        if self._model is None:
+            cfg = get_cfg()
+            cfg.merge_from_file(str(self.path / "config.yaml"))
+            cfg.MODEL.DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+            self._model = build_model(cfg)
+            DetectionCheckpointer(self._model).load(str(self.path / "model_final.pth"))
+            self._model.eval()
+        return self._model
 
     def train(
         self,
