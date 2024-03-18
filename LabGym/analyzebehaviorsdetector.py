@@ -19,7 +19,6 @@ Email: bingye@umich.edu
 import datetime
 import functools
 import gc
-import json
 import math
 import operator
 import os
@@ -35,14 +34,9 @@ from skimage import exposure
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array
 
-from .tools import *
+from LabGym.detector import Detector
 
-try:
-    from detectron2.checkpoint import DetectionCheckpointer
-    from detectron2.config import get_cfg
-    from detectron2.modeling import build_model
-except ImportError:
-    raise DetectronImportError
+from .tools import *
 
 
 class AnalyzeAnimalDetector:
@@ -118,23 +112,10 @@ class AnalyzeAnimalDetector:
         print("Preparation started...")
         print(datetime.datetime.now())
 
-        config = os.path.join(path_to_detector, "config.yaml")
-        detector = os.path.join(path_to_detector, "model_final.pth")
-        animalmapping = os.path.join(path_to_detector, "model_parameters.txt")
-        with open(animalmapping) as f:
-            model_parameters = f.read()
-        self.animal_mapping = json.loads(model_parameters)["animal_mapping"]
-        animal_names = json.loads(model_parameters)["animal_names"]
-        dt_infersize = int(json.loads(model_parameters)["inferencing_framesize"])
-        print("The total categories of animals / objects in this Detector: " + str(animal_names))
-        print("The animals / objects of interest in this Detector: " + str(animal_kinds))
-        print("The inferencing framesize of this Detector: " + str(dt_infersize))
-        cfg = get_cfg()
-        cfg.merge_from_file(config)
-        cfg.MODEL.DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-        self.detector = build_model(cfg)
-        DetectionCheckpointer(self.detector).load(detector)
-        self.detector.eval()
+        self.detector = Detector(path=path_to_detector)
+        print(f"The total categories of animals / objects in this Detector: {self.detector.animal_names}")
+        print(f"The animals / objects of interest in this Detector: {animal_kinds}")
+        print(f"The inferencing framesize of this Detector: {self.detector.inferencing_framesize}")
 
         self.path_to_video = path_to_video
         self.basename = os.path.basename(self.path_to_video)
@@ -2985,22 +2966,10 @@ class AnalyzeAnimalDetector:
         print("Preparation started...")
         print(datetime.datetime.now())
 
-        config = os.path.join(path_to_detector, "config.yaml")
-        animalmapping = os.path.join(path_to_detector, "model_parameters.txt")
-        with open(animalmapping) as f:
-            model_parameters = f.read()
-        animal_mapping = json.loads(model_parameters)["animal_mapping"]
-        animal_names = json.loads(model_parameters)["animal_names"]
-        dt_infersize = int(json.loads(model_parameters)["inferencing_framesize"])
-        print("The total categories of animals / objects in this Detector: " + str(animal_names))
-        print("The animals / objects of interest in this Detector: " + str(animal_kinds))
-        print("The inferencing framesize of this Detector: " + str(dt_infersize))
-        cfg = get_cfg()
-        cfg.merge_from_file(config)
-        cfg.MODEL.DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-        detector = build_model(cfg)
-        DetectionCheckpointer(detector).load(os.path.join(path_to_detector, "model_final.pth"))
-        detector.eval()
+        detector = Detector(path=path_to_detector)
+        print(f"The total categories of animals / objects in this Detector: {detector.animal_names}")
+        print(f"The animals / objects of interest in this Detector: {animal_kinds}")
+        print(f"The inferencing framesize of this Detector: {detector.inferencing_framesize}")
 
         if social_distance == 0:
             social_distance = float("inf")
