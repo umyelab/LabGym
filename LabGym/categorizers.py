@@ -18,8 +18,6 @@ Email: bingye@umich.edu
 
 import matplotlib
 
-from .tools import *
-
 matplotlib.use("Agg")
 import datetime
 import os
@@ -59,6 +57,8 @@ from tensorflow.keras.layers import (
 from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.optimizers import SGD
 from tensorflow.keras.preprocessing.image import img_to_array
+
+from LabGym.tools import *
 
 CATEGORIZER_FOLDER = Path(__file__).resolve().parent / "models"
 

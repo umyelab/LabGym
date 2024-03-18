@@ -35,8 +35,7 @@ from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array
 
 from LabGym.detector import Detector
-
-from .tools import *
+from LabGym.tools import *
 
 
 class AnalyzeAnimalDetector:
