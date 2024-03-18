@@ -235,7 +235,7 @@ class Detector:
         with open(config, "w") as f:
             f.write(cfg.dump())
 
-    def test(self, annotation_path: str, testing_images_folder: str, results_folder: str) -> None:
+    def test(self, annotation_path: str, testing_images_folder: str, results_folder: str) -> float:
         """Test this Detector with the given testing images.
 
         Args:
@@ -245,6 +245,10 @@ class Detector:
                 The path to the folder containing the testing images.
             results_folder:
                 The folder to store the testing results.
+
+        Returns:
+            The mean average precision (mAP) of the Detector on the given
+            testing data.
         """
         if "LabGym_detector_test" in DatasetCatalog.list():
             DatasetCatalog.remove("LabGym_detector_test")
@@ -280,9 +284,7 @@ class Detector:
         val_loader = build_detection_test_loader(cfg, "LabGym_detector_test")
         inference_on_dataset(predictor.model, val_loader, evaluator)
         mAP = evaluator._results["bbox"]["AP"]
-        print(f"The mean average precision (mAP) of the Detector is: {mAP:.4f}" + "%.")
-
-        print("Detector testing completed!")
+        return mAP
 
     def delete(self) -> None:
         """Permanently delete this detector."""

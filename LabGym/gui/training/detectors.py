@@ -524,11 +524,13 @@ class TestDetectors(LabGymWindow):
                 wx.OK | wx.ICON_ERROR,
             )
         else:
-            self.detector.test(
+            mAP = self.detector.test(
                 self.path_to_annotation,
                 self.path_to_testingimages,
                 self.results_folder,
             )
+            print(f"The mean average precision (mAP) of the Detector is: {mAP:.4f}%.")
+            print("Detector testing completed!")
 
     def delete_detector(self, event):
         """Delete a Detector."""
