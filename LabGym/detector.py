@@ -36,6 +36,7 @@ try:
         MetadataCatalog,
         build_detection_test_loader,
     )
+    from detectron2.data.datasets import register_coco_instances
     from detectron2.engine import DefaultPredictor, DefaultTrainer
     from detectron2.evaluation import COCOEvaluator, inference_on_dataset
     from detectron2.modeling import build_model
@@ -53,8 +54,19 @@ class Detector:
     Attributes:
         path:
             The path to the Detector.
+        model_parameters:
+            The model parameters dictionary. This attribute will be None if
+            the Detector hasn't been loaded from a folder.
+        animal_mapping:
+            The mapping between ID numbers and animal names. This attribute
+            will be None if the Detector hasn't been loaded from a folder.
         animal_names:
-            The names of the animals associated with this Detector.
+            The names of the animals/objects associated with this Detector.
+            This attribute will be None if the Detector hasn't been loaded
+            from a folder.
+        inferencing_framesize:
+            The inferencing frame size of the Detector. This attribute
+            will be None if the Detector hasn't been loaded from a folder.
     """
 
     def __init__(self, name: str | None = None, path: str | None = None) -> None:
