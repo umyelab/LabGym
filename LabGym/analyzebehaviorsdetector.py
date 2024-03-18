@@ -116,6 +116,7 @@ class AnalyzeAnimalDetector:
         print(f"The total categories of animals / objects in this Detector: {self.detector.animal_names}")
         print(f"The animals / objects of interest in this Detector: {animal_kinds}")
         print(f"The inferencing framesize of this Detector: {self.detector.inferencing_framesize}")
+        self.animal_mapping = self.detector.animal_mapping
 
         self.path_to_video = path_to_video
         self.basename = os.path.basename(self.path_to_video)
@@ -2970,6 +2971,7 @@ class AnalyzeAnimalDetector:
         print(f"The total categories of animals / objects in this Detector: {detector.animal_names}")
         print(f"The animals / objects of interest in this Detector: {animal_kinds}")
         print(f"The inferencing framesize of this Detector: {detector.inferencing_framesize}")
+        animal_mapping = detector.animal_mapping
 
         if social_distance == 0:
             social_distance = float("inf")
