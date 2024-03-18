@@ -294,7 +294,11 @@ class TrainDetectors(LabGymWindow):
         )
         if dialog.ShowModal() == wx.ID_OK:
             self.path_to_annotation = dialog.GetPath()
-            class_names = get_annotation_class_names(self.path_to_annotation)
+            try:
+                class_names = get_annotation_class_names(self.path_to_annotation)
+            except ValueError as err:
+                wx.MessageBox(str(err), "Error", wx.OK | wx.ICON_ERROR)
+                return
             self.text_selectannotation.SetLabel(f"Animal/object categories in annotation file: {class_names}.")
         dialog.Destroy()
 
@@ -498,7 +502,11 @@ class TestDetectors(LabGymWindow):
         )
         if dialog.ShowModal() == wx.ID_OK:
             self.path_to_annotation = dialog.GetPath()
-            class_names = get_annotation_class_names(self.path_to_annotation)
+            try:
+                class_names = get_annotation_class_names(self.path_to_annotation)
+            except ValueError as err:
+                wx.MessageBox(str(err), "Error", wx.OK | wx.ICON_ERROR)
+                return
             self.text_selectannotation.SetLabel(f"Animal/object categories in annotation file: {class_names}.")
         dialog.Destroy()
 

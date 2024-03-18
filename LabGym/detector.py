@@ -310,7 +310,11 @@ def get_annotation_class_names(annotation_path: str) -> list[str]:
     with open(annotation_path) as f:
         info = json.load(f)
     classnames = []
-    for category in info["categories"]:
-        if category["id"] > 0:
-            classnames.append(category["name"])
+    try:
+        for category in info["categories"]:
+            if category["id"] > 0:
+                classnames.append(category["name"])
+    except (TypeError, KeyError):
+        raise ValueError("Invalid COCO annotation file.")
+
     return classnames
