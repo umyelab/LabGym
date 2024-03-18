@@ -25,10 +25,7 @@ from pathlib import Path
 
 import cv2
 import torch
-from detectron2.modeling import build_model
 from torch import nn
-
-from LabGym.tools import DetectronImportError
 
 try:
     from detectron2 import model_zoo
@@ -39,12 +36,13 @@ try:
         MetadataCatalog,
         build_detection_test_loader,
     )
-    from detectron2.data.datasets import register_coco_instances
     from detectron2.engine import DefaultPredictor, DefaultTrainer
     from detectron2.evaluation import COCOEvaluator, inference_on_dataset
+    from detectron2.modeling import build_model
     from detectron2.utils.visualizer import Visualizer
 except ImportError:
-    raise DetectronImportError
+    print("You need to install Detectron2 to use the Detector module in LabGym:")
+    print("https://detectron2.readthedocs.io/en/latest/tutorials/install.html")
 
 DETECTOR_FOLDER = Path(__file__).resolve().parent / "detectors"
 

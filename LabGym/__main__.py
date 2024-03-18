@@ -5,13 +5,7 @@ from urllib.error import URLError
 
 from packaging import version
 
-from LabGym.tools import DetectronImportError
-
-USING_DETECTRON = True
-try:
-    from LabGym import __version__, gui
-except DetectronImportError:
-    USING_DETECTRON = False
+from LabGym import __version__, gui
 
 
 def main() -> None:
@@ -35,9 +29,6 @@ def main() -> None:
         print("Unable to check for new versions of LabGym!")
         print("Please check https://github.com/umyelab/LabGym for updates.\n")
 
-    if not USING_DETECTRON:
-        print("You need to install Detectron2 to use the Detector module in LabGym:")
-        print("https://detectron2.readthedocs.io/en/latest/tutorials/install.html")
 
     gui.gui()
 
