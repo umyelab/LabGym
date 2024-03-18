@@ -306,6 +306,7 @@ def get_annotation_class_names(annotation_path: str) -> list[str]:
     Raises:
         FileNotFoundError: The annotation file doesn't exist (this should
             be taken care of by the file selection GUI).
+        ValueError: The COCO annotation file is in an invalid format.
     """
     with open(annotation_path) as f:
         info = json.load(f)
