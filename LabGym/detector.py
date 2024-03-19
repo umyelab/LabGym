@@ -142,7 +142,8 @@ class Detector:
 
     def __call__(self, *args, **kw):
         """Run the Detector on the given inputs."""
-        return self.model(*args, **kw)
+        with torch.no_grad():
+            return self.model(*args, **kw)
 
     def train(
         self,
