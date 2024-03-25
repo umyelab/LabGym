@@ -1987,6 +1987,21 @@ class AnalyzeAnimalDetector:
         print("Exporting results...")
         print(datetime.datetime.now())
 
+        # Export centers data every time
+        centers = {}
+        for animal_name, animal_centers_dict in self.animal_centers.items():
+            for i, centers_arr in animal_centers_dict.items():
+                centers[f"{animal_name}_{i}"] = centers_arr
+        pd.DataFrame.from_dict(
+            centers,
+            orient="index",
+            columns=self.all_time,
+        ).transpose().to_excel(
+            os.path.join(self.results_path, "centers.xlsx"),
+            float_format="%.2f",
+            index_label="time/ID",
+        )
+
         for animal_name in self.animal_kinds:
             if self.categorize_behavior is True:
                 events_df = pd.DataFrame(self.event_probability[animal_name], index=self.all_time)
@@ -3011,9 +3026,12 @@ class AnalyzeAnimalDetector:
                         if animal_name in animal_to_include:
                             animal_information[behavior_name][animal_name]["probability"][image_name] = [[]]
                             animal_information[behavior_name][animal_name]["count"][image_name] = 0
-                            animal_information[behavior_name][animal_name]["time"][image_name] = (pd.to_datetime(int(os.path.getmtime(path_to_image)), utc=True, unit='s')).strftime('%H:%M:%S')
-                            animal_information[behavior_name][animal_name]["date"][image_name] = (pd.to_datetime(int(os.path.getmtime(path_to_image)), utc=True, unit='s')).strftime('%Y-%m-%d')
-
+                            animal_information[behavior_name][animal_name]["time"][image_name] = (
+                                pd.to_datetime(int(os.path.getmtime(path_to_image)), utc=True, unit="s")
+                            ).strftime("%H:%M:%S")
+                            animal_information[behavior_name][animal_name]["date"][image_name] = (
+                                pd.to_datetime(int(os.path.getmtime(path_to_image)), utc=True, unit="s")
+                            ).strftime("%Y-%m-%d")
 
             if imagewidth is not None:
                 imageheight = int(image.shape[0] * imagewidth / image.shape[1])
@@ -3194,29 +3212,42 @@ class AnalyzeAnimalDetector:
         else:
             for behavior_name in names_and_colors:
                 for animal_name in animal_to_include:
-                    names = np.array(list(animal_information[behavior_name][animal_name]['count'].keys()))
+                    names = np.array(list(animal_information[behavior_name][animal_name]["count"].keys()))
 
-                    results_df1 = pd.DataFrame.from_dict(animal_information[behavior_name][animal_name]['count'], 
-                                                         orient='index', columns=['count'])
-                    results_df2 = pd.DataFrame.from_dict(animal_information[behavior_name][animal_name]['date'], 
-                                                         orient='index', columns=['date'])
+                    results_df1 = pd.DataFrame.from_dict(
+                        animal_information[behavior_name][animal_name]["count"], orient="index", columns=["count"]
+                    )
+                    results_df2 = pd.DataFrame.from_dict(
+                        animal_information[behavior_name][animal_name]["date"], orient="index", columns=["date"]
+                    )
 
-                    results_df3 = pd.DataFrame.from_dict(animal_information[behavior_name][animal_name]['time'], 
-                                                         orient='index', columns=['time'])
+                    results_df3 = pd.DataFrame.from_dict(
+                        animal_information[behavior_name][animal_name]["time"], orient="index", columns=["time"]
+                    )
 
                     # Very weird solution, had to create new dataframe from count and date/time merge
-                    firstCombination = pd.merge(results_df1, results_df2, left_index=True, right_index=True, how="outer")
+                    firstCombination = pd.merge(
+                        results_df1, results_df2, left_index=True, right_index=True, how="outer"
+                    )
 
                     results_df = pd.merge(firstCombination, results_df3, left_index=True, right_index=True, how="outer")
 
                     # Sets the index to names, if future dataframes/data need to be join do it here
                     results_df = results_df.set_index(names)
-                    results_df = results_df.join(pd.DataFrame.from_dict(animal_information[behavior_name][animal_name]['probability'], 
-                                                                        orient='index', columns=['probability']).reset_index(drop=True).set_index(names))
+                    results_df = results_df.join(
+                        pd.DataFrame.from_dict(
+                            animal_information[behavior_name][animal_name]["probability"],
+                            orient="index",
+                            columns=["probability"],
+                        )
+                        .reset_index(drop=True)
+                        .set_index(names)
+                    )
 
                     # Exports the data to an excel file: format is 'behaviorName_animalName.xlsx'
-                    results_df.to_excel(os.path.join(results_path, behavior_name + '_' + animal_name + '.xlsx'), 
-                                        index_label='imagename/parameter')
-
+                    results_df.to_excel(
+                        os.path.join(results_path, behavior_name + "_" + animal_name + ".xlsx"),
+                        index_label="imagename/parameter",
+                    )
 
             print("All results exported in: " + str(results_path))
