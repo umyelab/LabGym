@@ -1,5 +1,17 @@
 # Changelog
 
+## v2.4.0
+### What's Changed
+* Remove all references to `THE_ABSOLUTE_CURRENT_PATH` by @rohansatapathy in https://github.com/umyelab/LabGym/pull/120
+* Increase line length in format configuration by @rohansatapathy in https://github.com/umyelab/LabGym/pull/122
+* Add date/time changes by @rohansatapathy in https://github.com/umyelab/LabGym/pull/126
+* Refactor detector code by @rohansatapathy in https://github.com/umyelab/LabGym/pull/123
+* Add excel file with animal positions in analysis export by @rohansatapathy in https://github.com/umyelab/LabGym/pull/128
+* Fix text scale in annotated video by @rohansatapathy in https://github.com/umyelab/LabGym/pull/129
+
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.3.5...v2.4.0>
+
 ## v2.3.5
 ### What's Changed
 * Add ruff format rules by @rohansatapathy in https://github.com/umyelab/LabGym/pull/110
