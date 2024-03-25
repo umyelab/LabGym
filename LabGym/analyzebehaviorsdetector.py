@@ -1988,19 +1988,20 @@ class AnalyzeAnimalDetector:
         print(datetime.datetime.now())
 
         # Export centers data every time
-        centers = {}
-        for animal_name, animal_centers_dict in self.animal_centers.items():
-            for i, centers_arr in animal_centers_dict.items():
-                centers[f"{animal_name}_{i}"] = centers_arr
-        pd.DataFrame.from_dict(
-            centers,
-            orient="index",
-            columns=self.all_time,
-        ).transpose().to_excel(
-            os.path.join(self.results_path, "centers.xlsx"),
-            float_format="%.2f",
-            index_label="time/ID",
-        )
+        # centers = {}
+        # for animal_name, animal_centers_dict in self.animal_centers.items():
+        #     for i, centers_arr in animal_centers_dict.items():
+        #         centers[f"{animal_name}_{i}"] = centers_arr
+        for animal_name, centers_dict in self.animal_centers.items():
+            pd.DataFrame.from_dict(
+                centers_dict,
+                orient="index",
+                columns=self.all_time,
+            ).transpose().to_excel(
+                os.path.join(self.results_path, f"{animal_name}_centers.xlsx"),
+                float_format="%.2f",
+                index_label="time/ID",
+            )
 
         for animal_name in self.animal_kinds:
             if self.categorize_behavior is True:
