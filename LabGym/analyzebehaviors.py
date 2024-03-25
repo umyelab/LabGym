@@ -820,8 +820,8 @@ class AnalyzeAnimal:
         print("Annotating video...")
         print(datetime.datetime.now())
 
-        text_scl = max(min(self.background.shape[0], self.background.shape[1]) / 960, 0.5)
-        text_tk = max(1, int(min(self.background.shape[0], self.background.shape[1]) / 960))
+        text_scl = 1
+        text_tk = 2
 
         if self.categorize_behavior is True:
             colors = {}
