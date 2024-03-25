@@ -19,13 +19,10 @@ Email: bingye@umich.edu
 import datetime
 import functools
 import gc
-import json
 import math
 import operator
 import os
-import shutil
 from collections import deque
-from pathlib import Path
 
 import cv2
 import numpy as np
@@ -37,199 +34,8 @@ from skimage import exposure
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import img_to_array
 
-from .tools import *
-
-try:
-    from detectron2 import model_zoo
-    from detectron2.checkpoint import DetectionCheckpointer
-    from detectron2.config import get_cfg
-    from detectron2.data import (
-        DatasetCatalog,
-        MetadataCatalog,
-        build_detection_test_loader,
-    )
-    from detectron2.data.datasets import register_coco_instances
-    from detectron2.engine import DefaultPredictor, DefaultTrainer
-    from detectron2.evaluation import COCOEvaluator, inference_on_dataset
-    from detectron2.modeling import build_model
-    from detectron2.utils.visualizer import Visualizer
-except:
-    print("You need to install Detectron2 to use the Detector module in LabGym:")
-    print("https://detectron2.readthedocs.io/en/latest/tutorials/install.html")
-
-
-DETECTOR_FOLDER = Path(__file__).resolve().parent / "detectors"
-
-
-def get_detector_names() -> list[str]:
-    """Return the names of all saved detectors."""
-    ignore = ["__pycache__", "__init__", "__init.py__"]
-    return [path.name for path in DETECTOR_FOLDER.glob("*") if path.is_dir() and path.name not in ignore]
-
-
-def get_animal_names(detector_name: str) -> list[str]:
-    """Return a list of animal names associated with the given Detector.
-
-    Args:
-        detector_name: The name of the Detector.
-
-    Raises:
-        FileNotFoundError: The Detector doesn't exist (this should be taken
-            care of by the detector selection).
-    """
-    animalmapping = DETECTOR_FOLDER / detector_name / "model_parameters.txt"
-    with open(animalmapping) as f:
-        model_parameters = f.read()
-    return json.loads(model_parameters)["animal_names"]
-
-
-def get_annotation_class_names(annotation_path: str) -> list[str]:
-    """Return a list of class names associated with the annotation file.
-
-    Args:
-        annotation_path: The absolute path to the COCO annotation file.
-
-    Raises:
-        FileNotFoundError: The annotation file doesn't exist (this should
-            be taken care of by the file selection GUI).
-    """
-    with open(annotation_path) as f:
-        info = json.load(f)
-    classnames = []
-    for category in info["categories"]:
-        if category["id"] > 0:
-            classnames.append(category["name"])
-    return classnames
-
-
-def delete_detector(detector_name: str):
-    """Permanently delete the given detector."""
-    shutil.rmtree(str(DETECTOR_FOLDER / detector_name))
-
-
-def train_detector(
-    path_to_annotation: str,
-    path_to_trainingimages: str,
-    detector_name: str,
-    iteration_num: int,
-    inference_size: int,
-):
-    path_to_detector = str(DETECTOR_FOLDER / detector_name)
-    if torch.cuda.is_available():
-        device = "cuda"
-    else:
-        device = "cpu"
-
-    if str("LabGym_detector_train") in DatasetCatalog.list():
-        DatasetCatalog.remove("LabGym_detector_train")
-        MetadataCatalog.remove("LabGym_detector_train")
-    register_coco_instances("LabGym_detector_train", {}, path_to_annotation, path_to_trainingimages)
-    datasetcat = DatasetCatalog.get("LabGym_detector_train")
-    metadatacat = MetadataCatalog.get("LabGym_detector_train")
-    classnames = metadatacat.thing_classes
-
-    model_parameters_dict = {}
-    model_parameters_dict["animal_names"] = []
-    annotation_data = json.load(open(path_to_annotation))
-    for i in annotation_data["categories"]:
-        if i["id"] > 0:
-            model_parameters_dict["animal_names"].append(i["name"])
-    print("Animal names in annotation file: " + str(model_parameters_dict["animal_names"]))
-
-    cfg = get_cfg()
-    cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
-    cfg.OUTPUT_DIR = path_to_detector
-    cfg.DATASETS.TRAIN = ("LabGym_detector_train",)
-    cfg.DATASETS.TEST = ()
-    cfg.DATALOADER.NUM_WORKERS = 4
-    cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")
-    cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE = 128
-    cfg.MODEL.ROI_HEADS.NUM_CLASSES = int(len(classnames))
-    cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = 0.5
-    cfg.SOLVER.MAX_ITER = int(iteration_num)
-    cfg.SOLVER.BASE_LR = 0.001
-    cfg.SOLVER.WARMUP_ITERS = int(iteration_num * 0.1)
-    cfg.SOLVER.STEPS = (int(iteration_num * 0.4), int(iteration_num * 0.8))
-    cfg.SOLVER.GAMMA = 0.5
-    cfg.SOLVER.IMS_PER_BATCH = 4
-    cfg.MODEL.DEVICE = device
-    cfg.INPUT.MIN_SIZE_TEST = int(inference_size)
-    cfg.INPUT.MAX_SIZE_TEST = int(inference_size)
-    cfg.INPUT.MIN_SIZE_TRAIN = (int(inference_size),)
-    cfg.INPUT.MAX_SIZE_TRAIN = int(inference_size)
-    os.makedirs(cfg.OUTPUT_DIR)
-    trainer = DefaultTrainer(cfg)
-    trainer.resume_or_load(False)
-    trainer.train()
-
-    model_parameters = os.path.join(cfg.OUTPUT_DIR, "model_parameters.txt")
-
-    model_parameters_dict["animal_mapping"] = {}
-    model_parameters_dict["inferencing_framesize"] = int(inference_size)
-
-    for i in range(len(classnames)):
-        model_parameters_dict["animal_mapping"][i] = classnames[i]
-
-    with open(model_parameters, "w") as f:
-        f.write(json.dumps(model_parameters_dict))
-
-    predictor = DefaultPredictor(cfg)
-    model = predictor.model
-    DetectionCheckpointer(model).resume_or_load(os.path.join(cfg.OUTPUT_DIR, "model_final.pth"))
-    model.eval()
-
-    config = os.path.join(cfg.OUTPUT_DIR, "config.yaml")
-    with open(config, "w") as f:
-        f.write(cfg.dump())
-
-    print("Detector training completed!")
-
-
-def test_detector(
-    path_to_annotation: str,
-    path_to_testingimages: str,
-    detector_name: str,
-    output_path: str,
-):
-    path_to_detector = str(DETECTOR_FOLDER / detector_name)
-    if str("LabGym_detector_test") in DatasetCatalog.list():
-        DatasetCatalog.remove("LabGym_detector_test")
-        MetadataCatalog.remove("LabGym_detector_test")
-    register_coco_instances("LabGym_detector_test", {}, path_to_annotation, path_to_testingimages)
-    datasetcat = DatasetCatalog.get("LabGym_detector_test")
-    metadatacat = MetadataCatalog.get("LabGym_detector_test")
-
-    animalmapping = os.path.join(path_to_detector, "model_parameters.txt")
-    with open(animalmapping) as f:
-        model_parameters = f.read()
-    animal_names = json.loads(model_parameters)["animal_names"]
-    dt_infersize = int(json.loads(model_parameters)["inferencing_framesize"])
-    print("The total categories of animals / objects in this Detector: " + str(animal_names))
-    print("The inferencing framesize of this Detector: " + str(dt_infersize))
-    cfg = get_cfg()
-    cfg.merge_from_file(os.path.join(path_to_detector, "config.yaml"))
-    cfg.MODEL.WEIGHTS = os.path.join(path_to_detector, "model_final.pth")
-    cfg.MODEL.DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-
-    predictor = DefaultPredictor(cfg)
-
-    for d in datasetcat:
-        im = cv2.imread(d["file_name"])
-        outputs = predictor(im)
-        v = Visualizer(im[:, :, ::-1], MetadataCatalog.get("LabGym_detector_test"), scale=1.2)
-        out = v.draw_instance_predictions(outputs["instances"].to("cpu"))
-        cv2.imwrite(
-            os.path.join(output_path, os.path.basename(d["file_name"])),
-            out.get_image()[:, :, ::-1],
-        )
-
-    evaluator = COCOEvaluator("LabGym_detector_test", cfg, False, output_dir=output_path)
-    val_loader = build_detection_test_loader(cfg, "LabGym_detector_test")
-    inference_on_dataset(predictor.model, val_loader, evaluator)
-    mAP = evaluator._results["bbox"]["AP"]
-    print(f"The mean average precision (mAP) of the Detector is: {mAP:.4f}" + "%.")
-
-    print("Detector testing completed!")
+from LabGym.detector import Detector
+from LabGym.tools import *
 
 
 class AnalyzeAnimalDetector:
@@ -305,23 +111,11 @@ class AnalyzeAnimalDetector:
         print("Preparation started...")
         print(datetime.datetime.now())
 
-        config = os.path.join(path_to_detector, "config.yaml")
-        detector = os.path.join(path_to_detector, "model_final.pth")
-        animalmapping = os.path.join(path_to_detector, "model_parameters.txt")
-        with open(animalmapping) as f:
-            model_parameters = f.read()
-        self.animal_mapping = json.loads(model_parameters)["animal_mapping"]
-        animal_names = json.loads(model_parameters)["animal_names"]
-        dt_infersize = int(json.loads(model_parameters)["inferencing_framesize"])
-        print("The total categories of animals / objects in this Detector: " + str(animal_names))
-        print("The animals / objects of interest in this Detector: " + str(animal_kinds))
-        print("The inferencing framesize of this Detector: " + str(dt_infersize))
-        cfg = get_cfg()
-        cfg.merge_from_file(config)
-        cfg.MODEL.DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-        self.detector = build_model(cfg)
-        DetectionCheckpointer(self.detector).load(detector)
-        self.detector.eval()
+        self.detector = Detector(path=path_to_detector)
+        print(f"The total categories of animals / objects in this Detector: {self.detector.animal_names}")
+        print(f"The animals / objects of interest in this Detector: {animal_kinds}")
+        print(f"The inferencing framesize of this Detector: {self.detector.inferencing_framesize}")
+        self.animal_mapping = self.detector.animal_mapping
 
         self.path_to_video = path_to_video
         self.basename = os.path.basename(self.path_to_video)
@@ -701,8 +495,7 @@ class AnalyzeAnimalDetector:
         tensor_frames = [torch.as_tensor(frame.astype("float32").transpose(2, 0, 1)) for frame in frames]
         inputs = [{"image": tensor_frame} for tensor_frame in tensor_frames]
 
-        with torch.no_grad():
-            outputs = self.detector(inputs)
+        outputs = self.detector(inputs)
 
         for batch_count, output in enumerate(outputs):
             frame = frames[batch_count]
@@ -895,8 +688,7 @@ class AnalyzeAnimalDetector:
         tensor_frames = [torch.as_tensor(frame.astype("float32").transpose(2, 0, 1)) for frame in frames]
         inputs = [{"image": tensor_frame} for tensor_frame in tensor_frames]
 
-        with torch.no_grad():
-            outputs = self.detector(inputs)
+        outputs = self.detector(inputs)
 
         for batch_count, output in enumerate(outputs):
             frame = frames[batch_count]
@@ -1259,8 +1051,7 @@ class AnalyzeAnimalDetector:
                     tensor_frames = [torch.as_tensor(frame.astype("float32").transpose(2, 0, 1)) for frame in batch]
                     inputs = [{"image": tensor_frame} for tensor_frame in tensor_frames]
 
-                    with torch.no_grad():
-                        outputs = self.detector(inputs)
+                    outputs = self.detector(inputs)
 
                     for batch_count, output in enumerate(outputs):
                         frame = batch[batch_count]
@@ -2564,8 +2355,7 @@ class AnalyzeAnimalDetector:
 
                 self.temp_frames.append(frame)
                 tensor_frame = torch.as_tensor(frame.astype("float32").transpose(2, 0, 1))
-                with torch.no_grad():
-                    output = self.detector([{"image": tensor_frame}])
+                output = self.detector([{"image": tensor_frame}])
                 instances = output[0]["instances"].to("cpu")
                 masks = instances.pred_masks.numpy().astype(np.uint8)
                 classes = instances.pred_classes.numpy()
@@ -2786,8 +2576,7 @@ class AnalyzeAnimalDetector:
                     )
 
                 tensor_frame = torch.as_tensor(frame.astype("float32").transpose(2, 0, 1))
-                with torch.no_grad():
-                    output = self.detector([{"image": tensor_frame}])
+                output = self.detector([{"image": tensor_frame}])
                 instances = output[0]["instances"].to("cpu")
                 masks = instances.pred_masks.numpy().astype(np.uint8)
                 classes = instances.pred_classes.numpy()
@@ -3172,22 +2961,11 @@ class AnalyzeAnimalDetector:
         print("Preparation started...")
         print(datetime.datetime.now())
 
-        config = os.path.join(path_to_detector, "config.yaml")
-        animalmapping = os.path.join(path_to_detector, "model_parameters.txt")
-        with open(animalmapping) as f:
-            model_parameters = f.read()
-        animal_mapping = json.loads(model_parameters)["animal_mapping"]
-        animal_names = json.loads(model_parameters)["animal_names"]
-        dt_infersize = int(json.loads(model_parameters)["inferencing_framesize"])
-        print("The total categories of animals / objects in this Detector: " + str(animal_names))
-        print("The animals / objects of interest in this Detector: " + str(animal_kinds))
-        print("The inferencing framesize of this Detector: " + str(dt_infersize))
-        cfg = get_cfg()
-        cfg.merge_from_file(config)
-        cfg.MODEL.DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-        detector = build_model(cfg)
-        DetectionCheckpointer(detector).load(os.path.join(path_to_detector, "model_final.pth"))
-        detector.eval()
+        detector = Detector(path=path_to_detector)
+        print(f"The total categories of animals / objects in this Detector: {detector.animal_names}")
+        print(f"The animals / objects of interest in this Detector: {animal_kinds}")
+        print(f"The inferencing framesize of this Detector: {detector.inferencing_framesize}")
+        animal_mapping = detector.animal_mapping
 
         if social_distance == 0:
             social_distance = float("inf")
@@ -3263,8 +3041,7 @@ class AnalyzeAnimalDetector:
                 kernel = 9
 
             tensor_image = torch.as_tensor(image.astype("float32").transpose(2, 0, 1))
-            with torch.no_grad():
-                output = detector([{"image": tensor_image}])
+            output = detector([{"image": tensor_image}])
             instances = output[0]["instances"].to("cpu")
             masks = instances.pred_masks.numpy().astype(np.uint8)
             classes = instances.pred_classes.numpy()

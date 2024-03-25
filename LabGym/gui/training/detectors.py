@@ -20,14 +20,7 @@ import os
 
 import wx
 
-from LabGym.analyzebehaviorsdetector import (
-    delete_detector,
-    get_animal_names,
-    get_annotation_class_names,
-    get_detector_names,
-    test_detector,
-    train_detector,
-)
+from LabGym.detector import Detector, get_annotation_class_names, get_detector_names
 from LabGym.gui.utils import WX_VIDEO_WILDCARD, LabGymWindow
 from LabGym.tools import extract_frames
 
@@ -301,7 +294,11 @@ class TrainDetectors(LabGymWindow):
         )
         if dialog.ShowModal() == wx.ID_OK:
             self.path_to_annotation = dialog.GetPath()
-            class_names = get_annotation_class_names(self.path_to_annotation)
+            try:
+                class_names = get_annotation_class_names(self.path_to_annotation)
+            except ValueError as err:
+                wx.MessageBox(str(err), "Error", wx.OK | wx.ICON_ERROR)
+                return
             self.text_selectannotation.SetLabel(f"Animal/object categories in annotation file: {class_names}.")
         dialog.Destroy()
 
@@ -398,10 +395,9 @@ class TrainDetectors(LabGymWindow):
                 )
                 continue
 
-            train_detector(
+            Detector(name=detector_name).train(
                 self.path_to_annotation,
                 self.path_to_trainingimages,
-                detector_name,
                 self.iteration_num,
                 self.inference_size,
             )
@@ -415,7 +411,7 @@ class TestDetectors(LabGymWindow):
         super().__init__(title="Test Detectors", size=(1000, 280))
         self.path_to_testingimages = None
         self.path_to_annotation = None
-        self.detector_name = None
+        self.detector = None
         self.results_folder = None
 
         self.text_selectdetector = self.module_text("None.")
@@ -481,9 +477,9 @@ class TestDetectors(LabGymWindow):
         )
 
         if dialog.ShowModal() == wx.ID_OK:
-            self.detector_name = dialog.GetStringSelection()
+            self.detector = Detector(name=dialog.GetStringSelection())
             self.text_selectdetector.SetLabel(
-                f"Selected: {self.detector_name} (animals/objects: {get_animal_names(self.detector_name)})."
+                f"Selected: {self.detector} (animals/objects: {self.detector.animal_names})."
             )
         dialog.Destroy()
 
@@ -506,7 +502,11 @@ class TestDetectors(LabGymWindow):
         )
         if dialog.ShowModal() == wx.ID_OK:
             self.path_to_annotation = dialog.GetPath()
-            class_names = get_annotation_class_names(self.path_to_annotation)
+            try:
+                class_names = get_annotation_class_names(self.path_to_annotation)
+            except ValueError as err:
+                wx.MessageBox(str(err), "Error", wx.OK | wx.ICON_ERROR)
+                return
             self.text_selectannotation.SetLabel(f"Animal/object categories in annotation file: {class_names}.")
         dialog.Destroy()
 
@@ -521,7 +521,7 @@ class TestDetectors(LabGymWindow):
     def test_detector(self, event):
         """Test the selected detector."""
         if (
-            self.detector_name is None
+            self.detector is None
             or self.path_to_testingimages is None
             or self.path_to_annotation is None
             or self.results_folder is None
@@ -532,12 +532,13 @@ class TestDetectors(LabGymWindow):
                 wx.OK | wx.ICON_ERROR,
             )
         else:
-            test_detector(
+            mAP = self.detector.test(
                 self.path_to_annotation,
                 self.path_to_testingimages,
-                self.detector_name,
                 self.results_folder,
             )
+            print(f"The mean average precision (mAP) of the Detector is: {mAP:.4f}%.")
+            print("Detector testing completed!")
 
     def delete_detector(self, event):
         """Delete a Detector."""
@@ -551,7 +552,7 @@ class TestDetectors(LabGymWindow):
             dialog.Destroy()
             return
 
-        detector = dialog.GetStringSelection()
+        detector = Detector(name=dialog.GetStringSelection())
         confirm = wx.MessageDialog(
             self,
             f"Delete {detector}?",
@@ -559,5 +560,5 @@ class TestDetectors(LabGymWindow):
             wx.YES_NO | wx.ICON_QUESTION,
         )
         if confirm.ShowModal() == wx.ID_YES:
-            delete_detector(detector)
+            detector.delete()
         confirm.Destroy()

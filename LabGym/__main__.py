@@ -29,6 +29,7 @@ def main() -> None:
         print("Unable to check for new versions of LabGym!")
         print("Please check https://github.com/umyelab/LabGym for updates.\n")
 
+
     gui.gui()
 
 

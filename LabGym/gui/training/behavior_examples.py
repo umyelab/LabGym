@@ -29,12 +29,8 @@ import wx
 from cv2.typing import MatLike
 
 from LabGym.analyzebehaviors import AnalyzeAnimal
-from LabGym.analyzebehaviorsdetector import (
-    DETECTOR_FOLDER,
-    AnalyzeAnimalDetector,
-    get_animal_names,
-    get_detector_names,
-)
+from LabGym.analyzebehaviorsdetector import AnalyzeAnimalDetector
+from LabGym.detector import Detector, get_detector_names
 from LabGym.gui.utils import (
     WX_IMAGE_WILDCARD,
     WX_VIDEO_WILDCARD,
@@ -51,7 +47,7 @@ class GenerateBehaviorExamples(LabGymWindow):
         super().__init__(title="Generate Behavior Examples", size=(1000, 530))
         self.behavior_mode = BehaviorMode.NON_INTERACTIVE
         self.use_detector = False
-        self.path_to_detector = None
+        self.detector = None
         self.detection_threshold = 0
         self.animal_kinds = []
         self.background_path = None
@@ -431,18 +427,18 @@ class GenerateBehaviorExamples(LabGymWindow):
             select_detector_dialog.Destroy()
             return
         else:
-            detector = select_detector_dialog.GetStringSelection()
+            detector_name = select_detector_dialog.GetStringSelection()
             select_detector_dialog.Destroy()
 
-        if detector == "Choose a new directory of the Detector":
+        if detector_name == "Choose a new directory of the Detector":
             dialog2 = wx.DirDialog(self, "Select a directory", "", style=wx.DD_DEFAULT_STYLE)
             if dialog2.ShowModal() == wx.ID_OK:
-                self.path_to_detector = dialog2.GetPaths()
+                self.detector = Detector(path=dialog2.GetPath())
             dialog2.Destroy()
         else:
-            self.path_to_detector = os.path.join(str(DETECTOR_FOLDER), detector)
+            self.detector = Detector(name=detector_name)
 
-        animal_names = get_animal_names(detector)
+        animal_names = self.detector.animal_names
         if len(animal_names) > 1:
             dialog2 = wx.MultiChoiceDialog(
                 self,
@@ -472,7 +468,7 @@ class GenerateBehaviorExamples(LabGymWindow):
                 detection_threshold = dialog2.GetValue()
                 self.detection_threshold = detection_threshold / 100
                 self.text_detection.SetLabel(
-                    f"Detector: {detector} (detection threshold: {detection_threshold}%); The animals/objects: {self.animal_kinds}."
+                    f"Detector: {detector_name} (detection threshold: {detection_threshold}%); The animals/objects: {self.animal_kinds}."
                 )
             dialog2.Destroy()
         else:
@@ -481,7 +477,7 @@ class GenerateBehaviorExamples(LabGymWindow):
             self.text_animalnumber.SetLabel(
                 f"The number of {self.animal_kinds} is: {list(self.animal_number.values())}."
             )
-            self.text_detection.SetLabel(f"Detector: {detector}; The animals/objects: {self.animal_kinds}.")
+            self.text_detection.SetLabel(f"Detector: {detector_name}; The animals/objects: {self.animal_kinds}.")
 
     def select_method(self, event):
         """Select method to generate contours for behavior examples."""
@@ -754,13 +750,13 @@ class GenerateBehaviorExamples(LabGymWindow):
         dialog.Destroy()
 
         if self.behavior_mode == BehaviorMode.STATIC_IMAGES:
-            if self.path_to_detector is None:
+            if self.detector is None:
                 wx.MessageBox("You need to select a Detector.", "Error", wx.OK | wx.ICON_ERROR)
                 return
             else:
                 AAD = AnalyzeAnimalDetector()
                 AAD.analyze_images_individuals(
-                    self.path_to_detector,
+                    str(self.detector.path),
                     self.path_to_videos,
                     self.result_path,
                     self.animal_kinds,
@@ -876,9 +872,13 @@ class GenerateBehaviorExamples(LabGymWindow):
                         skip_redundant=self.skip_redundant,
                     )
             else:
+                if self.detector is None:
+                    wx.MessageBox("You need to select a Detector.", "Error", wx.OK | wx.ICON_ERROR)
+                    return
+
                 AAD = AnalyzeAnimalDetector()
                 AAD.prepare_analysis(
-                    self.path_to_detector,
+                    str(self.detector.path),
                     video,
                     self.result_path,
                     self.animal_number,
