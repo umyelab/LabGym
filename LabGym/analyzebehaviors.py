@@ -1333,6 +1333,17 @@ class AnalyzeAnimal:
         print("Exporting results...")
         print(datetime.datetime.now())
 
+        # Export centers data every time
+        pd.DataFrame.from_dict(
+            self.animal_centers,
+            orient="index",
+            columns=self.all_time,
+        ).reset_index(drop=True).transpose().to_excel(
+            os.path.join(self.results_path, "centers.xlsx"),
+            float_format="%.2f",
+            index_label="time/ID",
+        )
+
         if self.categorize_behavior is True:
             events_df = pd.DataFrame(self.event_probability, index=self.all_time)
             events_df.to_excel(
