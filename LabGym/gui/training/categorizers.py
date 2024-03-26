@@ -270,11 +270,11 @@ class TrainCategorizers(LabGymWindow):
         elif self.behavior_mode == BehaviorMode.STATIC_IMAGES:
             self.text_length.SetLabel('No need to specify this since the selected behavior mode is "Static images".')
 
-        PATTERN_RECOGNIZER_ONLY = "Categorizer (Pattern Recognizer only) (faster / a little less accurate)"
         BOTH = "Categorizer (Animation Analyzer + Pattern Recognizer)"
+        PATTERN_RECOGNIZER_ONLY = "Categorizer (Pattern Recognizer only) (faster / a little less accurate)"
         categorizer_types = [PATTERN_RECOGNIZER_ONLY]
         if self.behavior_mode != BehaviorMode.STATIC_IMAGES:
-            categorizer_types.append(BOTH)
+            categorizer_types.insert(0, BOTH)
 
         dialog = wx.SingleChoiceDialog(
             self,
@@ -289,22 +289,6 @@ class TrainCategorizers(LabGymWindow):
             categorizer_tp = dialog.GetStringSelection()
             self.using_animation_analyzer = categorizer_tp != PATTERN_RECOGNIZER_ONLY
             dialog.Destroy()
-
-        dialog1 = wx.NumberEntryDialog(
-            self,
-            "Complexity level from 1 to 7\nhigher level = deeper network",
-            "Enter a number (1~7)",
-            "Pattern Recognizer level",
-            2,
-            1,
-            7,
-        )
-        if dialog1.ShowModal() != wx.ID_OK:
-            dialog1.Destroy()
-            return
-        else:
-            self.level_conv = int(dialog1.GetValue())
-            dialog1.Destroy()
 
         if self.using_animation_analyzer:
             dialog1 = wx.NumberEntryDialog(
@@ -323,9 +307,26 @@ class TrainCategorizers(LabGymWindow):
                 self.level_tconv = int(dialog1.GetValue())
                 dialog1.Destroy()
 
-        label_text = f"Using Pattern Recognizer (Level {self.level_conv})"
+        dialog1 = wx.NumberEntryDialog(
+            self,
+            "Complexity level from 1 to 7\nhigher level = deeper network",
+            "Enter a number (1~7)",
+            "Pattern Recognizer level",
+            2,
+            1,
+            7,
+        )
+        if dialog1.ShowModal() != wx.ID_OK:
+            dialog1.Destroy()
+            return
+        else:
+            self.level_conv = int(dialog1.GetValue())
+            dialog1.Destroy()
+
+        label_text = "Using "
         if self.using_animation_analyzer:
-            label_text += f" and Animation Analyzer (Level {self.level_tconv})"
+            label_text = f"Animation Analyzer (Level {self.level_tconv}) and "
+        label_text += f"Pattern Recognizer (Level {self.level_conv})"
 
         if self.behavior_mode == BehaviorMode.NON_INTERACTIVE:
             label_text += " to identify non-interactive behaviors of each individual."
@@ -401,11 +402,11 @@ class TrainCategorizers(LabGymWindow):
         shape_tconv = f"({self.dim_tconv}, {self.dim_tconv}, {self.channel})"
         shape_conv = f"({self.dim_conv}, {self.dim_conv}, {self.channel})"
 
-        label_text = f"Input shapes: Pattern Recognizer {shape_conv}"
+        label_text = "Input shapes: "
         if self.using_animation_analyzer:
-            label_text += f", Animation Analyzer {shape_tconv}."
-        else:
-            label_text += "."
+            label_text += f"Animation Analyzer {shape_tconv}, "
+        label_text += f"Pattern Recognizer {shape_conv}."
+
         self.text_categorizershape.SetLabel(label_text)
 
     def input_behavior_length(self, event):
