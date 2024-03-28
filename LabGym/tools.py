@@ -24,7 +24,7 @@ import gc
 import operator
 import os
 from collections import deque
-from typing import Sequence, Tuple, Union
+from typing import Sequence, Tuple
 
 import cv2
 import matplotlib.pyplot as plt
@@ -47,7 +47,7 @@ class AnimalVsBg:
 
 
 # Use Frame to refer to different representations of a frame
-Frame = Union[NDArray[np.uint8], MatLike]
+Frame = NDArray[np.uint8]
 
 
 def _extract_background(
@@ -67,7 +67,8 @@ def _extract_background(
             tools.py for specific values.
 
     Returns:
-        An NDArray containing the extracted background.
+        An NDArray containing the extracted background. Returns None if less
+        than 4 frames are provided.
 
     Raises:
         None
@@ -80,11 +81,13 @@ def _extract_background(
         return None
 
     # Convert to ndarray
-    frames_arr = np.array(frames, dtype="float32")
+    frames_arr = np.array(frames, dtype=np.uint8)
 
     if animal_vs_bg == AnimalVsBg.HARD_TO_TELL:
         if len_frames <= 101:
-            return np.uint8(np.median(frames_arr, axis=0))  # type: ignore
+            background = np.median(frames_arr, axis=0).astype(np.uint8)
+            print(f"Returning background of type {background.dtype}")
+            return
 
         frames_mean = []
         check_frames = []
@@ -94,17 +97,25 @@ def _extract_background(
             mean = frames_temp.mean(0)
             frames_mean.append(frames_temp.mean(0))
             check_frames.append(abs(mean - mean_overall) + frames_temp.std(0))
+
         frames_mean = np.array(frames_mean, dtype="float32")
         check_frames = np.array(check_frames, dtype="float32")
-        background = np.uint8(np.take_along_axis(frames_mean, np.argsort(check_frames, axis=0), axis=0)[0])
+        background = np.take_along_axis(frames_mean, np.argsort(check_frames, axis=0), axis=0)[0].astype(np.uint8)
+
         del frames_mean
         del check_frames
         del frames_temp
         gc.collect()
-        return background  # type: ignore
 
-    if stable_illumination is True:
-        return np.uint8(frames_arr.max(0)) if animal_vs_bg == AnimalVsBg.ANIMAL_DARKER else np.uint8(frames_arr.min(0))  # type:ignore
+        print(f"Returning background of type {background.dtype}")
+        return background
+
+    if stable_illumination:
+        max_background = frames_arr.max(0).astype(np.uint8)
+        min_background = frames_arr.min(0).astype(np.uint8)
+        background = max_background if animal_vs_bg == AnimalVsBg.ANIMAL_DARKER else min_background
+        print(f"Returning background of type {background.dtype}")
+        return background
 
     if len_frames > 101:
         frames_mean = []
@@ -113,21 +124,28 @@ def _extract_background(
             frames_temp = frames_arr[n : n + 100]
             mean = frames_temp.mean(0)
             frames_mean.append(mean)
-            if animal_vs_bg == 1:
+            if animal_vs_bg == AnimalVsBg.ANIMAL_DARKER:
                 frames_temp_inv = 255 - frames_temp
                 check_frames.append(frames_temp_inv.mean(0) + frames_temp_inv.std(0))
             else:
                 check_frames.append(mean + frames_temp.std(0))
         frames_mean = np.array(frames_mean, dtype="float32")
         check_frames = np.array(check_frames, dtype="float32")
-        background = np.uint8(np.take_along_axis(frames_mean, np.argsort(check_frames, axis=0), axis=0)[0])
+        background = np.take_along_axis(frames_mean, np.argsort(check_frames, axis=0), axis=0)[0].astype(np.uint8)
+
         del frames_mean
         del check_frames
         del frames_temp
         gc.collect()
-        return background  # type: ignore
 
-    return np.uint8(frames_arr.max(0)) if animal_vs_bg == AnimalVsBg.ANIMAL_DARKER else np.uint8(frames_arr.min(0))  # type: ignore
+        print(f"Returning background of type {background.dtype}")
+        return background
+
+    max_background = frames_arr.max(0).astype(np.uint8)
+    min_background = frames_arr.min(0).astype(np.uint8)
+    background = max_background if animal_vs_bg == AnimalVsBg.ANIMAL_DARKER else min_background
+    print(f"Returning background of type {background.dtype}")
+    return background
 
 
 def extract_backgrounds_from_video(
@@ -267,9 +285,12 @@ def extract_backgrounds_from_video(
     if backgrounds["high"] is None:
         backgrounds["high"] = backgrounds["default"]
 
+    # Convert backgrounds to correct dtype
+    backgrounds = {bg_type: bg.astype(np.uint8) for bg_type, bg in backgrounds.items()}
+
     print("Background extraction completed!")
 
-    return (backgrounds["default"], backgrounds["low"], backgrounds["high"])  # type: ignore
+    return (backgrounds["default"], backgrounds["low"], backgrounds["high"])
 
 
 def load_backgrounds_from_folder(folder: str, frame_size: tuple[int, int] | None = None) -> tuple[Frame, Frame, Frame]:
@@ -464,6 +485,7 @@ def estimate_animal_area(
 
         # Subtract background and convert to grayscale
         if animal_vs_bg == AnimalVsBg.HARD_TO_TELL:
+            print(f"Frame: {frame.dtype}; Background: {background.dtype}")
             foreground = cv2.absdiff(frame, background)
         else:
             foreground = cv2.subtract(frame, background)
