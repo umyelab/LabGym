@@ -941,7 +941,7 @@ def generate_patternimage_interact(frame, outlines, other_outlines, inners=None,
     return pattern_image
 
 
-def plot_evnets(
+def plot_events(
     result_path,
     event_probability,
     time_points,

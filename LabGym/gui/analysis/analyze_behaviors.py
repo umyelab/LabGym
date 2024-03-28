@@ -29,7 +29,7 @@ from LabGym.analyzebehaviorsdetector import AnalyzeAnimalDetector
 from LabGym.categorizers import CATEGORIZER_FOLDER, get_categorizer_names
 from LabGym.detector import Detector, get_detector_names
 from LabGym.gui.utils import WX_IMAGE_WILDCARD, WX_VIDEO_WILDCARD, LabGymWindow
-from LabGym.tools import plot_evnets
+from LabGym.tools import plot_events
 
 
 class ColorPicker(wx.Dialog):
@@ -1293,7 +1293,7 @@ class AnalyzeBehaviors(LabGymWindow):
                             float_format="%.2f",
                             index_label="time/ID",
                         )
-                        plot_evnets(
+                        plot_events(
                             self.result_path,
                             event_data,
                             time_points,
@@ -1341,7 +1341,7 @@ class AnalyzeBehaviors(LabGymWindow):
                             float_format="%.2f",
                             index_label="time/ID",
                         )
-                        plot_evnets(
+                        plot_events(
                             self.result_path,
                             event_data,
                             time_points,
