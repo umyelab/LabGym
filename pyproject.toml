@@ -38,6 +38,7 @@ dependencies = [
     "torch==2.0.1 ; platform_system == 'Darwin'",
     "torchvision==0.15.2 ; platform_system == 'Darwin'",
     "packaging",
+    "requests",
 ]
 requires-python = ">=3.9,<3.11"
 readme = "README.md"
