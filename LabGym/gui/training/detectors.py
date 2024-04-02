@@ -232,7 +232,7 @@ class TrainDetectors(LabGymWindow):
         super().__init__(title="Train Detectors", size=(1000, 280))
         self.path_to_trainingimages = None
         self.path_to_annotation = None
-        self.inference_size = 320
+        self.inference_size = 480
         self.iteration_num = 200
 
         self.text_selectimages = self.module_text("None.")
