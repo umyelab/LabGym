@@ -414,8 +414,8 @@ class AnalyzeBehaviors(LabGymWindow):
     def select_method(self, event):
         if self.behavior_mode <= 1:
             methods = [
-                "Subtract background (fast but requires static background & stable illumination)",
                 "Use trained Detectors (versatile but slow)",
+                "Subtract background (fast but requires static background & stable illumination)", 
             ]
         else:
             methods = ["Use trained Detectors (versatile but slow)"]
