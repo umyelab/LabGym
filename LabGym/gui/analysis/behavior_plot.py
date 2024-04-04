@@ -33,22 +33,25 @@ class BehaviorPlot(LabGymWindow):
     Attributes:
         event_probability:
             A dictionary with the keys as with the keys as the ID of each
-            animal and the values are lists of lists, where each sub-list has
-            a length of 2 and is in one of the following formats:
-
-                - ["NA", -1] (The animal wasn't detected during this time point.)
-                - [behavior, probability], where behavior is the name of the behavior
-                  and probability is a float between 0 and 1.
+            animal and the values are lists of lists, where each sub-list
+            has a length of 2 and is in one of the following formats:
+                - ["NA", -1], indicating the animal wasn't detected during
+                  this time point.
+                - [behavior, probability], where behavior is the name of
+                  the behavior and probability is a float between 0 and 1.
         time_points:
-            A list of floats containing the time points for each behavior for
-            each animal, which is in the leftmost column in the original file.
+            A list of floats containing the time points for each behavior
+            for each animal, which is in the leftmost column in the original
+            file.
         results_folder:
             The Path to the folder in which to store the behavior plot.
         names_and_colors:
-            A mapping between behavior names and colors, with each color
-            in hex format.
+            A dictionary with keys as behavior names and values as lists
+            or tuples containing two strings, where the first string is
+            '#ffffff' and the second string is the hex color code of the
+            color corresponding to the behavior.
         figsize:
-            A tuple (width, height) containing the size in pixels of the plot.
+            A tuple (width, height) containing the size of the plot in inches.
     """
 
     def __init__(self):
