@@ -135,11 +135,7 @@ class BehaviorPlot(LabGymWindow):
 
         self.names_and_colors = {}
         for color, behavior in zip(colors, behaviors):
-            dialog = ColorPicker(
-                self,
-                f"Color for {behavior}",
-                [behavior, color],
-            )
+            dialog = ColorPicker(f"Color for {behavior}", color[1])
             if dialog.ShowModal() == wx.ID_OK:
                 (r, g, b, _) = dialog.color_picker.GetColour()
                 hex_code = f"#{r:02x}{g:02x}{b:02x}"
