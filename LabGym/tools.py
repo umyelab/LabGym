@@ -943,14 +943,43 @@ def generate_patternimage_interact(frame, outlines, other_outlines, inners=None,
 
 
 def plot_events(
-    result_path,
-    event_probability,
-    time_points,
-    names_and_colors,
-    behavior_to_include,
-    width=0,
-    height=0,
-):
+    result_path: str,
+    event_probability: dict,
+    time_points: list[float],
+    names_and_colors: dict[str, Sequence[str]],
+    behavior_to_include: list[str],
+    width: int = 0,
+    height: int = 0,
+) -> None:
+    """Generate time-series behavior plot and colorbars for each behavior.
+
+    Args:
+        result_path:
+            The folder in which to store the behavior plot and colorbars.
+        event_probability:
+            A dictionary with the keys as with the keys as the ID of each
+            animal and the values are lists of lists, where each sub-list
+            has a length of 2 and is in one of the following formats:
+                - ["NA", -1], indicating the animal wasn't detected during
+                  this time point.
+                - [behavior, probability], where behavior is the name of
+                  the behavior and probability is a float between 0 and 1.
+        time_points:
+            A list of floats containing the time points for each behavior
+            for each animal, which is in the leftmost column in the original
+            file.
+        names_and_colors:
+            A dictionary with keys as behavior names and values as lists
+            or tuples containing two strings, where the first string is
+            '#ffffff' and the second string is the hex color code of the
+            color corresponding to the behavior.
+        behavior_to_include:
+            A list of which behaviors to include.
+        width:
+            The width of the behavior plot in inches.
+        height:
+            The height of the behavior plot in inches.
+    """
     print("Exporting the raster plot for this analysis batch...")
     print(datetime.datetime.now())
 
