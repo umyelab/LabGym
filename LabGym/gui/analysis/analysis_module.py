@@ -18,6 +18,7 @@ Email: bingye@umich.edu
 
 from ..utils import LabGymWindow
 from .analyze_behaviors import AnalyzeBehaviors
+from .behavior_plot import BehaviorPlot
 from .mine_results import MineResults
 
 
@@ -37,6 +38,12 @@ class AnalysisModule(LabGymWindow):
             tool_tip="Automatically mine the analysis results to display the data details that show statistically significant differences among groups of your selection.",
         )
 
+        self.add_submit_button(
+            label="Generate Behavior Plot",
+            handler=self.behavior_plot,
+            tool_tip="Generate a behavior plot given an all_events.xlsx file.",
+        )
+
         self.display_window()
 
     def analyze_behaviors(self, event):
@@ -44,3 +51,6 @@ class AnalysisModule(LabGymWindow):
 
     def mine_results(self, event):
         MineResults()
+
+    def behavior_plot(self, event):
+        BehaviorPlot()
