@@ -1144,11 +1144,17 @@ def preprocess_video(
             added_name += "_" + str(start) + "-" + str(end)
 
     # Create VideoWriter with given parameters
+    if crop_frame:
+        writer_width = right - left
+        writer_height = bottom - top
+    else:
+        writer_width = width
+        writer_height = height
     writer = cv2.VideoWriter(
         filename=os.path.join(out_folder, name + added_name + "_processed.avi"),
         fourcc=cv2.VideoWriter_fourcc(*"MJPG"),  # type: ignore
         fps=fps / fps_reduction_factor,
-        frameSize=(int(width), int(height)),
+        frameSize=(int(writer_width), int(writer_height)),
         isColor=True,
     )
 
