@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.4.2
+### What's Changed
+* Fix bug that prevented using the cropping feature in the preprocessing module
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.4.1...v2.4.2>
+
 ## v2.4.1
 ### What's Changed
 * Standardize order of Animation Analyzer and Pattern Recognizer in GUI

@@ -16,4 +16,4 @@ USA
 Email: bingye@umich.edu
 """
 
-__version__ = "2.4.1"
+__version__ = "2.4.2"

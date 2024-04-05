@@ -283,6 +283,42 @@ class PreprocessingModule(LabGymWindow):
             windows.append((start, end))
         return windows
 
+    def _parse_crop_frame_selection(self, input_str: str) -> Tuple[int, int, int, int]:
+        """Parse the frame cropping selection.
+
+        Args:
+            input_str: The frame cropping input.
+
+        Returns:
+            A tuple (left, right, top, bottom) which contain the bounds
+            in which to crop the frame.
+
+        Raises:
+            ValueError: The input string is invalid.
+        """
+        coordinates = [coord.strip() for coord in input_str.split(",")]
+
+        if len(coordinates) != 4:
+            raise ValueError("Please enter the coordinates (integers) in correct format.")
+
+        try:
+            left = int(coordinates[0])
+            right = int(coordinates[1])
+            top = int(coordinates[2])
+            bottom = int(coordinates[3])
+        except ValueError:
+            raise ValueError("Please enter four integers.")
+
+        if not left <= right:
+            raise ValueError(f"Value for left {left} is greater than value for right {right}.")
+
+        if not top <= bottom:
+            raise ValueError(
+                f"Value for top {top} is greater than value for bottom {bottom}.",
+            )
+
+        return left, right, top, bottom
+
     def crop_frames(self, event):
         """Opens dialogs to configure frame cropping."""
 
@@ -343,25 +379,12 @@ class PreprocessingModule(LabGymWindow):
                 dialog.Destroy()
                 break
 
-            coordinates = dialog.GetValue().split(",")
-            if len(coordinates) != 4:
-                self.crop_frame = False
-                wx.MessageBox(
-                    "Please enter the coordinates (integers) in correct format.",
-                    "Error",
-                    wx.OK | wx.ICON_ERROR,
-                )
-                self.text_cropframe.SetLabel("Not to crop the frames")
-                continue
             try:
-                self.left = int(coordinates[0])
-                self.right = int(coordinates[1])
-                self.top = int(coordinates[2])
-                self.bottom = int(coordinates[3])
-            except ValueError:
+                (self.left, self.right, self.top, self.bottom) = self._parse_crop_frame_selection(dialog.GetValue())
+            except ValueError as err:
                 self.crop_frame = False
                 wx.MessageBox(
-                    "Please enter 4 integers.",
+                    str(err),
                     "Error",
                     wx.OK | wx.ICON_ERROR,
                 )
