@@ -1,5 +1,14 @@
 # Changelog
 
+## v2.4.1
+### What's Changed
+* Standardize order of Animation Analyzer and Pattern Recognizer in GUI
+* Fix OpenCV type error when using Background Subtraction
+* Allow for older versions of dependencies
+* Close window preview when canceling contrast in Preprocessing Module
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.4.0...v2.4.1>
+
 ## v2.4.0
 ### What's Changed
 * Remove all references to `THE_ABSOLUTE_CURRENT_PATH` by @rohansatapathy in https://github.com/umyelab/LabGym/pull/120
