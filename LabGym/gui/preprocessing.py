@@ -411,6 +411,7 @@ class PreprocessingModule(LabGymWindow):
                 self.enhance_contrast = False
                 self.text_enhancecontrast.SetLabel("Not to enhance contrast.")
                 dialog.Destroy()
+                cv2.destroyAllWindows()
                 break
 
             contrast = dialog.GetValue()
@@ -425,6 +426,7 @@ class PreprocessingModule(LabGymWindow):
                 )
                 self.text_enhancecontrast.SetLabel("Not to enhance contrast.")
                 dialog.Destroy()
+                cv2.destroyAllWindows()
                 continue
 
             show_frame = frame * self.contrast  # type: ignore
@@ -445,6 +447,7 @@ class PreprocessingModule(LabGymWindow):
                 self.text_enhancecontrast.SetLabel("Not to enhance contrast.")
                 confirm.Destroy()
                 dialog.Destroy()
+                cv2.destroyAllWindows()
                 continue
 
             self.enhance_contrast = True
