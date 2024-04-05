@@ -969,8 +969,8 @@ def plot_events(
             for each animal, which is in the leftmost column in the original
             file.
         names_and_colors:
-            A dictionary with keys as behavior names and values as
-            tuples containing two strings, where the first string is
+            A dictionary with keys as behavior names and values as lists
+            or tuples containing two strings, where the first string is
             '#ffffff' and the second string is the hex color code of the
             color corresponding to the behavior.
         behavior_to_include:
