@@ -29,21 +29,29 @@ from LabGym.analyzebehaviorsdetector import AnalyzeAnimalDetector
 from LabGym.categorizers import CATEGORIZER_FOLDER, get_categorizer_names
 from LabGym.detector import Detector, get_detector_names
 from LabGym.gui.utils import WX_IMAGE_WILDCARD, WX_VIDEO_WILDCARD, LabGymWindow
-from LabGym.tools import plot_evnets
+from LabGym.tools import plot_events
 
 
 class ColorPicker(wx.Dialog):
-    def __init__(self, parent, title, name_and_color):
-        super(ColorPicker, self).__init__(parent=None, title=title, size=(200, 200))
+    """A small window that contains a color picker dialog."""
 
-        self.name_and_color = name_and_color
-        name = self.name_and_color[0]
-        hex_color = self.name_and_color[1][1].lstrip("#")
-        color = tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
+    def __init__(self, title: str, default_color: str):
+        """Initialize a ColorPicker.
+
+        Args:
+            title:
+                The title of the ColorPicker window.
+            default_color:
+                A string in hex format (e.g. '#ffffff').
+        """
+        super().__init__(parent=None, title=title, size=(200, 200))
 
         boxsizer = wx.BoxSizer(wx.VERTICAL)
 
-        self.color_picker = wx.ColourPickerCtrl(self, colour=color)
+        # Convert hex string to (red, green, blue) tuple
+        raw_hex = default_color.lstrip("#")
+        default_color_rgb = tuple(int(raw_hex[i : i + 2], 16) for i in (0, 2, 4))
+        self.color_picker = wx.ColourPickerCtrl(self, colour=default_color_rgb)
 
         button = wx.Button(self, wx.ID_OK, label="Apply")
 
@@ -963,9 +971,8 @@ class AnalyzeBehaviors(LabGymWindow):
                 n = 0
                 while n < len(self.behavior_to_include):
                     dialog2 = ColorPicker(
-                        self,
                         "Color for " + self.behavior_to_include[n],
-                        [self.behavior_to_include[n], colors[n]],
+                        colors[n][1],
                     )
                     if dialog2.ShowModal() == wx.ID_OK:
                         (r, b, g, _) = dialog2.color_picker.GetColour()
@@ -1293,7 +1300,7 @@ class AnalyzeBehaviors(LabGymWindow):
                             float_format="%.2f",
                             index_label="time/ID",
                         )
-                        plot_evnets(
+                        plot_events(
                             self.result_path,
                             event_data,
                             time_points,
@@ -1341,7 +1348,7 @@ class AnalyzeBehaviors(LabGymWindow):
                             float_format="%.2f",
                             index_label="time/ID",
                         )
-                        plot_evnets(
+                        plot_events(
                             self.result_path,
                             event_data,
                             time_points,
