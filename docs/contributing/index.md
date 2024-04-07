@@ -8,5 +8,6 @@ who wishes to make contributions to LabGym. To get started, check out the
 setup
 developing
 docs
+internal
 ```
 
