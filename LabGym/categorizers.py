@@ -336,7 +336,7 @@ class Categorizers():
 				if code is not None:
 					pattern_image=cv2.flip(pattern_image,code)
 
-				if behavior_mode>=3:
+				if behavior_mode==3:
 					if beta is not None:
 						if background_free is True:
 							pattern_image_gray=cv2.cvtColor(pattern_image,cv2.COLOR_BGR2GRAY)
@@ -350,6 +350,7 @@ class Categorizers():
 							pattern_image=pattern_image.astype('float')
 							pattern_image[pattern_image>30]+=beta
 						else:
+							pattern_image=pattern_image.astype('float')
 							pattern_image+=beta
 						pattern_image=np.uint8(np.clip(pattern_image,0,255))
 
@@ -372,7 +373,7 @@ class Categorizers():
 					x:x+pattern_image_scl.shape[1],:]=pattern_image_scl
 					pattern_image=pattern_image_black
 
-				if behavior_mode>=3:
+				if behavior_mode==3:
 					if channel==1:
 						pattern_image=cv2.cvtColor(np.uint8(pattern_image),cv2.COLOR_BGR2GRAY)
 
@@ -1141,11 +1142,6 @@ class Categorizers():
 			level_tconv=int(parameters['level_tconv'][0])
 		if 'channel' in list(parameters.keys()):
 			channel=int(parameters['channel'][0])
-		network=int(parameters['network'][0])
-		if network==0:
-			print('The type of the Categorizer: Pattern Recognizer (Lv '+str(level_conv)+'; Shape '+str(dim_conv)+' X '+str(dim_conv)+' X 3).')
-		if network==2:
-			print('The type of the Categorizer: Animation Analyzer (Lv '+str(level_tconv)+'; Shape '+str(dim_tconv)+' X '+str(dim_tconv)+' X '+str(channel)+') + Pattern Recognizer (Lv '+str(level_conv)+'; Shape '+str(dim_conv)+' X '+str(dim_conv)+' X 3).')
 		if 'behavior_kind' in list(parameters.keys()):
 			behavior_mode=int(parameters['behavior_kind'][0])
 		else:
@@ -1158,6 +1154,14 @@ class Categorizers():
 			print('The behavior mode of the Categorizer: Interactive advanced (Social distance '+str(parameters['social_distance'][0])+').')
 		else:
 			print('The behavior mode of the Categorizer: Static images (non-interactive).')
+		network=int(parameters['network'][0])
+		if network==0:
+			if behavior_mode==3:
+				print('The type of the Categorizer: Pattern Recognizer (Lv '+str(level_conv)+'; Shape '+str(dim_conv)+' X '+str(dim_conv)+' X '+str(channel)+').')
+			else:
+				print('The type of the Categorizer: Pattern Recognizer (Lv '+str(level_conv)+'; Shape '+str(dim_conv)+' X '+str(dim_conv)+' X 3).')
+		if network==2:
+			print('The type of the Categorizer: Animation Analyzer (Lv '+str(level_tconv)+'; Shape '+str(dim_tconv)+' X '+str(dim_tconv)+' X '+str(channel)+') + Pattern Recognizer (Lv '+str(level_conv)+'; Shape '+str(dim_conv)+' X '+str(dim_conv)+' X 3).')
 		length=int(parameters['time_step'][0])
 		print('The length of a behavior example in the Categorizer: '+str(length)+' frames.')
 		if int(parameters['inner_code'][0])==0:
@@ -1219,6 +1223,9 @@ class Categorizers():
 
 						path_to_pattern_image=os.path.splitext(os.path.join(groundtruth_path,behavior,i))[0]+'.jpg'
 						pattern_image=cv2.imread(path_to_pattern_image)
+						if behavior_mode==3:
+							if channel==1:
+								pattern_image=cv2.cvtColor(pattern_image,cv2.COLOR_BGR2GRAY)
 						pattern_image=cv2.resize(pattern_image,(dim_conv,dim_conv),interpolation=cv2.INTER_AREA)
 						pattern_images.append(img_to_array(pattern_image))
 
