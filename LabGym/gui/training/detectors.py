@@ -546,7 +546,7 @@ class TestDetectors(LabGymWindow):
             self,
             message="Select a Detector to delete",
             caption="Delete a Detector",
-            choices=get_detector_names().sort(),
+            choices=get_detector_names(),
         )
         if dialog.ShowModal() != wx.ID_OK:
             dialog.Destroy()

@@ -423,7 +423,7 @@ class AnalyzeBehaviors(LabGymWindow):
         if self.behavior_mode <= 1:
             methods = [
                 "Use trained Detectors (versatile but slow)",
-                "Subtract background (fast but requires static background & stable illumination)", 
+                "Subtract background (fast but requires static background & stable illumination)",
             ]
         else:
             methods = ["Use trained Detectors (versatile but slow)"]
@@ -612,7 +612,6 @@ class AnalyzeBehaviors(LabGymWindow):
                 self.animal_number = {}
 
                 detectors = get_detector_names()
-                detectors.sort()
                 if "Choose a new directory of the Detector" not in detectors:
                     detectors.append("Choose a new directory of the Detector")
 
