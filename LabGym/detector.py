@@ -293,9 +293,9 @@ class Detector:
 
 
 def get_detector_names() -> list[str]:
-    """Return the names of all saved detectors."""
+    """Return the names of all saved detectors in sorted order."""
     ignore = ["__pycache__", "__init__", "__init.py__"]
-    return [path.name for path in DETECTOR_FOLDER.glob("*") if path.is_dir() and path.name not in ignore]
+    return sorted([path.name for path in DETECTOR_FOLDER.glob("*") if path.is_dir() and path.name not in ignore])
 
 
 def get_annotation_class_names(annotation_path: str) -> list[str]:
