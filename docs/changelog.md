@@ -1,5 +1,18 @@
 # Changelog
 
+## v2.4.4
+### What's Changed
+* Fix crash that occurs when no detectors are present by @rohansatapathy in https://github.com/umyelab/LabGym/pull/140
+* Constrain tensorflow version on non-Windows systems by @rohansatapathy in https://github.com/umyelab/LabGym/pull/141
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.4.3...v2.4.4>
+
+## v2.4.3
+### What's Changed
+* Fix bug in static image mode
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.4.3...v2.4.4>
+
 ## v2.4.2
 ### What's Changed
 * Fix bug that prevented using the cropping feature in the preprocessing module
