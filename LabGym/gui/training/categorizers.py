@@ -342,6 +342,7 @@ class TrainCategorizers(LabGymWindow):
 
     def set_categorizer_shape(self, event):
         """Set the network shape of the categorizer."""
+        self.channel = 3
         if self.using_animation_analyzer is True:
             dialog = wx.NumberEntryDialog(
                 self,
@@ -359,7 +360,6 @@ class TrainCategorizers(LabGymWindow):
                 self.dim_tconv = int(dialog.GetValue())
                 dialog.Destroy()
 
-            self.channel = 3
             if self.behavior_mode != BehaviorMode.INTERACT_ADVANCED:
                 dialog = wx.MessageDialog(
                     self,
@@ -387,7 +387,6 @@ class TrainCategorizers(LabGymWindow):
             self.dim_conv = int(dialog.GetValue())
             dialog.Destroy()
 
-        self.channel = 3
         if self.behavior_mode == BehaviorMode.STATIC_IMAGES:
             dialog1 = wx.MessageDialog(
                 self,
