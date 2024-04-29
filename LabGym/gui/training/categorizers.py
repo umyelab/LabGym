@@ -440,7 +440,7 @@ class TrainCategorizers(LabGymWindow):
             "Background-free animations?",
             wx.YES_NO | wx.ICON_QUESTION,
         )
-        self.background_free = dialog.ShowModal == wx.ID_YES
+        self.background_free = dialog.ShowModal() == wx.ID_YES
         dialog.Destroy()
 
         self.include_bodyparts = False
