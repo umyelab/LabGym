@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.4.5
+### What's Changed
+* Fix bugs in "Train Categorizers" module by @rohansatapathy in https://github.com/umyelab/LabGym/pull/148
+* Add internal notes section to documentation by @rohansatapathy in https://github.com/umyelab/LabGym/pull/149
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.4.4...v2.4.5>
+
 ## v2.4.4
 ### What's Changed
 * Fix crash that occurs when no detectors are present by @rohansatapathy in https://github.com/umyelab/LabGym/pull/140
