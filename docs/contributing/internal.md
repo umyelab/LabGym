@@ -83,12 +83,56 @@ environment](./setup.md) set up properly. Then, follow these instructions.
    "Generate release notes". Ensure that the release notes look correct, then
    click "Publish release". 
 
-   This will trigger a GitHub Action that deploys the new version to the Python 
-   Package Index (PyPI). For more information, see [CI/CD Pipeline](#ci-cd-pipeline).
+   This will trigger a GitHub Action that deploys the new version to the Python
+   Package Index (PyPI). For more information, see [CI/CD
+   Pipeline](#ci-cd-pipeline).
 
 9. After verifying that the deployment is successful, merge the release PR
    into `master`.
 
 ## CI/CD Pipeline
+
+LabGym uses Continuous Integration (CI) to ensure that changes made to the code
+pass the test suite and don't introduce any breaking changes for users, and it
+uses Continous Deployment (CD) to automatically publish LabGym to PyPI once a
+new version is released. 
+
+To automatically run the test suite and deploy new versions, LabGym uses GitHub
+Actions, which is a platform that provides free servers that can be used to run
+such automated tasks. The tasks to run are configured via `.yml` files in the
+`.github/workflows` folder in the repository. For a reference on the
+configuration, please refer to <https://docs.github.com/en/actions/quickstart>.
+
+### CI
+
+The CI workflow is defined in `.github/workflows/ci.yml`, and is configured to
+run on every Pull Request. Currently, the CI workflow runs the unit test suite
+using `nox`, running the `tests()` function in `noxfile.py`. 
+
+Although the test suite is defined using the `pytest` module, `pytest` itself
+can only use one version of Python at a time. Since LabGym supports both Python
+3.9 and 3.10, it's necessary to test on both versions of Python to ensure that,
+for example, a PR doesn't include Python features that are supported on Python
+3.10 but not on Python 3.9. `nox` allows us to test both versions by creating a
+separate virtual environment for each Python version, then it installs and runs
+`pytest` in each environment. For more information, check out the [Nox
+documentation](https://nox.thea.codes/en/stable/).
+
+The final part of the CI pipeline is automatic documentation builds, which are
+useful when previewing documentation to make sure it gets built correctly. The
+documentation builds are triggered using a webhook, which is configured
+separately from GitHub Actions. For the most part, you should never need to
+touch the webhook configuration, and you can check on the status of
+documentation builds at <https://readthedocs.org/projects/labgym/> or by
+clicking the ReadTheDocs icon at the bottom of the documentation website.
+
+### CD
+
+The CD workflow is defined in `.github/workflows/python-publish.yml`. The
+workflow builds
+[wheels](https://packaging.python.org/en/latest/glossary/#term-Wheel) for
+LabGym, then uploads them to PyPI. For more information, take a look at
+<https://github.com/pypa/gh-action-pypi-publish>.
+
 
 
