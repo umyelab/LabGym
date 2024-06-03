@@ -8,10 +8,7 @@
 ```{toctree}
 :hidden:
 
-what-can-labgym-do
 installation/index
-walkthroughs/index
-features/index
 issues
 changelog
 contributing/index
