@@ -23,8 +23,7 @@ enter. All terminal commands going forward should be entered in this terminal.
    ![VS Build Tools Installer Screenshot][]
 
 3. Install [Python 3.10][]. Scroll down to the bottom and click the `Windows
-   installer (64-bit)` option. Run the installer and accept all default
-   options.
+   installer (64-bit)` option. Run the installer and select "Add python to path" and "Disable long path limit".
 
    To test your Python installation, run the following command. If the version
    number prints out successfully, your Python installation is working.
