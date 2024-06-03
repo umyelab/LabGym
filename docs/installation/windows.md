@@ -76,7 +76,43 @@ enter. All terminal commands going forward should be entered in this terminal.
    with CUDA 11.8.
 
 
-4. Install `pipx` by following 
+5. Install LabGym via `pip`.
+   
+   ```pwsh-session
+   > py -m pip install LabGym
+   ```
+   
+6. Install Pytorch v2.0.1.
+
+   ```pwsh-session
+   > py -m pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
+   ```
+
+   If you are using LabGym without a GPU, use the following command instead.
+
+   ```pwsh-session
+   > py -m pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cpu
+   ```
+
+7. Install Detectron2.
+
+   ```pwsh-session
+   > py -m pip install git+https://github.com/facebookresearch/detectron2.git@a59f05630a8f205756064244bf5beb8661f96180
+   ```
+
+8. Launch LabGym.
+
+   ```pwsh-session
+   > LabGym
+   ```
+   
+   The GUI will take a few minutes to start up during the first launch. If the 
+   LabGym GUI shows up, you have successfully installed LabGym!
+
+
+If you use `pipx`, from step #5:
+
+5. Install `pipx` by following 
    [these instructions](https://pipx.pypa.io/stable/installation/).
    
    To test your installation of `pipx`, close and reopen your terminal window,
@@ -89,13 +125,13 @@ enter. All terminal commands going forward should be entered in this terminal.
    If the version number prints successfully, then your installation is working
    properly. Otherwise, try running the `pipx ensurepath` command again.
 
-5. Install LabGym via `pipx`.
+6. Install LabGym via `pipx`.
    
    ```pwsh-session
    > pipx install --python 3.10 LabGym
    ```
 
-6. Install PyTorch in LabGym's virtual environment.
+7. Install PyTorch in LabGym's virtual environment.
 
    ```pwsh-session
    > pipx inject --index-url https://download.pytorch.org/whl/cu118 LabGym torch==2.0.1 torchvision==0.15.2
@@ -107,65 +143,13 @@ enter. All terminal commands going forward should be entered in this terminal.
    > pipx inject --index-url https://download.pytorch.org/whl/cpu LabGym torch==2.0.1 torchvision==0.15.2
    ```
 
-6. Install [Detectron2][] in LabGym's virtual environment.
-   
-   First, download the Detectron2 code using the following command.
+8. Install [Detectron2][] in LabGym's virtual environment.
 
    ```pwsh-session
-   > git clone https://github.com/facebookresearch/detectron2.git
-   ```
-   The code should be available in the `C:\Users\<username>\detectron2\`
-   folder.
-
-   If you're using a GPU, open the `setup.py` file inside the `detectron2` 
-   folder using a text editor (e.g. Notepad, VS Code, etc.). Go to line 79 in 
-   the code, then apply the following edit.
-
-   Old version:
-   ```{code} python
-   :number-lines: 72
-
-   if not is_rocm_pytorch:
-       define_macros += [("WITH_CUDA", None)]
-       extra_compile_args["nvcc"] = [
-           "-O3",
-           "-DCUDA_HAS_FP16=1",
-           "-D__CUDA_NO_HALF_OPERATORS__",
-           "-D__CUDA_NO_HALF_CONVERSIONS__",
-           "-D__CUDA_NO_HALF2_OPERATORS__",
-       ]
-   else:
-       define_macros += [("WITH_HIP", None)]
-       extra_compile_args["nvcc"] = []
-   ```
-   New version:
-   ```{code} python
-   :number-lines: 72
-
-   if not is_rocm_pytorch:
-       define_macros += [("WITH_CUDA", None)]
-       extra_compile_args["nvcc"] = [
-           "-O3",
-           "-DCUDA_HAS_FP16=1",
-           "-D__CUDA_NO_HALF_OPERATORS__",
-           "-D__CUDA_NO_HALF_CONVERSIONS__",
-           "-D__CUDA_NO_HALF2_OPERATORS__",
-           "-DWITH_CUDA",
-       ]
-   else:
-       define_macros += [("WITH_HIP", None)]
-       extra_compile_args["nvcc"] = []
-   ```
-   Save the `setup.py` file, then exit your text editor.
-
-   Finally, reopen your terminal, then install Detectron2.
-   
-   ```pwsh-session
-   > set CUDA_HOME=%CUDA_HOME_V11_8%
-   > pipx runpip LabGym install -e detectron2
+   > pipx runpip LabGym install git+https://github.com/facebookresearch/detectron2.git@a59f05630a8f205756064244bf5beb8661f96180
    ```
 
-7. Launch LabGym.
+9. Launch LabGym.
 
    ```pwsh-session
    > LabGym
