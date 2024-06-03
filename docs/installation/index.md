@@ -19,11 +19,10 @@ configuration requires that you install these dependencies in a different way,
 (e.g. you're using a computing cluster that uses Lmod to load Python) feel 
 free to go ahead and do that.
 
-Regardless of your system configuration, we strongly recommend using 
-[`pipx`](https://pipx.pypa.io/stable/installation/) to install LabGym. If
-you use Python for other research tasks, you might have multiple version of
-Python installed, as well as versions of libraries like NumPy and TensorFlow
-that LabGym is incompatible with. Using `pipx` ensures that LabGym and its 
+The simplest way to install LabGym is using `pip`. You can also use 
+[`pipx`](https://pipx.pypa.io/stable/installation/) to install LabGym in case
+you use Python for other research tasks and have multiple version of
+Python or Python libraries like NumPy and TensorFlow installed. Using `pipx` ensures that LabGym and its 
 dependencies can be installed in an isolated environment with the correct 
 version of Python, while allowing the `LabGym` command to be recognized 
 globally in the terminal. For more information, please see the system-specific 
