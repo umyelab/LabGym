@@ -13,31 +13,42 @@ to install LabGym.
    A GUI installation window should pop up. Follow along and accept all
    the default values. 
 
-2. Install [Homebrew](https://brew.sh/), a command-line package manager for 
-   macOS that will simplify the installation of Python. To install Homebrew, run 
-   the following command:
+2. Install [Python 3.10][]. Scroll down to the bottom and click the `macOS 64-bit universal2 installer` option. Run the installer and select "Add python to path".
 
-   ```console
-   % /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+3. Install LabGym via `pip`.
+   
+   ```pwsh-session
+   % python3 -m pip install LabGym
    ```
 
-   ````{note}
-   If you're on an Apple Silicon Mac, you will need to add Homebrew to PATH. To
-   do this, enter the following command, then close and reopen your terminal
-   window.
+4. Install Pytorch v2.0.1.
 
-   ```console
-   % echo 'eval $(/opt/homebrew/bin/brew shellenv)' >> ~/.zprofile
+   ```pwsh-session
+   % python3 -m pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2
    ```
-   ````
 
-3. Use Homebrew to install Python 3.10.
+5. Install [Detectron2][].
    
    ```console
-   % brew install python@3.10
+   % python3 -m pip install 'git+https://github.com/facebookresearch/detectron2.git@a59f05630a8f205756064244bf5beb8661f96180'
    ```
+
+6. Launch LabGym.
+
+   ```console
+   % LabGym
+   ```
+
+   The GUI will take a few minutes to start up during the first launch. If the 
+   LabGym GUI shows up, you have successfully installed LabGym!
+
+&nbsp;
+
+If you use `pipx`, from step #3:
+
+&nbsp;
    
-4. Install `pipx` by following 
+3. Install `pipx` by following 
    [these instructions](https://pipx.pypa.io/stable/installation/).
    
    To test your installation of `pipx`, close and reopen your terminal window,
@@ -50,16 +61,22 @@ to install LabGym.
    If the version number prints successfully, then your installation is working
    properly. Otherwise, try running the `pipx ensurepath` command again.
 
-5. Install LabGym via `pipx`.
+4. Install LabGym via `pipx`.
    
    ```console
    % pipx install --python python3.10 LabGym
    ```
 
+5. Install PyTorch in LabGym's virtual environment.
+
+   ```pwsh-session
+   % pipx inject LabGym torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2
+   ```
+
 6. Install [Detectron2][] in the LabGym's virtual environment.
    
    ```console
-   % pipx runpip LabGym install 'git+https://github.com/facebookresearch/detectron2.git'
+   % pipx runpip LabGym install 'git+https://github.com/facebookresearch/detectron2.git@a59f05630a8f205756064244bf5beb8661f96180'
    ```
 
 7. Launch LabGym.
@@ -71,4 +88,5 @@ to install LabGym.
    The GUI will take a few minutes to start up during the first launch. If the 
    LabGym GUI shows up, you have successfully installed LabGym!
 
+[Python 3.10]: https://www.python.org/downloads/release/python-31011/
 [Detectron2]: https://github.com/facebookresearch/detectron2
