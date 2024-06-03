@@ -109,8 +109,11 @@ enter. All terminal commands going forward should be entered in this terminal.
    The GUI will take a few minutes to start up during the first launch. If the 
    LabGym GUI shows up, you have successfully installed LabGym!
 
+&nbsp;
 
 If you use `pipx`, from step #5:
+
+&nbsp;
 
 5. Install `pipx` by following 
    [these instructions](https://pipx.pypa.io/stable/installation/).
