@@ -74,14 +74,19 @@ enter. All terminal commands going forward should be entered in this terminal.
    As of February 2024, the latest version is cuDNN 9.0.0, which is compatible
    with CUDA 11.8.
 
+6. Upgrade `pip`, `wheel`, `setuptools`.
+   
+   ```pwsh-session
+   > py -m pip install --upgrade pip wheel setuptools
+   ```
 
-5. Install LabGym via `pip`.
+7. Install LabGym via `pip`.
    
    ```pwsh-session
    > py -m pip install LabGym
    ```
    
-6. Install Pytorch v2.0.1.
+8. Install Pytorch v2.0.1.
 
    ```pwsh-session
    > py -m pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
@@ -93,13 +98,13 @@ enter. All terminal commands going forward should be entered in this terminal.
    > py -m pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cpu
    ```
 
-7. Install Detectron2.
+9. Install Detectron2.
 
    ```pwsh-session
    > py -m pip install git+https://github.com/facebookresearch/detectron2.git@a59f05630a8f205756064244bf5beb8661f96180
    ```
 
-8. Launch LabGym.
+10. Launch LabGym.
 
    ```pwsh-session
    > LabGym
@@ -110,11 +115,11 @@ enter. All terminal commands going forward should be entered in this terminal.
 
 &nbsp;
 
-If you use `pipx`, from step #5:
+If you use `pipx`, from step #6:
 
 &nbsp;
 
-5. Install `pipx` by following 
+6. Install `pipx` by following 
    [these instructions](https://pipx.pypa.io/stable/installation/).
    
    To test your installation of `pipx`, close and reopen your terminal window,
@@ -127,13 +132,13 @@ If you use `pipx`, from step #5:
    If the version number prints successfully, then your installation is working
    properly. Otherwise, try running the `pipx ensurepath` command again.
 
-6. Install LabGym via `pipx`.
+7. Install LabGym via `pipx`.
    
    ```pwsh-session
    > pipx install --python 3.10 LabGym
    ```
 
-7. Install PyTorch in LabGym's virtual environment.
+8. Install PyTorch in LabGym's virtual environment.
 
    ```pwsh-session
    > pipx inject --index-url https://download.pytorch.org/whl/cu118 LabGym torch==2.0.1 torchvision==0.15.2
@@ -145,13 +150,13 @@ If you use `pipx`, from step #5:
    > pipx inject --index-url https://download.pytorch.org/whl/cpu LabGym torch==2.0.1 torchvision==0.15.2
    ```
 
-8. Install [Detectron2][] in LabGym's virtual environment.
+9. Install [Detectron2][] in LabGym's virtual environment.
 
    ```pwsh-session
    > pipx runpip LabGym install git+https://github.com/facebookresearch/detectron2.git@a59f05630a8f205756064244bf5beb8661f96180
    ```
 
-9. Launch LabGym.
+10. Launch LabGym.
 
    ```pwsh-session
    > LabGym
