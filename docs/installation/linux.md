@@ -42,7 +42,7 @@ If you're using Arch Linux or one of its derivatives, we assume you have the
    To verify your installation of CUDA, use the following command.
 
    ```pwsh-session
-   > nvcc --version
+   $ nvcc --version
    nvcc: NVIDIA (R) Cuda compiler driver
    Copyright (c) 2005-2022 NVIDIA Corporation
    Built on Wed_Sep_21_10:41:10_Pacific_Daylight_Time_2022
