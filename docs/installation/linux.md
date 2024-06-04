@@ -88,6 +88,13 @@ If you're using Arch Linux or one of its derivatives, we assume you have the
    $ python3 -m pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
    ```
 
+   If you are using LabGym without a GPU, use the following command instead.
+
+   ```console
+   $ python3 -m pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cpu
+   ```
+
+
 6. Install [Detectron2][].
 
    ```console
