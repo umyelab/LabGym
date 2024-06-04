@@ -27,7 +27,8 @@ If you're using Arch Linux or one of its derivatives, we assume you have the
    $ yay -S python310
    ```
    ````
-2. If you're using an Nvidia GPU, install CUDA Toolkit 11.8 and cuDNN.
+
+2. If you're using an NVIDIA GPU, install CUDA Toolkit 11.8 and cuDNN.
 
    First, install and/or update your GPU drivers at
    [this link](https://www.nvidia.com/Download/index.aspx). Select your GPU
@@ -69,7 +70,47 @@ If you're using Arch Linux or one of its derivatives, we assume you have the
    As of February 2024, the latest version is cuDNN 9.0.0, which is compatible
    with CUDA 11.8.
 
-3. Install `pipx` by following 
+3. Upgrade `pip`, `wheel`, `setuptools`.
+
+   ```console
+   $ python3 -m pip install --upgrade pip wheel setuptools
+   ```
+
+4. Install LabGym via `pip`.
+ 
+   ```console
+   $ python3 -m pip install LabGym
+   ```
+
+5. Install Pytorch v2.0.1.
+
+   ```console
+   $ python3 -m pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
+   ```
+
+6. Install [Detectron2][].
+
+   ```console
+   $ python3 -m pip install 'git+https://github.com/facebookresearch/detectron2.git@a59f05630a8f205756064244bf5beb8661f96180'
+   ```
+
+7. Launch LabGym.
+
+   ```console
+   $ LabGym
+   ```
+
+   The GUI will take a few minutes to start up during the first launch. If the 
+   LabGym GUI shows up, you have successfully installed LabGym!
+
+&nbsp;
+
+If you use `pipx`, from step #4:
+
+&nbsp;
+   
+
+4. Install `pipx` by following 
    [these instructions](https://pipx.pypa.io/stable/installation/). 
    
    To test your installation of `pipx`, close and reopen your terminal window,
@@ -82,7 +123,7 @@ If you're using Arch Linux or one of its derivatives, we assume you have the
    If the version number prints successfully, then your installation is working
    properly. Otherwise, try running the `pipx ensurepath` command again.
 
-4. Install LabGym via `pipx`.
+5. Install LabGym via `pipx`.
    
    ```console
    $ pipx install --python python3.10 LabGym
@@ -97,23 +138,23 @@ If you're using Arch Linux or one of its derivatives, we assume you have the
 
 6. Install PyTorch in LabGym's virtual environment.
 
-   ```pwsh-session
-   > pipx inject --index-url https://download.pytorch.org/whl/cu118 LabGym torch==2.0.1 torchvision==0.15.2
+   ```console
+   $ pipx inject --index-url https://download.pytorch.org/whl/cu118 LabGym torch==2.0.1 torchvision==0.15.2
    ```
 
    If you are using LabGym without a GPU, use the following command instead.
 
-   ```pwsh-session
-   > pipx inject --index-url https://download.pytorch.org/whl/cpu LabGym torch==2.0.1 torchvision==0.15.2
+   ```console
+   $ pipx inject --index-url https://download.pytorch.org/whl/cpu LabGym torch==2.0.1 torchvision==0.15.2
    ```
 
-5. Install [Detectron2][] in the LabGym's virtual environment.
+7. Install [Detectron2][] in the LabGym's virtual environment.
    
    ```console
-   $ pipx runpip LabGym install 'git+https://github.com/facebookresearch/detectron2.git'
+   $ pipx runpip LabGym install 'git+https://github.com/facebookresearch/detectron2.git@a59f05630a8f205756064244bf5beb8661f96180'
    ```
 
-6. Launch LabGym.
+8. Launch LabGym.
 
    ```console
    $ LabGym
