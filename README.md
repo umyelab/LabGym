@@ -21,6 +21,8 @@ Cite LabGym: <https://www.cell.com/cell-reports-methods/fulltext/S2667-2375(23)0
 
 <!-- end elevator-pitch -->
 
+Installation instructions, please see https://labgym.readthedocs.io/en/latest/installation/index.html.
+
 <p>&nbsp;</p>
 
 <!-- start what-can-labgym-do -->
@@ -160,6 +162,3 @@ LabGym employs two distinct methods for detecting animals or objects in differen
 
 <p>&nbsp;</p>
 
-## Installation
-
-For installation instructions, please see https://labgym.readthedocs.io/en/latest/installation/index.html.
