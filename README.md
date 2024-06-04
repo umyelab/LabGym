@@ -23,7 +23,7 @@ Cite LabGym: <https://www.cell.com/cell-reports-methods/fulltext/S2667-2375(23)0
 
 ## Installation
 
-For installation instructions and documentation, please see [https://labgym.readthedocs.io](https://labgym.readthedocs.io).
+For installation instructions, please see https://labgym.readthedocs.io/en/latest/installation/index.html.
 
 Refer to the [extended user guide](./LabGym%20user%20guide_v2.2.pdf) for a more detailed reference on how to use LabGym.
 
