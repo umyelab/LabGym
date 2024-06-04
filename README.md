@@ -21,12 +21,6 @@ Cite LabGym: <https://www.cell.com/cell-reports-methods/fulltext/S2667-2375(23)0
 
 <!-- end elevator-pitch -->
 
-## Installation
-
-For installation instructions, please see https://labgym.readthedocs.io/en/latest/installation/index.html.
-
-Refer to the [extended user guide](./LabGym%20user%20guide_v2.2.pdf) for a more detailed reference on how to use LabGym.
-
 <p>&nbsp;</p>
 
 <!-- start what-can-labgym-do -->
@@ -163,3 +157,9 @@ LabGym employs two distinct methods for detecting animals or objects in differen
     1. Click the **‘Generate Image Examples’** button to extract image frames from videos.
     2. Use free online annotation tools like Roboflow (https://roboflow.com) to annotate the outlines of animals or objects in these images. For annotation type, choose 'Instance Segmentation', and export the annotations in 'COCO instance segmentation' format, which generates a ‘*.json’ file. In **'Interactive advanced'** mode, focus on images where individuals collide and annotate these boundaries precisely. Exposing the **Detector** to a variety of collision scenarios during training can significantly minimize identity switching in subsequent analyses.
     3. Use the **‘Train Detectors’** button to input these annotated images and commence training your **Detectors**.
+
+<p>&nbsp;</p>
+
+## Installation
+
+For installation instructions, please see https://labgym.readthedocs.io/en/latest/installation/index.html.
