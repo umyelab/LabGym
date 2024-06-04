@@ -21,7 +21,9 @@ Cite LabGym: <https://www.cell.com/cell-reports-methods/fulltext/S2667-2375(23)0
 
 <!-- end elevator-pitch -->
 
-Installation instructions, please see https://labgym.readthedocs.io/en/latest/installation/index.html.
+<p>&nbsp;</p>
+
+Installation instructions: https://labgym.readthedocs.io/en/latest/installation/index.html.
 
 <p>&nbsp;</p>
 
