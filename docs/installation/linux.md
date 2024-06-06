@@ -98,7 +98,7 @@ If you're using Arch Linux or one of its derivatives, we assume you have the
 6. Install [Detectron2][].
 
    ```console
-   $ python3 -m pip install 'git+https://github.com/facebookresearch/detectron2.git@a59f05630a8f205756064244bf5beb8661f96180'
+   $ python3 -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
    ```
 
 7. Launch LabGym.
@@ -158,7 +158,7 @@ If you use `pipx`, from step #4:
 7. Install [Detectron2][] in the LabGym's virtual environment.
    
    ```console
-   $ pipx runpip LabGym install 'git+https://github.com/facebookresearch/detectron2.git@a59f05630a8f205756064244bf5beb8661f96180'
+   $ pipx runpip LabGym install 'git+https://github.com/facebookresearch/detectron2.git'
    ```
 
 8. Launch LabGym.
