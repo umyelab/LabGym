@@ -101,7 +101,7 @@ enter. All terminal commands going forward should be entered in this terminal.
 9. Install Detectron2.
 
    ```pwsh-session
-   > py -m pip install git+https://github.com/facebookresearch/detectron2.git@a59f05630a8f205756064244bf5beb8661f96180
+   > py -m pip install git+https://github.com/facebookresearch/detectron2.git
    ```
 
 10. Launch LabGym.
@@ -153,7 +153,7 @@ If you use `pipx`, from step #6:
 9. Install [Detectron2][] in LabGym's virtual environment.
 
    ```pwsh-session
-   > pipx runpip LabGym install git+https://github.com/facebookresearch/detectron2.git@a59f05630a8f205756064244bf5beb8661f96180
+   > pipx runpip LabGym install git+https://github.com/facebookresearch/detectron2.git
    ```
 
 10. Launch LabGym.
