@@ -982,4 +982,98 @@ def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_w
 
 	print('The processed video(s) stored in: '+out_folder)
 
+def get_dropped_frames(n: int, reduction_factor: float) -> list[int]:
+    """
+    Return a list of indices of frames to be dropped after an FPS reduction
+
+    Args:
+        n: The number of frames in the original video.
+        reduction_factor: The FPS reduction factor, where the new FPS is
+            calculated using new_fps = old_fps / reduction_factor.
+
+    Returns:
+        A list of indices of frames to be dropped.
+
+    Raises:
+        None
+    """
+    if n <= 1.0:
+        return []
+    num_dropped_frames = int(n * (1 - 1 / reduction_factor))
+    block_size = n / (n * (1 - 1 / reduction_factor) - 1)
+    return [round(block_size * i) for i in range(num_dropped_frames)]
+
+
+def parse_all_events_file(path: Path) -> Tuple[dict, list[float]]:
+    """Parse an all_events.xlsx file.
+
+    Args:
+        path: The path to the all_events.xlsx file.
+
+    Returns:
+        A tuple (events, time_points).
+
+        events is a dictionary with the keys as the ID of each animal and the
+        values are lists of lists, where each sub-list has a length of 2 and
+        is in one of the following formats:
+
+        - ["NA", -1] (The animal wasn't detected during this time point.)
+        - [behavior, probability], where behavior is the name of the behavior
+          and probability is a float between 0 and 1.
+
+        time_points is a list of floats containing the time points for each
+        behavior for each animal, which is in the leftmost column in the
+        original file.
+
+    Raises:
+        ValueError: The all_events.xlsx file is in an invalid format.
+    """
+
+    df = pd.read_excel(path)
+
+    event_probability = {}
+    time_points = []
+    for col_name, col in df.items():
+        try:
+            id = int(col_name)  # type: ignore[reportArgumentType]
+        except ValueError:
+            # Leftmost row, load time points
+            if col_name == "time/ID":
+                try:
+                    time_points = [float(i) for i in col]
+                except ValueError:
+                    raise ValueError("Invalid all_events.xlsx file.")
+            continue
+
+        # The eval() function converts the string representation of the
+        # list into a Python list object.
+        event_probability[id] = []
+        for i in col:
+            event = eval(i)
+            if not _is_valid_event(event):
+                raise ValueError(f"Invalid event {event}.")
+            event_probability[id].append(event)
+
+    return (event_probability, time_points)
+
+
+def _is_valid_event(event: list) -> bool:
+    """Return whether or not the given event is valid."""
+    return (
+        isinstance(event, list)
+        and len(event) == 2
+        and isinstance(event[0], str)
+        and (isinstance(event[1], float) and 0 <= event[1] <= 1 or isinstance(event[1], int) and event[1] == -1)
+    )
+
+
+def get_behaviors_from_all_events(events_behaviors: dict) -> list[str]:
+    """Return a list of the behaviors present in an all_events.xlsx file."""
+    behaviors = []
+    for events in events_behaviors.values():
+        for behavior, _ in events:
+            if behavior not in behaviors and behavior != "NA":
+                behaviors.append(behavior)
+
+    return behaviors
 
