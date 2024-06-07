@@ -15,3 +15,10 @@ USA
 
 Email: bingye@umich.edu
 """
+
+from LabGym.tools import get_dropped_frames
+
+
+def test_get_dropped_frames() -> None:
+    """Test the calculation of dropped frame indices when reducing FPS."""
+    assert get_dropped_frames(n=16, reduction_factor=1.25) == [0, 7, 15]

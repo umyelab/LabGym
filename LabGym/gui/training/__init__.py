@@ -15,3 +15,5 @@ USA
 
 Email: bingye@umich.edu
 """
+
+from .training_module import TrainingModule

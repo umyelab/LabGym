@@ -15,3 +15,5 @@ USA
 
 Email: bingye@umich.edu
 """
+
+from .main_window import gui

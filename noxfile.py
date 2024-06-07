@@ -15,3 +15,23 @@ USA
 
 Email: bingye@umich.edu
 """
+
+import nox
+
+nox.options.error_on_missing_interpreters = True
+
+
+@nox.session(python=["3.9", "3.10"], reuse_venv=True)
+def tests(session: nox.Session) -> None:
+    """Run the test suite."""
+    session.install("-e", ".")
+    session.install("pytest")
+    session.run("pytest")
+
+
+@nox.session(reuse_venv=True)
+def docs(session: nox.Session) -> None:
+    """Build the docs using the sphinx-autobuild server."""
+    session.install("-r", "docs/requirements.txt")
+    session.run("make", "-C", "docs", "clean", external=True)
+    session.run("sphinx-autobuild", "docs", "docs/_build/html")

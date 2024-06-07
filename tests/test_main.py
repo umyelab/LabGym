@@ -15,3 +15,13 @@ USA
 
 Email: bingye@umich.edu
 """
+
+
+def test_import_gui() -> None:
+    """Ensure that importing LabGym.gui works.
+
+    Importing `gui` ensures that the interpreter reads every file in LabGym,
+    which will catch basic syntax errors and compatibility errors between
+    Python 3.9 and 3.10.
+    """
+    from LabGym import gui  # noqa: F401
