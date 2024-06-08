@@ -35,6 +35,7 @@ def main():
 		latest_version=version.parse(pypi_json["info"]["version"])
 
 		if latest_version>current_version:
+
 			if 'pipx' in str(Path(__file__)):
 				upgrade_command='pipx upgrade LabGym'
 			else:
