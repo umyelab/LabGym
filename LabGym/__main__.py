@@ -22,7 +22,7 @@ Email: bingye@umich.edu
 import requests
 from pathlib import Path
 from packaging import version
-from LabGym import __version__,gui
+from LabGym import __version__,gui_main
 
 
 
@@ -46,11 +46,10 @@ def main():
 
 	except:
 
-		print('Unable to check for new versions of LabGym!')
-		print('Please check https://github.com/umyelab/LabGym for updates.\n')
+		pass
 
 
-	gui.gui()
+	gui_main.main_window()
 
 
 
