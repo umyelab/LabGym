@@ -28,7 +28,7 @@ import torch
 import json
 from .analyzebehavior import AnalyzeAnimal
 from .analyzebehavior_dt import AnalyzeAnimalDetector
-from .tools import plot_evnets
+from .tools import plot_evnets,
 from .minedata import data_mining
 
 
@@ -988,7 +988,6 @@ class WindowLv2_MineResults(wx.Frame):
 		boxsizer.Add(module_outputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		boxsizer.Add(0,5,0)
 
-
 		button_minedata=wx.Button(panel,label='Start to mine data',size=(300,40))
 		button_minedata.Bind(wx.EVT_BUTTON,self.mine_data)
 		wx.Button.SetToolTip(button_minedata,'Parametric / non-parametric tests will be automatically selected according to the data distribution, to compare the mean / median of different groups. See Extended Guide for details.')
@@ -1107,5 +1106,121 @@ class WindowLv2_MineResults(wx.Frame):
 			self.control_organization()
 			DM=data_mining(self.dataset,self.control,self.paired,self.result_path,self.pval,self.file_names)
 			DM.statistical_analysis()
+
+
+
+class WindowLv2_PlotBehaviors(wx.Frame):
+
+	def __init__(self,title):
+
+		super(WindowLv2_PlotBehaviors,self).__init__(parent=None,title=title,size=(1000,240))
+		self.events_probability=None
+		self.time_points=None
+		self.results_folder=None
+		self.names_and_colors=None
+
+		self.display_window()
+
+
+	def display_window(self):
+
+		panel=wx.Panel(self)
+		boxsizer=wx.BoxSizer(wx.VERTICAL)
+
+		module_inputfile=wx.BoxSizer(wx.HORIZONTAL)
+		button_inputfile=wx.Button(panel,label='Select the\nall_events.xlsx file',size=(300,40))
+		button_inputfile.Bind(wx.EVT_BUTTON,self.input_file)
+		wx.Button.SetToolTip(button_inputfile,'The all_events.xlsx file can be found in the output folder of LabGym analysis.')
+		self.text_inputfile=wx.StaticText(panel,label='None.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
+		module_inputfile.Add(button_inputfile,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		module_inputfile.Add(self.text_inputfile,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(0,10,0)
+		boxsizer.Add(module_inputfile,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(0,5,0)
+
+		module_outputfolder=wx.BoxSizer(wx.HORIZONTAL)
+		button_outputfolder=wx.Button(panel,label='Select folder to store\nthe behavior plot',size=(300,40))
+		button_outputfolder.Bind(wx.EVT_BUTTON,self.select_result_path)
+		wx.Button.SetToolTip(button_outputfolder,'Behavior plot is a raster plot containing all behavior events / probability over time.')
+		self.text_outputfolder=wx.StaticText(panel,label='None.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
+		module_outputfolder.Add(button_outputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		module_outputfolder.Add(self.text_outputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(module_outputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(0,5,0)
+
+		module_selectcolors=wx.BoxSizer(wx.HORIZONTAL)
+		button_selectcolors=wx.Button(panel,label='Select colors\nfor each behavior',size=(300,40))
+		button_selectcolors.Bind(wx.EVT_BUTTON,self.select_colors)
+		wx.Button.SetToolTip(button_selectcolors,'Select colors for annotating each behavior.')
+		self.text_selectcolors=wx.StaticText(panel,label='None.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
+		module_selectcolors.Add(button_selectcolors,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		module_selectcolors.Add(self.text_selectcolors,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(module_selectcolors,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(0,5,0)
+
+		button_plotbehavior=wx.Button(panel,label='Generate behavior plot',size=(300,40))
+		button_plotbehavior.Bind(wx.EVT_BUTTON,self.plot_behavior)
+		wx.Button.SetToolTip(button_plotbehavior,'Generate a behavior plot for a selected all_events.xlsx file.')
+		boxsizer.Add(0,5,0)
+		boxsizer.Add(button_plotbehavior,0,wx.RIGHT|wx.ALIGN_RIGHT,90)
+		boxsizer.Add(0,10,0)
+
+		panel.SetSizer(boxsizer)
+
+		self.Centre()
+		self.Show(True)
+
+
+	def input_file(self,event):
+
+		dialog=wx.FileDialog(self,'Select the all_events.xlsx file.','',wildcard='all_events file (*.xlsx)|*.xlsx',style=wx.FD_OPEN)
+        if dialog.ShowModal()==wx.ID_OK:
+        	all_events_file=Path(dialog.GetPath())
+        	self.events_probability,self.time_points=parse_all_events_file(all_events_file)
+        	self.text_inputfile.SetLabel(f'all_events.xlsx path: {all_events_file}')
+        dialog.Destroy()
+
+		 
+	def select_result_path(self,event):
+
+		dialog=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
+		if dialog.ShowModal()==wx.ID_OK:
+			self.results_folder=dialog.GetPath()
+			self.text_outputfolder.SetLabel(f'Results folder: {self.results_folder}')
+		dialog.Destroy()
+
+
+	def select_colors(self,event):
+
+		if self.events_probability is None:
+
+			wx.MessageBox('No all_events.xlsx file selected!','Error',wx.OK | wx.ICON_ERROR)
+
+		else:
+
+			behaviors=get_behaviors_from_all_events(self.events_probability)
+			colors=[('#ffffff',str(hex_code)) for hex_code in cnames.values()]
+			self.names_and_colors={}
+			for color,behavior in zip(colors,behaviors):
+				dialog=ColorPicker(f'Color for {behavior}',color[1])
+				if dialog.ShowModal()==wx.ID_OK:
+					(r,g,b,_)=dialog.color_picker.GetColour()
+					hex_code=f'#{r:02x}{g:02x}{b:02x}'
+					self.names_and_colors[behavior]=('#ffffff',hex_code)
+				else:
+					self.names_and_colors[behavior]=color
+			self.text_selectcolors.SetLabel('Colors: '+', '.join([f'{behavior}:{color}' for behavior,(_,color) in self.names_and_colors.items()]))
+
+	
+	def plot_behavior(self,event):
+
+		if self.events_probability is None or self.time_points is None or self.results_folder is None or self.names_and_colors is None:
+
+			wx.MessageBox('No input file / output folder / behavior colors selected.','Error',wx.OK|wx.ICON_ERROR)
+
+		else:
+
+			plot_events(str(self.results_folder),self.events_probability,self.time_points,self.names_and_colors,list(self.names_and_colors.keys()))
+
 
 
