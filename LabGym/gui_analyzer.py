@@ -18,6 +18,7 @@ Email: bingye@umich.edu
 
 
 
+
 import wx
 import os
 import matplotlib as mpl
@@ -25,8 +26,8 @@ from pathlib import Path
 import pandas as pd
 import torch
 import json
-from .analyzebehaviors import AnalyzeAnimal
-from .analyzebehaviorsdetector import AnalyzeAnimalDetector
+from .analyzebehavior import AnalyzeAnimal
+from .analyzebehavior_dt import AnalyzeAnimalDetector
 from .tools import plot_evnets
 from .minedata import data_mining
 

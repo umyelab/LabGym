@@ -24,10 +24,10 @@ import wx.lib.agw.hyperlink as hl
 import json
 from urllib import request
 from pathlib import Path
-from .gui_categorizers import WindowLv2_GenerateExamples,WindowLv2_TrainCategorizers,WindowLv2_SortBehaviors,WindowLv2_TestCategorizers
-from .gui_detectors import WindowLv2_GenerateImages,WindowLv2_TrainDetectors,WindowLv2_TestDetectors
-from .gui_preprocessors import WindowLv2_ProcessVideos
-from .gui_analyzers import WindowLv2_AnalyzeBehaviors,WindowLv2_MineResults,WindowLv2_PlotBehavior
+from .gui_categorizer import WindowLv2_GenerateExamples,WindowLv2_TrainCategorizers,WindowLv2_SortBehaviors,WindowLv2_TestCategorizers
+from .gui_detector import WindowLv2_GenerateImages,WindowLv2_TrainDetectors,WindowLv2_TestDetectors
+from .gui_preprocessor import WindowLv2_ProcessVideos
+from .gui_analyzer import WindowLv2_AnalyzeBehaviors,WindowLv2_MineResults,WindowLv2_PlotBehavior
 from LabGym import __version__
 
 

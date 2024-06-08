@@ -18,6 +18,7 @@ Email: bingye@umich.edu
 
 
 
+
 import wx
 import os
 import shutil
@@ -25,9 +26,9 @@ from pathlib import Path
 import json
 import cv2
 import numpy as np
-from .analyzebehaviors import AnalyzeAnimal
-from .analyzebehaviorsdetector import AnalyzeAnimalDetector
-from .categorizers import Categorizers
+from .analyzebehavior import AnalyzeAnimal
+from .analyzebehavior_dt import AnalyzeAnimalDetector
+from .categorizer import Categorizers
 
 
 
