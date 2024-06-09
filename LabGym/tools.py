@@ -18,12 +18,12 @@ Email: bingye@umich.edu
 
 
 
+
 import os
 import gc
 import cv2
 import numpy as np
 import datetime
-import scipy.ndimage as ndimage
 from skimage import exposure
 from tensorflow.keras.preprocessing.image import img_to_array
 from collections import deque
@@ -39,44 +39,71 @@ import operator
 
 def extract_background(frames,stable_illumination=True,animal_vs_bg=0):
 
+	'''
+	This function is used in 'background subtraction based detection method', 
+	which extract the static background of a video.
+
+	animal_vs_bg: 0--animals brighter than the background
+				  1--animals darker than the background
+				  2--hard to tell
+	'''
+
 	len_frames=len(frames)
 	
 	if len_frames<=3:
+
 		background=None
+
 	else:
+
 		frames=np.array(frames,dtype='float32')
+
 		if animal_vs_bg==2:
+
 			if len_frames>101:
+
 				frames_mean=[]
 				check_frames=[]
 				mean_overall=frames.mean(0)
 				n=0
+
 				while n<len_frames-101:
 					frames_temp=frames[n:n+100]
 					mean=frames_temp.mean(0)
 					frames_mean.append(mean)	
 					check_frames.append(abs(mean-mean_overall)+frames_temp.std(0))
 					n+=30
+
 				frames_mean=np.array(frames_mean,dtype='float32')
 				check_frames=np.array(check_frames,dtype='float32')
 				background=np.uint8(np.take_along_axis(frames_mean,np.argsort(check_frames,axis=0),axis=0)[0])
+
 				del frames_mean
 				del check_frames
 				del frames_temp
 				gc.collect()
+
 			else:
+
 				background=np.uint8(np.median(frames,axis=0))	
+
 		else:
+
 			if stable_illumination is True:
+
 				if animal_vs_bg==1:
 					background=np.uint8(frames.max(0))
 				else:
 					background=np.uint8(frames.min(0))
+
 			else:
+
 				if len_frames>101:
+
 					frames_mean=[]
 					check_frames=[]
 					n=0
+
 					while n<len_frames-101:
 						frames_temp=frames[n:n+100]
 						mean=frames_temp.mean(0)
@@ -87,14 +114,18 @@ def extract_background(frames,stable_illumination=True,animal_vs_bg=0):
 						else:
 							check_frames.append(mean+frames_temp.std(0))
 						n+=30
+
 					frames_mean=np.array(frames_mean,dtype='float32')
 					check_frames=np.array(check_frames,dtype='float32')
 					background=np.uint8(np.take_along_axis(frames_mean,np.argsort(check_frames,axis=0),axis=0)[0])
+
 					del frames_mean
 					del check_frames
 					del frames_temp
 					gc.collect()
+
 				else:
+
 					if animal_vs_bg==1:
 						background=np.uint8(frames.max(0))
 					else:
@@ -104,6 +135,17 @@ def extract_background(frames,stable_illumination=True,animal_vs_bg=0):
 
 
 def estimate_constants(path_to_video,delta,animal_number,framewidth=None,frameheight=None,stable_illumination=True,ex_start=0,ex_end=None,t=None,duration=10,animal_vs_bg=0,path_background=None,kernel=3):
+
+	'''
+	This function is in 'background subtraction based detection method',
+	which determines the time windows for background extraction and 
+	estimating animal size, as well as finding the stimulation start time.
+
+	delta: a float number that detemines fold changes of illumination when it's considered as stimulation start time point
+	ex_start and ex_end: determines the time window (in second) for extracting background
+	path_to_background: the path to the extracted background, which can be reused for background subtraction
+	kernel: determines how fine the erosion or dilation operation is
+	'''
 
 	capture=cv2.VideoCapture(path_to_video)
 	fps=round(capture.get(cv2.CAP_PROP_FPS))
@@ -138,6 +180,7 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,framehe
 		while True:
 
 			retval,frame=capture.read()
+
 			if frame is None:
 				break
 
@@ -291,6 +334,7 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,framehe
 			while True:
 
 				retval,frame=capture.read()
+
 				if frame is None:
 					break
 
@@ -318,6 +362,7 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,framehe
 			es_start=stim_t
 	else:
 		es_start=t
+
 	if duration>30 or duration<=0:
 		duration=30
 	es_end=es_start+duration
@@ -338,11 +383,15 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,framehe
 		background_high_estimation=background_high
 
 	while True:
+
 		retval,frame=capture.read()
+
 		if frame_initial is None:
 			frame_initial=frame
+
 		if frame is None:
 			break
+
 		if es_end is not None:
 			if frame_count>=es_end*fps:
 				break
@@ -372,9 +421,11 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,framehe
 					foreground=cv2.absdiff(frame,background_estimation)
 				else:
 					foreground=cv2.subtract(frame,background_estimation)
+
 			foreground=cv2.cvtColor(foreground,cv2.COLOR_BGR2GRAY)
 			thred=cv2.threshold(foreground,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]
 			thred=cv2.morphologyEx(thred,cv2.MORPH_CLOSE,np.ones((kernel,kernel),np.uint8))
+
 			if animal_vs_bg==2:
 				kernel_erode=max(kernel-4,1)
 				thred=cv2.erode(thred,np.ones((kernel_erode,kernel_erode),np.uint8))
@@ -411,6 +462,11 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,framehe
 
 def crop_frame(frame,contours):
 
+	'''
+	This function is used to crop a frame to fit
+	the border of a list of contours.
+	'''
+
 	lfbt=np.array([contours[i].min(0) for i in range(len(contours)) if contours[i] is not None]).min(0)[0]
 	x_lf=lfbt[0]
 	y_bt=lfbt[1]
@@ -438,6 +494,15 @@ def crop_frame(frame,contours):
 
 
 def extract_blob(frame,contour,channel=1):
+
+	'''
+	This function is used to keep the pixels for the area
+	inside a contour while make other pixels==0, and crop
+	the frame to fit the contour.
+
+	channel: 1--gray scale blob
+			 3--RGB scale blob
+	'''
 
 	mask=np.zeros_like(frame)
 
@@ -471,6 +536,15 @@ def extract_blob(frame,contour,channel=1):
 
 def extract_blob_background(frame,contours,contour=None,channel=1,background_free=False):
 
+	'''
+	This function is used to keep the pixels for the area
+	inside a contour, and crop the frame to fit a list of 
+	contours. It can also include background pixels.
+
+	channel: 1--gray scale blob
+			 3--RGB scale blob
+	'''
+
 	(y_bt,y_tp,x_lf,x_rt)=crop_frame(frame,contours)
 	if background_free is True:
 		mask=np.zeros_like(frame)
@@ -490,6 +564,15 @@ def extract_blob_background(frame,contours,contour=None,channel=1,background_fre
 
 def extract_blob_all(frame,y_bt,y_tp,x_lf,x_rt,contours=None,channel=1,background_free=False):
 
+	'''
+	This function is used to keep the pixels for the area
+	inside a list of contours, and crop the frame to fit 
+	the y_bt,y_tp,x_lf,x_rt coordinates.
+
+	channel: 1--gray scale blob
+			 3--RGB scale blob
+	'''
+
 	if background_free is True:
 		mask=np.zeros_like(frame)
 		cv2.drawContours(mask,contours,-1,(255,255,255),-1)
@@ -508,6 +591,11 @@ def extract_blob_all(frame,y_bt,y_tp,x_lf,x_rt,contours=None,channel=1,backgroun
 
 def get_inner(masked_frame_gray,contour):
 
+	'''
+	This function is used to get the inner contours, which is used
+	when body parts are inlcuded in the pattern images.
+	'''
+
 	blur=cv2.GaussianBlur(masked_frame_gray,(3,3),0)
 	edges=cv2.Canny(blur,20,75,apertureSize=3,L2gradient=True)
 	cnts,_=cv2.findContours(edges,cv2.RETR_CCOMP,cv2.CHAIN_APPROX_NONE)
@@ -521,6 +609,20 @@ def get_inner(masked_frame_gray,contour):
 
 
 def contour_frame(frame,animal_number,background,background_low,background_high,delta,contour_area,animal_vs_bg=0,include_bodyparts=False,animation_analyzer=False,channel=1,kernel=5):
+
+	'''
+	This function is used in 'background subtraction based detection method',
+	which gets contours parameters in a frame based on extracted background.
+
+	delta: a float number that detemines fold changes of illumination when it's considered as stimulation start time point
+	contour_area: an estimated area of a single animal / object, which is used to filter out unwanted contours
+	animal_vs_bg: 0--animals brighter than the background
+				  1--animals darker than the background
+				  2--hard to tell
+	channel: 1--gray scale blob
+			 3--RGB scale blob
+	kernel: determines how fine the erosion or dilation operation is
+	'''
 
 	if animal_vs_bg==1:
 		frame=np.uint8(255-frame)
@@ -582,6 +684,14 @@ def contour_frame(frame,animal_number,background,background_low,background_high,
 
 
 def generate_patternimage(frame,outlines,inners=None,std=0):
+
+	'''
+	This function is used to generate pattern images 
+	in 'non-interactive' behavior mode.
+
+	inners: the inner contours when body parts are inlcuded in the pattern images
+	std: a integer between 0 and 255, higher std, less inners are included in the pattern images
+	'''
 
 	if inners is not None:
 		background_inners=np.zeros_like(frame)
@@ -654,6 +764,15 @@ def generate_patternimage(frame,outlines,inners=None,std=0):
 
 
 def generate_patternimage_all(frame,y_bt,y_tp,x_lf,x_rt,outlines_list,inners_list,std=0):
+
+	'''
+	This function is used to generate pattern images 
+	in 'interactive basic' behavior mode.
+
+	y_bt...x_rt: the coordinates that determine the border of the pattern images
+	inners_list: the list of inner contours when body parts are inlcuded in the pattern images
+	std: a integer between 0 and 255, higher std, less inners are included in the pattern images
+	'''
 
 	inners_length=len(inners_list[0])
 
@@ -729,6 +848,15 @@ def generate_patternimage_all(frame,y_bt,y_tp,x_lf,x_rt,outlines_list,inners_lis
 
 
 def generate_patternimage_interact(frame,outlines,other_outlines,inners=None,other_inners=None,std=0):
+
+	'''
+	This function is used to generate pattern images 
+	in 'interactive advanced' behavior mode.
+
+	other_outlines: the contours of animals / objects that are not the 'main character'
+	other_inners: the inner contours of animals / objects that are not the 'main character' when body parts are inlcuded
+	std: a integer between 0 and 255, higher std, less inners are included in the pattern images
+	'''
 
 	total_outlines=functools.reduce(operator.iconcat,other_outlines,[])
 	total_outlines+=outlines
@@ -821,6 +949,14 @@ def generate_patternimage_interact(frame,outlines,other_outlines,inners=None,oth
 
 def plot_evnets(result_path,event_probability,time_points,names_and_colors,behavior_to_include,width=0,height=0):
 
+	'''
+	This function is used to plot a raster plot for behavior events and probability
+	over time based on the 'event_probability' and 'time_points'.
+	
+	names_and_colors: the behavior names and their representative colors
+	width and height: the size of the plot, when ==0, the size is defined automatically
+	'''
+
 	print('Exporting the raster plot for this analysis batch...')
 	print(datetime.datetime.now())
 
@@ -866,8 +1002,8 @@ def plot_evnets(result_path,event_probability,time_points,names_and_colors,behav
 
 		heatmap=sb.heatmap(dataframe,mask=masks,xticklabels=x_intvl,cmap=LinearSegmentedColormap.from_list('',names_and_colors[behavior_name]),cbar=False,vmin=0,vmax=1)
 		heatmap.set_xticklabels(heatmap.get_xticklabels(),rotation=90) 
-		# no ticks
-		#ax.tick_params(axis='both',which='both',length=0)
+		# if don't want the ticks
+		# ax.tick_params(axis='both',which='both',length=0)
 	
 	plt.savefig(os.path.join(result_path,'behaviors_plot.png'))
 
@@ -887,6 +1023,12 @@ def plot_evnets(result_path,event_probability,time_points,names_and_colors,behav
 
 
 def extract_frames(path_to_video,out_path,framewidth=None,start_t=0,duration=0,skip_redundant=1000):
+
+	'''
+	This function is used to extract frames from a video.
+	
+	skip_redundant: the interval between two consecutively extracted frames
+	'''
 
 	capture=cv2.VideoCapture(path_to_video)
 	fps=round(capture.get(cv2.CAP_PROP_FPS))
@@ -908,8 +1050,10 @@ def extract_frames(path_to_video,out_path,framewidth=None,start_t=0,duration=0,s
 
 		retval,frame=capture.read()
 		t=(frame_count)/fps
+
 		if frame is None:
 			break
+
 		if t>=end_t:
 			break
 
@@ -934,6 +1078,14 @@ def extract_frames(path_to_video,out_path,framewidth=None,start_t=0,duration=0,s
 
 def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_windows=[[0,10]],enhance_contrast=True,contrast=1.0,crop_frame=True,left=0,right=0,top=0,bottom=0):
 
+	'''
+	This function is used to preprocess a video.
+	
+	time_windows: if trim_video is True, the time_windows will form a new, trimmed video
+	contrast: only valide if enhance_contrast is True
+	left...bottom: the edges defining the cropped frame if crop_frame is True
+	'''
+
 	capture=cv2.VideoCapture(path_to_video)
 	name=os.path.basename(path_to_video).split('.')[0]
 	writer=None
@@ -943,6 +1095,7 @@ def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_w
 	while True:
 
 		ret,frame=capture.read()
+
 		if frame is None:
 			break
 
@@ -981,6 +1134,7 @@ def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_w
 	capture.release()
 
 	print('The processed video(s) stored in: '+out_folder)
+
 
 def get_dropped_frames(n: int, reduction_factor: float) -> list[int]:
     """
