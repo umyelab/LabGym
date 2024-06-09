@@ -1159,8 +1159,6 @@ def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_w
 	print('The processed video(s) stored in: '+out_folder)
 
 
-
-
 def parse_all_events_file(path_to_events):
 
 	'''
