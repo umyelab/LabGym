@@ -524,7 +524,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 
 				if self.behavior_mode<3:
 					if torch.cuda.is_available():
-						dialog1=wx.NumberEntryDialog(self,"Enter the batch size for faster processing","GPU is available in this device for Detectors.\nYou may use batch processing for faster speed.",'Batch size',0,0,500)
+						dialog1=wx.NumberEntryDialog(self,"Enter the batch size for faster processing","GPU is available in this device for Detectors.\nYou may use batch processing for faster speed.",'Batch size',1,1,100)
 						if dialog1.ShowModal()==wx.ID_OK:
 							self.detector_batch=int(dialog1.GetValue())
 						else:
@@ -1197,11 +1197,8 @@ class WindowLv2_PlotBehaviors(wx.Frame):
 	def select_colors(self,event):
 
 		if self.events_probability is None or self.names_and_colors is None:
-
 			wx.MessageBox('No all_events.xlsx file selected!','Error',wx.OK | wx.ICON_ERROR)
-
 		else:
-
 			for behavior in self.names_and_colors:
 				dialog=ColorPicker(f'Color for {behavior}',self.names_and_colors[behavior][1])
 				if dialog.ShowModal()==wx.ID_OK:
@@ -1214,11 +1211,8 @@ class WindowLv2_PlotBehaviors(wx.Frame):
 	def plot_behavior(self,event):
 
 		if self.events_probability is None or self.time_points is None or self.results_folder is None or self.names_and_colors is None:
-
 			wx.MessageBox('No input file / output folder / behavior colors selected.','Error',wx.OK|wx.ICON_ERROR)
-
 		else:
-
 			plot_events(self.results_folder,self.events_probability,self.time_points,self.names_and_colors,list(self.names_and_colors.keys()))
 
 
