@@ -1076,7 +1076,7 @@ def extract_frames(path_to_video,out_path,framewidth=None,start_t=0,duration=0,s
 	print('The image examples stored in: '+out_path)
 
 
-def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_windows=[[0,10]],enhance_contrast=True,contrast=1.0,crop_frame=True,left=0,right=0,top=0,bottom=0):
+def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_windows=[[0,10]],enhance_contrast=True,contrast=1.0,crop_frame=True,left=0,right=0,top=0,bottom=0,reduce_fps=1.0):
 
 	'''
 	This function is used to preprocess a video.
@@ -1084,12 +1084,41 @@ def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_w
 	time_windows: if trim_video is True, the time_windows will form a new, trimmed video
 	contrast: only valide if enhance_contrast is True
 	left...bottom: the edges defining the cropped frame if crop_frame is True
+	reduce_fps: The factor by which to reduce the fps of the video,
+				e.g., if the video is originally at 60 fps and 
+				fps_reduce is 4, then the new video will be scaled down 
+				to 15 fps while maintaining the same duration
 	'''
 
 	capture=cv2.VideoCapture(path_to_video)
 	name=os.path.basename(path_to_video).split('.')[0]
-	writer=None
 	fps=round(capture.get(cv2.CAP_PROP_FPS))
+	num_frames=int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
+	width=capture.get(cv2.CAP_PROP_FRAME_WIDTH)
+	height=capture.get(cv2.CAP_PROP_FRAME_HEIGHT)
+
+	if framewidth is not None:
+		w=int(framewidth)
+		h=int(framewidth*height/width)
+
+	if crop_frame:
+		w=int(right-left)
+		h=int(bottom-top)
+
+	added_name=''
+	if trim_video is True:
+		for start,end in time_windows:
+			added_name+='_'+str(start)+'-'+str(end)
+
+	if reduce_fps>1.0:
+		if num_frames>1:
+			num_dropped_frames=int(num_frames*(1-1/reduce_fps))
+			block_size=num_frames/(num_frames*(1-1/reduce_fps)-1)
+			dropped_frames=[round(block_size*i) for i in range(num_dropped_frames)]
+		else:
+			dropped_frames=[]
+
+	writer=cv2.VideoWriter(os.path.join(out_folder,name+added_name+'_processed.avi'),cv2.VideoWriter_fourcc(*'MJPG'),fps/reduce_fps,(w,h),True)
 	frame_count=1
 
 	while True:
@@ -1099,10 +1128,11 @@ def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_w
 		if frame is None:
 			break
 
-		if framewidth is not None:
-			frame=cv2.resize(frame,(framewidth,int(frame.shape[0]*framewidth/frame.shape[1])),interpolation=cv2.INTER_AREA)
+		if frame_count-1 in dropped_frames:
+			continue
 
-		t=frame_count/fps
+		if framewidth is not None:
+			frame=cv2.resize(frame,(w,h),interpolation=cv2.INTER_AREA)
 
 		if crop_frame is True:
 			frame=frame[top:bottom,left:right,:]
@@ -1110,23 +1140,16 @@ def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_w
 		if enhance_contrast is True:
 			frame=frame*contrast
 			frame[frame>255]=255
-			frame=np.uint8(frame)
 
-		(h,w)=frame.shape[:2]
+		frame=np.uint8(frame)
 
 		if trim_video is True:
-			added_name=''
-			for i in time_windows:
-				added_name+='_'+str(i[0])+'-'+str(i[1])
-			if writer is None:
-				writer=cv2.VideoWriter(os.path.join(out_folder,name+added_name+'_processed.avi'),cv2.VideoWriter_fourcc(*'MJPG'),fps,(w,h),True)
+			t=frame_count/fps
 			for i in time_windows:
 				if float(i[0])<=t<=float(i[1]):
-					writer.write(np.uint8(frame))
+					writer.write(frame)
 		else:
-			if writer is None:
-				writer=cv2.VideoWriter(os.path.join(out_folder,name+'_processed.avi'),cv2.VideoWriter_fourcc(*'MJPG'),fps,(w,h),True)
-			writer.write(np.uint8(frame))
+			writer.write(frame)
 
 		frame_count+=1
 
@@ -1136,89 +1159,48 @@ def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_w
 	print('The processed video(s) stored in: '+out_folder)
 
 
-def get_dropped_frames(n: int, reduction_factor: float) -> list[int]:
-    """
-    Return a list of indices of frames to be dropped after an FPS reduction
-
-    Args:
-        n: The number of frames in the original video.
-        reduction_factor: The FPS reduction factor, where the new FPS is
-            calculated using new_fps = old_fps / reduction_factor.
-
-    Returns:
-        A list of indices of frames to be dropped.
-
-    Raises:
-        None
-    """
-    if n <= 1.0:
-        return []
-    num_dropped_frames = int(n * (1 - 1 / reduction_factor))
-    block_size = n / (n * (1 - 1 / reduction_factor) - 1)
-    return [round(block_size * i) for i in range(num_dropped_frames)]
 
 
-def parse_all_events_file(path: Path) -> Tuple[dict, list[float]]:
-    """Parse an all_events.xlsx file.
+def parse_all_events_file(path_to_events):
 
-    Args:
-        path: The path to the all_events.xlsx file.
+	'''
+	Parse an all_events.xlsx file and convert it into 
+	a dict 'event_probability', and a list 'time_points'.
 
-    Returns:
-        A tuple (events, time_points).
+	path_to_events: The path to the 'all_events.xlsx' file
 
-        events is a dictionary with the keys as the ID of each animal and the
-        values are lists of lists, where each sub-list has a length of 2 and
-        is in one of the following formats:
+	event_probability is a dictionary with the keys as the ID of each animal / object 
+	and the values are lists of lists, where each sub-list has a length of 2 and is 
+	in one of the following formats:
 
-        - ["NA", -1] (The animal wasn't detected during this time point.)
-        - [behavior, probability], where behavior is the name of the behavior
-          and probability is a float between 0 and 1.
+		- ['NA', -1]
+		- [behavior, probability], where behavior is the name of the behavior 
+		and probability is a float between 0 and 1.
 
-        time_points is a list of floats containing the time points for each
-        behavior for each animal, which is in the leftmost column in the
-        original file.
+	time_points is a list of floats containing the time points of the analysis duration.
+	'''
 
-    Raises:
-        ValueError: The all_events.xlsx file is in an invalid format.
-    """
+	df=pd.read_excel(path_to_events)
 
-    df = pd.read_excel(path)
+	event_probability={}
+	time_points=[]
 
-    event_probability = {}
-    time_points = []
-    for col_name, col in df.items():
-        try:
-            id = int(col_name)  # type: ignore[reportArgumentType]
-        except ValueError:
-            # Leftmost row, load time points
-            if col_name == "time/ID":
-                try:
-                    time_points = [float(i) for i in col]
-                except ValueError:
-                    raise ValueError("Invalid all_events.xlsx file.")
-            continue
+	for col_name,col in df.items():
 
-        # The eval() function converts the string representation of the
-        # list into a Python list object.
-        event_probability[id] = []
-        for i in col:
-            event = eval(i)
-            if not _is_valid_event(event):
-                raise ValueError(f"Invalid event {event}.")
-            event_probability[id].append(event)
+		if col_name=='time/ID':
 
-    return (event_probability, time_points)
+			time_points=[float(i) for i in col]
 
+		else:
 
-def _is_valid_event(event: list) -> bool:
-    """Return whether or not the given event is valid."""
-    return (
-        isinstance(event, list)
-        and len(event) == 2
-        and isinstance(event[0], str)
-        and (isinstance(event[1], float) and 0 <= event[1] <= 1 or isinstance(event[1], int) and event[1] == -1)
-    )
+			idx=int(col_name)
+			event_probability[idx]=[['NA',-1]]*len(time_points)
+			for n,i in enumerate(col):
+				event=eval(i)
+				if event[0]!='NA':
+            		event_probability[idx][n]=event
+
+	return (event_probability,time_points)
 
 
 def get_behaviors_from_all_events(events_behaviors: dict) -> list[str]:
