@@ -28,7 +28,7 @@ import torch
 import json
 from .analyzebehavior import AnalyzeAnimal
 from .analyzebehavior_dt import AnalyzeAnimalDetector
-from .tools import plot_evnets,
+from .tools import plot_evnets,parse_all_events_file
 from .minedata import data_mining
 
 
@@ -1130,7 +1130,7 @@ class WindowLv2_PlotBehaviors(wx.Frame):
 		module_inputfile=wx.BoxSizer(wx.HORIZONTAL)
 		button_inputfile=wx.Button(panel,label='Select the\nall_events.xlsx file',size=(300,40))
 		button_inputfile.Bind(wx.EVT_BUTTON,self.input_file)
-		wx.Button.SetToolTip(button_inputfile,'The all_events.xlsx file can be found in the output folder of LabGym analysis.')
+		wx.Button.SetToolTip(button_inputfile,'The all_events.xlsx file should be as the same format as that of LabGym output, which can be found in the analysis result folder.')
 		self.text_inputfile=wx.StaticText(panel,label='None.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_inputfile.Add(button_inputfile,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_inputfile.Add(self.text_inputfile,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -1160,7 +1160,7 @@ class WindowLv2_PlotBehaviors(wx.Frame):
 
 		button_plotbehavior=wx.Button(panel,label='Generate behavior plot',size=(300,40))
 		button_plotbehavior.Bind(wx.EVT_BUTTON,self.plot_behavior)
-		wx.Button.SetToolTip(button_plotbehavior,'Generate a behavior plot for a selected all_events.xlsx file.')
+		wx.Button.SetToolTip(button_plotbehavior,'Generate a behavior plot for a selected all_events.xlsx file that is in LabGym output format.')
 		boxsizer.Add(0,5,0)
 		boxsizer.Add(button_plotbehavior,0,wx.RIGHT|wx.ALIGN_RIGHT,90)
 		boxsizer.Add(0,10,0)
@@ -1174,11 +1174,15 @@ class WindowLv2_PlotBehaviors(wx.Frame):
 	def input_file(self,event):
 
 		dialog=wx.FileDialog(self,'Select the all_events.xlsx file.','',wildcard='all_events file (*.xlsx)|*.xlsx',style=wx.FD_OPEN)
-        if dialog.ShowModal()==wx.ID_OK:
-        	all_events_file=Path(dialog.GetPath())
-        	self.events_probability,self.time_points=parse_all_events_file(all_events_file)
-        	self.text_inputfile.SetLabel(f'all_events.xlsx path: {all_events_file}')
-        dialog.Destroy()
+		if dialog.ShowModal()==wx.ID_OK:
+			all_events_file=Path(dialog.GetPath())
+			self.names_and_colors={}
+			self.events_probability,self.time_points,behavior_names=parse_all_events_file(all_events_file)
+			colors=[('#ffffff',str(hex_code)) for hex_code in mpl.colors.cnames.values()]
+			for color,behavior in zip(colors,behaviors):
+				self.names_and_colors[behavior]=color
+			self.text_inputfile.SetLabel(f'all_events.xlsx path: {all_events_file}')
+		dialog.Destroy()
 
 		 
 	def select_result_path(self,event):
@@ -1192,23 +1196,18 @@ class WindowLv2_PlotBehaviors(wx.Frame):
 
 	def select_colors(self,event):
 
-		if self.events_probability is None:
+		if self.events_probability is None or self.names_and_colors is None:
 
 			wx.MessageBox('No all_events.xlsx file selected!','Error',wx.OK | wx.ICON_ERROR)
 
 		else:
 
-			behaviors=get_behaviors_from_all_events(self.events_probability)
-			colors=[('#ffffff',str(hex_code)) for hex_code in cnames.values()]
-			self.names_and_colors={}
-			for color,behavior in zip(colors,behaviors):
-				dialog=ColorPicker(f'Color for {behavior}',color[1])
+			for behavior in self.names_and_colors:
+				dialog=ColorPicker(f'Color for {behavior}',self.names_and_colors[behavior][1])
 				if dialog.ShowModal()==wx.ID_OK:
 					(r,g,b,_)=dialog.color_picker.GetColour()
 					hex_code=f'#{r:02x}{g:02x}{b:02x}'
 					self.names_and_colors[behavior]=('#ffffff',hex_code)
-				else:
-					self.names_and_colors[behavior]=color
 			self.text_selectcolors.SetLabel('Colors: '+', '.join([f'{behavior}:{color}' for behavior,(_,color) in self.names_and_colors.items()]))
 
 	
@@ -1220,7 +1219,7 @@ class WindowLv2_PlotBehaviors(wx.Frame):
 
 		else:
 
-			plot_events(str(self.results_folder),self.events_probability,self.time_points,self.names_and_colors,list(self.names_and_colors.keys()))
+			plot_events(self.results_folder,self.events_probability,self.time_points,self.names_and_colors,list(self.names_and_colors.keys()))
 
 
 

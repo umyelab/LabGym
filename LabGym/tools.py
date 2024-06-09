@@ -1162,8 +1162,8 @@ def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_w
 def parse_all_events_file(path_to_events):
 
 	'''
-	Parse an all_events.xlsx file and convert it into 
-	a dict 'event_probability', and a list 'time_points'.
+	Parse an all_events.xlsx file and convert it into a dict 'event_probability', 
+	a list 'time_points', and a list 'behavior_names'.
 
 	path_to_events: The path to the 'all_events.xlsx' file
 
@@ -1182,6 +1182,7 @@ def parse_all_events_file(path_to_events):
 
 	event_probability={}
 	time_points=[]
+	behavior_names=[]
 
 	for col_name,col in df.items():
 
@@ -1195,19 +1196,15 @@ def parse_all_events_file(path_to_events):
 			event_probability[idx]=[['NA',-1]]*len(time_points)
 			for n,i in enumerate(col):
 				event=eval(i)
-				if event[0]!='NA':
-            		event_probability[idx][n]=event
+				behavior=event[0]
+				if behavior!='NA':
+					if behavior not in behavior_names:
+						behavior_names.append(behavior)
+					event_probability[idx][n]=event
 
-	return (event_probability,time_points)
+	behavior_names.sort()
+
+	return (event_probability,time_points,behavior_names)
 
 
-def get_behaviors_from_all_events(events_behaviors: dict) -> list[str]:
-    """Return a list of the behaviors present in an all_events.xlsx file."""
-    behaviors = []
-    for events in events_behaviors.values():
-        for behavior, _ in events:
-            if behavior not in behaviors and behavior != "NA":
-                behaviors.append(behavior)
-
-    return behaviors
 
