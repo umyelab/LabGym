@@ -36,7 +36,6 @@ import functools
 import operator
 
 
-
 def extract_background(frames,stable_illumination=True,animal_vs_bg=0):
 
 	'''
