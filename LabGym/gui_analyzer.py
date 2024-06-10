@@ -39,6 +39,10 @@ the_absolute_current_path=str(Path(__file__).resolve().parent)
 
 class ColorPicker(wx.Dialog):
 
+	'''
+	A window for select a color for each behavior
+	'''
+
 	def __init__(self,parent,title,name_and_color):
 
 		super(ColorPicker,self).__init__(parent=None,title=title,size=(200,200))
@@ -65,52 +69,56 @@ class ColorPicker(wx.Dialog):
 
 class WindowLv2_AnalyzeBehaviors(wx.Frame):
 
+	'''
+	The 'Analyze Behaviors' functional unit
+	'''
+
 	def __init__(self,title):
 
 		super(WindowLv2_AnalyzeBehaviors,self).__init__(parent=None,title=title,size=(1000,510))
-		self.behavior_mode=0
-		self.use_detector=False
-		self.detector_path=None
-		self.path_to_detector=None
-		self.detector_batch=1
-		self.detection_threshold=0
-		self.animal_kinds=[]
-		self.background_path=None # if not None, will load background images from path
-		self.model_path=None # the parent path of the Categorizers
-		self.path_to_categorizer=None
-		self.path_to_videos=None
-		self.result_path=None
-		self.framewidth=None
-		self.delta=10000
-		self.decode_animalnumber=False
-		self.animal_number=None
-		self.autofind_t=False
-		self.decode_t=False
-		self.t=0
-		self.duration=0
-		self.decode_extraction=False
-		self.ex_start=0
-		self.ex_end=None
-		self.behaviornames_and_colors={}
-		self.dim_tconv=8
-		self.dim_conv=8
-		self.channel=1
-		self.length=15
+		self.behavior_mode=0 # 0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
+		self.use_detector=False # whether the Detector is used
+		self.detector_path=None # the 'LabGym/detectors' folder, which stores all the trained Detectors
+		self.path_to_detector=None # path to the Detector
+		self.detector_batch=1 # for batch processing use if GPU is available
+		self.detection_threshold=0 # only for 'static images' behavior mode
+		self.animal_kinds=[] # the total categories of animals / objects in a Detector
+		self.background_path=None # if not None, load background images from path in 'background subtraction' detection method
+		self.model_path=None # the 'LabGym/models' folder, which stores all the trained Categorizers
+		self.path_to_categorizer=None # path to the Categorizer
+		self.path_to_videos=None # path to a batch of videos for analysis
+		self.result_path=None # the folder for storing analysis outputs
+		self.framewidth=None # if not None, will resize the video frame keeping the original w:h ratio
+		self.delta=10000 # the fold changes in illumination that determines the optogenetic stimulation onset
+		self.decode_animalnumber=False # whether to decode animal numbers from '_nn_' in video file names
+		self.animal_number=None # the number of animals / objects in a video
+		self.autofind_t=False # whether to find stimulation onset automatically (only for optogenetics)
+		self.decode_t=False # whether to decode start_t from '_bt_' in video file names
+		self.t=0 # the start_t for analysis
+		self.duration=0 # the duration of the analysis
+		self.decode_extraction=False # whether to decode time windows for background extraction from '_xst_' and '_xet_' in video file names
+		self.ex_start=0 # start time for background extraction
+		self.ex_end=None # end time for background extraction
+		self.behaviornames_and_colors={} # behavior names in the Categorizer and their representative colors for annotation
+		self.dim_tconv=8 # input dimension for Animation Analyzer in Categorizer
+		self.dim_conv=8 # input dimension for Pattern Recognizer in Categorizer
+		self.channel=1 # input channel for Animation Analyzer, 1--gray scale, 3--RGB scale
+		self.length=15 # input time step for Animation Analyzer, also the duration / length for a behavior example
 		self.animal_vs_bg=0 # 0: animals birghter than the background; 1: animals darker than the background; 2: hard to tell
-		self.stable_illumination=True
-		self.animation_analyzer=True
-		self.animal_to_include=[]
-		self.behavior_to_include=['all'] # behaviors for annotation and analyze
-		self.parameter_to_analyze=[]
-		self.include_bodyparts=False
-		self.std=0
-		self.uncertain=0
-		self.show_legend=True
-		self.background_free=True
+		self.stable_illumination=True # whether the illumination in videos is stable
+		self.animation_analyzer=True # whether to include Animation Analyzer in the Categorizers
+		self.animal_to_include=[] # the animals / obejcts that will be annotated in the annotated videos / behavior plots
+		self.behavior_to_include=['all'] # behaviors that will be annotated in the annotated videos / behavior plots
+		self.parameter_to_analyze=[] # quantitative measures that will be included in the quantification
+		self.include_bodyparts=False # whether to include body parts in the pattern images
+		self.std=0 # a value between 0 and 255, higher value, less body parts will be included in the pattern images
+		self.uncertain=0 # a threshold between the highest the 2nd highest probablity of behaviors to determine if output an 'NA' in behavior classification
+		self.show_legend=True # whether to show legend of behavior names in the annotated videos
+		self.background_free=True # whether to include background in animations
 		self.normalize_distance=True # whether to normalize the distance (in pixel) to the animal contour area
-		self.social_distance=0
-		self.specific_behaviors={}
-		self.correct_ID=False
+		self.social_distance=0 # a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
+		self.specific_behaviors={} # sex or identity-specific behaviors
+		self.correct_ID=False # whether to use sex or identity-specific behaviors to guide ID correction when ID switching is likely to happen
 
 		self.dispaly_window()
 
@@ -524,7 +532,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 
 				if self.behavior_mode<3:
 					if torch.cuda.is_available():
-						dialog1=wx.NumberEntryDialog(self,"Enter the batch size for faster processing","GPU is available in this device for Detectors.\nYou may use batch processing for faster speed.",'Batch size',1,1,100)
+						dialog1=wx.NumberEntryDialog(self,'Enter the batch size for faster processing','GPU is available in this device for Detectors.\nYou may use batch processing for faster speed.','Batch size',1,1,100)
 						if dialog1.ShowModal()==wx.ID_OK:
 							self.detector_batch=int(dialog1.GetValue())
 						else:
@@ -937,17 +945,21 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 
 class WindowLv2_MineResults(wx.Frame):
 
+	'''
+	The 'Mine Results' functional unit
+	'''
+
 	def __init__(self,title):
 
 		super(WindowLv2_MineResults,self).__init__(parent=None,title=title,size=(1000,240))
-		self.file_path=None
-		self.result_path=None
-		self.dataset=None
-		self.paired=False
-		self.control=None
-		self.pval=0.05
-		self.file_names=None
-		self.control_file_name=None
+		self.file_path=None # the path to LabGym analysis results
+		self.result_path=None # the folder to store data mining results
+		self.dataset=None # store the dataset in RAM
+		self.paired=False # whether the data is paired
+		self.control=None # the dataset of the control group
+		self.pval=0.05 # the p value that decides whether the statistical tests are significant to show
+		self.file_names=None # the names of the LabGym analysis results folders
+		self.control_file_name=None # the name of the control folder
 
 		self.display_window()
 
