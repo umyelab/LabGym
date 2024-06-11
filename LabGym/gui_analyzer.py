@@ -1123,13 +1123,17 @@ class WindowLv2_MineResults(wx.Frame):
 
 class WindowLv2_PlotBehaviors(wx.Frame):
 
+	'''
+	The 'Plot Behaviors' functional unit
+	'''
+
 	def __init__(self,title):
 
 		super(WindowLv2_PlotBehaviors,self).__init__(parent=None,title=title,size=(1000,240))
-		self.events_probability=None
-		self.time_points=None
-		self.results_folder=None
-		self.names_and_colors=None
+		self.events_probability=None # read from 'all_events.xsls' to store the behavior events and probability of each animal / object
+		self.time_points=None # the frame-wise time points of the events_probablity
+		self.results_folder=None # the folder that stores the ouput behavior plot
+		self.names_and_colors=None # the user-defined color for each behavior
 
 		self.display_window()
 
