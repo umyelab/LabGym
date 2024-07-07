@@ -6,6 +6,13 @@
 [![Documentation Status](https://readthedocs.org/projects/labgym/badge/?version=latest)](https://labgym.readthedocs.io/en/latest/?badge=latest)
 
 <!-- start elevator-pitch -->
+
+<p>&nbsp;</p>
+
+![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/LabGym_logo.jpg?raw=true)
+
+<p>&nbsp;</p>
+
 LabGym can:
 
 1. **TRACK** multiple animals / objects without restrictions on recording environments
