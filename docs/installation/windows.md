@@ -86,7 +86,7 @@ enter. All terminal commands going forward should be entered in this terminal.
    > py -m pip install LabGym
    ```
 
-8. Install Pytorch v2.3.1 (Detectron2 needs PyTorch2.3.1 to install).
+8. Install PyTorch v2.3.1 (Detectron2 needs PyTorch2.3.1 to install).
 
    ```pwsh-session
    > py -m pip install torch==2.3.1
@@ -98,7 +98,7 @@ enter. All terminal commands going forward should be entered in this terminal.
    > py -m pip install git+https://github.com/facebookresearch/detectron2.git
    ```
 
-10. Install Pytorch v2.0.1 with CUDA v11.8 (Detectron2 needs PyTorch2.0.1 to run).
+10. Install PyTorch v2.0.1 with CUDA v11.8 (Detectron2 needs PyTorch2.0.1 to run).
 
    ```pwsh-session
    > py -m pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
@@ -144,7 +144,7 @@ If you use `pipx`, from step #6:
    > pipx install --python 3.10 LabGym
    ```
 
-8. Install Pytorch v2.3.1 (Detectron2 needs PyTorch2.3.1 to install) in LabGym's virtual environment.
+8. Install PyTorch v2.3.1 (Detectron2 needs PyTorch2.3.1 to install) in LabGym's virtual environment.
 
    ```pwsh-session
    > pipx runpip LabGym install torch==2.3.1
