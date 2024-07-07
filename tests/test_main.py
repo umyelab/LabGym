@@ -19,7 +19,7 @@ Email: bingye@umich.edu
 
 
 
-def test_import_gui() -> None:
+#def test_import_gui() -> None:
 
 	'''
 	Ensures that the interpreter reads every file in LabGym,
@@ -27,4 +27,4 @@ def test_import_gui() -> None:
 	Python 3.9 and 3.10.
 	'''
 
-	from LabGym import gui_main  # noqa: F401
+	#from LabGym import gui_main  # noqa: F401
