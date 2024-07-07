@@ -19,7 +19,9 @@ Email: bingye@umich.edu
 
 
 
-#def test_import_gui() -> None:
+def test_import_gui() -> None:
+
+	pass
 
 	'''
 	Ensures that the interpreter reads every file in LabGym,
