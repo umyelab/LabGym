@@ -33,7 +33,7 @@ enter. All terminal commands going forward should be entered in this terminal.
    Python 3.10.10
    ```
 
-4. If you're using an Nvidia GPU, install CUDA Toolkit 11.8 and cuDNN.
+4. If you're using an NVIDIA GPU, install CUDA Toolkit 11.8 and cuDNN.
 
    First, install and/or update your GPU drivers at
    [this link](https://www.nvidia.com/Download/index.aspx). Select your GPU
@@ -74,31 +74,31 @@ enter. All terminal commands going forward should be entered in this terminal.
    As of February 2024, the latest version is cuDNN 9.0.0, which is compatible
    with CUDA 11.8.
 
-6. Upgrade `pip`, `wheel`, `setuptools`.
+5. Upgrade `pip`, `wheel`, `setuptools`.
    
    ```pwsh-session
    > py -m pip install --upgrade pip wheel setuptools
    ```
 
-7. Install LabGym via `pip`.
+6. Install LabGym via `pip`.
    
    ```pwsh-session
    > py -m pip install LabGym
    ```
 
-8. Install PyTorch v2.3.1 (Detectron2 needs PyTorch2.3.1 to install).
+7. Install PyTorch v2.3.1 (Detectron2 needs PyTorch2.3.1 to install).
 
    ```pwsh-session
    > py -m pip install torch==2.3.1
    ```
 
-9. Install [Detectron2][].
+8. Install [Detectron2][].
 
    ```pwsh-session
    > py -m pip install git+https://github.com/facebookresearch/detectron2.git
    ```
 
-10. Install PyTorch v2.0.1 with CUDA v11.8 (Detectron2 needs PyTorch2.0.1 to run).
+9. Install PyTorch v2.0.1 with CUDA v11.8 (Detectron2 needs PyTorch2.0.1 to run).
 
    ```pwsh-session
    > py -m pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
@@ -110,7 +110,7 @@ enter. All terminal commands going forward should be entered in this terminal.
    > py -m pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cpu
    ```
 
-11. Launch LabGym.
+10. Launch LabGym.
 
    ```pwsh-session
    > LabGym
