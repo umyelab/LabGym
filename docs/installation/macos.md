@@ -27,10 +27,10 @@ to install LabGym.
    % python3 -m pip install LabGym
    ```
 
-5. Install Pytorch v2.0.1.
+5. Install PyTorch v2.3.1 (Detectron2 needs PyTorch2.3.1 to install).
 
    ```console
-   % python3 -m pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2
+   % python3 -m pip install torch==2.3.1
    ```
 
 6. Install [Detectron2][].
@@ -39,7 +39,13 @@ to install LabGym.
    % python3 -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
    ```
 
-7. Launch LabGym.
+7. Install PyTorch v2.0.1 (Detectron2 needs PyTorch2.0.1 to run).
+
+   ```console
+   % python3 -m pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cpu
+   ```
+
+8. Launch LabGym.
 
    ```console
    % LabGym
@@ -73,10 +79,10 @@ If you use `pipx`, from step #4:
    % pipx install --python python3.10 LabGym
    ```
 
-6. Install PyTorch in LabGym's virtual environment.
+6. Install PyTorch v2.3.1 (Detectron2 needs PyTorch2.3.1 to install) in LabGym's virtual environment.
 
    ```console
-   % pipx inject LabGym torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2
+   % pipx inject LabGym torch==2.3.1
    ```
 
 7. Install [Detectron2][] in the LabGym's virtual environment.
@@ -85,7 +91,13 @@ If you use `pipx`, from step #4:
    % pipx runpip LabGym install 'git+https://github.com/facebookresearch/detectron2.git'
    ```
 
-8. Launch LabGym.
+8. Install PyTorch v2.0.1 (Detectron2 needs PyTorch2.0.1 to run) in LabGym's virtual environment.
+
+   ```console
+   % pipx inject --index-url https://download.pytorch.org/whl/cpu LabGym torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2
+   ```
+
+9. Launch LabGym.
 
    ```console
    % LabGym
