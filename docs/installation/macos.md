@@ -82,7 +82,7 @@ If you use `pipx`, from step #4:
 6. Install PyTorch v2.3.1 (Detectron2 needs PyTorch2.3.1 to install) in LabGym's virtual environment.
 
    ```console
-   % pipx inject LabGym torch==2.3.1
+   % pipx runpip LabGym install torch==2.3.1
    ```
 
 7. Install [Detectron2][] in the LabGym's virtual environment.
