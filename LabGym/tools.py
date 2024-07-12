@@ -1162,8 +1162,8 @@ def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_w
 def parse_all_events_file(path_to_events):
 
 	'''
-	Parse an all_events.xlsx file and convert it into a dict 'event_probability', 
-	a list 'time_points', and a list 'behavior_names'.
+	This function is used to parse an all_events.xlsx file and convert it into 
+	a dict 'event_probability', a list 'time_points', and a list 'behavior_names'.
 
 	path_to_events: The path to the 'all_events.xlsx' file
 
