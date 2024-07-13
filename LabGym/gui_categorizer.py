@@ -909,27 +909,27 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 	def __init__(self,title):
 
 		super(WindowLv2_TrainCategorizers,self).__init__(parent=None,title=title,size=(1000,520))
-		self.file_path=None # the file path storing orginal examples
-		self.new_path=None # the new path for renamed, labeled examples
-		self.behavior_mode=0
-		self.animation_analyzer=True
-		self.level_tconv=2
-		self.level_conv=2
-		self.dim_tconv=32
-		self.dim_conv=32
-		self.channel=1
-		self.length=15
-		self.aug_methods=[]
-		self.augvalid=True # also perform augmentation for validation data
-		self.data_path=None # the path to all prepared training examples
-		self.model_path=os.path.join(the_absolute_current_path,'models')
-		self.path_to_categorizer=os.path.join(the_absolute_current_path,'models','New_model')
-		self.out_path=None # for storing training reports
-		self.include_bodyparts=False
-		self.std=0
+		self.file_path=None # the folder that stores sorted, unprepared behavior examples (each category is a subfolder)
+		self.new_path=None # the folder that stores prepared behavior examples (contains all examples with a category tag in their names) 
+		self.behavior_mode=0 # 0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
+		self.animation_analyzer=True # whether to include Animation Analyzer in the Categorizers
+		self.level_tconv=2 # complexity level of Animation Analyzer in Categorizer
+		self.level_conv=2 # complexity level of Pattern Recognizer in Categorizer
+		self.dim_tconv=32 # input dimension for Animation Analyzer in Categorizer
+		self.dim_conv=32 # input dimension for Pattern Recognizer in Categorizer
+		self.channel=1 # input channel for Animation Analyzer, 1--gray scale, 3--RGB scale
+		self.length=15 # input time step for Animation Analyzer, also the duration / length for a behavior example
+		self.aug_methods=[] # the methods for augment training and validation examples
+		self.augvalid=True # whether to perform augmentation for validation data as well
+		self.data_path=None # the folder that stores prepared behavior examples
+		self.model_path=os.path.join(the_absolute_current_path,'models') # the 'LabGym/models' folder, which stores all the trained Categorizers
+		self.path_to_categorizer=os.path.join(the_absolute_current_path,'models','New_model') # path to the Categorizer
+		self.out_path=None # the folder for storing the training reports
+		self.include_bodyparts=False # whether to include body parts in the pattern images
+		self.std=0 # a value between 0 and 255, higher value, less body parts will be included in the pattern images
 		self.resize=None # resize the frames and pattern images before data augmentation
-		self.background_free=True
-		self.social_distance=0
+		self.background_free=True # whether to include background in animations
+		self.social_distance=0 # a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
 
 		self.dispaly_window()
 
