@@ -903,7 +903,7 @@ class WindowLv2_SortBehaviors(wx.Frame):
 class WindowLv2_TrainCategorizers(wx.Frame):
 
 	'''
-	The 'Analyze Behaviors' functional unit
+	The 'Train Categorizers' functional unit
 	'''
 
 	def __init__(self,title):
