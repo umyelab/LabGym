@@ -38,37 +38,41 @@ the_absolute_current_path=str(Path(__file__).resolve().parent)
 
 class WindowLv2_GenerateExamples(wx.Frame):
 
+	'''
+	The 'Generate Behavior Examples' functional unit
+	'''
+
 	def __init__(self,title):
 
 		super(WindowLv2_GenerateExamples,self).__init__(parent=None,title=title,size=(1000,510))
 		self.behavior_mode=0 # 0: non-interactive behavior; 1: interact basic; 2: interact advanced; 3: static images
-		self.use_detector=False
-		self.detector_path=None
-		self.path_to_detector=None
-		self.detection_threshold=0
-		self.animal_kinds=[]
-		self.background_path=None
-		self.path_to_videos=None
-		self.result_path=None
-		self.framewidth=None
-		self.delta=10000
-		self.decode_animalnumber=False
-		self.animal_number=None
-		self.autofind_t=False
-		self.decode_t=False
-		self.t=0
-		self.duration=0
-		self.decode_extraction=False
-		self.ex_start=0
-		self.ex_end=None
+		self.use_detector=False # whether the Detector is used
+		self.detector_path=None # the 'LabGym/detectors' folder, which stores all the trained Detectors
+		self.path_to_detector=None # path to the Detector
+		self.detection_threshold=0 # only for 'static images' behavior mode
+		self.animal_kinds=[] # the total categories of animals / objects in a Detector
+		self.background_path=None # if not None, load background images from path in 'background subtraction' detection method
+		self.path_to_videos=None # path to a batch of videos for generating behavior examples
+		self.result_path=None # the folder for storing the unsorted behavior examples
+		self.framewidth=None # if not None, will resize the video frame keeping the original w:h ratio
+		self.delta=10000 # the fold changes in illumination that determines the optogenetic stimulation onset
+		self.decode_animalnumber=False # whether to decode animal numbers from '_nn_' in video file names
+		self.animal_number=None # the number of animals / objects in a video
+		self.autofind_t=False # whether to find stimulation onset automatically (only for optogenetics)
+		self.decode_t=False # whether to decode start_t from '_bt_' in video file names
+		self.t=0 # the start_t for generating behavior examples
+		self.duration=0 # the duration for generating behavior examples
+		self.decode_extraction=False # whether to decode time windows for background extraction from '_xst_' and '_xet_' in video file names
+		self.ex_start=0 # start time for background extraction
+		self.ex_end=None # end time for background extraction
 		self.animal_vs_bg=0 # 0: animals birghter than the background; 1: animals darker than the background; 2: hard to tell
-		self.stable_illumination=True
-		self.length=15
-		self.skip_redundant=1
-		self.include_bodyparts=False
-		self.std=0
-		self.background_free=True
-		self.social_distance=0
+		self.stable_illumination=True # whether the illumination in videos is stable
+		self.length=15 # the duration / length for a behavior example, is also the input time step for Animation Analyzer
+		self.skip_redundant=1 # the interval (in frames) of two consecutively generated behavior example pairs
+		self.include_bodyparts=False # whether to include body parts in the pattern images
+		self.std=0 # a value between 0 and 255, higher value, less body parts will be included in the pattern images
+		self.background_free=True # whether to include background in animations
+		self.social_distance=0 # a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
 
 		self.dispaly_window()
 
@@ -652,13 +656,17 @@ class WindowLv2_GenerateExamples(wx.Frame):
 
 class WindowLv2_SortBehaviors(wx.Frame):
 
+	'''
+	The 'Sort Behavior Examples' functional unit
+	'''
+
 	def __init__(self,title):
 
 		super(WindowLv2_SortBehaviors,self).__init__(parent=None,title=title,size=(1000,240))
-		self.input_path=None
-		self.result_path=None
-		self.keys_behaviors={}
-		self.keys_behaviorpaths={}
+		self.input_path=None # the folder that stores unsorted behavior examples (one example is a pair of an animation and a pattern image)
+		self.result_path=None # the folder that stores the sorted behavior examples
+		self.keys_behaviors={} # stores the pairs of shortcut key-behavior name
+		self.keys_behaviorpaths={} # stores the pairs of shortcut key-path to behavior examples
 
 		self.display_window()
 
@@ -797,15 +805,12 @@ class WindowLv2_SortBehaviors(wx.Frame):
 						shutil.move(os.path.join(self.input_path,example_name+'.avi'),os.path.join(self.keys_behaviorpaths[shortcutkey],example_name+'.avi'))
 					shutil.move(os.path.join(self.input_path,example_name+'.jpg'),os.path.join(self.keys_behaviorpaths[shortcutkey],example_name+'.jpg'))
 
-				if only_image is False:
-					animations=[i for i in os.listdir(self.input_path) if i.endswith('.avi')]
-					animations=sorted(animations,key=lambda name:int(name.split('_len')[0].split('_')[-1]))
-				else:
-					animations=[i for i in os.listdir(self.input_path) if i.endswith('.jpg')]
+				pattern_images=[i for i in os.listdir(self.input_path) if i.endswith('.jpg')]
+				pattern_images=sorted(pattern_images,key=lambda name:int(name.split('_len')[0].split('_')[-1]))
 
-				if len(animations)>0 and index<len(animations):
+				if len(pattern_images)>0 and index<len(pattern_images):
 
-					example_name=animations[index].split('.')[0]
+					example_name=pattern_images[index].split('.jpg')[0]
 					pattern_image=cv2.resize(cv2.imread(os.path.join(self.input_path,example_name+'.jpg')),(600,600),interpolation=cv2.INTER_AREA)
 
 					if only_image is False:
@@ -847,7 +852,7 @@ class WindowLv2_SortBehaviors(wx.Frame):
 
 						for shortcutkey in self.keys_behaviorpaths:
 							if key==ord(shortcutkey):
-								example_name=animations[index].split('.')[0]
+								example_name=pattern_images[index].split('.')[0]
 								actions.append([shortcutkey,example_name])
 								moved=True
 								break
@@ -884,7 +889,7 @@ class WindowLv2_SortBehaviors(wx.Frame):
 						animation.release()
 
 				else:
-					if len(animations)==0:
+					if len(pattern_images)==0:
 						wx.MessageBox('Behavior example sorting completed!','Completed!',wx.OK|wx.ICON_INFORMATION)
 						stop=True
 					else:
@@ -896,6 +901,10 @@ class WindowLv2_SortBehaviors(wx.Frame):
 
 
 class WindowLv2_TrainCategorizers(wx.Frame):
+
+	'''
+	The 'Analyze Behaviors' functional unit
+	'''
 
 	def __init__(self,title):
 
