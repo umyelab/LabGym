@@ -1339,13 +1339,17 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 
 class WindowLv2_TestCategorizers(wx.Frame):
 
+	'''
+	The 'Test Categorizers' functional unit
+	'''
+
 	def __init__(self,title):
 
 		super(WindowLv2_TestCategorizers,self).__init__(parent=None,title=title,size=(1000,240))
-		self.file_path=None # the file path storing ground-truth examples
-		self.model_path=os.path.join(the_absolute_current_path,'models')
-		self.path_to_categorizer=None
-		self.out_path=None # for storing testing reports
+		self.file_path=None # the folder that stores the ground-truth examples (each subfolder is a behavior category)
+		self.model_path=os.path.join(the_absolute_current_path,'models') # the 'LabGym/models' folder, which stores all the trained Categorizers
+		self.path_to_categorizer=None # path to the Categorizer
+		self.out_path=None # for storing the testing reports
 
 		self.dispaly_window()
 
