@@ -109,6 +109,16 @@ class WindowLv2_ProcessVideos(wx.Frame):
 		boxsizer.Add(module_enhancecontrast,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		boxsizer.Add(0,5,0)
 
+		module_reducefps=wx.BoxSizer(wx.HORIZONTAL)
+		button_reducefps=wx.Button(panel,label='Specify whether to reduce\nthe video fps',size=(300,40))
+		button_reducefps.Bind(wx.EVT_BUTTON,self.reduce_fps)
+		wx.Button.SetToolTip(button_reducefps,'Reducing video fps can significantly increase the processing speed. High fps may not always benefit behavior identification especially when the behavior dynamics is not that fast.')
+		self.text_reducefps=wx.StaticText(panel,label='Default: not to reduce video fps.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
+		module_reducefps.Add(button_reducefps,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		module_reducefps.Add(self.text_reducefps,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(module_reducefps,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(0,5,0)
+
 		button_preprocessvideos=wx.Button(panel,label='Start to preprocess the videos',size=(300,40))
 		button_preprocessvideos.Bind(wx.EVT_BUTTON,self.preprocess_videos)
 		wx.Button.SetToolTip(button_preprocessvideos,'Preprocess each selected video.')
