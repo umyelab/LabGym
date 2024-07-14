@@ -34,7 +34,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
 
 	def __init__(self,title):
 
-		super(WindowLv2_ProcessVideos,self).__init__(parent=None,title=title,size=(1000,330))
+		super(WindowLv2_ProcessVideos,self).__init__(parent=None,title=title,size=(1000,360))
 		self.path_to_videos=None # path to a batch of videos for preprocessing
 		self.framewidth=None # if not None, will resize the video frame keeping the original w:h ratio
 		self.result_path=None # the folder for storing preprocessed videos
@@ -342,7 +342,9 @@ class WindowLv2_ProcessVideos(wx.Frame):
 					for x,startt in enumerate(starttime_windows):
 						self.time_windows.append([startt,endtime_windows[x]])
 
-				preprocess_video(i,self.result_path,self.framewidth,trim_video=self.trim_video,time_windows=self.time_windows,enhance_contrast=self.enhance_contrast,contrast=self.contrast,crop_frame=self.crop_frame,left=self.left,right=self.right,top=self.top,bottom=self.bottom)
+				preprocess_video(i,self.result_path,self.framewidth,trim_video=self.trim_video,time_windows=self.time_windows,
+					enhance_contrast=self.enhance_contrast,contrast=self.contrast,
+					crop_frame=self.crop_frame,left=self.left,right=self.right,top=self.top,bottom=self.bottom,reduce_fps=self.reduce_fps)
 
 			print('Preprocessing completed!')
 
