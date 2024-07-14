@@ -26,18 +26,7 @@ import cv2
 import json
 import shutil
 import torch
-try:
-	from detectron2 import model_zoo
-	from detectron2.checkpoint import DetectionCheckpointer
-	from detectron2.config import get_cfg
-	from detectron2.data import MetadataCatalog,DatasetCatalog,build_detection_test_loader
-	from detectron2.data.datasets import register_coco_instances
-	from detectron2.engine import DefaultTrainer,DefaultPredictor
-	from detectron2.utils.visualizer import Visualizer
-	from detectron2.evaluation import COCOEvaluator,inference_on_dataset
-except:
-	print('You need to install Detectron2 to use the Detector module in LabGym:')
-	print('https://detectron2.readthedocs.io/en/latest/tutorials/install.html')
+from .detector import traindetector,testdetector
 
 
 
@@ -45,130 +34,21 @@ the_absolute_current_path=str(Path(__file__).resolve().parent)
 
 
 
-def traindetector(path_to_annotation,path_to_trainingimages,path_to_detector,iteration_num,inference_size):
-
-	if torch.cuda.is_available():
-		device='cuda'
-	else:
-		device='cpu'
-
-	if str('LabGym_detector_train') in DatasetCatalog.list():
-		DatasetCatalog.remove('LabGym_detector_train')
-		MetadataCatalog.remove('LabGym_detector_train')
-	register_coco_instances('LabGym_detector_train',{},path_to_annotation,path_to_trainingimages)
-	datasetcat=DatasetCatalog.get('LabGym_detector_train')
-	metadatacat=MetadataCatalog.get('LabGym_detector_train')
-	classnames=metadatacat.thing_classes
-
-	model_parameters_dict={}
-	model_parameters_dict['animal_names']=[]
-	annotation_data=json.load(open(path_to_annotation))
-	for i in annotation_data['categories']:
-		if i['id']>0:
-			model_parameters_dict['animal_names'].append(i['name'])
-	print('Animal names in annotation file: '+str(model_parameters_dict['animal_names']))
-
-	cfg=get_cfg()
-	cfg.merge_from_file(model_zoo.get_config_file("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml"))
-	cfg.OUTPUT_DIR=path_to_detector
-	cfg.DATASETS.TRAIN=('LabGym_detector_train',)
-	cfg.DATASETS.TEST=()
-	cfg.DATALOADER.NUM_WORKERS=4
-	cfg.MODEL.WEIGHTS=model_zoo.get_checkpoint_url("COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml")
-	cfg.MODEL.ROI_HEADS.BATCH_SIZE_PER_IMAGE=128
-	cfg.MODEL.ROI_HEADS.NUM_CLASSES=int(len(classnames))
-	cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST=0.5
-	cfg.SOLVER.MAX_ITER=int(iteration_num)
-	cfg.SOLVER.BASE_LR=0.001
-	cfg.SOLVER.WARMUP_ITERS=int(iteration_num*0.1)
-	cfg.SOLVER.STEPS=(int(iteration_num*0.4),int(iteration_num*0.8))
-	cfg.SOLVER.GAMMA=0.5
-	cfg.SOLVER.IMS_PER_BATCH=4
-	cfg.MODEL.DEVICE=device
-	cfg.INPUT.MIN_SIZE_TEST=int(inference_size)
-	cfg.INPUT.MAX_SIZE_TEST=int(inference_size)
-	cfg.INPUT.MIN_SIZE_TRAIN=(int(inference_size),)
-	cfg.INPUT.MAX_SIZE_TRAIN=int(inference_size)
-	os.makedirs(cfg.OUTPUT_DIR)
-	trainer=DefaultTrainer(cfg)
-	trainer.resume_or_load(False)
-	trainer.train()
-
-	model_parameters=os.path.join(cfg.OUTPUT_DIR,'model_parameters.txt')
-	
-	model_parameters_dict['animal_mapping']={}
-	model_parameters_dict['inferencing_framesize']=int(inference_size)
-
-	for i in range(len(classnames)):
-		model_parameters_dict['animal_mapping'][i]=classnames[i]
-
-	with open(model_parameters,'w') as f:
-		f.write(json.dumps(model_parameters_dict))
-
-	predictor=DefaultPredictor(cfg)
-	model=predictor.model
-	DetectionCheckpointer(model).resume_or_load(os.path.join(cfg.OUTPUT_DIR,'model_final.pth'))
-	model.eval()
-
-	config=os.path.join(cfg.OUTPUT_DIR,'config.yaml')
-	with open(config,'w') as f:
-		f.write(cfg.dump())
-
-	print('Detector training completed!')
-
-
-
-def testdetector(path_to_annotation,path_to_testingimages,path_to_detector,output_path):
-
-	if str('LabGym_detector_test') in DatasetCatalog.list():
-		DatasetCatalog.remove('LabGym_detector_test')
-		MetadataCatalog.remove('LabGym_detector_test')
-	register_coco_instances('LabGym_detector_test',{},path_to_annotation,path_to_testingimages)
-	datasetcat=DatasetCatalog.get('LabGym_detector_test')
-	metadatacat=MetadataCatalog.get('LabGym_detector_test')
-
-	animalmapping=os.path.join(path_to_detector,'model_parameters.txt')
-	with open(animalmapping) as f:
-		model_parameters=f.read()
-	animal_names=json.loads(model_parameters)['animal_names']
-	dt_infersize=int(json.loads(model_parameters)['inferencing_framesize'])
-	print('The total categories of animals / objects in this Detector: '+str(animal_names))
-	print('The inferencing framesize of this Detector: '+str(dt_infersize))
-	cfg=get_cfg()
-	cfg.merge_from_file(os.path.join(path_to_detector,'config.yaml'))
-	cfg.MODEL.WEIGHTS=os.path.join(path_to_detector,'model_final.pth')
-	cfg.MODEL.DEVICE='cuda' if torch.cuda.is_available() else 'cpu'
-
-	predictor=DefaultPredictor(cfg)
-
-	for d in datasetcat:
-		im=cv2.imread(d['file_name'])
-		outputs=predictor(im)
-		v=Visualizer(im[:,:,::-1],MetadataCatalog.get('LabGym_detector_test'),scale=1.2)
-		out=v.draw_instance_predictions(outputs['instances'].to('cpu'))
-		cv2.imwrite(os.path.join(output_path,os.path.basename(d['file_name'])),out.get_image()[:,:,::-1])
-
-	evaluator=COCOEvaluator('LabGym_detector_test',cfg,False,output_dir=output_path)
-	val_loader=build_detection_test_loader(cfg,'LabGym_detector_test')
-	inference_on_dataset(predictor.model,val_loader,evaluator)
-	mAP=evaluator._results['bbox']['AP']
-	print(f'The mean average precision (mAP) of the Detector is: {mAP:.4f}'+'%.')
-
-	print('Detector testing completed!')
-
-
-
 class WindowLv2_GenerateImages(wx.Frame):
+
+	'''
+	The 'Generate Images' functional unit
+	'''
 
 	def __init__(self,title):
 
 		super(WindowLv2_GenerateImages,self).__init__(parent=None,title=title,size=(1000,330))
-		self.path_to_videos=None
-		self.result_path=None
-		self.framewidth=None
-		self.t=0
-		self.duration=0
-		self.skip_redundant=1000
+		self.path_to_videos=None # path to a batch of videos for generate images (extract frames)
+		self.result_path=None # the folder for storing the generate images (extract frames)
+		self.framewidth=None # if not None, will resize the video frame keeping the original w:h ratio
+		self.t=0 # the start_t for generating images
+		self.duration=0 # the duration of generating images
+		self.skip_redundant=1000 # the interval (in frames) of two consecutively generated images
 
 		self.dispaly_window()
 
@@ -340,15 +220,19 @@ class WindowLv2_GenerateImages(wx.Frame):
 
 class WindowLv2_TrainDetectors(wx.Frame):
 
+	'''
+	The 'Train Detectors' functional unit
+	'''
+
 	def __init__(self,title):
 
 		super(WindowLv2_TrainDetectors,self).__init__(parent=None,title=title,size=(1000,280))
-		self.path_to_trainingimages=None
-		self.path_to_annotation=None
-		self.inference_size=320
-		self.iteration_num=200
-		self.detector_path=os.path.join(the_absolute_current_path,'detectors')
-		self.path_to_detector=None
+		self.path_to_trainingimages=None # the folder that stores all the training images
+		self.path_to_annotation=None # the path to the .json file that stores the annotations in coco format
+		self.inference_size=480 # the Detector inferencing frame size
+		self.iteration_num=200 # the number of training iterations
+		self.detector_path=os.path.join(the_absolute_current_path,'detectors') # the 'LabGym/detectors' folder, which stores all the trained Detectors
+		self.path_to_detector=None # path to the Detector
 
 		self.dispaly_window()
 
@@ -488,14 +372,18 @@ class WindowLv2_TrainDetectors(wx.Frame):
 
 class WindowLv2_TestDetectors(wx.Frame):
 
+	'''
+	The 'Test Detectors' functional unit
+	'''
+
 	def __init__(self,title):
 
 		super(WindowLv2_TestDetectors,self).__init__(parent=None,title=title,size=(1000,280))
-		self.path_to_testingimages=None
-		self.path_to_annotation=None
-		self.detector_path=os.path.join(the_absolute_current_path,'detectors')
-		self.path_to_detector=None
-		self.output_path=None
+		self.path_to_testingimages=None # the folder that stores all the testing images
+		self.path_to_annotation=None # the path to the .json file that stores the annotations in coco format
+		self.detector_path=os.path.join(the_absolute_current_path,'detectors') # the 'LabGym/detectors' folder, which stores all the trained Detectors
+		self.path_to_detector=None # path to the Detector
+		self.output_path=None # the folder that stores the testing images with annotations
 
 		self.dispaly_window()
 
