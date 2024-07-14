@@ -40,6 +40,11 @@ except:
 
 def traindetector(path_to_annotation,path_to_trainingimages,path_to_detector,iteration_num,inference_size):
 
+	# path_to_annotation: the path to the .json file that stores the annotations in coco format
+	# path_to_trainingimages: the folder that stores all the training images
+	# iteration_num: the number of training iterations
+	# inference_size: the Detector inferencing frame size
+
 	if torch.cuda.is_available():
 		device='cuda'
 	else:
@@ -121,6 +126,10 @@ def traindetector(path_to_annotation,path_to_trainingimages,path_to_detector,ite
 
 
 def testdetector(path_to_annotation,path_to_testingimages,path_to_detector,output_path):
+
+	# path_to_annotation: the path to the .json file that stores the annotations in coco format
+	# path_to_testingimages: the folder that stores all the ground-truth testing images
+	# output_path: the folder that stores the testing images with annotations
 
 	if str('LabGym_detector_test') in DatasetCatalog.list():
 		DatasetCatalog.remove('LabGym_detector_test')
