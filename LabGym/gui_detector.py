@@ -372,14 +372,18 @@ class WindowLv2_TrainDetectors(wx.Frame):
 
 class WindowLv2_TestDetectors(wx.Frame):
 
+	'''
+	The 'Test Detectors' functional unit
+	'''
+
 	def __init__(self,title):
 
 		super(WindowLv2_TestDetectors,self).__init__(parent=None,title=title,size=(1000,280))
-		self.path_to_testingimages=None
-		self.path_to_annotation=None
-		self.detector_path=os.path.join(the_absolute_current_path,'detectors')
-		self.path_to_detector=None
-		self.output_path=None
+		self.path_to_testingimages=None # the folder that stores all the testing images
+		self.path_to_annotation=None # the path to the .json file that stores the annotations in coco format
+		self.detector_path=os.path.join(the_absolute_current_path,'detectors') # the 'LabGym/detectors' folder, which stores all the trained Detectors
+		self.path_to_detector=None # path to the Detector
+		self.output_path=None # the folder that stores the testing images with annotations
 
 		self.dispaly_window()
 
