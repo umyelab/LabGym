@@ -220,15 +220,19 @@ class WindowLv2_GenerateImages(wx.Frame):
 
 class WindowLv2_TrainDetectors(wx.Frame):
 
+	'''
+	The 'Train Detectors' functional unit
+	'''
+
 	def __init__(self,title):
 
 		super(WindowLv2_TrainDetectors,self).__init__(parent=None,title=title,size=(1000,280))
-		self.path_to_trainingimages=None
-		self.path_to_annotation=None
-		self.inference_size=320
-		self.iteration_num=200
-		self.detector_path=os.path.join(the_absolute_current_path,'detectors')
-		self.path_to_detector=None
+		self.path_to_trainingimages=None # the folder that stores all the training images
+		self.path_to_annotation=None # the path to the .json file that stores the annotations in coco format
+		self.inference_size=480 # the Detector inferencing frame size
+		self.iteration_num=200 # the number of training iterations
+		self.detector_path=os.path.join(the_absolute_current_path,'detectors') # the 'LabGym/detectors' folder, which stores all the trained Detectors
+		self.path_to_detector=None # path to the Detector
 
 		self.dispaly_window()
 
