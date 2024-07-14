@@ -28,22 +28,27 @@ import numpy as np
 
 class WindowLv2_ProcessVideos(wx.Frame):
 
+	'''
+	The 'Preprocess Videos' functional unit
+	'''
+
 	def __init__(self,title):
 
 		super(WindowLv2_ProcessVideos,self).__init__(parent=None,title=title,size=(1000,330))
-		self.path_to_videos=None
-		self.framewidth=None
-		self.result_path=None
-		self.trim_video=False
-		self.time_windows=[]
-		self.enhance_contrast=False
-		self.contrast=1.0
-		self.crop_frame=False
-		self.left=0
-		self.right=0
-		self.top=0
-		self.bottom=0
-		self.decode_t=False
+		self.path_to_videos=None # path to a batch of videos for preprocessing
+		self.framewidth=None # if not None, will resize the video frame keeping the original w:h ratio
+		self.result_path=None # the folder for storing preprocessed videos
+		self.trim_video=False # whether to trim videos into shorter clips, different clips from the same video can be merged
+		self.time_windows=[] # the time windows (short clips) for trimming the videos
+		self.enhance_contrast=False # whether to enhance the contrast in videos
+		self.decode_t=False # whether to decode the time windows for trimming the videos from '_stt' and '_edt_' in video file names
+		self.contrast=1.0 # contrast enhancement factor
+		self.crop_frame=False # whether to crop the frames of videos
+		self.left=0 # frame cropping coordinates left
+		self.right=0 # frame cropping coordinates right
+		self.top=0 # frame cropping coordinates top
+		self.bottom=0 # frame cropping coordinates bottom
+		self.reduce_fps=1.0 # the reduction factor for downsizing the fps of the videos
 
 		self.dispaly_window()
 
