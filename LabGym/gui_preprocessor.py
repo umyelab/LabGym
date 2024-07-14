@@ -111,7 +111,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
 
 		module_reducefps=wx.BoxSizer(wx.HORIZONTAL)
 		button_reducefps=wx.Button(panel,label='Specify whether to reduce\nthe video fps',size=(300,40))
-		button_reducefps.Bind(wx.EVT_BUTTON,self.reduce_fps)
+		button_reducefps.Bind(wx.EVT_BUTTON,self.downsize_fps)
 		wx.Button.SetToolTip(button_reducefps,'Reducing video fps can significantly increase the processing speed. High fps may not always benefit behavior identification especially when the behavior dynamics is not that fast.')
 		self.text_reducefps=wx.StaticText(panel,label='Default: not to reduce video fps.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_reducefps.Add(button_reducefps,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -320,6 +320,21 @@ class WindowLv2_ProcessVideos(wx.Frame):
 					self.text_enhancecontrast.SetLabel('Not to enhance contrast.')
 				dialog.Destroy()
 			cv2.destroyAllWindows()
+
+
+	def downsize_fps(self,event):
+
+		dialog=wx.NumberEntryDialog(self,'Enter the fps reduction factor','Enter a number > 1.0:','Fps reduction factor',1.2,1.0,100.0)
+
+		if dialog.ShowModal()==wx.ID_OK:
+			self.reduce_fps=float(dialog.GetValue())
+			if self.reduce_fps<=1.0:
+				wx.MessageBox('The fps reduction factor must be greater than 1.0.','Error',wx.OK|wx.ICON_ERROR)
+				self.reduce_fps=1.0
+			else:
+				self.text_reducefps.SetLabel('Downsize fps by the reduction factor of: '+str(self.reduce_fps)+'.')
+
+		dialog.Destroy()
 
 
 	def preprocess_videos(self,event):
