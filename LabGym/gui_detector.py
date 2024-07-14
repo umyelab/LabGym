@@ -36,15 +36,19 @@ the_absolute_current_path=str(Path(__file__).resolve().parent)
 
 class WindowLv2_GenerateImages(wx.Frame):
 
+	'''
+	The 'Generate Images' functional unit
+	'''
+
 	def __init__(self,title):
 
 		super(WindowLv2_GenerateImages,self).__init__(parent=None,title=title,size=(1000,330))
-		self.path_to_videos=None
-		self.result_path=None
-		self.framewidth=None
-		self.t=0
-		self.duration=0
-		self.skip_redundant=1000
+		self.path_to_videos=None # path to a batch of videos for generate images (extract frames)
+		self.result_path=None # the folder for storing the generate images (extract frames)
+		self.framewidth=None # if not None, will resize the video frame keeping the original w:h ratio
+		self.t=0 # the start_t for generating images
+		self.duration=0 # the duration of generating images
+		self.skip_redundant=1000 # the interval (in frames) of two consecutively generated images
 
 		self.dispaly_window()
 
