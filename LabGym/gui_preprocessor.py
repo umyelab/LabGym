@@ -187,6 +187,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
 				method=dialog.GetStringSelection()
 				if method=='Decode from filenames: "_stt_" and "_edt_"':
 					self.decode_t=True
+					self.text_duration.SetLabel('The time windows to form the new, trimmed video will be decoded from filenames: "_stt_" and "_edt_".')
 				else:
 					self.decode_t=False
 					dialog1=wx.TextEntryDialog(self,'Format: starttime1-endtime1,starttime2-endtime2,...','Enter the time windows (in seconds)')
