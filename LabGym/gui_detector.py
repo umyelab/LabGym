@@ -544,4 +544,3 @@ class WindowLv2_TestDetectors(wx.Frame):
 
 
 
-
