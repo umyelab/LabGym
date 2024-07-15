@@ -411,6 +411,12 @@ class Categorizers():
 
 	def simple_vgg(self,inputs,filters,classes=3,level=2,with_classifier=False):
 
+		# inputs: the input tensor (w,h,c) of the neural network
+		# filters: the number of nodes (neurons) in each layer
+		# classes: the behavior category names (if with_classifier is True)
+		# level: complexity level, determines how deep the neural network is
+		# with_classifier: if True, the neural network can output classification probabilities
+
 		if level<2:
 			layers=[2]
 		elif level<3:
@@ -458,6 +464,12 @@ class Categorizers():
 
 
 	def simple_tvgg(self,inputs,filters,classes=3,level=2,with_classifier=False):
+
+		# inputs: the input tensor (t,w,h,c) of the neural network
+		# filters: the number of nodes (neurons) in each layer
+		# classes: the behavior category names (if with_classifier is True)
+		# level: complexity level, determines how deep the neural network is
+		# with_classifier: if True, the neural network can output classification probabilities
 
 		if level<2:
 			layers=[2]
@@ -508,6 +520,12 @@ class Categorizers():
 
 	def res_block(self,x,filters,strides=2,block=False,basic=True):
 
+		# x: the output from the last layer
+		# filters: the number of nodes (neurons) in each layer
+		# strides: the strides in each layer
+		# block: whether it's a block or shortcut
+		# basic: whether it uses additional zeropadding and normalization
+
 		shortcut=x
 
 		if basic is True:
@@ -551,6 +569,12 @@ class Categorizers():
 
 	def tres_block(self,x,filters,strides=2,block=False,basic=True):
 
+		# x: the output from the last layer
+		# filters: the number of nodes (neurons) in each layer
+		# strides: the strides in each layer
+		# block: whether it's a block or shortcut
+		# basic: whether it uses additional zeropadding and normalization
+
 		shortcut=x
 
 		if basic is True:
@@ -593,6 +617,12 @@ class Categorizers():
 
 
 	def simple_resnet(self,inputs,filters,classes=3,level=5,with_classifier=False):
+
+		# inputs: the input tensor (w,h,c) of the neural network
+		# filters: the number of nodes (neurons) in each layer
+		# classes: the behavior category names (if with_classifier is True)
+		# level: complexity level, determines how deep the neural network is
+		# with_classifier: if True, the neural network can output classification probabilities
 
 		x=ZeroPadding2D((3,3))(inputs)
 		x=Conv2D(filters,(5,5),strides=(2,2))(x)
@@ -642,6 +672,12 @@ class Categorizers():
 
 
 	def simple_tresnet(self,inputs,filters,classes=3,level=5,with_classifier=False):
+
+		# inputs: the input tensor (t,w,h,c) of the neural network
+		# filters: the number of nodes (neurons) in each layer
+		# classes: the behavior category names (if with_classifier is True)
+		# level: complexity level, determines how deep the neural network is
+		# with_classifier: if True, the neural network can output classification probabilities
 
 		x=TimeDistributed(ZeroPadding2D((3,3)))(inputs)
 		x=TimeDistributed(Conv2D(filters,(5,5),strides=(2,2)))(x)
