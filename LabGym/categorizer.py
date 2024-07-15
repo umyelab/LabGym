@@ -1229,6 +1229,10 @@ class Categorizers():
 
 	def test_categorizer(self,groundtruth_path,model_path,result_path=None):
 
+		# groundtruth_path: the folder that stores all the groundtruth behavior examples, each subfolder should be a behavior category, all categories must match those in the Categorizer
+		# model_path: path to the Categorizer
+		# result_path: if not None, will store the testing reports in this folder
+
 		print('Testing the selected Categorizer...')
 
 		animations=deque()
