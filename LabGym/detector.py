@@ -44,6 +44,10 @@ class Detector():
 	def __init__(self):
 
 		self.device='cuda' if torch.cuda.is_available() else 'cpu'
+		self.animal_mapping=None
+		self.inference_size=None
+		self.config=None
+		self.current_detector=None
 
 
 	def train(path_to_annotation,path_to_trainingimages,path_to_detector,iteration_num,inference_size):
