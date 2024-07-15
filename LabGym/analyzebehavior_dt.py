@@ -24,7 +24,6 @@ from .detector import Detector
 import os
 import gc
 import cv2
-import json
 import torch
 import datetime
 import numpy as np
