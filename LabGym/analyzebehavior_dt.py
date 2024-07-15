@@ -20,10 +20,10 @@ Email: bingye@umich.edu
 
 
 from .tools import *
+from .detector import Detector
 import os
 import gc
 import cv2
-import json
 import torch
 import datetime
 import numpy as np
@@ -38,13 +38,6 @@ import seaborn as sb
 from skimage import exposure
 import functools
 import operator
-try:
-	from detectron2.config import get_cfg
-	from detectron2.modeling import build_model
-	from detectron2.checkpoint import DetectionCheckpointer
-except:
-	print('You need to install Detectron2 to use the Detector module in LabGym:')
-	print('https://detectron2.readthedocs.io/en/latest/tutorials/install.html')
 
 
 
@@ -124,24 +117,8 @@ class AnalyzeAnimalDetector():
 		print('Preparation started...')
 		print(datetime.datetime.now())
 
-		config=os.path.join(path_to_detector,'config.yaml')
-		detector=os.path.join(path_to_detector,'model_final.pth')
-		animalmapping=os.path.join(path_to_detector,'model_parameters.txt')
-		with open(animalmapping) as f:
-			model_parameters=f.read()
-		self.animal_mapping=json.loads(model_parameters)['animal_mapping']
-		animal_names=json.loads(model_parameters)['animal_names']
-		dt_infersize=int(json.loads(model_parameters)['inferencing_framesize'])
-		print('The total categories of animals / objects in this Detector: '+str(animal_names))
-		print('The animals / objects of interest in this Detector: '+str(animal_kinds))
-		print('The inferencing framesize of this Detector: '+str(dt_infersize))
-		cfg=get_cfg()
-		cfg.merge_from_file(config)
-		cfg.MODEL.DEVICE='cuda' if torch.cuda.is_available() else 'cpu'
-		self.detector=build_model(cfg)
-		DetectionCheckpointer(self.detector).load(detector)
-		self.detector.eval()
-
+		self.detector=Detector()
+		self.detector.load(path_to_detector,animal_kinds)
 		self.path_to_video=path_to_video
 		self.basename=os.path.basename(self.path_to_video)
 		self.framewidth=framewidth
@@ -381,8 +358,7 @@ class AnalyzeAnimalDetector():
 		tensor_frames=[torch.as_tensor(frame.astype("float32").transpose(2,0,1)) for frame in frames]
 		inputs=[{"image":tensor_frame} for tensor_frame in tensor_frames]
 
-		with torch.no_grad():
-			outputs=self.detector(inputs)
+		self.detector.inference(inputs)
 
 		for batch_count,output in enumerate(outputs):
 
@@ -505,8 +481,7 @@ class AnalyzeAnimalDetector():
 		tensor_frames=[torch.as_tensor(frame.astype("float32").transpose(2,0,1)) for frame in frames]
 		inputs=[{"image":tensor_frame} for tensor_frame in tensor_frames]
 
-		with torch.no_grad():
-			outputs=self.detector(inputs)
+		outputs=self.detector.inference(inputs)
 
 		for batch_count,output in enumerate(outputs):
 
@@ -784,8 +759,7 @@ class AnalyzeAnimalDetector():
 					tensor_frames=[torch.as_tensor(frame.astype("float32").transpose(2,0,1)) for frame in batch]
 					inputs=[{"image":tensor_frame} for tensor_frame in tensor_frames]
 
-					with torch.no_grad():
-						outputs=self.detector(inputs)
+					outputs=self.detector.inference(inputs)
 
 					for batch_count,output in enumerate(outputs):
 
@@ -1667,8 +1641,7 @@ class AnalyzeAnimalDetector():
 
 				self.temp_frames.append(frame)
 				tensor_frame=torch.as_tensor(frame.astype("float32").transpose(2,0,1))
-				with torch.no_grad():
-					output=self.detector([{"image":tensor_frame}])
+				output=self.detector.inference([{"image":tensor_frame}])
 				instances=output[0]['instances'].to('cpu')
 				masks=instances.pred_masks.numpy().astype(np.uint8)
 				classes=instances.pred_classes.numpy()
@@ -1809,8 +1782,7 @@ class AnalyzeAnimalDetector():
 					frame=cv2.resize(frame,(self.framewidth,self.frameheight),interpolation=cv2.INTER_AREA)
 
 				tensor_frame=torch.as_tensor(frame.astype("float32").transpose(2,0,1))
-				with torch.no_grad():
-					output=self.detector([{"image":tensor_frame}])
+				output=self.detector.inference([{"image":tensor_frame}])
 				instances=output[0]['instances'].to('cpu')
 				masks=instances.pred_masks.numpy().astype(np.uint8)
 				classes=instances.pred_classes.numpy()
@@ -2070,22 +2042,8 @@ class AnalyzeAnimalDetector():
 		print('Preparation started...')
 		print(datetime.datetime.now())
 
-		config=os.path.join(path_to_detector,'config.yaml')
-		animalmapping=os.path.join(path_to_detector,'model_parameters.txt')
-		with open(animalmapping) as f:
-			model_parameters=f.read()
-		animal_mapping=json.loads(model_parameters)['animal_mapping']
-		animal_names=json.loads(model_parameters)['animal_names']
-		dt_infersize=int(json.loads(model_parameters)['inferencing_framesize'])
-		print('The total categories of animals / objects in this Detector: '+str(animal_names))
-		print('The animals / objects of interest in this Detector: '+str(animal_kinds))
-		print('The inferencing framesize of this Detector: '+str(dt_infersize))
-		cfg=get_cfg()
-		cfg.merge_from_file(config)
-		cfg.MODEL.DEVICE='cuda' if torch.cuda.is_available() else 'cpu'
-		detector=build_model(cfg)
-		DetectionCheckpointer(detector).load(os.path.join(path_to_detector,'model_final.pth'))
-		detector.eval()
+		self.detector=Detector()
+		self.detector.load(path_to_detector,animal_kinds)
 
 		if social_distance==0:
 			social_distance=float('inf')
@@ -2156,8 +2114,7 @@ class AnalyzeAnimalDetector():
 				kernel=9
 
 			tensor_image=torch.as_tensor(image.astype("float32").transpose(2,0,1))
-			with torch.no_grad():
-				output=detector([{"image":tensor_image}])
+			output=self.detector.inference([{"image":tensor_image}])
 			instances=output[0]['instances'].to('cpu')
 			masks=instances.pred_masks.numpy().astype(np.uint8)
 			classes=instances.pred_classes.numpy()

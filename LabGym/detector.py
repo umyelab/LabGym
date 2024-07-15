@@ -34,8 +34,9 @@ try:
 	from detectron2.evaluation import COCOEvaluator,inference_on_dataset
 	from detectron2.modeling import build_model
 except:
-	print('You need to install Detectron2 to use the Detector module in LabGym:')
-	print('https://detectron2.readthedocs.io/en/latest/tutorials/install.html')
+	print('You need to install Detectron2 to use the Detector module in LabGym.')
+	print('See installation instructions on LabGym GitHub page or here:')
+	print('https://labgym.readthedocs.io/en/latest/installation/index.html')
 
 
 
@@ -43,9 +44,9 @@ class Detector():
 
 	def __init__(self):
 
-		self.device='cuda' if torch.cuda.is_available() else 'cpu'
-		self.animal_mapping=None
-		self.current_detector=None
+		self.device='cuda' if torch.cuda.is_available() else 'cpu' # whether the GPU is available, if so, use GPU
+		self.animal_mapping=None # the animal categories and names in a Detector
+		self.current_detector=None # the current Detector used for inference
 
 
 	def train(path_to_annotation,path_to_trainingimages,path_to_detector,iteration_num,inference_size):
@@ -213,3 +214,5 @@ class Detector():
 			outputs=self.current_detector(inputs)
 
 		return outputs
+
+
