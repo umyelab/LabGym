@@ -48,7 +48,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
 		self.right=0 # frame cropping coordinates right
 		self.top=0 # frame cropping coordinates top
 		self.bottom=0 # frame cropping coordinates bottom
-		self.reduce_fps=1.0 # the reduction factor for downsizing the fps of the videos
+		self.fps_new=None # the target fps to downsize
 
 		self.dispaly_window()
 
@@ -324,10 +324,10 @@ class WindowLv2_ProcessVideos(wx.Frame):
 
 	def downsize_fps(self,event):
 
-		dialog=wx.NumberEntryDialog(self,'Enter the fps reduction factor','Enter a number > 1.0:','Fps reduction factor',1.2,1.0,100.0)
+		dialog=wx.NumberEntryDialog(self,'Enter the new fps','Enter a number:','Target fps',30,1,100)
 
 		if dialog.ShowModal()==wx.ID_OK:
-			self.reduce_fps=float(dialog.GetValue())
+			self.fps_new=int(dialog.GetValue())
 			if self.reduce_fps<=1.0:
 				wx.MessageBox('The fps reduction factor must be greater than 1.0.','Error',wx.OK|wx.ICON_ERROR)
 				self.reduce_fps=1.0
