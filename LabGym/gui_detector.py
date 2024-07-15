@@ -368,7 +368,6 @@ class WindowLv2_TrainDetectors(wx.Frame):
 			if do_nothing is False:
 
 				DT=Detector()
-
 				DT.train(self.path_to_annotation,self.path_to_trainingimages,self.path_to_detector,self.iteration_num,self.inference_size)
 
 
