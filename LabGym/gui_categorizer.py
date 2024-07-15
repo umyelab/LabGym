@@ -44,7 +44,7 @@ class WindowLv2_GenerateExamples(wx.Frame):
 
 	def __init__(self,title):
 
-		super(WindowLv2_GenerateExamples,self).__init__(parent=None,title=title,size=(1000,510))
+		super(WindowLv2_GenerateExamples,self).__init__(parent=None,title=title,size=(1000,530))
 		self.behavior_mode=0 # 0: non-interactive behavior; 1: interact basic; 2: interact advanced; 3: static images
 		self.use_detector=False # whether the Detector is used
 		self.detector_path=None # the 'LabGym/detectors' folder, which stores all the trained Detectors
@@ -662,7 +662,7 @@ class WindowLv2_SortBehaviors(wx.Frame):
 
 	def __init__(self,title):
 
-		super(WindowLv2_SortBehaviors,self).__init__(parent=None,title=title,size=(1000,240))
+		super(WindowLv2_SortBehaviors,self).__init__(parent=None,title=title,size=(1000,260))
 		self.input_path=None # the folder that stores unsorted behavior examples (one example is a pair of an animation and a pattern image)
 		self.result_path=None # the folder that stores the sorted behavior examples
 		self.keys_behaviors={} # stores the pairs of shortcut key-behavior name
