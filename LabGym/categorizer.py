@@ -51,12 +51,16 @@ class Categorizers():
 
 	def __init__(self):
 
-		self.extension_image=('.png','.PNG','.jpeg','.JPEG','.jpg','.JPG','.tiff','.TIFF','.bmp','.BMP')
-		self.extension_video=('.avi','.mpg','.wmv','.mp4','.mkv','.m4v','.mov')
-		self.classnames=None
+		self.extension_image=('.png','.PNG','.jpeg','.JPEG','.jpg','.JPG','.tiff','.TIFF','.bmp','.BMP') # the image formats that LabGym can accept
+		self.extension_video=('.avi','.mpg','.wmv','.mp4','.mkv','.m4v','.mov') # the video formats that LabGym can accept
+		self.classnames=None # the behavior category names in the trained Categorizer
 
 
 	def rename_label(self,file_path,new_path,resize=None):
+
+		# file_path: the folder that stores the sorted, unprepared examples
+		# new_path: the folder that stores all prepared examples, which can be directly used for training a Categorizer
+		# resize: if not None, resize the frames in animations / pattern images to the target size
 
 		folder_list=[i for i in os.listdir(file_path) if os.path.isdir(os.path.join(file_path,i))]
 		print('Behavior names are: '+str(folder_list))
@@ -121,6 +125,15 @@ class Categorizers():
 
 
 	def build_data(self,path_to_animations,dim_tconv=0,dim_conv=64,channel=1,time_step=15,aug_methods=[],background_free=True,behavior_mode=0):
+
+		# path_to_animations: the folder that stores all the prepared training examples
+		# dim_tconv: the input dimension of Animation Analyzer
+		# dim_conv: the input dimension of Pattern Recognizer
+		# channel: the input color channel of Animation Analyzer, 1 is gray scale, 3 is RGB
+		# time_step: the duration of an animation, also the input length of Animation Analyzer
+		# aug_methods: the augmentation methods that are used in training
+		# background_free: whether the background is included in animations
+		# behavior_mode:  0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
 
 		animations=deque()
 		pattern_images=deque()
