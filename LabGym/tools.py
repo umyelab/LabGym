@@ -1098,12 +1098,15 @@ def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_w
 	height=capture.get(cv2.CAP_PROP_FRAME_HEIGHT)
 
 	if framewidth is not None:
-		w=int(framewidth)
-		h=int(framewidth*height/width)
+		w_resize=int(framewidth)
+		h_resize=int(framewidth*height/width)
 
 	if crop_frame:
 		w=int(right-left)
 		h=int(bottom-top)
+	else:
+		w=w_resize
+		h=h_resize
 
 	added_name=''
 	if trim_video is True:
@@ -1137,7 +1140,7 @@ def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_w
 			continue
 
 		if framewidth is not None:
-			frame=cv2.resize(frame,(w,h),interpolation=cv2.INTER_AREA)
+			frame=cv2.resize(frame,(w_resize,h_resize),interpolation=cv2.INTER_AREA)
 
 		if crop_frame is True:
 			frame=frame[top:bottom,left:right,:]
