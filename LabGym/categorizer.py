@@ -807,16 +807,6 @@ class Categorizers():
 		# behavior_mode:  0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
 		# social_distance: a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
 
-		# dim_tconv: the input dimension of Animation Analyzer
-		# dim_conv: the input dimension of Pattern Recognizer
-		# channel: the input color channel of Animation Analyzer, 1 is gray scale, 3 is RGB
-		# time_step: the duration of an animation, also the input length of Animation Analyzer
-		# level_tconv: complexity level of Animation Analyzer, determines how deep the neural network is
-		# level_conv: complexity level of Pattern Recognizer, determines how deep the neural network is
-		# aug_methods: the augmentation methods that are used in training
-		# background_free: whether the background is included in animations
-		# behavior_mode:  0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
-
 		filters=8
 
 		for i in range(round(dim/60)):
@@ -966,16 +956,6 @@ class Categorizers():
 		# background_free: whether to include background in animations
 		# behavior_mode:  0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
 		# social_distance: a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
-
-		# dim_tconv: the input dimension of Animation Analyzer
-		# dim_conv: the input dimension of Pattern Recognizer
-		# channel: the input color channel of Animation Analyzer, 1 is gray scale, 3 is RGB
-		# time_step: the duration of an animation, also the input length of Animation Analyzer
-		# level_tconv: complexity level of Animation Analyzer, determines how deep the neural network is
-		# level_conv: complexity level of Pattern Recognizer, determines how deep the neural network is
-		# aug_methods: the augmentation methods that are used in training
-		# background_free: whether the background is included in animations
-		# behavior_mode:  0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
 
 		filters=8
 
