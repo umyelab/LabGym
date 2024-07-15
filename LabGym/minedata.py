@@ -29,12 +29,12 @@ class data_mining():
 
 	def __init__(self,data_in,control_in=None,paired_in=False,result_path_in=None,pval_in=0.05,file_names_in=None):
 
-		self.data=data_in
-		self.control=control_in
-		self.paired=paired_in
-		self.pval=pval_in
-		self.writer=pd.ExcelWriter(os.path.join(result_path_in,'data_mining_results.xlsx'))
-		self.file_names=file_names_in
+		self.data=data_in # the input data
+		self.control=control_in # the control group
+		self.paired=paired_in # whether the data is paired
+		self.pval=pval_in # the p value for the statistical tests
+		self.writer=pd.ExcelWriter(os.path.join(result_path_in,'data_mining_results.xlsx')) # the output spreadsheet that stores the data mining results
+		self.file_names=file_names_in # the file names
 
 
 	def normal(self,dataset):
