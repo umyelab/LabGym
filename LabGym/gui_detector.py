@@ -19,6 +19,7 @@ Email: bingye@umich.edu
 
 
 from .tools import extract_frames
+from .detector import Detector
 from pathlib import Path
 import wx
 import os
@@ -26,7 +27,7 @@ import cv2
 import json
 import shutil
 import torch
-from .detector import traindetector,testdetector
+
 
 
 
@@ -366,7 +367,9 @@ class WindowLv2_TrainDetectors(wx.Frame):
 
 			if do_nothing is False:
 
-				traindetector(self.path_to_annotation,self.path_to_trainingimages,self.path_to_detector,self.iteration_num,self.inference_size)
+				DT=Detector()
+
+				DT.train(self.path_to_annotation,self.path_to_trainingimages,self.path_to_detector,self.iteration_num,self.inference_size)
 
 
 
