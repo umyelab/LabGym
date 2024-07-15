@@ -45,7 +45,6 @@ class Detector():
 
 		self.device='cuda' if torch.cuda.is_available() else 'cpu'
 		self.animal_mapping=None
-		self.inference_size=None
 		self.current_detector=None
 
 
@@ -55,11 +54,6 @@ class Detector():
 		# path_to_trainingimages: the folder that stores all the training images
 		# iteration_num: the number of training iterations
 		# inference_size: the Detector inferencing frame size
-
-		if torch.cuda.is_available():
-			device='cuda'
-		else:
-			device='cpu'
 
 		if str('LabGym_detector_train') in DatasetCatalog.list():
 			DatasetCatalog.remove('LabGym_detector_train')
@@ -188,6 +182,8 @@ class Detector():
 
 	def load(path_to_detector,animal_kinds):
 
+		# animal_kinds: the catgories of animals / objects to be analyzed
+
 		config=os.path.join(path_to_detector,'config.yaml')
 		detector_model=os.path.join(path_to_detector,'model_final.pth')
 		animalmapping=os.path.join(path_to_detector,'model_parameters.txt')
@@ -196,9 +192,11 @@ class Detector():
 		self.animal_mapping=json.loads(model_parameters)['animal_mapping']
 		animal_names=json.loads(model_parameters)['animal_names']
 		dt_infersize=int(json.loads(model_parameters)['inferencing_framesize'])
+
 		print('The total categories of animals / objects in this Detector: '+str(animal_names))
 		print('The animals / objects of interest in this Detector: '+str(animal_kinds))
 		print('The inferencing framesize of this Detector: '+str(dt_infersize))
+
 		cfg=get_cfg()
 		cfg.merge_from_file(config)
 		cfg.MODEL.DEVICE=self.device
@@ -208,6 +206,8 @@ class Detector():
 
 
 	def inference(inputs):
+
+		# inputs: images that the current Detector runs on
 
 		with torch.no_grad():
 			outputs=self.current_detector(inputs)
