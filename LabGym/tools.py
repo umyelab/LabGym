@@ -1076,7 +1076,7 @@ def extract_frames(path_to_video,out_path,framewidth=None,start_t=0,duration=0,s
 	print('The image examples stored in: '+out_path)
 
 
-def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_windows=[[0,10]],enhance_contrast=True,contrast=1.0,crop_frame=True,left=0,right=0,top=0,bottom=0,reduce_fps=1.0):
+def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_windows=[[0,10]],enhance_contrast=True,contrast=1.0,crop_frame=True,left=0,right=0,top=0,bottom=0,fps_new=10000):
 
 	'''
 	This function is used to preprocess a video.
@@ -1109,6 +1109,11 @@ def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_w
 	if trim_video is True:
 		for start,end in time_windows:
 			added_name+='_'+str(start)+'-'+str(end)
+
+	if fps_new>=fps:
+		print('The target fps is equal or greater than the original fps, which is: '+str(fps)+'.')
+		print('Will keep the original fps.')
+	else:
 
 	if reduce_fps>1.0:
 		if num_frames>1:
