@@ -32,7 +32,11 @@ from LabGym import __version__
 
 
 
-class InitialWindow(wx.Frame): # The main window
+class InitialWindow(wx.Frame):
+
+	'''
+	The main window of LabGym
+	'''
 
 	def __init__(self,title):
 
