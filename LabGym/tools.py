@@ -1076,7 +1076,7 @@ def extract_frames(path_to_video,out_path,framewidth=None,start_t=0,duration=0,s
 	print('The image examples stored in: '+out_path)
 
 
-def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_windows=[[0,10]],enhance_contrast=True,contrast=1.0,crop_frame=True,left=0,right=0,top=0,bottom=0,fps_new=10000):
+def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_windows=[[0,10]],enhance_contrast=True,contrast=1.0,crop_frame=True,left=0,right=0,top=0,bottom=0,fps_new=None):
 
 	'''
 	This function is used to preprocess a video.
@@ -1110,19 +1110,18 @@ def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_w
 		for start,end in time_windows:
 			added_name+='_'+str(start)+'-'+str(end)
 
-	if fps_new>=fps:
-		print('The target fps is equal or greater than the original fps, which is: '+str(fps)+'.')
-		print('Will keep the original fps.')
-		fps_new=fps
-	else:
-		fps_reducefactor=fps_new/fps
-
-		if num_frames>1:
-			num_dropped_frames=int(num_frames*(1-fps_reducefactor))
-			block_size=num_frames/(num_frames*(1-fps_reducefactor)-1)
-			dropped_frames=[round(block_size*i) for i in range(num_dropped_frames)]
+	dropped_frames=[]
+	if fps_new is not None:
+		if fps_new>=fps:
+			print('The target fps is equal or greater than the original fps, which is: '+str(fps)+'.')
+			print('Will keep the original fps.')
+			fps_new=fps
 		else:
-			dropped_frames=[]
+			fps_reducefactor=fps_new/fps
+			if num_frames>1:
+				num_dropped_frames=int(num_frames*(1-fps_reducefactor))
+				block_size=num_frames/(num_frames*(1-fps_reducefactor)-1)
+				dropped_frames=[round(block_size*i) for i in range(num_dropped_frames)]
 
 	writer=cv2.VideoWriter(os.path.join(out_folder,name+added_name+'_processed.avi'),cv2.VideoWriter_fourcc(*'MJPG'),fps_new,(w,h),True)
 	frame_count=1
