@@ -38,13 +38,6 @@ import seaborn as sb
 from skimage import exposure
 import functools
 import operator
-try:
-	from detectron2.config import get_cfg
-	from detectron2.modeling import build_model
-	from detectron2.checkpoint import DetectionCheckpointer
-except:
-	print('You need to install Detectron2 to use the Detector module in LabGym:')
-	print('https://detectron2.readthedocs.io/en/latest/tutorials/install.html')
 
 
 
