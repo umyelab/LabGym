@@ -207,5 +207,9 @@ class Detector():
 		self.current_detector.eval()
 
 
-	def inference():
-		pass
+	def inference(inputs):
+
+		with torch.no_grad():
+			outputs=self.current_detector(inputs)
+
+		return outputs
