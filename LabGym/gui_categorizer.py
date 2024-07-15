@@ -908,7 +908,7 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 
 	def __init__(self,title):
 
-		super(WindowLv2_TrainCategorizers,self).__init__(parent=None,title=title,size=(1000,520))
+		super(WindowLv2_TrainCategorizers,self).__init__(parent=None,title=title,size=(1000,540))
 		self.file_path=None # the folder that stores sorted, unprepared behavior examples (each category is a subfolder)
 		self.new_path=None # the folder that stores prepared behavior examples (contains all examples with a category tag in their names) 
 		self.behavior_mode=0 # 0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
@@ -1345,7 +1345,7 @@ class WindowLv2_TestCategorizers(wx.Frame):
 
 	def __init__(self,title):
 
-		super(WindowLv2_TestCategorizers,self).__init__(parent=None,title=title,size=(1000,240))
+		super(WindowLv2_TestCategorizers,self).__init__(parent=None,title=title,size=(1000,260))
 		self.file_path=None # the folder that stores the ground-truth examples (each subfolder is a behavior category)
 		self.model_path=os.path.join(the_absolute_current_path,'models') # the 'LabGym/models' folder, which stores all the trained Categorizers
 		self.path_to_categorizer=None # path to the Categorizer
@@ -1492,7 +1492,5 @@ class WindowLv2_TestCategorizers(wx.Frame):
 				shutil.rmtree(os.path.join(self.model_path,categorizer))
 			dialog1.Destroy()
 		dialog.Destroy()
-
-
 
 
