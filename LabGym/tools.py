@@ -1207,4 +1207,3 @@ def parse_all_events_file(path_to_events):
 	return (event_probability,time_points,behavior_names)
 
 
-

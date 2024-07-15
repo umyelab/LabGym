@@ -32,7 +32,11 @@ from LabGym import __version__
 
 
 
-class InitialWindow(wx.Frame): # The main window
+class InitialWindow(wx.Frame):
+
+	'''
+	The main window of LabGym
+	'''
 
 	def __init__(self,title):
 
@@ -99,7 +103,11 @@ class InitialWindow(wx.Frame): # The main window
 
 
 
-class WindowLv1_ProcessModule(wx.Frame): # The Preprocessing module
+class WindowLv1_ProcessModule(wx.Frame):
+
+	'''
+	The Preprocessing Module
+	'''
 
 	def __init__(self,title):
 
@@ -131,7 +139,11 @@ class WindowLv1_ProcessModule(wx.Frame): # The Preprocessing module
 
 
 
-class WindowLv1_TrainingModule(wx.Frame): # The training module
+class WindowLv1_TrainingModule(wx.Frame):
+
+	'''
+	The Training Module
+	'''
 
 	def __init__(self,title):
 
@@ -233,7 +245,11 @@ class WindowLv1_TrainingModule(wx.Frame): # The training module
 
 
 
-class WindowLv1_AnalysisModule(wx.Frame): # The analysis module
+class WindowLv1_AnalysisModule(wx.Frame):
+
+	'''
+	The Analysis Module
+	'''
 
 	def __init__(self,title):
 
