@@ -45,7 +45,6 @@ class Detector():
 
 		self.device='cuda' if torch.cuda.is_available() else 'cpu'
 		self.animal_mapping=None
-		self.animal_names=None
 		self.inference_size=None
 		self.current_detector=None
 
@@ -100,7 +99,7 @@ class Detector():
 		cfg.SOLVER.STEPS=(int(iteration_num*0.4),int(iteration_num*0.8))
 		cfg.SOLVER.GAMMA=0.5
 		cfg.SOLVER.IMS_PER_BATCH=4
-		cfg.MODEL.DEVICE=device
+		cfg.MODEL.DEVICE=self.device
 		cfg.INPUT.MIN_SIZE_TEST=int(inference_size)
 		cfg.INPUT.MAX_SIZE_TEST=int(inference_size)
 		cfg.INPUT.MIN_SIZE_TRAIN=(int(inference_size),)
@@ -165,7 +164,7 @@ class Detector():
 		cfg=get_cfg()
 		cfg.merge_from_file(os.path.join(path_to_detector,'config.yaml'))
 		cfg.MODEL.WEIGHTS=os.path.join(path_to_detector,'model_final.pth')
-		cfg.MODEL.DEVICE='cuda' if torch.cuda.is_available() else 'cpu'
+		cfg.MODEL.DEVICE=self.device
 
 		predictor=DefaultPredictor(cfg)
 
@@ -187,7 +186,7 @@ class Detector():
 		print('Detector testing completed!')
 
 
-	def load(path_to_detector):
+	def load(path_to_detector,animal_kinds):
 
 		config=os.path.join(path_to_detector,'config.yaml')
 		detector_model=os.path.join(path_to_detector,'model_final.pth')
@@ -195,17 +194,17 @@ class Detector():
 		with open(animalmapping) as f:
 			model_parameters=f.read()
 		self.animal_mapping=json.loads(model_parameters)['animal_mapping']
-		self.animal_names=json.loads(model_parameters)['animal_names']
+		animal_names=json.loads(model_parameters)['animal_names']
 		dt_infersize=int(json.loads(model_parameters)['inferencing_framesize'])
 		print('The total categories of animals / objects in this Detector: '+str(animal_names))
 		print('The animals / objects of interest in this Detector: '+str(animal_kinds))
 		print('The inferencing framesize of this Detector: '+str(dt_infersize))
 		cfg=get_cfg()
 		cfg.merge_from_file(config)
-		cfg.MODEL.DEVICE='cuda' if torch.cuda.is_available() else 'cpu'
-		self.detector=build_model(cfg)
-		DetectionCheckpointer(self.detector).load(detector)
-		self.detector.eval()
+		cfg.MODEL.DEVICE=self.device
+		self.current_detector=build_model(cfg)
+		DetectionCheckpointer(self.current_detector).load(detector_model)
+		self.current_detector.eval()
 
 
 	def inference():
