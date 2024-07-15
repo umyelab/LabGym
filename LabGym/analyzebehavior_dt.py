@@ -119,6 +119,7 @@ class AnalyzeAnimalDetector():
 
 		self.detector=Detector()
 		self.detector.load(path_to_detector,animal_kinds)
+		self.animal_mapping=self.detector.animal_mapping
 		self.path_to_video=path_to_video
 		self.basename=os.path.basename(self.path_to_video)
 		self.framewidth=framewidth
@@ -2044,6 +2045,7 @@ class AnalyzeAnimalDetector():
 
 		self.detector=Detector()
 		self.detector.load(path_to_detector,animal_kinds)
+		self.animal_mapping=self.detector.animal_mapping
 
 		if social_distance==0:
 			social_distance=float('inf')
