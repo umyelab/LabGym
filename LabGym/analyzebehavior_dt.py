@@ -2043,22 +2043,8 @@ class AnalyzeAnimalDetector():
 		print('Preparation started...')
 		print(datetime.datetime.now())
 
-		config=os.path.join(path_to_detector,'config.yaml')
-		animalmapping=os.path.join(path_to_detector,'model_parameters.txt')
-		with open(animalmapping) as f:
-			model_parameters=f.read()
-		animal_mapping=json.loads(model_parameters)['animal_mapping']
-		animal_names=json.loads(model_parameters)['animal_names']
-		dt_infersize=int(json.loads(model_parameters)['inferencing_framesize'])
-		print('The total categories of animals / objects in this Detector: '+str(animal_names))
-		print('The animals / objects of interest in this Detector: '+str(animal_kinds))
-		print('The inferencing framesize of this Detector: '+str(dt_infersize))
-		cfg=get_cfg()
-		cfg.merge_from_file(config)
-		cfg.MODEL.DEVICE='cuda' if torch.cuda.is_available() else 'cpu'
-		detector=build_model(cfg)
-		DetectionCheckpointer(detector).load(os.path.join(path_to_detector,'model_final.pth'))
-		detector.eval()
+		self.detector=Detector()
+		self.detector.load(path_to_detector,animal_kinds)
 
 		if social_distance==0:
 			social_distance=float('inf')
@@ -2129,8 +2115,7 @@ class AnalyzeAnimalDetector():
 				kernel=9
 
 			tensor_image=torch.as_tensor(image.astype("float32").transpose(2,0,1))
-			with torch.no_grad():
-				output=detector([{"image":tensor_image}])
+			output=self.detector.inference([{"image":tensor_image}])
 			instances=output[0]['instances'].to('cpu')
 			masks=instances.pred_masks.numpy().astype(np.uint8)
 			classes=instances.pred_classes.numpy()
