@@ -34,8 +34,9 @@ try:
 	from detectron2.evaluation import COCOEvaluator,inference_on_dataset
 	from detectron2.modeling import build_model
 except:
-	print('You need to install Detectron2 to use the Detector module in LabGym:')
-	print('https://detectron2.readthedocs.io/en/latest/tutorials/install.html')
+	print('You need to install Detectron2 to use the Detector module in LabGym.')
+	print('See installation instructions on LabGym GitHub page or here:')
+	print('https://labgym.readthedocs.io/en/latest/installation/index.html')
 
 
 
