@@ -188,7 +188,7 @@ class WindowLv2_GenerateExamples(wx.Frame):
 
 	def specify_mode(self,event):
 
-		behavior_modes=['Non-interactive: behaviors of each individual (each example contains one animal / object)','Interactive basic: behaviors of all (each example contains all animals / objects)','Interactive advanced: behaviors of each individual and social groups (each example contains either one or multiple animals / objects)','Static images (non-interactive): behaviors of each individual in static images(each image contains one animal / object)']
+		behavior_modes=['Non-interactive: behaviors of each individual (each example contains one animal / object)','Interactive basic: behaviors of all (each example contains all animals / objects)','Interactive advanced: behaviors of each individual and social groups (each example contains either one or multiple animals / objects)','Static images (non-interactive): behaviors of each individual in static images (each image contains one animal / object)']
 		dialog=wx.SingleChoiceDialog(self,message='Specify the mode of behavior examples to generate',caption='Behavior-example mode',choices=behavior_modes)
 		if dialog.ShowModal()==wx.ID_OK:
 			behavior_mode=dialog.GetStringSelection()
@@ -1081,7 +1081,7 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 
 	def specify_categorizer(self,event):
 
-		behavior_modes=['Non-interact (identify behavior for each individual)','Interact basic (identify behavior for the interactive pair / group)','Interact advanced (identify behavior for both each individual and each interactive pair / group)','Static images (non-interactive): behaviors of each individual in static images(each image contains one animal / object)']
+		behavior_modes=['Non-interact (identify behavior for each individual)','Interact basic (identify behavior for the interactive pair / group)','Interact advanced (identify behavior for both each individual and each interactive pair / group)','Static images (non-interactive): behaviors of each individual in static images (each image contains one animal / object)']
 		dialog=wx.SingleChoiceDialog(self,message='Specify the mode of behavior for the Categorizer to identify',caption='Behavior mode',choices=behavior_modes)
 		if dialog.ShowModal()==wx.ID_OK:
 			behavior_mode=dialog.GetStringSelection()
