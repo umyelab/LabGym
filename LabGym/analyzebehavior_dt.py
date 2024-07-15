@@ -20,6 +20,7 @@ Email: bingye@umich.edu
 
 
 from .tools import *
+from .detector import Detector
 import os
 import gc
 import cv2
@@ -46,7 +47,6 @@ class AnalyzeAnimalDetector():
 	def __init__(self):
 
 		self.behavior_mode=0
-		self.detector=None
 		self.animal_mapping=None
 		self.path_to_video=None
 		self.basename=None
@@ -116,6 +116,8 @@ class AnalyzeAnimalDetector():
 		
 		print('Preparation started...')
 		print(datetime.datetime.now())
+
+		DT=Detector()
 
 		config=os.path.join(path_to_detector,'config.yaml')
 		detector=os.path.join(path_to_detector,'model_final.pth')
