@@ -518,7 +518,8 @@ class WindowLv2_TestDetectors(wx.Frame):
 		if self.path_to_detector is None or self.path_to_testingimages is None or self.path_to_annotation is None or self.output_path is None:
 			wx.MessageBox('No Detector / training images / annotation file / output path selected.','Error',wx.OK|wx.ICON_ERROR)
 		else:
-			testdetector(self.path_to_annotation,self.path_to_testingimages,self.path_to_detector,self.output_path)
+			DT=Detector()
+			DT.test(self.path_to_annotation,self.path_to_testingimages,self.path_to_detector,self.output_path)
 
 
 	def remove_detector(self,event):
