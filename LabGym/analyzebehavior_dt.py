@@ -359,8 +359,7 @@ class AnalyzeAnimalDetector():
 		tensor_frames=[torch.as_tensor(frame.astype("float32").transpose(2,0,1)) for frame in frames]
 		inputs=[{"image":tensor_frame} for tensor_frame in tensor_frames]
 
-		with torch.no_grad():
-			outputs=self.detector(inputs)
+		self.detector.inference(inputs)
 
 		for batch_count,output in enumerate(outputs):
 
@@ -483,8 +482,7 @@ class AnalyzeAnimalDetector():
 		tensor_frames=[torch.as_tensor(frame.astype("float32").transpose(2,0,1)) for frame in frames]
 		inputs=[{"image":tensor_frame} for tensor_frame in tensor_frames]
 
-		with torch.no_grad():
-			outputs=self.detector(inputs)
+		outputs=self.detector.inference(inputs)
 
 		for batch_count,output in enumerate(outputs):
 
@@ -762,8 +760,7 @@ class AnalyzeAnimalDetector():
 					tensor_frames=[torch.as_tensor(frame.astype("float32").transpose(2,0,1)) for frame in batch]
 					inputs=[{"image":tensor_frame} for tensor_frame in tensor_frames]
 
-					with torch.no_grad():
-						outputs=self.detector(inputs)
+					outputs=self.detector.inference(inputs)
 
 					for batch_count,output in enumerate(outputs):
 
@@ -1645,8 +1642,7 @@ class AnalyzeAnimalDetector():
 
 				self.temp_frames.append(frame)
 				tensor_frame=torch.as_tensor(frame.astype("float32").transpose(2,0,1))
-				with torch.no_grad():
-					output=self.detector([{"image":tensor_frame}])
+				output=self.detector.inference([{"image":tensor_frame}])
 				instances=output[0]['instances'].to('cpu')
 				masks=instances.pred_masks.numpy().astype(np.uint8)
 				classes=instances.pred_classes.numpy()
@@ -1787,8 +1783,7 @@ class AnalyzeAnimalDetector():
 					frame=cv2.resize(frame,(self.framewidth,self.frameheight),interpolation=cv2.INTER_AREA)
 
 				tensor_frame=torch.as_tensor(frame.astype("float32").transpose(2,0,1))
-				with torch.no_grad():
-					output=self.detector([{"image":tensor_frame}])
+				output=self.detector.inference([{"image":tensor_frame}])
 				instances=output[0]['instances'].to('cpu')
 				masks=instances.pred_masks.numpy().astype(np.uint8)
 				classes=instances.pred_classes.numpy()
