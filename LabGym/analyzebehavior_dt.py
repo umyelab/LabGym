@@ -358,7 +358,7 @@ class AnalyzeAnimalDetector():
 		tensor_frames=[torch.as_tensor(frame.astype("float32").transpose(2,0,1)) for frame in frames]
 		inputs=[{"image":tensor_frame} for tensor_frame in tensor_frames]
 
-		self.detector.inference(inputs)
+		outputs=self.detector.inference(inputs)
 
 		for batch_count,output in enumerate(outputs):
 
