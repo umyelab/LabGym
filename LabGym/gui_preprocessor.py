@@ -328,11 +328,10 @@ class WindowLv2_ProcessVideos(wx.Frame):
 
 		if dialog.ShowModal()==wx.ID_OK:
 			self.fps_new=int(dialog.GetValue())
-			if self.reduce_fps<=1.0:
-				wx.MessageBox('The fps reduction factor must be greater than 1.0.','Error',wx.OK|wx.ICON_ERROR)
-				self.reduce_fps=1.0
-			else:
-				self.text_reducefps.SetLabel('Downsize fps by the reduction factor of: '+str(self.reduce_fps)+'.')
+			self.text_reducefps.SetLabel('The target fps is: '+str(self.fps_new)+'.')
+		else:
+			self.fps_new=None
+			self.text_reducefps.SetLabel('Default: not to reduce video fps.')
 
 		dialog.Destroy()
 
@@ -359,7 +358,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
 
 				preprocess_video(i,self.result_path,self.framewidth,trim_video=self.trim_video,time_windows=self.time_windows,
 					enhance_contrast=self.enhance_contrast,contrast=self.contrast,
-					crop_frame=self.crop_frame,left=self.left,right=self.right,top=self.top,bottom=self.bottom,reduce_fps=self.reduce_fps)
+					crop_frame=self.crop_frame,left=self.left,right=self.right,top=self.top,bottom=self.bottom,fps_new=self.fps_new)
 
 			print('Preprocessing completed!')
 
