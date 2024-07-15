@@ -1120,14 +1120,15 @@ def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_w
 			print('Will keep the original fps.')
 			fps_new=fps
 		else:
-			fps_reducefactor=fps_new/fps
+			drop_interval=fps/(fps-fps_new)
 			if num_frames>1:
-				num_dropped_frames=int(num_frames*(1-fps_reducefactor))
-				block_size=num_frames/(num_frames*(1-fps_reducefactor)-1)
-				dropped_frames=[round(block_size*i) for i in range(num_dropped_frames)]
+				num_dropped_frames=int(num_frames*(1-fps_new/fps))
+				dropped_frames=[round(drop_interval*i) for i in range(num_dropped_frames)]
+	else:
+		fps_new=fps
 
 	writer=cv2.VideoWriter(os.path.join(out_folder,name+added_name+'_processed.avi'),cv2.VideoWriter_fourcc(*'MJPG'),fps_new,(w,h),True)
-	frame_count=1
+	frame_count=0
 
 	while True:
 
@@ -1135,6 +1136,8 @@ def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_w
 
 		if frame is None:
 			break
+
+		frame_count+=1
 
 		if frame_count-1 in dropped_frames:
 			continue
@@ -1158,8 +1161,6 @@ def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_w
 					writer.write(frame)
 		else:
 			writer.write(frame)
-
-		frame_count+=1
 
 	writer.release()
 	capture.release()
