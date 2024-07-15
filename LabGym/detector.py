@@ -46,9 +46,7 @@ class Detector():
 		self.device='cuda' if torch.cuda.is_available() else 'cpu'
 
 
-
-
-	def traindetector(path_to_annotation,path_to_trainingimages,path_to_detector,iteration_num,inference_size):
+	def train(path_to_annotation,path_to_trainingimages,path_to_detector,iteration_num,inference_size):
 
 		# path_to_annotation: the path to the .json file that stores the annotations in coco format
 		# path_to_trainingimages: the folder that stores all the training images
@@ -134,8 +132,7 @@ class Detector():
 		print('Detector training completed!')
 
 
-
-	def testdetector(path_to_annotation,path_to_testingimages,path_to_detector,output_path):
+	def test(path_to_annotation,path_to_testingimages,path_to_detector,output_path):
 
 		# path_to_annotation: the path to the .json file that stores the annotations in coco format
 		# path_to_testingimages: the folder that stores all the ground-truth testing images
@@ -185,3 +182,10 @@ class Detector():
 		print(f'The mean average precision (mAP) of the Detector is: {mAP:.4f}%.')
 		print('Detector testing completed!')
 
+
+	def load():
+		pass
+
+
+	def inference():
+		pass
