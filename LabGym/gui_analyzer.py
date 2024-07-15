@@ -75,7 +75,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 
 	def __init__(self,title):
 
-		super(WindowLv2_AnalyzeBehaviors,self).__init__(parent=None,title=title,size=(1000,510))
+		super(WindowLv2_AnalyzeBehaviors,self).__init__(parent=None,title=title,size=(1000,530))
 		self.behavior_mode=0 # 0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
 		self.use_detector=False # whether the Detector is used
 		self.detector_path=None # the 'LabGym/detectors' folder, which stores all the trained Detectors
@@ -958,7 +958,7 @@ class WindowLv2_MineResults(wx.Frame):
 
 	def __init__(self,title):
 
-		super(WindowLv2_MineResults,self).__init__(parent=None,title=title,size=(1000,240))
+		super(WindowLv2_MineResults,self).__init__(parent=None,title=title,size=(1000,260))
 		self.file_path=None # the path to LabGym analysis results
 		self.result_path=None # the folder to store data mining results
 		self.dataset=None # store the dataset in RAM
@@ -1136,7 +1136,7 @@ class WindowLv2_PlotBehaviors(wx.Frame):
 
 	def __init__(self,title):
 
-		super(WindowLv2_PlotBehaviors,self).__init__(parent=None,title=title,size=(1000,240))
+		super(WindowLv2_PlotBehaviors,self).__init__(parent=None,title=title,size=(1000,260))
 		self.events_probability=None # read from 'all_events.xsls' to store the behavior events and probability of each animal / object
 		self.time_points=None # the frame-wise time points of the events_probablity
 		self.results_folder=None # the folder that stores the ouput behavior plot

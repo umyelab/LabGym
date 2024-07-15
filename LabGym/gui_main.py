@@ -111,7 +111,7 @@ class WindowLv1_ProcessModule(wx.Frame):
 
 	def __init__(self,title):
 
-		super(WindowLv1_ProcessModule,self).__init__(parent=None,title=title,size=(500,150))
+		super(WindowLv1_ProcessModule,self).__init__(parent=None,title=title,size=(500,180))
 		self.dispaly_window()
 
 
@@ -253,7 +253,7 @@ class WindowLv1_AnalysisModule(wx.Frame):
 
 	def __init__(self,title):
 
-		super(WindowLv1_AnalysisModule,self).__init__(parent=None,title=title,size=(500,280))
+		super(WindowLv1_AnalysisModule,self).__init__(parent=None,title=title,size=(500,290))
 		self.dispaly_window()
 
 

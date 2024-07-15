@@ -44,7 +44,7 @@ class WindowLv2_GenerateExamples(wx.Frame):
 
 	def __init__(self,title):
 
-		super(WindowLv2_GenerateExamples,self).__init__(parent=None,title=title,size=(1000,510))
+		super(WindowLv2_GenerateExamples,self).__init__(parent=None,title=title,size=(1000,530))
 		self.behavior_mode=0 # 0: non-interactive behavior; 1: interact basic; 2: interact advanced; 3: static images
 		self.use_detector=False # whether the Detector is used
 		self.detector_path=None # the 'LabGym/detectors' folder, which stores all the trained Detectors
@@ -662,7 +662,7 @@ class WindowLv2_SortBehaviors(wx.Frame):
 
 	def __init__(self,title):
 
-		super(WindowLv2_SortBehaviors,self).__init__(parent=None,title=title,size=(1000,240))
+		super(WindowLv2_SortBehaviors,self).__init__(parent=None,title=title,size=(1000,260))
 		self.input_path=None # the folder that stores unsorted behavior examples (one example is a pair of an animation and a pattern image)
 		self.result_path=None # the folder that stores the sorted behavior examples
 		self.keys_behaviors={} # stores the pairs of shortcut key-behavior name
@@ -908,7 +908,7 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 
 	def __init__(self,title):
 
-		super(WindowLv2_TrainCategorizers,self).__init__(parent=None,title=title,size=(1000,520))
+		super(WindowLv2_TrainCategorizers,self).__init__(parent=None,title=title,size=(1000,540))
 		self.file_path=None # the folder that stores sorted, unprepared behavior examples (each category is a subfolder)
 		self.new_path=None # the folder that stores prepared behavior examples (contains all examples with a category tag in their names) 
 		self.behavior_mode=0 # 0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
@@ -1345,7 +1345,7 @@ class WindowLv2_TestCategorizers(wx.Frame):
 
 	def __init__(self,title):
 
-		super(WindowLv2_TestCategorizers,self).__init__(parent=None,title=title,size=(1000,240))
+		super(WindowLv2_TestCategorizers,self).__init__(parent=None,title=title,size=(1000,260))
 		self.file_path=None # the folder that stores the ground-truth examples (each subfolder is a behavior category)
 		self.model_path=os.path.join(the_absolute_current_path,'models') # the 'LabGym/models' folder, which stores all the trained Categorizers
 		self.path_to_categorizer=None # path to the Categorizer
@@ -1492,7 +1492,5 @@ class WindowLv2_TestCategorizers(wx.Frame):
 				shutil.rmtree(os.path.join(self.model_path,categorizer))
 			dialog1.Destroy()
 		dialog.Destroy()
-
-
 
 

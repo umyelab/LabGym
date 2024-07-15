@@ -34,7 +34,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
 
 	def __init__(self,title):
 
-		super(WindowLv2_ProcessVideos,self).__init__(parent=None,title=title,size=(1000,360))
+		super(WindowLv2_ProcessVideos,self).__init__(parent=None,title=title,size=(1000,400))
 		self.path_to_videos=None # path to a batch of videos for preprocessing
 		self.framewidth=None # if not None, will resize the video frame keeping the original w:h ratio
 		self.result_path=None # the folder for storing preprocessed videos
