@@ -45,8 +45,8 @@ class Detector():
 
 		self.device='cuda' if torch.cuda.is_available() else 'cpu'
 		self.animal_mapping=None
+		self.animal_names=None
 		self.inference_size=None
-		self.config=None
 		self.current_detector=None
 
 
@@ -187,8 +187,25 @@ class Detector():
 		print('Detector testing completed!')
 
 
-	def load():
-		pass
+	def load(path_to_detector):
+
+		config=os.path.join(path_to_detector,'config.yaml')
+		detector_model=os.path.join(path_to_detector,'model_final.pth')
+		animalmapping=os.path.join(path_to_detector,'model_parameters.txt')
+		with open(animalmapping) as f:
+			model_parameters=f.read()
+		self.animal_mapping=json.loads(model_parameters)['animal_mapping']
+		self.animal_names=json.loads(model_parameters)['animal_names']
+		dt_infersize=int(json.loads(model_parameters)['inferencing_framesize'])
+		print('The total categories of animals / objects in this Detector: '+str(animal_names))
+		print('The animals / objects of interest in this Detector: '+str(animal_kinds))
+		print('The inferencing framesize of this Detector: '+str(dt_infersize))
+		cfg=get_cfg()
+		cfg.merge_from_file(config)
+		cfg.MODEL.DEVICE='cuda' if torch.cuda.is_available() else 'cpu'
+		self.detector=build_model(cfg)
+		DetectionCheckpointer(self.detector).load(detector)
+		self.detector.eval()
 
 
 	def inference():
