@@ -32,6 +32,7 @@ try:
 	from detectron2.engine import DefaultTrainer,DefaultPredictor
 	from detectron2.utils.visualizer import Visualizer
 	from detectron2.evaluation import COCOEvaluator,inference_on_dataset
+	from detectron2.modeling import build_model
 except:
 	print('You need to install Detectron2 to use the Detector module in LabGym:')
 	print('https://detectron2.readthedocs.io/en/latest/tutorials/install.html')
