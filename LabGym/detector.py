@@ -213,3 +213,5 @@ class Detector():
 			outputs=self.current_detector(inputs)
 
 		return outputs
+
+
