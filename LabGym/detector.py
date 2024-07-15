@@ -49,7 +49,7 @@ class Detector():
 		self.current_detector=None # the current Detector used for inference
 
 
-	def train(path_to_annotation,path_to_trainingimages,path_to_detector,iteration_num,inference_size):
+	def train(self,path_to_annotation,path_to_trainingimages,path_to_detector,iteration_num,inference_size):
 
 		# path_to_annotation: the path to the .json file that stores the annotations in coco format
 		# path_to_trainingimages: the folder that stores all the training images
@@ -130,7 +130,7 @@ class Detector():
 		print('Detector training completed!')
 
 
-	def test(path_to_annotation,path_to_testingimages,path_to_detector,output_path):
+	def test(self,path_to_annotation,path_to_testingimages,path_to_detector,output_path):
 
 		# path_to_annotation: the path to the .json file that stores the annotations in coco format
 		# path_to_testingimages: the folder that stores all the ground-truth testing images
@@ -181,7 +181,7 @@ class Detector():
 		print('Detector testing completed!')
 
 
-	def load(path_to_detector,animal_kinds):
+	def load(self,path_to_detector,animal_kinds):
 
 		# animal_kinds: the catgories of animals / objects to be analyzed
 
@@ -206,7 +206,7 @@ class Detector():
 		self.current_detector.eval()
 
 
-	def inference(inputs):
+	def inference(self,inputs):
 
 		# inputs: images that the current Detector runs on
 
