@@ -48,7 +48,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
 		self.right=0 # frame cropping coordinates right
 		self.top=0 # frame cropping coordinates top
 		self.bottom=0 # frame cropping coordinates bottom
-		self.reduce_fps=1.0 # the reduction factor for downsizing the fps of the videos
+		self.fps_new=None # the target fps to downsize
 
 		self.dispaly_window()
 
@@ -187,6 +187,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
 				method=dialog.GetStringSelection()
 				if method=='Decode from filenames: "_stt_" and "_edt_"':
 					self.decode_t=True
+					self.text_duration.SetLabel('The time windows to form the new, trimmed video will be decoded from filenames: "_stt_" and "_edt_".')
 				else:
 					self.decode_t=False
 					dialog1=wx.TextEntryDialog(self,'Format: starttime1-endtime1,starttime2-endtime2,...','Enter the time windows (in seconds)')
@@ -324,15 +325,14 @@ class WindowLv2_ProcessVideos(wx.Frame):
 
 	def downsize_fps(self,event):
 
-		dialog=wx.NumberEntryDialog(self,'Enter the fps reduction factor','Enter a number > 1.0:','Fps reduction factor',1.2,1.0,100.0)
+		dialog=wx.NumberEntryDialog(self,'Enter the new fps','Enter a number:','Target fps',30,1,100)
 
 		if dialog.ShowModal()==wx.ID_OK:
-			self.reduce_fps=float(dialog.GetValue())
-			if self.reduce_fps<=1.0:
-				wx.MessageBox('The fps reduction factor must be greater than 1.0.','Error',wx.OK|wx.ICON_ERROR)
-				self.reduce_fps=1.0
-			else:
-				self.text_reducefps.SetLabel('Downsize fps by the reduction factor of: '+str(self.reduce_fps)+'.')
+			self.fps_new=int(dialog.GetValue())
+			self.text_reducefps.SetLabel('The target fps is: '+str(self.fps_new)+'.')
+		else:
+			self.fps_new=None
+			self.text_reducefps.SetLabel('Default: not to reduce video fps.')
 
 		dialog.Destroy()
 
@@ -359,7 +359,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
 
 				preprocess_video(i,self.result_path,self.framewidth,trim_video=self.trim_video,time_windows=self.time_windows,
 					enhance_contrast=self.enhance_contrast,contrast=self.contrast,
-					crop_frame=self.crop_frame,left=self.left,right=self.right,top=self.top,bottom=self.bottom,reduce_fps=self.reduce_fps)
+					crop_frame=self.crop_frame,left=self.left,right=self.right,top=self.top,bottom=self.bottom,fps_new=self.fps_new)
 
 			print('Preprocessing completed!')
 

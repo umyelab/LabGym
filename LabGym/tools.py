@@ -1076,7 +1076,7 @@ def extract_frames(path_to_video,out_path,framewidth=None,start_t=0,duration=0,s
 	print('The image examples stored in: '+out_path)
 
 
-def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_windows=[[0,10]],enhance_contrast=True,contrast=1.0,crop_frame=True,left=0,right=0,top=0,bottom=0,reduce_fps=1.0):
+def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_windows=[[0,10]],enhance_contrast=True,contrast=1.0,crop_frame=True,left=0,right=0,top=0,bottom=0,fps_new=None):
 
 	'''
 	This function is used to preprocess a video.
@@ -1098,28 +1098,37 @@ def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_w
 	height=capture.get(cv2.CAP_PROP_FRAME_HEIGHT)
 
 	if framewidth is not None:
-		w=int(framewidth)
-		h=int(framewidth*height/width)
+		w_resize=int(framewidth)
+		h_resize=int(framewidth*height/width)
 
 	if crop_frame:
 		w=int(right-left)
 		h=int(bottom-top)
+	else:
+		w=w_resize
+		h=h_resize
 
 	added_name=''
 	if trim_video is True:
 		for start,end in time_windows:
 			added_name+='_'+str(start)+'-'+str(end)
 
-	if reduce_fps>1.0:
-		if num_frames>1:
-			num_dropped_frames=int(num_frames*(1-1/reduce_fps))
-			block_size=num_frames/(num_frames*(1-1/reduce_fps)-1)
-			dropped_frames=[round(block_size*i) for i in range(num_dropped_frames)]
+	dropped_frames=[]
+	if fps_new is not None:
+		if fps_new>=fps:
+			print('The target fps is equal or greater than the original fps, which is: '+str(fps)+'.')
+			print('Will keep the original fps.')
+			fps_new=fps
 		else:
-			dropped_frames=[]
+			drop_interval=fps/(fps-fps_new)
+			if num_frames>1:
+				num_dropped_frames=int(num_frames*(1-fps_new/fps))
+				dropped_frames=[round(drop_interval*i) for i in range(num_dropped_frames)]
+	else:
+		fps_new=fps
 
-	writer=cv2.VideoWriter(os.path.join(out_folder,name+added_name+'_processed.avi'),cv2.VideoWriter_fourcc(*'MJPG'),fps/reduce_fps,(w,h),True)
-	frame_count=1
+	writer=cv2.VideoWriter(os.path.join(out_folder,name+added_name+'_processed.avi'),cv2.VideoWriter_fourcc(*'MJPG'),fps_new,(w,h),True)
+	frame_count=0
 
 	while True:
 
@@ -1128,11 +1137,13 @@ def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_w
 		if frame is None:
 			break
 
+		frame_count+=1
+
 		if frame_count-1 in dropped_frames:
 			continue
 
 		if framewidth is not None:
-			frame=cv2.resize(frame,(w,h),interpolation=cv2.INTER_AREA)
+			frame=cv2.resize(frame,(w_resize,h_resize),interpolation=cv2.INTER_AREA)
 
 		if crop_frame is True:
 			frame=frame[top:bottom,left:right,:]
@@ -1150,8 +1161,6 @@ def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_w
 					writer.write(frame)
 		else:
 			writer.write(frame)
-
-		frame_count+=1
 
 	writer.release()
 	capture.release()
