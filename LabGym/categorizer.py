@@ -792,6 +792,31 @@ class Categorizers():
 
 	def train_pattern_recognizer(self,data_path,model_path,out_path=None,dim=64,channel=3,time_step=15,level=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,behavior_mode=0,social_distance=0):
 
+		# data_path: the folder that stores all the prepared training examples
+		# model_path: the path to the trained Animation Analyzer
+		# out_path: if not None, will store the training reports in this folder
+		# dim: the input dimension
+		# channel: the input color channel, 1 is gray scale, 3 is RGB
+		# time_step: the duration of an animation / pattern image, also the length of a behavior episode
+		# level: complexity level, determines how deep the neural network is
+		# aug_methods: the augmentation methods that are used in training
+		# augvalid: whether augment the validation data as well
+		# whether to include body parts in the pattern images
+		# std: a value between 0 and 255, higher value, less body parts will be included in the pattern images
+		# background_free: whether to include background in animations
+		# behavior_mode:  0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
+		# social_distance: a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
+
+		# dim_tconv: the input dimension of Animation Analyzer
+		# dim_conv: the input dimension of Pattern Recognizer
+		# channel: the input color channel of Animation Analyzer, 1 is gray scale, 3 is RGB
+		# time_step: the duration of an animation, also the input length of Animation Analyzer
+		# level_tconv: complexity level of Animation Analyzer, determines how deep the neural network is
+		# level_conv: complexity level of Pattern Recognizer, determines how deep the neural network is
+		# aug_methods: the augmentation methods that are used in training
+		# background_free: whether the background is included in animations
+		# behavior_mode:  0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
+
 		filters=8
 
 		for i in range(round(dim/60)):
