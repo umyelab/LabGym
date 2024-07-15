@@ -47,6 +47,7 @@ class AnalyzeAnimalDetector():
 	def __init__(self):
 
 		self.behavior_mode=0
+		self.detector=None
 		self.animal_mapping=None
 		self.path_to_video=None
 		self.basename=None
@@ -117,26 +118,8 @@ class AnalyzeAnimalDetector():
 		print('Preparation started...')
 		print(datetime.datetime.now())
 
-		DT=Detector()
-
-		config=os.path.join(path_to_detector,'config.yaml')
-		detector=os.path.join(path_to_detector,'model_final.pth')
-		animalmapping=os.path.join(path_to_detector,'model_parameters.txt')
-		with open(animalmapping) as f:
-			model_parameters=f.read()
-		self.animal_mapping=json.loads(model_parameters)['animal_mapping']
-		animal_names=json.loads(model_parameters)['animal_names']
-		dt_infersize=int(json.loads(model_parameters)['inferencing_framesize'])
-		print('The total categories of animals / objects in this Detector: '+str(animal_names))
-		print('The animals / objects of interest in this Detector: '+str(animal_kinds))
-		print('The inferencing framesize of this Detector: '+str(dt_infersize))
-		cfg=get_cfg()
-		cfg.merge_from_file(config)
-		cfg.MODEL.DEVICE='cuda' if torch.cuda.is_available() else 'cpu'
-		self.detector=build_model(cfg)
-		DetectionCheckpointer(self.detector).load(detector)
-		self.detector.eval()
-
+		self.detector=Detector()
+		self.detector.load(path_to_detector,animal_kinds)
 		self.path_to_video=path_to_video
 		self.basename=os.path.basename(self.path_to_video)
 		self.framewidth=framewidth
