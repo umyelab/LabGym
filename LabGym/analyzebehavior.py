@@ -215,6 +215,13 @@ class AnalyzeAnimal():
 
 	def track_animal(self,frame_count_analyze,contours,centers,heights,inners=None,blobs=None):
 
+		# frame_count_analyze: the analyzed frame count
+		# contours: the contours of detected animals
+		# centers: the centers of detected animals
+		# heights: the heights of detected animals
+		# inners: the inner contours of detected animals when body parts are included in pattern images
+		# blobs: the blobs of detected animals
+
 		unused_existing_indices=list(self.animal_existingcenters)
 		existing_centers=list(self.animal_existingcenters.values())
 		unused_new_indices=list(range(len(centers)))
