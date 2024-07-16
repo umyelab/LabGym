@@ -663,6 +663,7 @@ class AnalyzeAnimal():
 
 								cx=self.animal_centers[i][frame_count_analyze][0]
 								cy=self.animal_centers[i][frame_count_analyze][1]
+								cv2.circle(background,(cx,cy),int(text_tk),(abs(int(color_diff*(total_animal_number-current_animal_number)-255)),int(color_diff*current_animal_number/2),abs(int(color_diff*(total_animal_number-current_animal_number)-255))),-1)
 
 								if interact_all is False:
 									cv2.putText(frame,str(i),(cx-10,cy-10),cv2.FONT_HERSHEY_SIMPLEX,text_scl,(255,255,255),text_tk)
