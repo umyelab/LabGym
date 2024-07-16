@@ -86,9 +86,9 @@ class AnalyzeAnimal():
 		
 
 	def prepare_analysis(self,
-		path_to_video,
-		results_path,
-		animal_number,
+		path_to_video, # path to the video for generating behavior examples or behavior analysis
+		results_path, # the folder that stores the generated behavior examples or analysis results
+		animal_number, # the number of animals / objects in a video
 		delta=1.2, # an estimated fold change (1.2) of the light intensity for optogenetics only
 		names_and_colors=None, # the behavior names and their representing colors
 		framewidth=None, # the width of the frame to resize
