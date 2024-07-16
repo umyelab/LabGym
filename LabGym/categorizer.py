@@ -51,12 +51,16 @@ class Categorizers():
 
 	def __init__(self):
 
-		self.extension_image=('.png','.PNG','.jpeg','.JPEG','.jpg','.JPG','.tiff','.TIFF','.bmp','.BMP')
-		self.extension_video=('.avi','.mpg','.wmv','.mp4','.mkv','.m4v','.mov')
-		self.classnames=None
+		self.extension_image=('.png','.PNG','.jpeg','.JPEG','.jpg','.JPG','.tiff','.TIFF','.bmp','.BMP') # the image formats that LabGym can accept
+		self.extension_video=('.avi','.mpg','.wmv','.mp4','.mkv','.m4v','.mov') # the video formats that LabGym can accept
+		self.classnames=None # the behavior category names in the trained Categorizer
 
 
 	def rename_label(self,file_path,new_path,resize=None):
+
+		# file_path: the folder that stores the sorted, unprepared examples
+		# new_path: the folder that stores all prepared examples, which can be directly used for training a Categorizer
+		# resize: if not None, resize the frames in animations / pattern images to the target size
 
 		folder_list=[i for i in os.listdir(file_path) if os.path.isdir(os.path.join(file_path,i))]
 		print('Behavior names are: '+str(folder_list))
@@ -121,6 +125,15 @@ class Categorizers():
 
 
 	def build_data(self,path_to_animations,dim_tconv=0,dim_conv=64,channel=1,time_step=15,aug_methods=[],background_free=True,behavior_mode=0):
+
+		# path_to_animations: the folder that stores all the prepared training examples
+		# dim_tconv: the input dimension of Animation Analyzer
+		# dim_conv: the input dimension of Pattern Recognizer
+		# channel: the input color channel of Animation Analyzer, 1 is gray scale, 3 is RGB
+		# time_step: the duration of an animation, also the input length of Animation Analyzer
+		# aug_methods: the augmentation methods that are used in training
+		# background_free: whether the background is included in animations
+		# behavior_mode:  0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
 
 		animations=deque()
 		pattern_images=deque()
@@ -398,6 +411,12 @@ class Categorizers():
 
 	def simple_vgg(self,inputs,filters,classes=3,level=2,with_classifier=False):
 
+		# inputs: the input tensor (w,h,c) of the neural network
+		# filters: the number of nodes (neurons) in each layer
+		# classes: the behavior category names (if with_classifier is True)
+		# level: complexity level, determines how deep the neural network is
+		# with_classifier: if True, the neural network can output classification probabilities
+
 		if level<2:
 			layers=[2]
 		elif level<3:
@@ -445,6 +464,12 @@ class Categorizers():
 
 
 	def simple_tvgg(self,inputs,filters,classes=3,level=2,with_classifier=False):
+
+		# inputs: the input tensor (t,w,h,c) of the neural network
+		# filters: the number of nodes (neurons) in each layer
+		# classes: the behavior category names (if with_classifier is True)
+		# level: complexity level, determines how deep the neural network is
+		# with_classifier: if True, the neural network can output classification probabilities
 
 		if level<2:
 			layers=[2]
@@ -495,6 +520,12 @@ class Categorizers():
 
 	def res_block(self,x,filters,strides=2,block=False,basic=True):
 
+		# x: the output from the last layer
+		# filters: the number of nodes (neurons) in each layer
+		# strides: the strides in each layer
+		# block: whether it's a block or shortcut
+		# basic: whether it uses additional zeropadding and normalization
+
 		shortcut=x
 
 		if basic is True:
@@ -538,6 +569,12 @@ class Categorizers():
 
 	def tres_block(self,x,filters,strides=2,block=False,basic=True):
 
+		# x: the output from the last layer
+		# filters: the number of nodes (neurons) in each layer
+		# strides: the strides in each layer
+		# block: whether it's a block or shortcut
+		# basic: whether it uses additional zeropadding and normalization
+
 		shortcut=x
 
 		if basic is True:
@@ -580,6 +617,12 @@ class Categorizers():
 
 
 	def simple_resnet(self,inputs,filters,classes=3,level=5,with_classifier=False):
+
+		# inputs: the input tensor (w,h,c) of the neural network
+		# filters: the number of nodes (neurons) in each layer
+		# classes: the behavior category names (if with_classifier is True)
+		# level: complexity level, determines how deep the neural network is
+		# with_classifier: if True, the neural network can output classification probabilities
 
 		x=ZeroPadding2D((3,3))(inputs)
 		x=Conv2D(filters,(5,5),strides=(2,2))(x)
@@ -629,6 +672,12 @@ class Categorizers():
 
 
 	def simple_tresnet(self,inputs,filters,classes=3,level=5,with_classifier=False):
+
+		# inputs: the input tensor (t,w,h,c) of the neural network
+		# filters: the number of nodes (neurons) in each layer
+		# classes: the behavior category names (if with_classifier is True)
+		# level: complexity level, determines how deep the neural network is
+		# with_classifier: if True, the neural network can output classification probabilities
 
 		x=TimeDistributed(ZeroPadding2D((3,3)))(inputs)
 		x=TimeDistributed(Conv2D(filters,(5,5),strides=(2,2)))(x)
@@ -693,6 +742,14 @@ class Categorizers():
 
 	def combined_network(self,time_step=15,dim_tconv=32,dim_conv=64,channel=1,classes=9,level_tconv=1,level_conv=2):
 
+		# time_step: the duration of an animation, also the input length of Animation Analyzer
+		# dim_tconv: the input dimension of Animation Analyzer
+		# dim_conv: the input dimension of Pattern Recognizer
+		# channel: the input color channel of Animation Analyzer, 1 is gray scale, 3 is RGB
+		# classes: the behavior category names
+		# level_tconv: complexity level of Animation Analyzer, determines how deep the neural network is
+		# level_conv: complexity level of Pattern Recognizer, determines how deep the neural network is
+
 		animation_inputs=Input(shape=(time_step,dim_tconv,dim_tconv,channel))
 		pattern_image_inputs=Input(shape=(dim_conv,dim_conv,3))
 
@@ -734,6 +791,21 @@ class Categorizers():
 
 
 	def train_pattern_recognizer(self,data_path,model_path,out_path=None,dim=64,channel=3,time_step=15,level=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,behavior_mode=0,social_distance=0):
+
+		# data_path: the folder that stores all the prepared training examples
+		# model_path: the path to the trained Animation Analyzer
+		# out_path: if not None, will store the training reports in this folder
+		# dim: the input dimension
+		# channel: the input color channel, 1 is gray scale, 3 is RGB
+		# time_step: the duration of an animation / pattern image, also the length of a behavior episode
+		# level: complexity level, determines how deep the neural network is
+		# aug_methods: the augmentation methods that are used in training
+		# augvalid: whether augment the validation data as well
+		# whether to include body parts in the pattern images
+		# std: a value between 0 and 255, higher value, less body parts will be included in the pattern images
+		# background_free: whether to include background in animations
+		# behavior_mode:  0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
+		# social_distance: a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
 
 		filters=8
 
@@ -870,6 +942,21 @@ class Categorizers():
 
 	def train_animation_analyzer(self,data_path,model_path,out_path=None,dim=64,channel=1,time_step=15,level=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,behavior_mode=0,social_distance=0):
 
+		# data_path: the folder that stores all the prepared training examples
+		# model_path: the path to the trained Animation Analyzer
+		# out_path: if not None, will store the training reports in this folder
+		# dim: the input dimension
+		# channel: the input color channel, 1 is gray scale, 3 is RGB
+		# time_step: the duration of an animation, also the input length of Animation Analyzer
+		# level: complexity level, determines how deep the neural network is
+		# aug_methods: the augmentation methods that are used in training
+		# augvalid: whether augment the validation data as well
+		# whether to include body parts in the pattern images
+		# std: a value between 0 and 255, higher value, less body parts will be included in the pattern images
+		# background_free: whether to include background in animations
+		# behavior_mode:  0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
+		# social_distance: a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
+
 		filters=8
 
 		for i in range(round(dim/60)):
@@ -1002,6 +1089,23 @@ class Categorizers():
 
 	def train_combnet(self,data_path,model_path,out_path=None,dim_tconv=32,dim_conv=64,channel=1,time_step=15,level_tconv=1,level_conv=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,behavior_mode=0,social_distance=0):
 
+		# data_path: the folder that stores all the prepared training examples
+		# model_path: the path to the trained Animation Analyzer
+		# out_path: if not None, will store the training reports in this folder
+		# dim_tconv: the input dimension of Animation Analyzer
+		# dim_conv: the input dimension of Pattern Recognizer
+		# channel: the input color channel of Animation Analyzer, 1 is gray scale, 3 is RGB
+		# time_step: the duration of an animation, also the input length of Animation Analyzer
+		# level_tconv: complexity level of Animation Analyzer, determines how deep the neural network is
+		# level_conv: complexity level of Pattern Recognizer, determines how deep the neural network is
+		# aug_methods: the augmentation methods that are used in training
+		# augvalid: whether augment the validation data as well
+		# whether to include body parts in the pattern images
+		# std: a value between 0 and 255, higher value, less body parts will be included in the pattern images
+		# background_free: whether to include background in animations
+		# behavior_mode:  0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
+		# social_distance: a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
+
 		print('Training Categorizer with both Animation Analyzer and Pattern Recognizer using the behavior examples in: '+str(data_path))
 
 		files=[i for i in os.listdir(data_path) if i.endswith(self.extension_video)]
@@ -1124,6 +1228,10 @@ class Categorizers():
 
 
 	def test_categorizer(self,groundtruth_path,model_path,result_path=None):
+
+		# groundtruth_path: the folder that stores all the groundtruth behavior examples, each subfolder should be a behavior category, all categories must match those in the Categorizer
+		# model_path: path to the Categorizer
+		# result_path: if not None, will store the testing reports in this folder
 
 		print('Testing the selected Categorizer...')
 

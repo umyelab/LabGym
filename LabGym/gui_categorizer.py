@@ -188,7 +188,7 @@ class WindowLv2_GenerateExamples(wx.Frame):
 
 	def specify_mode(self,event):
 
-		behavior_modes=['Non-interactive: behaviors of each individual (each example contains one animal / object)','Interactive basic: behaviors of all (each example contains all animals / objects)','Interactive advanced: behaviors of each individual and social groups (each example contains either one or multiple animals / objects)','Static images (non-interactive): behaviors of each individual in static images(each image contains one animal / object)']
+		behavior_modes=['Non-interactive: behaviors of each individual (each example contains one animal / object)','Interactive basic: behaviors of all (each example contains all animals / objects)','Interactive advanced: behaviors of each individual and social groups (each example contains either one or multiple animals / objects)','Static images (non-interactive): behaviors of each individual in static images (each image contains one animal / object)']
 		dialog=wx.SingleChoiceDialog(self,message='Specify the mode of behavior examples to generate',caption='Behavior-example mode',choices=behavior_modes)
 		if dialog.ShowModal()==wx.ID_OK:
 			behavior_mode=dialog.GetStringSelection()
@@ -1081,7 +1081,7 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 
 	def specify_categorizer(self,event):
 
-		behavior_modes=['Non-interact (identify behavior for each individual)','Interact basic (identify behavior for the interactive pair / group)','Interact advanced (identify behavior for both each individual and each interactive pair / group)','Static images (non-interactive): behaviors of each individual in static images(each image contains one animal / object)']
+		behavior_modes=['Non-interact (identify behavior for each individual)','Interact basic (identify behavior for the interactive pair / group)','Interact advanced (identify behavior for both each individual and each interactive pair / group)','Static images (non-interactive): behaviors of each individual in static images (each image contains one animal / object)']
 		dialog=wx.SingleChoiceDialog(self,message='Specify the mode of behavior for the Categorizer to identify',caption='Behavior mode',choices=behavior_modes)
 		if dialog.ShowModal()==wx.ID_OK:
 			behavior_mode=dialog.GetStringSelection()
@@ -1204,16 +1204,34 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 
 	def select_datapath(self,event):
 
-		dialog=wx.MessageDialog(self,'Are the animations (in any) in\ntraining examples background free?','Background-free animations?',wx.YES_NO|wx.ICON_QUESTION)
-		if dialog.ShowModal()==wx.ID_YES:
-			self.background_free=True
-		else:
-			self.background_free=False
+		dialog=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
+		if dialog.ShowModal()==wx.ID_OK:
+			self.data_path=dialog.GetPath()			
 		dialog.Destroy()
 
 		if self.behavior_mode>=3:
+
 			self.include_bodyparts=False
+
+			dialog=wx.MessageDialog(self,'Are the images in\ntraining examples background free?','Background-free images?',wx.YES_NO|wx.ICON_QUESTION)
+			if dialog.ShowModal()==wx.ID_YES:
+				self.background_free=True
+				self.text_trainingfolder.SetLabel('Static images w/o background in: '+self.data_path+'.')
+			else:
+				self.background_free=False
+				self.text_trainingfolder.SetLabel('Static images w/ background in: '+self.data_path+'.')
+			dialog.Destroy()
+	
 		else:
+
+			if self.animation_analyzer is True:
+				dialog=wx.MessageDialog(self,'Are the animations (in any) in\ntraining examples background free?','Background-free animations?',wx.YES_NO|wx.ICON_QUESTION)
+				if dialog.ShowModal()==wx.ID_YES:
+					self.background_free=True
+				else:
+					self.background_free=False
+				dialog.Destroy()
+
 			dialog=wx.MessageDialog(self,'Do the pattern images in training examples\ninclude body parts?','Body parts in pattern images?',wx.YES_NO|wx.ICON_QUESTION)
 			if dialog.ShowModal()==wx.ID_YES:
 				self.include_bodyparts=True
@@ -1227,20 +1245,22 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 				self.include_bodyparts=False
 			dialog.Destroy()
 
-		dialog=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
-		if dialog.ShowModal()==wx.ID_OK:
-			self.data_path=dialog.GetPath()
 			if self.include_bodyparts is True:
-				if self.background_free is True:
-					self.text_trainingfolder.SetLabel('Animations w/o background, pattern images w/ bodyparts ('+str(self.std)+') in: '+self.data_path+'.')
+				if self.animation_analyzer is True:
+					if self.background_free is True:
+						self.text_trainingfolder.SetLabel('Animations w/o background, pattern images w/ bodyparts ('+str(self.std)+') in: '+self.data_path+'.')
+					else:
+						self.text_trainingfolder.SetLabel('Animations w/ background, pattern images w/ bodyparts ('+str(self.std)+') in: '+self.data_path+'.')
 				else:
-					self.text_trainingfolder.SetLabel('Animations w/ background, pattern images w/ bodyparts ('+str(self.std)+') in: '+self.data_path+'.')
+					self.text_trainingfolder.SetLabel('Pattern images w/ bodyparts ('+str(self.std)+') in: '+self.data_path+'.')
 			else:
-				if self.background_free is True:
-					self.text_trainingfolder.SetLabel('Animations w/o background, pattern images w/o bodyparts in: '+self.data_path+'.')
+				if self.animation_analyzer is True:
+					if self.background_free is True:
+						self.text_trainingfolder.SetLabel('Animations w/o background, pattern images w/o bodyparts in: '+self.data_path+'.')
+					else:
+						self.text_trainingfolder.SetLabel('Animations w/ background, pattern images w/o bodyparts in: '+self.data_path+'.')
 				else:
-					self.text_trainingfolder.SetLabel('Animations w/ background, pattern images w/o bodyparts in: '+self.data_path+'.')				
-		dialog.Destroy()
+					self.text_trainingfolder.SetLabel('Pattern images w/o bodyparts in: '+self.data_path+'.')
 
 
 	def specify_augmentation(self,event):

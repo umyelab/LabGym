@@ -119,6 +119,7 @@ class AnalyzeAnimalDetector():
 
 		self.detector=Detector()
 		self.detector.load(path_to_detector,animal_kinds)
+		self.animal_mapping=self.detector.animal_mapping
 		self.path_to_video=path_to_video
 		self.basename=os.path.basename(self.path_to_video)
 		self.framewidth=framewidth
@@ -358,7 +359,7 @@ class AnalyzeAnimalDetector():
 		tensor_frames=[torch.as_tensor(frame.astype("float32").transpose(2,0,1)) for frame in frames]
 		inputs=[{"image":tensor_frame} for tensor_frame in tensor_frames]
 
-		self.detector.inference(inputs)
+		outputs=self.detector.inference(inputs)
 
 		for batch_count,output in enumerate(outputs):
 
@@ -2044,6 +2045,7 @@ class AnalyzeAnimalDetector():
 
 		self.detector=Detector()
 		self.detector.load(path_to_detector,animal_kinds)
+		self.animal_mapping=self.detector.animal_mapping
 
 		if social_distance==0:
 			social_distance=float('inf')
@@ -2127,7 +2129,7 @@ class AnalyzeAnimalDetector():
 				exclusion_mask[np.where((np.sum(np.logical_and(masks[:,None],masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
 				masks=[m for m,exclude in zip(masks,exclusion_mask) if not exclude]
 				classes=[c for c,exclude in zip(classes,exclusion_mask) if not exclude]
-				classes=[animal_mapping[str(x)] for x in classes]
+				classes=[self.animal_mapping[str(x)] for x in classes]
 				scores=[s for s,exclude in zip(scores,exclusion_mask) if not exclude]
 
 				contours=[]
