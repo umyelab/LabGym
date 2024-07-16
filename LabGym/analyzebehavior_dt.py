@@ -2108,14 +2108,15 @@ class AnalyzeAnimalDetector():
 		generate=False, # whether to generate behavior examples or analyze behaviors
 		animal_to_include=[], # animal_to_include: animals / objects that are included in the annotation
 		behavior_to_include=[], # behavior_to_include: behaviors that are included in the annotation
-		names_and_colors=None,
-		imagewidth=None,
-		dim_conv=8,
-		channel=1,
-		detection_threshold=0.5,
-		uncertain=0,
-		background_free=True,
-		social_distance=0):
+		names_and_colors=None, # behavior names in the Categorizer and their representative colors for annotation
+		imagewidth=None, # if not None, will resize the image keeping the original w:h ratio
+		dim_conv=8, # input dimension for Pattern Recognizer in Categorizer
+		channel=1, # input channel for Animation Analyzer, 1--gray scale, 3--RGB scale
+		detection_threshold=0.5, # the treshold for determine whether a detected animal / object is of interest
+		uncertain=0, # a threshold between the highest the 2nd highest probablity of behaviors to determine if output an 'NA' in behavior classification
+		background_free=True, # whether to include background in animations
+		social_distance=0 # a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
+		):
 
 		print('Preparation started...')
 		print(datetime.datetime.now())
