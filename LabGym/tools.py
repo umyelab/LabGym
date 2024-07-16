@@ -1084,18 +1084,14 @@ def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_w
 	time_windows: if trim_video is True, the time_windows will form a new, trimmed video
 	contrast: only valide if enhance_contrast is True
 	left...bottom: the edges defining the cropped frame if crop_frame is True
-	reduce_fps: The factor by which to reduce the fps of the video,
-				e.g., if the video is originally at 60 fps and 
-				fps_reduce is 4, then the new video will be scaled down 
-				to 15 fps while maintaining the same duration
 	'''
 
 	capture=cv2.VideoCapture(path_to_video)
 	name=os.path.basename(path_to_video).split('.')[0]
 	fps=round(capture.get(cv2.CAP_PROP_FPS))
 	num_frames=int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
-	width=capture.get(cv2.CAP_PROP_FRAME_WIDTH)
-	height=capture.get(cv2.CAP_PROP_FRAME_HEIGHT)
+	width=int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+	height=int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
 	if framewidth is not None:
 		w_resize=int(framewidth)
@@ -1131,7 +1127,7 @@ def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_w
 	else:
 		fps_new=fps
 
-	writer=cv2.VideoWriter(os.path.join(out_folder,name+added_name+'_processed.avi'),cv2.VideoWriter_fourcc(*'MJPG'),fps_new,(w,h),True)
+	writer=cv2.VideoWriter(os.path.join(out_folder,name+added_name+'_processed.avi'),cv2.VideoWriter_fourcc(*'MJPG'),int(fps_new),(w,h),True)
 	frame_count=0
 
 	while True:
