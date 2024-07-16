@@ -1594,6 +1594,9 @@ class AnalyzeAnimalDetector():
 
 
 	def generate_data(self,background_free=True,skip_redundant=1):
+
+		# background_free: whether to include background in animations
+		# skip_redundant: the interval (in frames) of two consecutively generated behavior example pairs
 		
 		print('Generating behavior examples...')
 		print(datetime.datetime.now())
@@ -1676,6 +1679,9 @@ class AnalyzeAnimalDetector():
 
 
 	def generate_data_interact_basic(self,background_free=True,skip_redundant=1):
+
+		# background_free: whether to include background in animations
+		# skip_redundant: the interval (in frames) of two consecutively generated behavior example pairs
 
 		print('Generating behavior examples...')
 		print(datetime.datetime.now())
@@ -1808,6 +1814,9 @@ class AnalyzeAnimalDetector():
 
 
 	def generate_data_interact_advance(self,background_free=True,skip_redundant=1):
+
+		# background_free: whether to include background in animations
+		# skip_redundant: the interval (in frames) of two consecutively generated behavior example pairs
 
 		print('Generating behavior examples...')
 		print(datetime.datetime.now())
@@ -2091,14 +2100,14 @@ class AnalyzeAnimalDetector():
 
 
 	def analyze_images_individuals(self,
-		path_to_detector,
-		path_to_images,
-		results_path,
-		animal_kinds,
-		path_to_categorizer=None,
-		generate=False,
-		animal_to_include=[],
-		behavior_to_include=[],
+		path_to_detector, # path to the Detector
+		path_to_images, # path to the images to analyze
+		results_path, # the folder for storing the analysis results
+		animal_kinds, # the total categories of animals / objects in a Detector
+		path_to_categorizer=None, # path to the Categorizer
+		generate=False, # whether to generate behavior examples or analyze behaviors
+		animal_to_include=[], # animal_to_include: animals / objects that are included in the annotation
+		behavior_to_include=[], # behavior_to_include: behaviors that are included in the annotation
 		names_and_colors=None,
 		imagewidth=None,
 		dim_conv=8,
