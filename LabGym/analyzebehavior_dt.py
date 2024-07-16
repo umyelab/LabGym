@@ -1071,7 +1071,6 @@ class AnalyzeAnimalDetector():
 					intvl=int(self.background.shape[0]/(len(colors)+1))
 
 		capture=cv2.VideoCapture(self.path_to_video)
-
 		writer=None
 		frame_count=frame_count_analyze=0
 
