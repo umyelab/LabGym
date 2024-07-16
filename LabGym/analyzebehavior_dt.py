@@ -236,6 +236,8 @@ class AnalyzeAnimalDetector():
 
 	def track_animal(self,frame_count_analyze,animal_name,contours,centers,heights,inners=None,blobs=None):
 
+		# animal_name: the name of animals / objects that are included in the analysis
+
 		unused_existing_indices=list(self.animal_existingcenters[animal_name])
 		existing_centers=list(self.animal_existingcenters[animal_name].values())
 		unused_new_indices=list(range(len(centers)))
