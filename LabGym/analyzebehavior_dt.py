@@ -237,6 +237,11 @@ class AnalyzeAnimalDetector():
 	def track_animal(self,frame_count_analyze,animal_name,contours,centers,heights,inners=None,blobs=None):
 
 		# animal_name: the name of animals / objects that are included in the analysis
+		# contours: the contours of detected animals / objects
+		# centers: the centers of detected animals / objects
+		# heights: the heights of detected animals / objects
+		# inners: the inner contours of detected animals / objects when body parts are included in pattern images
+		# blobs: the blobs of detected animals / objects
 
 		unused_existing_indices=list(self.animal_existingcenters[animal_name])
 		existing_centers=list(self.animal_existingcenters[animal_name].values())
@@ -285,6 +290,15 @@ class AnalyzeAnimalDetector():
 
 
 	def track_animal_interact(self,frame_count_analyze,contours,other_contours,centers,heights,inners=None,other_inners=None,blobs=None):
+
+		# frame_count_analyze: the analyzed frame count
+		# contours: the contours of detected animals / objects (main character)
+		# other_contours: the contours of detected animals / objects (other characters)
+		# centers: the centers of detected animals / objects (main character)
+		# heights: the heights of detected animals / objects (main character)
+		# inners: the inner contours of detected animals / objects when body parts are included in pattern images (main character)
+		# other_inners: the inner contours of detected animals / objects when body parts are included in pattern images (other characters)
+		# blobs: the blobs of detected animals / objects (main character)
 
 		n=0
 
