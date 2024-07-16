@@ -944,7 +944,8 @@ class AnalyzeAnimalDetector():
 
 	def categorize_behaviors(self,path_to_categorizer,uncertain=0):
 
-		
+		# path_to_categorizer: path to the Categorizer
+		# uncertain: a threshold between the highest the 2nd highest probablity of behaviors to determine if output an 'NA' in behavior classification
 
 		print('Categorizing behaviors...')
 		print(datetime.datetime.now())
@@ -1034,6 +1035,8 @@ class AnalyzeAnimalDetector():
 
 	def correct_identity(self,specific_behaviors):
 
+		# specific_behaviors: the sex / identity specific behaviors
+
 		print('Initiating behavior-guided identity correction...')
 		print(datetime.datetime.now())
 
@@ -1072,6 +1075,10 @@ class AnalyzeAnimalDetector():
 
 
 	def annotate_video(self,animal_to_include,behavior_to_include,show_legend=True):
+
+		# animal_to_include: animals / objects that are included in the annotation
+		# behavior_to_include: behaviors that are included in the annotation
+		# show_legend: whether to show the legend of behavior names in video frames
 
 		print('Annotating video...')
 		print(datetime.datetime.now())
@@ -1215,6 +1222,9 @@ class AnalyzeAnimalDetector():
 
 
 	def analyze_parameters(self,normalize_distance=True,parameter_to_analyze=[]):
+
+		# normalize_distance: whether to normalize the distance (in pixel) to the animal contour area
+		# parameter_to_analyze: the behavior parameters that are selected in the analysis
 
 		all_parameters=[]
 		if '3 length parameters' in parameter_to_analyze:
@@ -1502,6 +1512,9 @@ class AnalyzeAnimalDetector():
 
 
 	def export_results(self,normalize_distance=True,parameter_to_analyze=[]):
+
+		# normalize_distance: whether to normalize the distance (in pixel) to the animal contour area
+		# parameter_to_analyze: the behavior parameters that are selected in the analysis
 
 		print('Quantifying behaviors...')
 		print(datetime.datetime.now())
