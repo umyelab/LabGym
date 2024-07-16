@@ -201,10 +201,8 @@ class WindowLv2_GenerateExamples(wx.Frame):
 				dialog1=wx.NumberEntryDialog(self,'Interactions happen within the social distance.','(See Extended Guide for details)\nHow many folds of square root of the animals area\nis the social distance (0=infinity far):','Social distance (Enter an integer)',0,0,100000000000000)
 				if dialog1.ShowModal()==wx.ID_OK:
 					self.social_distance=int(dialog1.GetValue())
-					if self.social_distance==0:
-						self.social_distance=float('inf')
 				else:
-					self.social_distance=float('inf')
+					self.social_distance=0
 				dialog1.Destroy()
 				self.text_detection.SetLabel('Only Detector-based detection method is available for the selected behavior mode.')
 			else:
@@ -1095,10 +1093,8 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 				dialog1=wx.NumberEntryDialog(self,'Interactions happen within the social distance.',"How many folds of the animals's diameter\nis the social distance (0=inf):",'Social distance (Enter an integer)',0,0,100000000000000)
 				if dialog1.ShowModal()==wx.ID_OK:
 					self.social_distance=int(dialog1.GetValue())
-					if self.social_distance==0:
-						self.social_distance=float('inf')
 				else:
-					self.social_distance=float('inf')
+					self.social_distance=0
 				dialog1.Destroy()
 			else:
 				self.behavior_mode=3
