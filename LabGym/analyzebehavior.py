@@ -655,6 +655,8 @@ class AnalyzeAnimal():
 							cv2.putText(frame,i,(10,intvl*n),cv2.FONT_HERSHEY_SIMPLEX,scl,colors[i],text_tk)
 							n+=1
 
+				current_animal_number=0
+
 				if frame_count_analyze not in self.skipped_frames:
 
 					for i in self.animal_contours:
