@@ -265,6 +265,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 					self.uncertain=uncertain/100
 				dialog1.Destroy()
 				self.text_selectcategorizer.SetLabel('The path to the Categorizer is: '+self.path_to_categorizer+' with uncertainty of '+str(uncertain)+'%.')
+				self.text_selectbehaviors.SetLabel('All the behaviors in the selected Categorizer with default colors.')
 			elif categorizer=='No behavior classification, just track animals and quantify motion kinematics':
 				self.path_to_categorizer=None
 				self.behavior_mode=0
@@ -283,7 +284,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 					uncertain=dialog1.GetValue()
 					self.uncertain=uncertain/100
 					self.text_selectcategorizer.SetLabel('Categorizer: '+categorizer+' with uncertainty of '+str(uncertain)+'%.')
-			self.text_selectbehaviors.SetLabel('All the behaviors in the selected Categorizer with default colors.')
+				self.text_selectbehaviors.SetLabel('All the behaviors in the selected Categorizer with default colors.')
 
 			if self.path_to_categorizer is not None:
 
