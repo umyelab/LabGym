@@ -1042,8 +1042,8 @@ class AnalyzeAnimalDetector():
 		print('Annotating video...')
 		print(datetime.datetime.now())
 
-		text_scl=max(min(self.background.shape[0],self.background.shape[1])/480,0.5)
-		text_tk=max(1,int(min(self.background.shape[0],self.background.shape[1])/480))
+		text_scl=max(min(self.background.shape[0],self.background.shape[1])/640,0.5)
+		text_tk=max(1,int(min(self.background.shape[0],self.background.shape[1])/320))
 		background=np.zeros_like(self.background)
 		if self.framewidth is not None:
 			background=cv2.resize(background,(self.framewidth,self.frameheight),interpolation=cv2.INTER_AREA)
@@ -1081,7 +1081,7 @@ class AnalyzeAnimalDetector():
 			df.to_excel(os.path.join(self.results_path,animal_name+'_'+'all_centers.xlsx'),index_label='time/ID')
 			for i in self.animal_centers[animal_name]:
 				total_animal_number+=1
-		color_diff=int(510/total_animal_number)
+		color_diff=int(500/total_animal_number)
 
 		start_t=round((self.t-self.length/self.fps),2)
 		if start_t<0:
@@ -1125,7 +1125,7 @@ class AnalyzeAnimalDetector():
 
 									cx=self.animal_centers[animal_name][i][frame_count_analyze][0]
 									cy=self.animal_centers[animal_name][i][frame_count_analyze][1]
-									cv2.circle(background,(cx,cy),int(text_tk),(abs(int(255-color_diff*current_animal_number)),abs(int(color_diff*current_animal_number-255)),abs(int(255-color_diff*current_animal_number))),-1)
+									cv2.circle(background,(cx,cy),int(text_tk),(abs(int(color_diff*current_animal_number-255)),int(color_diff*current_animal_number/2),abs(int(255-color_diff*current_animal_number))),-1)
 
 									if self.behavior_mode!=1:
 										cv2.circle(frame,(cx,cy),int(text_tk*3),(255,0,0),-1)
