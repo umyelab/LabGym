@@ -1131,8 +1131,6 @@ class AnalyzeAnimalDetector():
 
 									cx=self.animal_centers[animal_name][i][frame_count_analyze][0]
 									cy=self.animal_centers[animal_name][i][frame_count_analyze][1]
-
-									self.all_behavior_parameters[animal_name]['center'][i][frame_count_analyze]=(cx,cy)
 									cv2.circle(background,(cx,cy),int(text_tk),(int(255-color_diff*current_animal_number),int(color_diff*current_animal_number),int(255-color_diff*current_animal_number)),-1)
 
 									if self.behavior_mode!=1:
