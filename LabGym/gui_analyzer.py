@@ -1206,7 +1206,7 @@ class WindowLv2_PlotBehaviors(wx.Frame):
 			self.names_and_colors={}
 			self.events_probability,self.time_points,behavior_names=parse_all_events_file(all_events_file)
 			colors=[('#ffffff',str(hex_code)) for hex_code in mpl.colors.cnames.values()]
-			for color,behavior in zip(colors,behaviors):
+			for color,behavior in zip(colors,behavior_names):
 				self.names_and_colors[behavior]=color
 			self.text_inputfile.SetLabel(f'all_events.xlsx path: {all_events_file}')
 		dialog.Destroy()
