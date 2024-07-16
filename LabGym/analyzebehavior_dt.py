@@ -176,13 +176,13 @@ class AnalyzeAnimalDetector():
 				for behavior_name in names_and_colors:
 					self.all_behavior_parameters[animal_name][behavior_name]={}
 					self.all_behavior_parameters[animal_name][behavior_name]['color']=names_and_colors[behavior_name]
-					for parameter_name in ['acceleration','center','count','distance','duration','intensity_area','intensity_length','latency','magnitude_area','magnitude_length','probability','speed','velocity','vigor_area','vigor_length']:
+					for parameter_name in ['acceleration','count','distance','duration','intensity_area','intensity_length','latency','magnitude_area','magnitude_length','probability','speed','velocity','vigor_area','vigor_length']:
 						self.all_behavior_parameters[animal_name][behavior_name][parameter_name]={}
 			else:
 				self.dim_conv=8
 				self.animation_analyzer=False
 				self.all_behavior_parameters[animal_name]={}
-				for parameter_name in ['acceleration','center','distance','intensity_area','intensity_length','magnitude_area','magnitude_length','speed','velocity','vigor_area','vigor_length']:
+				for parameter_name in ['acceleration','distance','intensity_area','intensity_length','magnitude_area','magnitude_length','speed','velocity','vigor_area','vigor_length']:
 					self.all_behavior_parameters[animal_name][parameter_name]={}
 			self.animal_area[animal_name]=None
 			self.to_deregister[animal_name]={}
@@ -1082,13 +1082,11 @@ class AnalyzeAnimalDetector():
 		frame_count=frame_count_analyze=0
 
 		total_animal_number=1
-
 		for animal_name in self.animal_kinds:
+			df=pd.DataFrame(self.animal_centers[animal_name],index=self.all_time)
+			df.to_excel(os.path.join(self.results_path,animal_name+'_'+'all_centers.xlsx'),index_label='time/ID')
 			for i in self.animal_centers[animal_name]:
-				self.all_behavior_parameters[animal_name]['center'][i]=[np.nan]*len(self.all_time)
-				self.all_behavior_parameters[animal_name]['center'][i]=[np.nan]*len(self.all_time)
 				total_animal_number+=1
-
 		color_diff=int(255/total_animal_number)
 
 		start_t=round((self.t-self.length/self.fps),2)
