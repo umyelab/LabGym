@@ -93,10 +93,10 @@ class AnalyzeAnimalDetector():
 
 
 	def prepare_analysis(self,
-		path_to_detector,
-		path_to_video,
-		results_path,
-		animal_number,
+		path_to_detector, # path to the Detector
+		path_to_video, # path to the video for generating behavior examples or behavior analysis
+		results_path, # the folder that stores the generated behavior examples or analysis results
+		animal_number, # the number of animals / objects in a video
 		animal_kinds, # the catgories of animals / objects to be analyzed
 		behavior_mode, # 0: non-interactive; 1: interactive basic; 2: interactive advanced; 3: static image (non-interactive)
 		names_and_colors=None, # the behavior names and their representing colors
