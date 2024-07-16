@@ -1105,8 +1105,12 @@ def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_w
 		w=int(right-left)
 		h=int(bottom-top)
 	else:
-		w=w_resize
-		h=h_resize
+		if framewidth is not None:
+			w=w_resize
+			h=h_resize
+		else:
+			w=width
+			h=height
 
 	added_name=''
 	if trim_video is True:
