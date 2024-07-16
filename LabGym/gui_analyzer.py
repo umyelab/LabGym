@@ -1227,7 +1227,7 @@ class WindowLv2_PlotBehaviors(wx.Frame):
 			wx.MessageBox('No all_events.xlsx file selected!','Error',wx.OK | wx.ICON_ERROR)
 		else:
 			for behavior in self.names_and_colors:
-				dialog=ColorPicker(self,f'Color for {behavior}',[behavior,self.names_and_colors[behavior][1]])
+				dialog=ColorPicker(self,f'Color for {behavior}',[behavior,self.names_and_colors[behavior]])
 				if dialog.ShowModal()==wx.ID_OK:
 					(r,g,b,_)=dialog.color_picker.GetColour()
 					new_color='#%02x%02x%02x'%(r,b,g)
