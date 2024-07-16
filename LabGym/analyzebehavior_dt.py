@@ -1042,11 +1042,11 @@ class AnalyzeAnimalDetector():
 		print('Annotating video...')
 		print(datetime.datetime.now())
 
-		#text_scl=max(min(self.background.shape[0],self.background.shape[1])/960,0.5)
-		#text_tk=max(1,int(min(self.background.shape[0],self.background.shape[1])/960))
-
-		text_scl=1
-		text_tk=2
+		text_scl=max(min(self.background.shape[0],self.background.shape[1])/480,0.5)
+		text_tk=max(1,int(min(self.background.shape[0],self.background.shape[1])/480))
+		background=np.zeros_like(self.background)
+		if self.framewidth is not None:
+			background=cv2.resize(background,(self.framewidth,self.frameheight),interpolation=cv2.INTER_AREA)
 
 		if self.categorize_behavior is True:
 			colors={}
@@ -1071,12 +1071,6 @@ class AnalyzeAnimalDetector():
 					intvl=int(self.background.shape[0]/(len(colors)+1))
 
 		capture=cv2.VideoCapture(self.path_to_video)
-		while True:
-			retval,frame=capture.read()
-			break
-		if self.framewidth is not None:
-			frame=cv2.resize(frame,(self.framewidth,self.frameheight),interpolation=cv2.INTER_AREA)
-		background=np.zeros_like(frame)
 
 		writer=None
 		frame_count=frame_count_analyze=0
@@ -1087,7 +1081,7 @@ class AnalyzeAnimalDetector():
 			df.to_excel(os.path.join(self.results_path,animal_name+'_'+'all_centers.xlsx'),index_label='time/ID')
 			for i in self.animal_centers[animal_name]:
 				total_animal_number+=1
-		color_diff=int(255/total_animal_number)
+		color_diff=int(510/total_animal_number)
 
 		start_t=round((self.t-self.length/self.fps),2)
 		if start_t<0:
@@ -1131,7 +1125,7 @@ class AnalyzeAnimalDetector():
 
 									cx=self.animal_centers[animal_name][i][frame_count_analyze][0]
 									cy=self.animal_centers[animal_name][i][frame_count_analyze][1]
-									cv2.circle(background,(cx,cy),int(text_tk),(int(255-color_diff*current_animal_number),int(color_diff*current_animal_number),int(255-color_diff*current_animal_number)),-1)
+									cv2.circle(background,(cx,cy),int(text_tk),(abs(int(255-color_diff*current_animal_number)),abs(int(color_diff*current_animal_number-255)),abs(int(255-color_diff*current_animal_number))),-1)
 
 									if self.behavior_mode!=1:
 										cv2.circle(frame,(cx,cy),int(text_tk*3),(255,0,0),-1)
