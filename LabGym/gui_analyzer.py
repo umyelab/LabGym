@@ -28,7 +28,7 @@ import torch
 import json
 from .analyzebehavior import AnalyzeAnimal
 from .analyzebehavior_dt import AnalyzeAnimalDetector
-from .tools import plot_evnets,parse_all_events_file
+from .tools import plot_events,parse_all_events_file
 from .minedata import data_mining
 
 
