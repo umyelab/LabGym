@@ -271,6 +271,8 @@ class AnalyzeAnimal():
 
 	def acquire_information(self,background_free=True):
 
+		# background_free: whether to include background in animations
+
 		print('Acquiring information in each frame...')
 		print(datetime.datetime.now())
 
@@ -357,6 +359,8 @@ class AnalyzeAnimal():
 
 
 	def acquire_information_interact_basic(self,background_free=True):
+
+		# background_free: whether to include background in animations
 
 		print('Acquiring information in each frame...')
 		print(datetime.datetime.now())
@@ -510,6 +514,9 @@ class AnalyzeAnimal():
 
 	def categorize_behaviors(self,path_to_categorizer,uncertain=0):
 
+		# path_to_categorizer: path to the Categorizer
+		# uncertain: a threshold between the highest the 2nd highest probablity of behaviors to determine if output an 'NA' in behavior classification
+
 		print('Categorizing behaviors...')
 		print(datetime.datetime.now())
 
@@ -590,6 +597,10 @@ class AnalyzeAnimal():
 
 
 	def annotate_video(self,behavior_to_include,show_legend=True,interact_all=False):
+
+		# behavior_to_include: behaviors that are included in the annotation
+		# show_legend: whether to show the legend of behavior names in video frames
+		# interact_all: whether is the interactive basic mode
 
 		print('Annotating video...')
 		print(datetime.datetime.now())
@@ -726,6 +737,9 @@ class AnalyzeAnimal():
 
 
 	def analyze_parameters(self,normalize_distance=True,parameter_to_analyze=[]):
+
+		# normalize_distance: whether to normalize the distance (in pixel) to the animal contour area
+		# parameter_to_analyze: the behavior parameters that are selected in the analysis
 
 		all_parameters=[]
 		if '3 length parameters' in parameter_to_analyze:
@@ -1015,6 +1029,9 @@ class AnalyzeAnimal():
 
 	def export_results(self,normalize_distance=True,parameter_to_analyze=[]):
 
+		# normalize_distance: whether to normalize the distance (in pixel) to the animal contour area
+		# parameter_to_analyze: the behavior parameters that are selected in the analysis
+
 		print('Quantifying behaviors...')
 		print(datetime.datetime.now())
 
@@ -1091,6 +1108,9 @@ class AnalyzeAnimal():
 
 
 	def generate_data(self,background_free=True,skip_redundant=1):
+
+		# background_free: whether to include background in animations
+		# skip_redundant: the interval (in frames) of two consecutively generated behavior example pairs
 		
 		print('Generating behavior examples...')
 		print(datetime.datetime.now())
@@ -1185,6 +1205,9 @@ class AnalyzeAnimal():
 
 
 	def generate_data_interact_basic(self,background_free=True,skip_redundant=1):
+
+		# background_free: whether to include background in animations
+		# skip_redundant: the interval (in frames) of two consecutively generated behavior example pairs
 
 		print('Generating behavior examples...')
 		print(datetime.datetime.now())
