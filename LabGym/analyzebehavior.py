@@ -619,12 +619,14 @@ class AnalyzeAnimal():
 		writer=None
 		frame_count=frame_count_analyze=index=0
 
-		total_animal_number=1
+		total_animal_number=0
 		df=pd.DataFrame(self.animal_centers,index=self.all_time)
 		df.to_excel(os.path.join(self.results_path,'all_centers.xlsx'),index_label='time/ID')
 		for i in self.animal_centers:
 			total_animal_number+=1
-		color_diff=int(500/total_animal_number)
+		if total_animal_number<=0:
+			total_animal_number=1
+		color_diff=int(510/total_animal_number)
 
 		start_t=round((self.t-self.length/self.fps),2)
 		if start_t<0:
@@ -663,7 +665,7 @@ class AnalyzeAnimal():
 
 								cx=self.animal_centers[i][frame_count_analyze][0]
 								cy=self.animal_centers[i][frame_count_analyze][1]
-								cv2.circle(background,(cx,cy),int(text_tk),(abs(int(color_diff*(total_animal_number-current_animal_number)-255)),int(color_diff*current_animal_number/2),abs(int(color_diff*(total_animal_number-current_animal_number)-255))),-1)
+								cv2.circle(background,(cx,cy),int(text_tk),(abs(int(color_diff*(total_animal_number-current_animal_number)-255)),int(color_diff*current_animal_number/2),int(color_diff*(total_animal_number-current_animal_number)/2)),-1)
 
 								if interact_all is False:
 									cv2.putText(frame,str(i),(cx-10,cy-10),cv2.FONT_HERSHEY_SIMPLEX,text_scl,(255,255,255),text_tk)
