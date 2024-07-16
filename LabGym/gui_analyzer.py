@@ -948,6 +948,8 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 									all_summary=pd.concat(all_summary,ignore_index=True)
 									all_summary.to_excel(os.path.join(self.result_path,animal_name+'_'+behavior_name+'_summary.xlsx'),float_format='%.2f',index_label='ID/parameter')
 
+			print('Analysis completed!')
+
 
 
 class WindowLv2_MineResults(wx.Frame):
