@@ -1090,13 +1090,15 @@ class AnalyzeAnimalDetector():
 		writer=None
 		frame_count=frame_count_analyze=0
 
-		total_animal_number=1
+		total_animal_number=0
 		for animal_name in self.animal_kinds:
 			df=pd.DataFrame(self.animal_centers[animal_name],index=self.all_time)
 			df.to_excel(os.path.join(self.results_path,animal_name+'_'+'all_centers.xlsx'),index_label='time/ID')
 			for i in self.animal_centers[animal_name]:
 				total_animal_number+=1
-		color_diff=int(500/total_animal_number)
+		if total_animal_number<=0:
+			total_animal_number=1
+		color_diff=int(510/total_animal_number)
 
 		start_t=round((self.t-self.length/self.fps),2)
 		if start_t<0:
