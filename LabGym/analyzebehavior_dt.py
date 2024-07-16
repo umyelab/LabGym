@@ -500,6 +500,11 @@ class AnalyzeAnimalDetector():
 
 	def detect_track_interact(self,frames,batch_size,frame_count_analyze,background_free=True):
 
+		# frames: frames that the Detector runs on
+		# batch_size: for batch inferencing by the Detector
+		# frame_count_analyze: the analyzed frame count
+		# background_free: whether to include background in animations
+
 		tensor_frames=[torch.as_tensor(frame.astype("float32").transpose(2,0,1)) for frame in frames]
 		inputs=[{"image":tensor_frame} for tensor_frame in tensor_frames]
 
@@ -658,6 +663,9 @@ class AnalyzeAnimalDetector():
 
 	def acquire_information(self,batch_size=1,background_free=True):
 
+		# batch_size: for batch inferencing by the Detector
+		# background_free: whether to include background in animations
+
 		print('Acquiring information in each frame...')
 		print(datetime.datetime.now())
 
@@ -717,6 +725,9 @@ class AnalyzeAnimalDetector():
 
 
 	def acquire_information_interact_basic(self,batch_size=1,background_free=True):
+
+		# batch_size: for batch inferencing by the Detector
+		# background_free: whether to include background in animations
 
 		print('Acquiring information in each frame...')
 		print(datetime.datetime.now())
@@ -932,6 +943,8 @@ class AnalyzeAnimalDetector():
 
 
 	def categorize_behaviors(self,path_to_categorizer,uncertain=0):
+
+		
 
 		print('Categorizing behaviors...')
 		print(datetime.datetime.now())
