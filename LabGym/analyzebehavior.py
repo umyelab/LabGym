@@ -699,6 +699,8 @@ class AnalyzeAnimal():
 								else:
 									cv2.drawContours(frame,[self.animal_contours[i][frame_count_analyze]],0,(255,255,255),1)
 
+						current_animal_number+=1
+
 					index+=1
 
 				if writer is None:
