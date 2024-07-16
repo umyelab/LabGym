@@ -913,7 +913,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 						time_points=AA.all_time[:min(all_lengths)]
 						all_events_df=pd.DataFrame(event_data,index=time_points)
 						all_events_df.to_excel(os.path.join(self.result_path,'all_events.xlsx'),float_format='%.2f',index_label='time/ID')
-						plot_evnets(self.result_path,event_data,time_points,self.behaviornames_and_colors,self.behavior_to_include,width=0,height=0)
+						plot_events(self.result_path,event_data,time_points,self.behaviornames_and_colors,self.behavior_to_include,width=0,height=0)
 						folders=[i for i in os.listdir(self.result_path) if os.path.isdir(os.path.join(self.result_path,i))]
 						folders.sort()
 						for behavior_name in self.behaviornames_and_colors:
@@ -936,7 +936,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 						time_points=AAD.all_time[:min(all_lengths)]
 						all_events_df=pd.DataFrame(event_data,index=time_points)
 						all_events_df.to_excel(os.path.join(self.result_path,'all_events.xlsx'),float_format='%.2f',index_label='time/ID')
-						plot_evnets(self.result_path,event_data,time_points,self.behaviornames_and_colors,self.behavior_to_include,width=0,height=0)
+						plot_events(self.result_path,event_data,time_points,self.behaviornames_and_colors,self.behavior_to_include,width=0,height=0)
 						folders=[i for i in os.listdir(self.result_path) if os.path.isdir(os.path.join(self.result_path,i))]
 						folders.sort()
 						for animal_name in self.animal_kinds:
