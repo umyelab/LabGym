@@ -93,10 +93,10 @@ class AnalyzeAnimalDetector():
 
 
 	def prepare_analysis(self,
-		path_to_detector,
-		path_to_video,
-		results_path,
-		animal_number,
+		path_to_detector, # path to the Detector
+		path_to_video, # path to the video for generating behavior examples or behavior analysis
+		results_path, # the folder that stores the generated behavior examples or analysis results
+		animal_number, # the number of animals / objects in a video
 		animal_kinds, # the catgories of animals / objects to be analyzed
 		behavior_mode, # 0: non-interactive; 1: interactive basic; 2: interactive advanced; 3: static image (non-interactive)
 		names_and_colors=None, # the behavior names and their representing colors
@@ -236,6 +236,13 @@ class AnalyzeAnimalDetector():
 
 	def track_animal(self,frame_count_analyze,animal_name,contours,centers,heights,inners=None,blobs=None):
 
+		# animal_name: the name of animals / objects that are included in the analysis
+		# contours: the contours of detected animals / objects
+		# centers: the centers of detected animals / objects
+		# heights: the heights of detected animals / objects
+		# inners: the inner contours of detected animals / objects when body parts are included in pattern images
+		# blobs: the blobs of detected animals / objects
+
 		unused_existing_indices=list(self.animal_existingcenters[animal_name])
 		existing_centers=list(self.animal_existingcenters[animal_name].values())
 		unused_new_indices=list(range(len(centers)))
@@ -283,6 +290,15 @@ class AnalyzeAnimalDetector():
 
 
 	def track_animal_interact(self,frame_count_analyze,contours,other_contours,centers,heights,inners=None,other_inners=None,blobs=None):
+
+		# frame_count_analyze: the analyzed frame count
+		# contours: the contours of detected animals / objects (main character)
+		# other_contours: the contours of detected animals / objects (other characters)
+		# centers: the centers of detected animals / objects (main character)
+		# heights: the heights of detected animals / objects (main character)
+		# inners: the inner contours of detected animals / objects when body parts are included in pattern images (main character)
+		# other_inners: the inner contours of detected animals / objects when body parts are included in pattern images (other characters)
+		# blobs: the blobs of detected animals / objects (main character)
 
 		n=0
 
@@ -355,6 +371,11 @@ class AnalyzeAnimalDetector():
 
 
 	def detect_track_individuals(self,frames,batch_size,frame_count_analyze,background_free=True,animation=None):
+
+		# frames: frames that the Detector runs on
+		# batch_size: for batch inferencing by the Detector
+		# frame_count_analyze: the analyzed frame count
+		# background_free: whether to include background in animations
 
 		tensor_frames=[torch.as_tensor(frame.astype("float32").transpose(2,0,1)) for frame in frames]
 		inputs=[{"image":tensor_frame} for tensor_frame in tensor_frames]
@@ -478,6 +499,11 @@ class AnalyzeAnimalDetector():
 
 
 	def detect_track_interact(self,frames,batch_size,frame_count_analyze,background_free=True):
+
+		# frames: frames that the Detector runs on
+		# batch_size: for batch inferencing by the Detector
+		# frame_count_analyze: the analyzed frame count
+		# background_free: whether to include background in animations
 
 		tensor_frames=[torch.as_tensor(frame.astype("float32").transpose(2,0,1)) for frame in frames]
 		inputs=[{"image":tensor_frame} for tensor_frame in tensor_frames]
@@ -637,6 +663,9 @@ class AnalyzeAnimalDetector():
 
 	def acquire_information(self,batch_size=1,background_free=True):
 
+		# batch_size: for batch inferencing by the Detector
+		# background_free: whether to include background in animations
+
 		print('Acquiring information in each frame...')
 		print(datetime.datetime.now())
 
@@ -696,6 +725,9 @@ class AnalyzeAnimalDetector():
 
 
 	def acquire_information_interact_basic(self,batch_size=1,background_free=True):
+
+		# batch_size: for batch inferencing by the Detector
+		# background_free: whether to include background in animations
 
 		print('Acquiring information in each frame...')
 		print(datetime.datetime.now())
@@ -912,6 +944,9 @@ class AnalyzeAnimalDetector():
 
 	def categorize_behaviors(self,path_to_categorizer,uncertain=0):
 
+		# path_to_categorizer: path to the Categorizer
+		# uncertain: a threshold between the highest the 2nd highest probablity of behaviors to determine if output an 'NA' in behavior classification
+
 		print('Categorizing behaviors...')
 		print(datetime.datetime.now())
 
@@ -1000,6 +1035,8 @@ class AnalyzeAnimalDetector():
 
 	def correct_identity(self,specific_behaviors):
 
+		# specific_behaviors: the sex / identity specific behaviors
+
 		print('Initiating behavior-guided identity correction...')
 		print(datetime.datetime.now())
 
@@ -1039,11 +1076,15 @@ class AnalyzeAnimalDetector():
 
 	def annotate_video(self,animal_to_include,behavior_to_include,show_legend=True):
 
+		# animal_to_include: animals / objects that are included in the annotation
+		# behavior_to_include: behaviors that are included in the annotation
+		# show_legend: whether to show the legend of behavior names in video frames
+
 		print('Annotating video...')
 		print(datetime.datetime.now())
 
-		text_scl=max(min(self.background.shape[0],self.background.shape[1])/960,0.5)
-		text_tk=max(1,int(min(self.background.shape[0],self.background.shape[1])/960))
+		text_scl=max(min(self.background.shape[0],self.background.shape[1])/640,0.5)
+		text_tk=max(1,int(min(self.background.shape[0],self.background.shape[1])/320))
 
 		if self.categorize_behavior is True:
 			colors={}
@@ -1071,6 +1112,16 @@ class AnalyzeAnimalDetector():
 		writer=None
 		frame_count=frame_count_analyze=0
 
+		total_animal_number=0
+		for animal_name in self.animal_kinds:
+			df=pd.DataFrame(self.animal_centers[animal_name],index=self.all_time)
+			df.to_excel(os.path.join(self.results_path,animal_name+'_'+'all_centers.xlsx'),index_label='time/ID')
+			for i in self.animal_centers[animal_name]:
+				total_animal_number+=1
+		if total_animal_number<=0:
+			total_animal_number=1
+		color_diff=int(510/total_animal_number)
+
 		start_t=round((self.t-self.length/self.fps),2)
 		if start_t<0:
 			start_t=0.00
@@ -1080,6 +1131,7 @@ class AnalyzeAnimalDetector():
 			end_t=start_t+self.duration
 
 		while True:
+
 			retval,frame=capture.read()
 			time=round((frame_count+1)/self.fps,2)
 
@@ -1098,6 +1150,8 @@ class AnalyzeAnimalDetector():
 							cv2.putText(frame,i,(10,intvl*n),cv2.FONT_HERSHEY_SIMPLEX,scl,colors[i],text_tk)
 							n+=1
 
+				current_animal_number=0
+
 				if frame_count_analyze not in self.skipped_frames:
 
 					for animal_name in animal_to_include:
@@ -1110,6 +1164,7 @@ class AnalyzeAnimalDetector():
 
 									cx=self.animal_centers[animal_name][i][frame_count_analyze][0]
 									cy=self.animal_centers[animal_name][i][frame_count_analyze][1]
+									cv2.circle(self.background,(cx,cy),int(text_tk),(abs(int(color_diff*(total_animal_number-current_animal_number)-255)),int(color_diff*current_animal_number/2),int(color_diff*(total_animal_number-current_animal_number)/2)),-1)
 
 									if self.behavior_mode!=1:
 										cv2.circle(frame,(cx,cy),int(text_tk*3),(255,0,0),-1)
@@ -1143,6 +1198,8 @@ class AnalyzeAnimalDetector():
 										cv2.putText(frame,animal_name+' '+str(i),(cx-10,cy-10),cv2.FONT_HERSHEY_SIMPLEX,text_scl,(255,255,255),text_tk)
 										cv2.drawContours(frame,[self.animal_contours[animal_name][i][frame_count_analyze]],0,(255,255,255),1)
 
+							current_animal_number+=1
+
 				if writer is None:
 					(h,w)=frame.shape[:2]
 					writer=cv2.VideoWriter(os.path.join(self.results_path,'Annotated video.avi'),cv2.VideoWriter_fourcc(*'MJPG'),self.fps,(w,h),True)
@@ -1156,10 +1213,15 @@ class AnalyzeAnimalDetector():
 		capture.release()
 		writer.release()
 
+		cv2.imwrite(os.path.join(self.results_path,'Trajectory.jpg'),self.background)
+
 		print('Video annotation completed!')
 
 
 	def analyze_parameters(self,normalize_distance=True,parameter_to_analyze=[]):
+
+		# normalize_distance: whether to normalize the distance (in pixel) to the animal contour area
+		# parameter_to_analyze: the behavior parameters that are selected in the analysis
 
 		all_parameters=[]
 		if '3 length parameters' in parameter_to_analyze:
@@ -1448,6 +1510,9 @@ class AnalyzeAnimalDetector():
 
 	def export_results(self,normalize_distance=True,parameter_to_analyze=[]):
 
+		# normalize_distance: whether to normalize the distance (in pixel) to the animal contour area
+		# parameter_to_analyze: the behavior parameters that are selected in the analysis
+
 		print('Quantifying behaviors...')
 		print(datetime.datetime.now())
 
@@ -1526,6 +1591,9 @@ class AnalyzeAnimalDetector():
 
 
 	def generate_data(self,background_free=True,skip_redundant=1):
+
+		# background_free: whether to include background in animations
+		# skip_redundant: the interval (in frames) of two consecutively generated behavior example pairs
 		
 		print('Generating behavior examples...')
 		print(datetime.datetime.now())
@@ -1608,6 +1676,9 @@ class AnalyzeAnimalDetector():
 
 
 	def generate_data_interact_basic(self,background_free=True,skip_redundant=1):
+
+		# background_free: whether to include background in animations
+		# skip_redundant: the interval (in frames) of two consecutively generated behavior example pairs
 
 		print('Generating behavior examples...')
 		print(datetime.datetime.now())
@@ -1740,6 +1811,9 @@ class AnalyzeAnimalDetector():
 
 
 	def generate_data_interact_advance(self,background_free=True,skip_redundant=1):
+
+		# background_free: whether to include background in animations
+		# skip_redundant: the interval (in frames) of two consecutively generated behavior example pairs
 
 		print('Generating behavior examples...')
 		print(datetime.datetime.now())
@@ -2023,22 +2097,23 @@ class AnalyzeAnimalDetector():
 
 
 	def analyze_images_individuals(self,
-		path_to_detector,
-		path_to_images,
-		results_path,
-		animal_kinds,
-		path_to_categorizer=None,
-		generate=False,
-		animal_to_include=[],
-		behavior_to_include=[],
-		names_and_colors=None,
-		imagewidth=None,
-		dim_conv=8,
-		channel=1,
-		detection_threshold=0.5,
-		uncertain=0,
-		background_free=True,
-		social_distance=0):
+		path_to_detector, # path to the Detector
+		path_to_images, # path to the images to analyze
+		results_path, # the folder for storing the analysis results
+		animal_kinds, # the total categories of animals / objects in a Detector
+		path_to_categorizer=None, # path to the Categorizer
+		generate=False, # whether to generate behavior examples or analyze behaviors
+		animal_to_include=[], # animal_to_include: animals / objects that are included in the annotation
+		behavior_to_include=[], # behavior_to_include: behaviors that are included in the annotation
+		names_and_colors=None, # behavior names in the Categorizer and their representative colors for annotation
+		imagewidth=None, # if not None, will resize the image keeping the original w:h ratio
+		dim_conv=8, # input dimension for Pattern Recognizer in Categorizer
+		channel=1, # input channel for Animation Analyzer, 1--gray scale, 3--RGB scale
+		detection_threshold=0.5, # the treshold for determine whether a detected animal / object is of interest
+		uncertain=0, # a threshold between the highest the 2nd highest probablity of behaviors to determine if output an 'NA' in behavior classification
+		background_free=True, # whether to include background in animations
+		social_distance=0 # a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
+		):
 
 		print('Preparation started...')
 		print(datetime.datetime.now())

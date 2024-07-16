@@ -86,9 +86,9 @@ class AnalyzeAnimal():
 		
 
 	def prepare_analysis(self,
-		path_to_video,
-		results_path,
-		animal_number,
+		path_to_video, # path to the video for generating behavior examples or behavior analysis
+		results_path, # the folder that stores the generated behavior examples or analysis results
+		animal_number, # the number of animals / objects in a video
 		delta=1.2, # an estimated fold change (1.2) of the light intensity for optogenetics only
 		names_and_colors=None, # the behavior names and their representing colors
 		framewidth=None, # the width of the frame to resize
@@ -215,6 +215,13 @@ class AnalyzeAnimal():
 
 	def track_animal(self,frame_count_analyze,contours,centers,heights,inners=None,blobs=None):
 
+		# frame_count_analyze: the analyzed frame count
+		# contours: the contours of detected animals
+		# centers: the centers of detected animals
+		# heights: the heights of detected animals
+		# inners: the inner contours of detected animals when body parts are included in pattern images
+		# blobs: the blobs of detected animals
+
 		unused_existing_indices=list(self.animal_existingcenters)
 		existing_centers=list(self.animal_existingcenters.values())
 		unused_new_indices=list(range(len(centers)))
@@ -263,6 +270,8 @@ class AnalyzeAnimal():
 
 
 	def acquire_information(self,background_free=True):
+
+		# background_free: whether to include background in animations
 
 		print('Acquiring information in each frame...')
 		print(datetime.datetime.now())
@@ -350,6 +359,8 @@ class AnalyzeAnimal():
 
 
 	def acquire_information_interact_basic(self,background_free=True):
+
+		# background_free: whether to include background in animations
 
 		print('Acquiring information in each frame...')
 		print(datetime.datetime.now())
@@ -503,6 +514,9 @@ class AnalyzeAnimal():
 
 	def categorize_behaviors(self,path_to_categorizer,uncertain=0):
 
+		# path_to_categorizer: path to the Categorizer
+		# uncertain: a threshold between the highest the 2nd highest probablity of behaviors to determine if output an 'NA' in behavior classification
+
 		print('Categorizing behaviors...')
 		print(datetime.datetime.now())
 
@@ -584,11 +598,15 @@ class AnalyzeAnimal():
 
 	def annotate_video(self,behavior_to_include,show_legend=True,interact_all=False):
 
+		# behavior_to_include: behaviors that are included in the annotation
+		# show_legend: whether to show the legend of behavior names in video frames
+		# interact_all: whether is the interactive basic mode
+
 		print('Annotating video...')
 		print(datetime.datetime.now())
 
-		text_scl=max(min(self.background.shape[0],self.background.shape[1])/960,0.5)
-		text_tk=max(1,int(min(self.background.shape[0],self.background.shape[1])/960))
+		text_scl=max(min(self.background.shape[0],self.background.shape[1])/640,0.5)
+		text_tk=max(1,int(min(self.background.shape[0],self.background.shape[1])/320))
 
 		if self.categorize_behavior is True:
 			colors={}
@@ -615,6 +633,15 @@ class AnalyzeAnimal():
 		capture=cv2.VideoCapture(self.path_to_video)
 		writer=None
 		frame_count=frame_count_analyze=index=0
+
+		total_animal_number=0
+		df=pd.DataFrame(self.animal_centers,index=self.all_time)
+		df.to_excel(os.path.join(self.results_path,'all_centers.xlsx'),index_label='time/ID')
+		for i in self.animal_centers:
+			total_animal_number+=1
+		if total_animal_number<=0:
+			total_animal_number=1
+		color_diff=int(510/total_animal_number)
 
 		start_t=round((self.t-self.length/self.fps),2)
 		if start_t<0:
@@ -643,6 +670,8 @@ class AnalyzeAnimal():
 							cv2.putText(frame,i,(10,intvl*n),cv2.FONT_HERSHEY_SIMPLEX,scl,colors[i],text_tk)
 							n+=1
 
+				current_animal_number=0
+
 				if frame_count_analyze not in self.skipped_frames:
 
 					for i in self.animal_contours:
@@ -653,6 +682,7 @@ class AnalyzeAnimal():
 
 								cx=self.animal_centers[i][frame_count_analyze][0]
 								cy=self.animal_centers[i][frame_count_analyze][1]
+								cv2.circle(self.background,(cx,cy),int(text_tk),(abs(int(color_diff*(total_animal_number-current_animal_number)-255)),int(color_diff*current_animal_number/2),int(color_diff*(total_animal_number-current_animal_number)/2)),-1)
 
 								if interact_all is False:
 									cv2.putText(frame,str(i),(cx-10,cy-10),cv2.FONT_HERSHEY_SIMPLEX,text_scl,(255,255,255),text_tk)
@@ -684,6 +714,8 @@ class AnalyzeAnimal():
 								else:
 									cv2.drawContours(frame,[self.animal_contours[i][frame_count_analyze]],0,(255,255,255),1)
 
+						current_animal_number+=1
+
 					index+=1
 
 				if writer is None:
@@ -699,10 +731,15 @@ class AnalyzeAnimal():
 		capture.release()
 		writer.release()
 
+		cv2.imwrite(os.path.join(self.results_path,'Trajectory.jpg'),self.background)
+
 		print('Video annotation completed!')
 
 
 	def analyze_parameters(self,normalize_distance=True,parameter_to_analyze=[]):
+
+		# normalize_distance: whether to normalize the distance (in pixel) to the animal contour area
+		# parameter_to_analyze: the behavior parameters that are selected in the analysis
 
 		all_parameters=[]
 		if '3 length parameters' in parameter_to_analyze:
@@ -992,6 +1029,9 @@ class AnalyzeAnimal():
 
 	def export_results(self,normalize_distance=True,parameter_to_analyze=[]):
 
+		# normalize_distance: whether to normalize the distance (in pixel) to the animal contour area
+		# parameter_to_analyze: the behavior parameters that are selected in the analysis
+
 		print('Quantifying behaviors...')
 		print(datetime.datetime.now())
 
@@ -1068,6 +1108,9 @@ class AnalyzeAnimal():
 
 
 	def generate_data(self,background_free=True,skip_redundant=1):
+
+		# background_free: whether to include background in animations
+		# skip_redundant: the interval (in frames) of two consecutively generated behavior example pairs
 		
 		print('Generating behavior examples...')
 		print(datetime.datetime.now())
@@ -1162,6 +1205,9 @@ class AnalyzeAnimal():
 
 
 	def generate_data_interact_basic(self,background_free=True,skip_redundant=1):
+
+		# background_free: whether to include background in animations
+		# skip_redundant: the interval (in frames) of two consecutively generated behavior example pairs
 
 		print('Generating behavior examples...')
 		print(datetime.datetime.now())

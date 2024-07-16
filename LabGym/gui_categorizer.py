@@ -201,10 +201,8 @@ class WindowLv2_GenerateExamples(wx.Frame):
 				dialog1=wx.NumberEntryDialog(self,'Interactions happen within the social distance.','(See Extended Guide for details)\nHow many folds of square root of the animals area\nis the social distance (0=infinity far):','Social distance (Enter an integer)',0,0,100000000000000)
 				if dialog1.ShowModal()==wx.ID_OK:
 					self.social_distance=int(dialog1.GetValue())
-					if self.social_distance==0:
-						self.social_distance=float('inf')
 				else:
-					self.social_distance=float('inf')
+					self.social_distance=0
 				dialog1.Destroy()
 				self.text_detection.SetLabel('Only Detector-based detection method is available for the selected behavior mode.')
 			else:
@@ -1095,10 +1093,8 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 				dialog1=wx.NumberEntryDialog(self,'Interactions happen within the social distance.',"How many folds of the animals's diameter\nis the social distance (0=inf):",'Social distance (Enter an integer)',0,0,100000000000000)
 				if dialog1.ShowModal()==wx.ID_OK:
 					self.social_distance=int(dialog1.GetValue())
-					if self.social_distance==0:
-						self.social_distance=float('inf')
 				else:
-					self.social_distance=float('inf')
+					self.social_distance=0
 				dialog1.Destroy()
 			else:
 				self.behavior_mode=3
@@ -1135,11 +1131,11 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 			level=''
 		dialog.Destroy()
 
-		if behavior_mode==0:
+		if self.behavior_mode==0:
 			self.text_categorizertype.SetLabel(categorizer_tp+' (LV '+str(level)+') to identify behaviors of each non-interactive individual.')
-		elif behavior_mode==1:
+		elif self.behavior_mode==1:
 			self.text_categorizertype.SetLabel(categorizer_tp+' (LV '+str(level)+') to identify behaviors of the interactive group.')
-		elif behavior_mode==2:
+		elif self.behavior_mode==2:
 			self.text_categorizertype.SetLabel(categorizer_tp+' (LV '+str(level)+') to identify behaviors of the interactive individuals and groups. Social distance: '+str(self.social_distance)+' folds of the animal diameter.')
 		else:
 			self.text_categorizertype.SetLabel(categorizer_tp+' (LV '+str(level)+') to identify behaviors of each non-interactive individual in static images.')
@@ -1209,58 +1205,64 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 			self.data_path=dialog.GetPath()			
 		dialog.Destroy()
 
-		if self.behavior_mode>=3:
+		if self.data_path is None:
 
-			self.include_bodyparts=False
+			wx.MessageBox('No data path has been specified.','Error',wx.OK|wx.ICON_ERROR)
 
-			dialog=wx.MessageDialog(self,'Are the images in\ntraining examples background free?','Background-free images?',wx.YES_NO|wx.ICON_QUESTION)
-			if dialog.ShowModal()==wx.ID_YES:
-				self.background_free=True
-				self.text_trainingfolder.SetLabel('Static images w/o background in: '+self.data_path+'.')
-			else:
-				self.background_free=False
-				self.text_trainingfolder.SetLabel('Static images w/ background in: '+self.data_path+'.')
-			dialog.Destroy()
-	
 		else:
 
-			if self.animation_analyzer is True:
-				dialog=wx.MessageDialog(self,'Are the animations (in any) in\ntraining examples background free?','Background-free animations?',wx.YES_NO|wx.ICON_QUESTION)
+			if self.behavior_mode>=3:
+
+				self.include_bodyparts=False
+
+				dialog=wx.MessageDialog(self,'Are the images in\ntraining examples background free?','Background-free images?',wx.YES_NO|wx.ICON_QUESTION)
 				if dialog.ShowModal()==wx.ID_YES:
 					self.background_free=True
+					self.text_trainingfolder.SetLabel('Static images w/o background in: '+self.data_path+'.')
 				else:
 					self.background_free=False
+					self.text_trainingfolder.SetLabel('Static images w/ background in: '+self.data_path+'.')
+				dialog.Destroy()
+		
+			else:
+
+				if self.animation_analyzer is True:
+					dialog=wx.MessageDialog(self,'Are the animations (in any) in\ntraining examples background free?','Background-free animations?',wx.YES_NO|wx.ICON_QUESTION)
+					if dialog.ShowModal()==wx.ID_YES:
+						self.background_free=True
+					else:
+						self.background_free=False
+					dialog.Destroy()
+
+				dialog=wx.MessageDialog(self,'Do the pattern images in training examples\ninclude body parts?','Body parts in pattern images?',wx.YES_NO|wx.ICON_QUESTION)
+				if dialog.ShowModal()==wx.ID_YES:
+					self.include_bodyparts=True
+					dialog2=wx.NumberEntryDialog(self,'Should match the STD of the pattern images in training examples.','Enter a number between 0 and 255:','STD for motionless pixels',0,0,255)
+					if dialog2.ShowModal()==wx.ID_OK:
+						self.std=int(dialog2.GetValue())
+					else:
+						self.std=0
+					dialog2.Destroy()
+				else:
+					self.include_bodyparts=False
 				dialog.Destroy()
 
-			dialog=wx.MessageDialog(self,'Do the pattern images in training examples\ninclude body parts?','Body parts in pattern images?',wx.YES_NO|wx.ICON_QUESTION)
-			if dialog.ShowModal()==wx.ID_YES:
-				self.include_bodyparts=True
-				dialog2=wx.NumberEntryDialog(self,'Should match the STD of the pattern images in training examples.','Enter a number between 0 and 255:','STD for motionless pixels',0,0,255)
-				if dialog2.ShowModal()==wx.ID_OK:
-					self.std=int(dialog2.GetValue())
-				else:
-					self.std=0
-				dialog2.Destroy()
-			else:
-				self.include_bodyparts=False
-			dialog.Destroy()
-
-			if self.include_bodyparts is True:
-				if self.animation_analyzer is True:
-					if self.background_free is True:
-						self.text_trainingfolder.SetLabel('Animations w/o background, pattern images w/ bodyparts ('+str(self.std)+') in: '+self.data_path+'.')
+				if self.include_bodyparts is True:
+					if self.animation_analyzer is True:
+						if self.background_free is True:
+							self.text_trainingfolder.SetLabel('Animations w/o background, pattern images w/ bodyparts ('+str(self.std)+') in: '+self.data_path+'.')
+						else:
+							self.text_trainingfolder.SetLabel('Animations w/ background, pattern images w/ bodyparts ('+str(self.std)+') in: '+self.data_path+'.')
 					else:
-						self.text_trainingfolder.SetLabel('Animations w/ background, pattern images w/ bodyparts ('+str(self.std)+') in: '+self.data_path+'.')
+						self.text_trainingfolder.SetLabel('Pattern images w/ bodyparts ('+str(self.std)+') in: '+self.data_path+'.')
 				else:
-					self.text_trainingfolder.SetLabel('Pattern images w/ bodyparts ('+str(self.std)+') in: '+self.data_path+'.')
-			else:
-				if self.animation_analyzer is True:
-					if self.background_free is True:
-						self.text_trainingfolder.SetLabel('Animations w/o background, pattern images w/o bodyparts in: '+self.data_path+'.')
+					if self.animation_analyzer is True:
+						if self.background_free is True:
+							self.text_trainingfolder.SetLabel('Animations w/o background, pattern images w/o bodyparts in: '+self.data_path+'.')
+						else:
+							self.text_trainingfolder.SetLabel('Animations w/ background, pattern images w/o bodyparts in: '+self.data_path+'.')
 					else:
-						self.text_trainingfolder.SetLabel('Animations w/ background, pattern images w/o bodyparts in: '+self.data_path+'.')
-				else:
-					self.text_trainingfolder.SetLabel('Pattern images w/o bodyparts in: '+self.data_path+'.')
+						self.text_trainingfolder.SetLabel('Pattern images w/o bodyparts in: '+self.data_path+'.')
 
 
 	def specify_augmentation(self,event):

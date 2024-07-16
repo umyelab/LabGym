@@ -28,7 +28,7 @@ import torch
 import json
 from .analyzebehavior import AnalyzeAnimal
 from .analyzebehavior_dt import AnalyzeAnimalDetector
-from .tools import plot_evnets,parse_all_events_file
+from .tools import plot_events,parse_all_events_file
 from .minedata import data_mining
 
 
@@ -265,8 +265,10 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 					self.uncertain=uncertain/100
 				dialog1.Destroy()
 				self.text_selectcategorizer.SetLabel('The path to the Categorizer is: '+self.path_to_categorizer+' with uncertainty of '+str(uncertain)+'%.')
+				self.text_selectbehaviors.SetLabel('All the behaviors in the selected Categorizer with default colors.')
 			elif categorizer=='No behavior classification, just track animals and quantify motion kinematics':
 				self.path_to_categorizer=None
+				self.behavior_mode=0
 				dialog1=wx.NumberEntryDialog(self,'Specify a time window used for measuring\nmotion kinematics of the tracked animals','Enter the number of\nframes (minimum=3):','Time window for calculating kinematics',15,1,100000000000000)
 				if dialog1.ShowModal()==wx.ID_OK:
 					self.length=int(dialog1.GetValue())
@@ -282,7 +284,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 					uncertain=dialog1.GetValue()
 					self.uncertain=uncertain/100
 					self.text_selectcategorizer.SetLabel('Categorizer: '+categorizer+' with uncertainty of '+str(uncertain)+'%.')
-			self.text_selectbehaviors.SetLabel('All the behaviors in the selected Categorizer with default colors.')
+				self.text_selectbehaviors.SetLabel('All the behaviors in the selected Categorizer with default colors.')
 
 			if self.path_to_categorizer is not None:
 
@@ -806,6 +808,8 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 						all_events[animal_name]={}
 					if len(self.animal_to_include)==0:
 						self.animal_to_include=self.animal_kinds
+					if self.detector_batch<=0:
+						self.detector_batch=1
 
 				if self.path_to_categorizer is None:
 					self.behavior_to_include=[]
@@ -911,7 +915,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 						time_points=AA.all_time[:min(all_lengths)]
 						all_events_df=pd.DataFrame(event_data,index=time_points)
 						all_events_df.to_excel(os.path.join(self.result_path,'all_events.xlsx'),float_format='%.2f',index_label='time/ID')
-						plot_evnets(self.result_path,event_data,time_points,self.behaviornames_and_colors,self.behavior_to_include,width=0,height=0)
+						plot_events(self.result_path,event_data,time_points,self.behaviornames_and_colors,self.behavior_to_include,width=0,height=0)
 						folders=[i for i in os.listdir(self.result_path) if os.path.isdir(os.path.join(self.result_path,i))]
 						folders.sort()
 						for behavior_name in self.behaviornames_and_colors:
@@ -934,7 +938,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 						time_points=AAD.all_time[:min(all_lengths)]
 						all_events_df=pd.DataFrame(event_data,index=time_points)
 						all_events_df.to_excel(os.path.join(self.result_path,'all_events.xlsx'),float_format='%.2f',index_label='time/ID')
-						plot_evnets(self.result_path,event_data,time_points,self.behaviornames_and_colors,self.behavior_to_include,width=0,height=0)
+						plot_events(self.result_path,event_data,time_points,self.behaviornames_and_colors,self.behavior_to_include,width=0,height=0)
 						folders=[i for i in os.listdir(self.result_path) if os.path.isdir(os.path.join(self.result_path,i))]
 						folders.sort()
 						for animal_name in self.animal_kinds:
@@ -947,6 +951,8 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 								if len(all_summary)>=1:
 									all_summary=pd.concat(all_summary,ignore_index=True)
 									all_summary.to_excel(os.path.join(self.result_path,animal_name+'_'+behavior_name+'_summary.xlsx'),float_format='%.2f',index_label='ID/parameter')
+
+			print('Analysis completed!')
 
 
 
@@ -1202,7 +1208,7 @@ class WindowLv2_PlotBehaviors(wx.Frame):
 			self.names_and_colors={}
 			self.events_probability,self.time_points,behavior_names=parse_all_events_file(all_events_file)
 			colors=[('#ffffff',str(hex_code)) for hex_code in mpl.colors.cnames.values()]
-			for color,behavior in zip(colors,behaviors):
+			for color,behavior in zip(colors,behavior_names):
 				self.names_and_colors[behavior]=color
 			self.text_inputfile.SetLabel(f'all_events.xlsx path: {all_events_file}')
 		dialog.Destroy()
@@ -1223,11 +1229,11 @@ class WindowLv2_PlotBehaviors(wx.Frame):
 			wx.MessageBox('No all_events.xlsx file selected!','Error',wx.OK | wx.ICON_ERROR)
 		else:
 			for behavior in self.names_and_colors:
-				dialog=ColorPicker(f'Color for {behavior}',self.names_and_colors[behavior][1])
+				dialog=ColorPicker(self,f'Color for {behavior}',[behavior,self.names_and_colors[behavior]])
 				if dialog.ShowModal()==wx.ID_OK:
-					(r,g,b,_)=dialog.color_picker.GetColour()
-					hex_code=f'#{r:02x}{g:02x}{b:02x}'
-					self.names_and_colors[behavior]=('#ffffff',hex_code)
+					(r,b,g,_)=dialog.color_picker.GetColour()
+					new_color='#%02x%02x%02x'%(r,b,g)
+					self.names_and_colors[behavior]=('#ffffff',new_color)
 			self.text_selectcolors.SetLabel('Colors: '+', '.join([f'{behavior}:{color}' for behavior,(_,color) in self.names_and_colors.items()]))
 
 	
