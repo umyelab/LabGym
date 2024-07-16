@@ -806,6 +806,8 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 						all_events[animal_name]={}
 					if len(self.animal_to_include)==0:
 						self.animal_to_include=self.animal_kinds
+					if self.detector_batch<=0:
+						self.detector_batch=1
 
 				if self.path_to_categorizer is None:
 					self.behavior_to_include=[]
