@@ -709,6 +709,8 @@ class AnalyzeAnimal():
 		capture.release()
 		writer.release()
 
+		cv2.imwrite(os.path.join(self.results_path,'Trajectory.jpg'),background)
+
 		print('Video annotation completed!')
 
 
