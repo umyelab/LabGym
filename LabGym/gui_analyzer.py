@@ -267,6 +267,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 				self.text_selectcategorizer.SetLabel('The path to the Categorizer is: '+self.path_to_categorizer+' with uncertainty of '+str(uncertain)+'%.')
 			elif categorizer=='No behavior classification, just track animals and quantify motion kinematics':
 				self.path_to_categorizer=None
+				self.behavior_mode=0
 				dialog1=wx.NumberEntryDialog(self,'Specify a time window used for measuring\nmotion kinematics of the tracked animals','Enter the number of\nframes (minimum=3):','Time window for calculating kinematics',15,1,100000000000000)
 				if dialog1.ShowModal()==wx.ID_OK:
 					self.length=int(dialog1.GetValue())
