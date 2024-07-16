@@ -589,9 +589,6 @@ class AnalyzeAnimal():
 
 		text_scl=max(min(self.background.shape[0],self.background.shape[1])/640,0.5)
 		text_tk=max(1,int(min(self.background.shape[0],self.background.shape[1])/320))
-		background=np.zeros_like(self.background)
-		if self.framewidth is not None:
-			background=cv2.resize(background,(self.framewidth,self.frameheight),interpolation=cv2.INTER_AREA)
 
 		if self.categorize_behavior is True:
 			colors={}
@@ -667,7 +664,7 @@ class AnalyzeAnimal():
 
 								cx=self.animal_centers[i][frame_count_analyze][0]
 								cy=self.animal_centers[i][frame_count_analyze][1]
-								cv2.circle(background,(cx,cy),int(text_tk),(abs(int(color_diff*(total_animal_number-current_animal_number)-255)),int(color_diff*current_animal_number/2),int(color_diff*(total_animal_number-current_animal_number)/2)),-1)
+								cv2.circle(self.background,(cx,cy),int(text_tk),(abs(int(color_diff*(total_animal_number-current_animal_number)-255)),int(color_diff*current_animal_number/2),int(color_diff*(total_animal_number-current_animal_number)/2)),-1)
 
 								if interact_all is False:
 									cv2.putText(frame,str(i),(cx-10,cy-10),cv2.FONT_HERSHEY_SIMPLEX,text_scl,(255,255,255),text_tk)
@@ -716,7 +713,7 @@ class AnalyzeAnimal():
 		capture.release()
 		writer.release()
 
-		cv2.imwrite(os.path.join(self.results_path,'Trajectory.jpg'),background)
+		cv2.imwrite(os.path.join(self.results_path,'Trajectory.jpg'),self.background)
 
 		print('Video annotation completed!')
 
