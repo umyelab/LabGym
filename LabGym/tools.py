@@ -947,7 +947,7 @@ def generate_patternimage_interact(frame,outlines,other_outlines,inners=None,oth
 	return pattern_image
 
 
-def plot_evnets(result_path,event_probability,time_points,names_and_colors,behavior_to_include,width=0,height=0):
+def plot_events(result_path,event_probability,time_points,names_and_colors,behavior_to_include,width=0,height=0):
 
 	'''
 	This function is used to plot a raster plot for behavior events and probability
