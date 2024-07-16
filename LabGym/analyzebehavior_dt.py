@@ -176,13 +176,13 @@ class AnalyzeAnimalDetector():
 				for behavior_name in names_and_colors:
 					self.all_behavior_parameters[animal_name][behavior_name]={}
 					self.all_behavior_parameters[animal_name][behavior_name]['color']=names_and_colors[behavior_name]
-					for parameter_name in ['acceleration','count','distance','duration','intensity_area','intensity_length','latency','magnitude_area','magnitude_length','probability','speed','velocity','vigor_area','vigor_length']:
+					for parameter_name in ['acceleration','center','count','distance','duration','intensity_area','intensity_length','latency','magnitude_area','magnitude_length','probability','speed','velocity','vigor_area','vigor_length']:
 						self.all_behavior_parameters[animal_name][behavior_name][parameter_name]={}
 			else:
 				self.dim_conv=8
 				self.animation_analyzer=False
 				self.all_behavior_parameters[animal_name]={}
-				for parameter_name in ['acceleration','distance','intensity_area','intensity_length','magnitude_area','magnitude_length','speed','velocity','vigor_area','vigor_length']:
+				for parameter_name in ['acceleration','center','distance','intensity_area','intensity_length','magnitude_area','magnitude_length','speed','velocity','vigor_area','vigor_length']:
 					self.all_behavior_parameters[animal_name][parameter_name]={}
 			self.animal_area[animal_name]=None
 			self.to_deregister[animal_name]={}
@@ -1042,8 +1042,11 @@ class AnalyzeAnimalDetector():
 		print('Annotating video...')
 		print(datetime.datetime.now())
 
-		text_scl=max(min(self.background.shape[0],self.background.shape[1])/960,0.5)
-		text_tk=max(1,int(min(self.background.shape[0],self.background.shape[1])/960))
+		#text_scl=max(min(self.background.shape[0],self.background.shape[1])/960,0.5)
+		#text_tk=max(1,int(min(self.background.shape[0],self.background.shape[1])/960))
+
+		text_scl=1
+		text_tk=2
 
 		if self.categorize_behavior is True:
 			colors={}
@@ -1068,8 +1071,25 @@ class AnalyzeAnimalDetector():
 					intvl=int(self.background.shape[0]/(len(colors)+1))
 
 		capture=cv2.VideoCapture(self.path_to_video)
+		while True:
+			retval,frame=capture.read()
+			break
+		if self.framewidth is not None:
+			frame=cv2.resize(frame,(self.framewidth,self.frameheight),interpolation=cv2.INTER_AREA)
+		background=np.zeros_like(frame)
+
 		writer=None
 		frame_count=frame_count_analyze=0
+
+		total_animal_number=1
+
+		for animal_name in self.animal_kinds:
+			for i in self.animal_centers[animal_name]:
+				self.all_behavior_parameters[animal_name]['center'][i]=[np.nan]*len(self.all_time)
+				self.all_behavior_parameters[animal_name]['center'][i]=[np.nan]*len(self.all_time)
+				total_animal_number+=1
+
+		color_diff=int(255/total_animal_number)
 
 		start_t=round((self.t-self.length/self.fps),2)
 		if start_t<0:
@@ -1080,6 +1100,7 @@ class AnalyzeAnimalDetector():
 			end_t=start_t+self.duration
 
 		while True:
+
 			retval,frame=capture.read()
 			time=round((frame_count+1)/self.fps,2)
 
@@ -1098,6 +1119,8 @@ class AnalyzeAnimalDetector():
 							cv2.putText(frame,i,(10,intvl*n),cv2.FONT_HERSHEY_SIMPLEX,scl,colors[i],text_tk)
 							n+=1
 
+				current_animal_number=0
+
 				if frame_count_analyze not in self.skipped_frames:
 
 					for animal_name in animal_to_include:
@@ -1110,6 +1133,9 @@ class AnalyzeAnimalDetector():
 
 									cx=self.animal_centers[animal_name][i][frame_count_analyze][0]
 									cy=self.animal_centers[animal_name][i][frame_count_analyze][1]
+
+									self.all_behavior_parameters[animal_name]['center'][i][frame_count_analyze]=(cx,cy)
+									cv2.circle(background,(cx,cy),int(text_tk),(int(255-color_diff*current_animal_number),int(color_diff*current_animal_number),int(255-color_diff*current_animal_number)),-1)
 
 									if self.behavior_mode!=1:
 										cv2.circle(frame,(cx,cy),int(text_tk*3),(255,0,0),-1)
@@ -1143,6 +1169,8 @@ class AnalyzeAnimalDetector():
 										cv2.putText(frame,animal_name+' '+str(i),(cx-10,cy-10),cv2.FONT_HERSHEY_SIMPLEX,text_scl,(255,255,255),text_tk)
 										cv2.drawContours(frame,[self.animal_contours[animal_name][i][frame_count_analyze]],0,(255,255,255),1)
 
+							current_animal_number+=1
+
 				if writer is None:
 					(h,w)=frame.shape[:2]
 					writer=cv2.VideoWriter(os.path.join(self.results_path,'Annotated video.avi'),cv2.VideoWriter_fourcc(*'MJPG'),self.fps,(w,h),True)
@@ -1155,6 +1183,8 @@ class AnalyzeAnimalDetector():
 
 		capture.release()
 		writer.release()
+
+		cv2.imwrite(os.path.join(self.results_path,'Trajectory.jpg'),background)
 
 		print('Video annotation completed!')
 
