@@ -1135,11 +1135,11 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 			level=''
 		dialog.Destroy()
 
-		if behavior_mode==0:
+		if self.behavior_mode==0:
 			self.text_categorizertype.SetLabel(categorizer_tp+' (LV '+str(level)+') to identify behaviors of each non-interactive individual.')
-		elif behavior_mode==1:
+		elif self.behavior_mode==1:
 			self.text_categorizertype.SetLabel(categorizer_tp+' (LV '+str(level)+') to identify behaviors of the interactive group.')
-		elif behavior_mode==2:
+		elif self.behavior_mode==2:
 			self.text_categorizertype.SetLabel(categorizer_tp+' (LV '+str(level)+') to identify behaviors of the interactive individuals and groups. Social distance: '+str(self.social_distance)+' folds of the animal diameter.')
 		else:
 			self.text_categorizertype.SetLabel(categorizer_tp+' (LV '+str(level)+') to identify behaviors of each non-interactive individual in static images.')
