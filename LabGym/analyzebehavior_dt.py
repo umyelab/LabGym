@@ -1083,7 +1083,7 @@ class AnalyzeAnimalDetector():
 		print('Annotating video...')
 		print(datetime.datetime.now())
 
-		text_scl=max(0.5,round(self.background.shape[0]+self.background.shape[1])/1080,1)
+		text_scl=max(0.5,round((self.background.shape[0]+self.background.shape[1])/1080,1))
 		text_tk=max(1,round((self.background.shape[0]+self.background.shape[1])/540))
 		background=np.zeros_like(self.background)
 		if self.framewidth is not None:
