@@ -1083,8 +1083,8 @@ class AnalyzeAnimalDetector():
 		print('Annotating video...')
 		print(datetime.datetime.now())
 
-		text_scl=max(min(self.background.shape[0],self.background.shape[1])/640,0.5)
-		text_tk=max(1,int(min(self.background.shape[0],self.background.shape[1])/320))
+		text_scl=max(0.5,round(self.background.shape[0]+self.background.shape[1])/1080,1)
+		text_tk=max(1,round((self.background.shape[0]+self.background.shape[1])/540))
 		background=np.zeros_like(self.background)
 		if self.framewidth is not None:
 			background=cv2.resize(background,(self.framewidth,self.frameheight),interpolation=cv2.INTER_AREA)
