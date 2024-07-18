@@ -178,6 +178,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
 			self.trim_video=True
 		else:
 			self.trim_video=False
+			self.text_duration.SetLabel('Not to trim the videos.')
 		dialog.Destroy()
 
 		if self.trim_video is True:
