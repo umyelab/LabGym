@@ -16,7 +16,6 @@ dependencies = [
     # Windows-native GPU support ended with TensorFlow 2.11, so use 2.10
     "tensorflow>=2.10.1,<2.16.0; platform_system != 'Windows'",
     "tensorflow<2.11; platform_system == 'Windows'",
-    "torch==2.3.1",
     "matplotlib",
     "opencv-python",
     "opencv-contrib-python",

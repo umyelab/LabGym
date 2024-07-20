@@ -59,7 +59,7 @@ class InitialWindow(wx.Frame):
 		
 		links=wx.BoxSizer(wx.HORIZONTAL)
 		homepage=hl.HyperLinkCtrl(panel,0,'Home Page',URL='https://github.com/umyelab/LabGym')
-		userguide=hl.HyperLinkCtrl(panel,0,'Extended Guide',URL='https://github.com/yujiahu415/LabGym/blob/master/LabGym%20user%20guide_v2.2.pdf')
+		userguide=hl.HyperLinkCtrl(panel,0,'Extended Guide',URL='https://github.com/yujiahu415/LabGym/blob/master/LabGym_extended_user_guide.pdf')
 		links.Add(homepage,0,wx.LEFT|wx.EXPAND,10)
 		links.Add(userguide,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		boxsizer.Add(links,0,wx.ALIGN_CENTER,50)
