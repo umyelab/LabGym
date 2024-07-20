@@ -42,7 +42,7 @@ Identifying behaviors in diverse species in various recording environments
 
 <p>&nbsp;</p>
 
-Identifying behaviors with no posture changes such a cell 'changing color' and the neurons 'firing'
+Identifying behaviors with no posture changes such as cells 'changing color' and neurons 'firing'
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_non_posture_1.gif?raw=true)    ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_non_posture_2.gif?raw=true)
 
