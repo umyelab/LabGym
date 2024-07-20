@@ -166,7 +166,7 @@ To train a **Categorizer** of this mode, you can sort the behavior examples (**A
 
 <p>&nbsp;</p>
 
-### 3. Static image
+### 4. Static image
 
 This mode is for identifying solitary behaviors of individuals in static images.
 
