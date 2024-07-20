@@ -56,7 +56,7 @@ Identifying behaviors with no posture changes such as objects changing color and
 
 Computes a range of motion and kinematics parameters for each behavior. The parameters include **count**, **duration**, and **latency** of behavioral incidents, as well as **speed**, **acceleration**, **distance traveled**, and the **intensity** and **vigor** of motions during the behaviors. These parameters are output in spreadsheets.
 
-Also provides visualization of analysis results, including annotated videos that visually mark each behavior event, temporal raster plots that show every behavior event of every individual overtime.
+Also provides visualization of analysis results, including annotated videos / images that visually mark each behavior event, temporal raster plots that show every behavior event of every individual overtime.
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Quantify_behavior.jpg?raw=true)
 
@@ -92,15 +92,15 @@ LabGym has a user interface and requires no coding knowledge to use.
 
 LabGym comprises three modules, each tailored to streamline the analysis process. Together, these modules create a cohesive workflow, enabling users to prepare, train, and analyze their behavioral data with accuracy and ease.
 
-1. **'Preprocessing Module'**: This module is for optimizing video footage for analysis. It can enhance video contrast to make the relevant details more discernible. It can trim videos to focus solely on the necessary time windows. It can also crop frames to remove irrelevant regions.
+1. **'Preprocessing Module'**: This module is for optimizing video footage for analysis. It can trim videos to focus solely on the necessary time windows, crop frames to remove irrelevant regions, enhance video contrast to make the relevant details more discernible, and reduce video fps to increase processing speed.
 
-2. **'Training Module'**: Here, you can customize LabGym according to your specific research needs. You can train a Detector in this module to detect animals or objects of your interest in videos. You can also train a Categorizer to recognize specific behaviors that are defined by you.
+2. **'Training Module'**: Here, you can customize LabGym according to your specific research needs. You can train a Detector in this module to detect animals or objects of your interest in videos / images. You can also train a Categorizer to recognize specific behaviors that are defined by you.
 
-3. **'Analysis Module'**: After customizing LabGym to your need, you can use this module for automated behavioral analysis in videos. It not only outputs comprehensive analysis results but also delves into these results to mine significant findings.
+3. **'Analysis Module'**: After customizing LabGym to your need, you can use this module for automated behavioral analysis in videos / images. It not only outputs comprehensive analysis results but also delves into these results to mine significant findings.
 
 <p>&nbsp;</p>
 
-## Using LabGym Step 1: detect animals / objects
+## LabGym workflow Step 1: detect animals / objects
 
 LabGym employs two distinct methods for detecting animals or objects in different scenarios.
 
@@ -123,14 +123,14 @@ To determine the optimal time window for background extraction, consider the ani
 This method incorporates Detectron2 (https://github.com/facebookresearch/detectron2), offering more versatility but at a slower processing speed compared to the **‘Subtract Background’** method. It excels in differentiating individual animals or objects, even during collisions, which is particularly beneficial for the **'Interactive advanced'** mode. To enhance processing speed, use a GPU or reduce the frame size during analysis. To train a **Detector** in **‘Training Module’**: 
 
    1. Click the **‘Generate Image Examples’** button to extract image frames from videos.
-   2. Use free online annotation tools like Roboflow (https://roboflow.com) to annotate the outlines of animals or objects in these images. For annotation type, choose 'Instance Segmentation', and export the annotations in 'COCO instance segmentation' format, which generates a ‘*.json’ file. In **'Interactive advanced'** mode, focus on images where individuals collide and annotate these boundaries precisely. Exposing the **Detector** to a variety of collision scenarios during training can significantly minimize identity switching in subsequent analyses.
+   2. Use free online annotation tools like Roboflow (https://roboflow.com) to annotate the outlines of animals or objects in these images. For annotation type, choose 'Instance Segmentation', and export the annotations in 'COCO instance segmentation' format, which generates a ‘*.json’ file.
    3. Use the **‘Train Detectors’** button to input these annotated images and commence training your **Detectors**.
 
 <p>&nbsp;</p>
 
-## Usage Step 2: identify and quantify behaviors
+## LabGym workflow Step 2: identify and quantify behaviors
 
-LabGym is equipped with three distinct modes of behavior identification to suit different scenarios.
+LabGym is equipped with four distinct modes of behavior identification to suit different scenarios.
 
 <p>&nbsp;</p>
 
@@ -140,7 +140,7 @@ This mode is for analyzing the behavior of every individual in a group of animal
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_interactive_advanced.gif?raw=true)
 
-To train a **Categorizer** of this mode, you can sort the behavior examples (**Animation** and **Pattern Image**) according to the behaviors / social roles of the 'main character' highlighted in a magenta-color-coded 'spotlight'. In the 4 pairs of behavior examples below, behaviors are 'taking the offer', 'being taken', 'being held', and 'offering peanut', respectively.
+To train a **Categorizer** of this mode, you can sort the behavior examples (**Animation** and **Pattern Image**) according to the behaviors / social roles of the 'main character' highlighted in a magenta-color-coded 'spotlight'. In the four pairs of behavior examples below, behaviors are 'taking the offer', 'being taken', 'being held', and 'offering peanut', respectively.
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Behavior_examples_interactive_advanced.gif?raw=true)
 
@@ -170,7 +170,14 @@ To train a **Categorizer** of this mode, you can sort the behavior examples (**A
 
 <p>&nbsp;</p>
 
-The extended user guide: (https://github.com/yujiahu415/LabGym/blob/master/LabGym_extended_user_guide.pdf).
+### 3. Static image
+
+This mode is for identifying solitary behaviors of individuals in static images.
+
+<p>&nbsp;</p>
+
+# Extended user guide
+https://github.com/yujiahu415/LabGym/blob/master/LabGym_extended_user_guide.pdf.
 
 <p>&nbsp;</p>
 
