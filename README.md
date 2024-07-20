@@ -29,7 +29,7 @@ Distinguishing different interactive behaviors among multiple animal-object inte
 
 <p>&nbsp;</p>
 
-Distinguishing different social roles of animals in the field where the recording environment is unstable
+Distinguishing different social roles of animals in the field with unstable recording environment
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_wild_animal_1.gif?raw=true)    ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_wild_animal_2.gif?raw=true)
 
@@ -132,7 +132,7 @@ This method incorporates Detectron2 (https://github.com/facebookresearch/detectr
 
 ## Usage Step 2: identify and quantify behaviors
 
-LabGym is equipped with three distinct modes of behavior identification to suit different scenarios:
+LabGym is equipped with three distinct modes of behavior identification to suit different scenarios.
 
 <p>&nbsp;</p>
 
