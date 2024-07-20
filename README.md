@@ -13,7 +13,7 @@
 
 <p>&nbsp;</p>
 
-## Identifying social behaviors in multi-individual interactions
+## LabGym identifies social behaviors in multi-individual interactions
 
 <p>&nbsp;</p>
 
@@ -35,7 +35,7 @@ Distinguishing different social roles of animals in the field with unstable reco
 
 <p>&nbsp;</p>
 
-## Identifies non-social behaviors
+## LabGym identifies non-social behaviors
 
 <p>&nbsp;</p>
 
@@ -52,11 +52,11 @@ Identifying behaviors with no posture changes such as objects changing color and
 
 <p>&nbsp;</p>
 
-## Quantifies each user-defined behavior
+## LabGym quantifies each user-defined behavior
 
 Computes a range of motion and kinematics parameters for each behavior. The parameters include **count**, **duration**, and **latency** of behavioral incidents, as well as **speed**, **acceleration**, **distance traveled**, and the **intensity** and **vigor** of motions during the behaviors. These parameters are output in spreadsheets.
 
-LabGym also provides visualization of analysis results, including annotated videos that visually mark each behavior event, temporal raster plots that show every behavior event of every individual overtime.
+Also provides visualization of analysis results, including annotated videos that visually mark each behavior event, temporal raster plots that show every behavior event of every individual overtime.
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Quantify_behavior.jpg?raw=true)
 
@@ -82,8 +82,6 @@ LabGym 2.x <https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1>
 
 LabGym has a user interface and requires no coding knowledge to use.
 
-The extended user guide: (https://github.com/yujiahu415/LabGym/blob/master/LabGym%20user%20guide_v2.2.pdf).
-
 ***Put your mouse cursor above each button in the user interface to see a detailed description for it***.
 
 <p>&nbsp;</p>
@@ -102,7 +100,7 @@ LabGym comprises three modules, each tailored to streamline the analysis process
 
 <p>&nbsp;</p>
 
-## Usage Step 1: detect animals / objects
+## Using LabGym Step 1: detect animals / objects
 
 LabGym employs two distinct methods for detecting animals or objects in different scenarios.
 
@@ -169,6 +167,10 @@ This mode is for identifying solitary behaviors of individuals that are not enga
 To train a **Categorizer** of this mode, you can sort the behavior examples (**Animation** and **Pattern Image**) according to the behaviors of individuals.
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Behavior_examples_non_interactive.gif?raw=true)
+
+<p>&nbsp;</p>
+
+The extended user guide: (https://github.com/yujiahu415/LabGym/blob/master/LabGym_extended_user_guide.pdf).
 
 <p>&nbsp;</p>
 
