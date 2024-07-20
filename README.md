@@ -25,7 +25,7 @@ Distinguishing different interactive behaviors among multiple animal-object inte
 
 <p>&nbsp;</p>
 
-Distinguishing different social roles of animals in the field with unstable recording environment
+Distinguishing different social roles of animals in the field with unstable recording environments
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_wild_animal_1.gif?raw=true)    ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_wild_animal_2.gif?raw=true)
 
@@ -35,14 +35,14 @@ Distinguishing different social roles of animals in the field with unstable reco
 
 <p>&nbsp;</p>
 
-Identifying behaviors in diverse species in various recording environment
+Identifying behaviors in diverse species in various recording environments
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_non_social_1.gif?raw=true)    ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_non_social_2.gif?raw=true)
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_non_social_3.gif?raw=true)    ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_non_social_4.gif?raw=true)
 
 <p>&nbsp;</p>
 
-Identifying behaviors with no posture changes such as objects changing color and neurons firing
+Identifying behaviors with no posture changes such as objects 'changing color' and neurons 'firing'
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_non_posture_1.gif?raw=true)    ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_non_posture_2.gif?raw=true)
 
