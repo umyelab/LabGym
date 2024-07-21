@@ -1,83 +1,73 @@
 [build-system]
-requires = ["pdm-backend"]
-build-backend = "pdm.backend"
+requires=['pdm-backend']
+build-backend='pdm.backend'
 
 [project]
-name = "LabGym"
-description = "Quantify user-defined behaviors."
-authors = [
-    {name = "Yujia Hu", email = "henryhu@umich.edu"},
-    {name = "Rohan Satapathy", email = "rohansat@umich.edu"},
-    {name = "M. Victor Struman", email = "strmark@umich.edu"},
-    {name = "Kelly Goss", email = "khgoss@umich.edu"},
-    {name = "Isabelle Baker", email = "ibaker@umich.edu"},
+name='LabGym'
+description='Quantify user-defined behaviors.'
+authors=[
+    {name='Yujia Hu',email='henryhu@umich.edu'},
+    {name='Rohan Satapathy',email='rohansat@umich.edu'},
+    {name='M. Victor Struman',email='strmark@umich.edu'},
+    {name='Kelly Goss',email='khgoss@umich.edu'},
+    {name='Isabelle Baker',email='ibaker@umich.edu'},
 ]
-dependencies = [
-    # Windows-native GPU support ended with TensorFlow 2.11, so use 2.10
-    "tensorflow>=2.10.1,<2.16.0; platform_system != 'Windows'",
-    "tensorflow<2.11; platform_system == 'Windows'",
-    "matplotlib",
-    "opencv-python",
-    "opencv-contrib-python",
-    "openpyxl",
-    "xlsxwriter",
-    "pandas",
-    "scikit-learn",
-    "scikit-image",
-    "seaborn",
-    "wxPython",
-    "scikit-posthocs",
-    "packaging",
-    "requests",
+dependencies=[
+    'tensorflow>=2.10.1,<2.16.0;platform_system!="Windows"',
+    'tensorflow<2.11;platform_system=="Windows"',
+    'matplotlib',
+    'opencv-python',
+    'opencv-contrib-python',
+    'openpyxl',
+    'xlsxwriter',
+    'pandas',
+    'scikit-learn',
+    'scikit-image',
+    'seaborn',
+    'wxPython',
+    'scikit-posthocs',
+    'packaging',
+    'requests',
 ]
-requires-python = ">=3.9,<3.11"
-readme = "README.md"
-license = {text = "GPL-3.0"}
-keywords = ["behavior analysis", "behavioral analysis", "user defined behaviors"]
-classifiers = [
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
+requires-python='>=3.9,<3.11'
+readme='README.md'
+license={text='GPL-3.0'}
+keywords=['behavior analysis','user defined behaviors','behavior quantification',]
+classifiers=[
+    'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+    'Operating System :: OS Independent',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3 :: Only',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
 ]
-# LabGym's version number is defined in __init__.py in the variable __version__
-# to keep it defined in one place only.
-dynamic = ["version"]
+dynamic=['version']
 
 [project.urls]
-Homepage = "http://github.com/umyelab/LabGym"
-Documentation = "https://labgym.readthedocs.io/en/latest/"
-Issues =  "http://github.com/umyelab/LabGym/issues"
+Homepage='http://github.com/umyelab/LabGym'
+Documentation='https://labgym.readthedocs.io/en/latest/'
+Issues='http://github.com/umyelab/LabGym/issues'
 
-# When LabGym is run at the command line, the function main() in the file
-# LabGym/__main__.py will be called.
 [project.scripts]
-LabGym = "LabGym.__main__:main"
+LabGym='LabGym.__main__:main'
 
 [tool.pdm]
-distribution = true
+distribution=true
 
-# This line tells PDM to search for the version number in __init__.py (see 
-# above comment).
 [tool.pdm.version]
-source = "file"
-path = "LabGym/__init__.py"
+source='file'
+path='LabGym/__init__.py'
 
 [tool.pdm.dev-dependencies]
-docs = [
-    "sphinx>=7.2.6",
-    "sphinx-autobuild>=2021.3.14",
-    "sphinx-copybutton>=0.5.2",
-    "myst-parser>=2.0.0",
-    "furo>=2023.9.10",
-    "sphinx-inline-tabs>=2023.4.21",
+docs=[
+    'sphinx>=7.2.6',
+    'sphinx-autobuild>=2021.3.14',
+    'sphinx-copybutton>=0.5.2',
+    'myst-parser>=2.0.0',
+    'furo>=2023.9.10',
+    'sphinx-inline-tabs>=2023.4.21',
 ]
 
-[tool.ruff]
-line-length = 120
-
 [tool.ruff.lint]
-select = ["E4", "E7", "E9", "F", "I001"]
-ignore-init-module-imports = true
+select=['E4','E7','E9','F','I001']
+ignore-init-module-imports=true
