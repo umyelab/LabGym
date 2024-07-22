@@ -63,65 +63,73 @@ class Categorizers():
 		# resize: if not None, resize the frames in animations / pattern images to the target size
 
 		folder_list=[i for i in os.listdir(file_path) if os.path.isdir(os.path.join(file_path,i))]
-		print('Behavior names are: '+str(folder_list))
-		previous_lenth=None
-		imagedata=False
 
-		for folder in folder_list:
+		if len(folder_list)<2:
 
-			name_list=[i for i in os.listdir(os.path.join(file_path,folder)) if i.endswith('.avi')]
+			print('You need at least 2 categories of behaviors!')
+			print('Preparation aborted!')
 
-			if len(name_list)==0:
-				name_list=[i for i in os.listdir(os.path.join(file_path,folder)) if i.endswith('.jpg')]
-				imagedata=True
-		
-			for i in name_list:
+		else:
 
-				if imagedata is True:
+			print('Behavior names are: '+str(folder_list))
+			previous_lenth=None
+			imagedata=False
 
-					image=os.path.join(file_path,folder,i)
-					new_image=os.path.join(new_path,str(name_list.index(i))+'_'+folder+'.jpg')
-					image=cv2.imread(image)
-					if resize is not None:
-						image=cv2.resize(image,(resize,resize),interpolation=cv2.INTER_AREA)
-					cv2.imwrite(new_image,image)
+			for folder in folder_list:
 
-				else:
+				name_list=[i for i in os.listdir(os.path.join(file_path,folder)) if i.endswith('.avi')]
 
-					animation=os.path.join(file_path,folder,i)
-					pattern_image=os.path.join(file_path,folder,os.path.splitext(i)[0]+'.jpg')
-					current_length=0
+				if len(name_list)==0:
+					name_list=[i for i in os.listdir(os.path.join(file_path,folder)) if i.endswith('.jpg')]
+					imagedata=True
+			
+				for i in name_list:
 
-					new_animation=os.path.join(new_path,str(name_list.index(i))+'_'+folder+'.avi')
-					new_pattern_image=os.path.join(new_path,str(name_list.index(i))+'_'+folder+'.jpg')
-					writer=None
-					capture=cv2.VideoCapture(animation)
-					fps=round(capture.get(cv2.CAP_PROP_FPS))
-					while True:
-						retval,frame=capture.read()
-						current_length+=1
-						if frame is None:
-							break
+					if imagedata is True:
+
+						image=os.path.join(file_path,folder,i)
+						new_image=os.path.join(new_path,str(name_list.index(i))+'_'+folder+'.jpg')
+						image=cv2.imread(image)
 						if resize is not None:
-							frame=cv2.resize(frame,(resize,resize),interpolation=cv2.INTER_AREA)
-						if writer is None:
-							(h,w)=frame.shape[:2]
-							writer=cv2.VideoWriter(new_animation,cv2.VideoWriter_fourcc(*'MJPG'),fps,(w,h),True)
-						writer.write(frame)
-					capture.release()
-					writer.release()
-					pattern_image=cv2.imread(pattern_image)
-					if resize is not None:
-						pattern_image=cv2.resize(pattern_image,(resize,resize),interpolation=cv2.INTER_AREA)
-					cv2.imwrite(new_pattern_image,pattern_image)
-					if previous_lenth is None:
-						previous_lenth=current_length
-					else:
-						if previous_lenth!=current_length:
-							previous_lenth=current_length
-							print('Inconsistent duration of animation detected at: '+str(i)+'. Check the duration of animations!')
+							image=cv2.resize(image,(resize,resize),interpolation=cv2.INTER_AREA)
+						cv2.imwrite(new_image,image)
 
-		print('All prepared training examples stored in: '+str(new_path))
+					else:
+
+						animation=os.path.join(file_path,folder,i)
+						pattern_image=os.path.join(file_path,folder,os.path.splitext(i)[0]+'.jpg')
+						current_length=0
+
+						new_animation=os.path.join(new_path,str(name_list.index(i))+'_'+folder+'.avi')
+						new_pattern_image=os.path.join(new_path,str(name_list.index(i))+'_'+folder+'.jpg')
+						writer=None
+						capture=cv2.VideoCapture(animation)
+						fps=round(capture.get(cv2.CAP_PROP_FPS))
+						while True:
+							retval,frame=capture.read()
+							current_length+=1
+							if frame is None:
+								break
+							if resize is not None:
+								frame=cv2.resize(frame,(resize,resize),interpolation=cv2.INTER_AREA)
+							if writer is None:
+								(h,w)=frame.shape[:2]
+								writer=cv2.VideoWriter(new_animation,cv2.VideoWriter_fourcc(*'MJPG'),fps,(w,h),True)
+							writer.write(frame)
+						capture.release()
+						writer.release()
+						pattern_image=cv2.imread(pattern_image)
+						if resize is not None:
+							pattern_image=cv2.resize(pattern_image,(resize,resize),interpolation=cv2.INTER_AREA)
+						cv2.imwrite(new_pattern_image,pattern_image)
+						if previous_lenth is None:
+							previous_lenth=current_length
+						else:
+							if previous_lenth!=current_length:
+								previous_lenth=current_length
+								print('Inconsistent duration of animation detected at: '+str(i)+'. Check the duration of animations!')
+
+			print('All prepared training examples stored in: '+str(new_path))
 
 
 	def build_data(self,path_to_animations,dim_tconv=0,dim_conv=64,channel=1,time_step=15,aug_methods=[],background_free=True,behavior_mode=0):
@@ -831,113 +839,120 @@ class Categorizers():
 		labels=lb.fit_transform(labels)
 		self.classnames=lb.classes_
 
-		print('Found behavior names: '+str(self.classnames))
+		if len(list(self.classnames))<2:
 
-		if include_bodyparts is True:
-			inner_code=0
+			print('You need at least 2 categories of behaviors!')
+			print('Training aborted!')
+
 		else:
-			inner_code=1
 
-		if background_free is True:
-			background_code=0
-		else:
-			background_code=1
+			print('Found behavior names: '+str(self.classnames))
 
-		if behavior_mode>=3:
-			time_step=std=0
-			inner_code=1
-
-		parameters={'classnames':list(self.classnames),'dim_conv':int(dim),'channel':int(channel),'time_step':int(time_step),'network':0,'level_conv':int(level),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code),'behavior_kind':int(behavior_mode),'social_distance':int(social_distance)}
-		pd_parameters=pd.DataFrame.from_dict(parameters)
-		pd_parameters.to_csv(os.path.join(model_path,'model_parameters.txt'),index=False)
-
-		(train_files,test_files,y1,y2)=train_test_split(path_files,labels,test_size=0.2,stratify=labels)
-
-		print('Perform augmentation for the behavior examples...')
-		print('This might take hours or days, depending on the capacity of your computer.')
-		print(datetime.datetime.now())
-
-		print('Start to augment training examples...')
-		_,trainX,trainY=self.build_data(train_files,dim_tconv=0,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,behavior_mode=behavior_mode)
-		trainY=lb.fit_transform(trainY)
-		print('Start to augment validation examples...')
-		if augvalid is True:
-			_,testX,testY=self.build_data(test_files,dim_tconv=0,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,behavior_mode=behavior_mode)
-		else:
-			_,testX,testY=self.build_data(test_files,dim_tconv=0,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free,behavior_mode=behavior_mode)
-		testY=lb.fit_transform(testY)
-
-		with tf.device('CPU'):
-			trainX=tf.convert_to_tensor(trainX)
-			trainY=tf.convert_to_tensor(trainY)
-			testX_tensor=tf.convert_to_tensor(testX)
-			testY_tensor=tf.convert_to_tensor(testY)
-
-		print('Training example shape : '+str(trainX.shape))
-		print('Training label shape : '+str(trainY.shape))
-		print('Validation example shape : '+str(testX.shape))
-		print('Validation label shape : '+str(testY.shape))
-		print(datetime.datetime.now())
-
-		if trainX.shape[0]<5000:
-			batch_size=8
-		elif trainX.shape[0]<50000:
-			batch_size=16
-		else:
-			batch_size=32
-
-		if level<5:
-			model=self.simple_vgg(inputs,filters,classes=len(self.classnames),level=level,with_classifier=True)
-		else:
-			model=self.simple_resnet(inputs,filters,classes=len(self.classnames),level=level,with_classifier=True)
-		if len(self.classnames)==2:
-			model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='binary_crossentropy',metrics=['accuracy'])
-		else:
-			model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='categorical_crossentropy',metrics=['accuracy'])
-
-		cp=ModelCheckpoint(model_path,monitor='val_loss',verbose=1,save_best_only=True,save_weights_only=False,mode='min',save_freq='epoch')
-		es=EarlyStopping(monitor='val_loss',min_delta=0.001,mode='min',verbose=1,patience=4,restore_best_weights=True)
-		rl=ReduceLROnPlateau(monitor='val_loss',min_delta=0.001,factor=0.2,patience=2,verbose=1,mode='min',min_learning_rate=1e-7)
-
-		H=model.fit(trainX,trainY,batch_size=batch_size,validation_data=(testX_tensor,testY_tensor),epochs=1000000,callbacks=[cp,es,rl])
-
-		model.save(model_path)
-		print('Trained Categorizer saved in: '+str(model_path))
-
-		try:
-		
-			predictions=model.predict(testX,batch_size=batch_size)
-
-			if len(self.classnames)==2:
-				print(classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=[self.classnames[0]]))
-				report=classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=[self.classnames[0]],output_dict=True)
+			if include_bodyparts is True:
+				inner_code=0
 			else:
-				print(classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=self.classnames))
-				report=classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=self.classnames,output_dict=True)
+				inner_code=1
 
-			pd.DataFrame(report).transpose().to_csv(os.path.join(model_path,'training_metrics.csv'),float_format='%.2f')
-			if out_path is not None:
-				pd.DataFrame(report).transpose().to_excel(os.path.join(out_path,'training_metrics.xlsx'),float_format='%.2f')
+			if background_free is True:
+				background_code=0
+			else:
+				background_code=1
+
+			if behavior_mode>=3:
+				time_step=std=0
+				inner_code=1
+
+			parameters={'classnames':list(self.classnames),'dim_conv':int(dim),'channel':int(channel),'time_step':int(time_step),'network':0,'level_conv':int(level),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code),'behavior_kind':int(behavior_mode),'social_distance':int(social_distance)}
+			pd_parameters=pd.DataFrame.from_dict(parameters)
+			pd_parameters.to_csv(os.path.join(model_path,'model_parameters.txt'),index=False)
+
+			(train_files,test_files,y1,y2)=train_test_split(path_files,labels,test_size=0.2,stratify=labels)
+
+			print('Perform augmentation for the behavior examples...')
+			print('This might take hours or days, depending on the capacity of your computer.')
+			print(datetime.datetime.now())
+
+			print('Start to augment training examples...')
+			_,trainX,trainY=self.build_data(train_files,dim_tconv=0,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,behavior_mode=behavior_mode)
+			trainY=lb.fit_transform(trainY)
+			print('Start to augment validation examples...')
+			if augvalid is True:
+				_,testX,testY=self.build_data(test_files,dim_tconv=0,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,behavior_mode=behavior_mode)
+			else:
+				_,testX,testY=self.build_data(test_files,dim_tconv=0,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free,behavior_mode=behavior_mode)
+			testY=lb.fit_transform(testY)
+
+			with tf.device('CPU'):
+				trainX=tf.convert_to_tensor(trainX)
+				trainY=tf.convert_to_tensor(trainY)
+				testX_tensor=tf.convert_to_tensor(testX)
+				testY_tensor=tf.convert_to_tensor(testY)
+
+			print('Training example shape : '+str(trainX.shape))
+			print('Training label shape : '+str(trainY.shape))
+			print('Validation example shape : '+str(testX.shape))
+			print('Validation label shape : '+str(testY.shape))
+			print(datetime.datetime.now())
+
+			if trainX.shape[0]<5000:
+				batch_size=8
+			elif trainX.shape[0]<50000:
+				batch_size=16
+			else:
+				batch_size=32
+
+			if level<5:
+				model=self.simple_vgg(inputs,filters,classes=len(self.classnames),level=level,with_classifier=True)
+			else:
+				model=self.simple_resnet(inputs,filters,classes=len(self.classnames),level=level,with_classifier=True)
+			if len(self.classnames)==2:
+				model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='binary_crossentropy',metrics=['accuracy'])
+			else:
+				model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='categorical_crossentropy',metrics=['accuracy'])
+
+			cp=ModelCheckpoint(model_path,monitor='val_loss',verbose=1,save_best_only=True,save_weights_only=False,mode='min',save_freq='epoch')
+			es=EarlyStopping(monitor='val_loss',min_delta=0.001,mode='min',verbose=1,patience=4,restore_best_weights=True)
+			rl=ReduceLROnPlateau(monitor='val_loss',min_delta=0.001,factor=0.2,patience=2,verbose=1,mode='min',min_learning_rate=1e-7)
+
+			H=model.fit(trainX,trainY,batch_size=batch_size,validation_data=(testX_tensor,testY_tensor),epochs=1000000,callbacks=[cp,es,rl])
+
+			model.save(model_path)
+			print('Trained Categorizer saved in: '+str(model_path))
+
+			try:
 			
-			plt.style.use('seaborn-bright')
-			plt.figure()
-			plt.plot(H.history['loss'],label='train_loss')
-			plt.plot(H.history['val_loss'],label='val_loss')
-			plt.plot(H.history['accuracy'],label='train_accuracy')
-			plt.plot(H.history['val_accuracy'],label='val_accuracy')
-			plt.title('Loss and Accuracy')
-			plt.xlabel('Epoch')
-			plt.ylabel('Loss/Accuracy')
-			plt.legend(loc='center right')
-			plt.savefig(os.path.join(model_path,'training_history.png'))
-			if out_path is not None:
-				plt.savefig(os.path.join(out_path,'training_history.png'))
-				print('Training reports saved in: '+str(out_path))
-			plt.close('all')
+				predictions=model.predict(testX,batch_size=batch_size)
 
-		except:
+				if len(self.classnames)==2:
+					print(classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=[self.classnames[0]]))
+					report=classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=[self.classnames[0]],output_dict=True)
+				else:
+					print(classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=self.classnames))
+					report=classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=self.classnames,output_dict=True)
 
-			pass
+				pd.DataFrame(report).transpose().to_csv(os.path.join(model_path,'training_metrics.csv'),float_format='%.2f')
+				if out_path is not None:
+					pd.DataFrame(report).transpose().to_excel(os.path.join(out_path,'training_metrics.xlsx'),float_format='%.2f')
+				
+				plt.style.use('seaborn-bright')
+				plt.figure()
+				plt.plot(H.history['loss'],label='train_loss')
+				plt.plot(H.history['val_loss'],label='val_loss')
+				plt.plot(H.history['accuracy'],label='train_accuracy')
+				plt.plot(H.history['val_accuracy'],label='val_accuracy')
+				plt.title('Loss and Accuracy')
+				plt.xlabel('Epoch')
+				plt.ylabel('Loss/Accuracy')
+				plt.legend(loc='center right')
+				plt.savefig(os.path.join(model_path,'training_history.png'))
+				if out_path is not None:
+					plt.savefig(os.path.join(out_path,'training_history.png'))
+					print('Training reports saved in: '+str(out_path))
+				plt.close('all')
+
+			except:
+
+				pass
 
 
 	def train_animation_analyzer(self,data_path,model_path,out_path=None,dim=64,channel=1,time_step=15,level=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,behavior_mode=0,social_distance=0):
