@@ -257,7 +257,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 			if categorizer=='Choose a new directory of the Categorizer':
 				dialog1=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
 				if dialog1.ShowModal()==wx.ID_OK:
-					self.path_to_categorizer=dialog1.GetPaths()
+					self.path_to_categorizer=dialog1.GetPath()
 				dialog1.Destroy()
 				dialog1=wx.NumberEntryDialog(self,"Enter the Categorizer's uncertainty level (0~100%)","If probability difference between\n1st- and 2nd-likely behaviors\nis less than uncertainty,\nclassfication outputs an 'NA'. Enter 0 if don't know how to set.",'Uncertainty level',0,0,100)
 				if dialog1.ShowModal()==wx.ID_OK:
