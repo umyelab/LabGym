@@ -502,7 +502,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 					if detector=='Choose a new directory of the Detector':
 						dialog2=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
 						if dialog2.ShowModal()==wx.ID_OK:
-							self.path_to_detector=dialog2.GetPaths()
+							self.path_to_detector=dialog2.GetPath()
 						dialog2.Destroy()
 					else:
 						self.path_to_detector=os.path.join(self.detector_path,detector)
