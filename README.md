@@ -179,3 +179,18 @@ https://github.com/yujiahu415/LabGym/blob/master/LabGym_extended_user_guide.pdf.
 
 # Installation
 https://labgym.readthedocs.io/en/latest/installation/index.html.
+
+<p>&nbsp;</p>
+
+# Reporting Issues
+https://labgym.readthedocs.io/en/latest/issues.html.
+
+<p>&nbsp;</p>
+
+# Changelog
+https://labgym.readthedocs.io/en/latest/changelog.html.
+
+<p>&nbsp;</p>
+
+# Contributing
+https://labgym.readthedocs.io/en/latest/contributing/index.html.
