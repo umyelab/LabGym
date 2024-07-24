@@ -518,6 +518,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 						dialog2.Destroy()
 					else:
 						self.animal_kinds=animal_names
+					self.animal_to_include=self.animal_kinds
 					if self.behavior_mode>=3:
 						dialog2=wx.NumberEntryDialog(self,"Enter the Detector's detection threshold (0~100%)","The higher detection threshold,\nthe higher detection accuracy,\nbut the lower detection sensitivity.\nEnter 0 if don't know how to set.",'Detection threshold',0,0,100)
 						if dialog2.ShowModal()==wx.ID_OK:
