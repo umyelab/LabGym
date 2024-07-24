@@ -1,4 +1,4 @@
-# LabGym: quantifying user-defined behaviors
+# LabGym identifies and quantifies user-defined behaviors
 
 [![PyPI - Version](https://img.shields.io/pypi/v/LabGym)](https://pypi.org/project/LabGym/)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/LabGym)](https://pypi.org/project/LabGym/)
