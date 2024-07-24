@@ -1451,7 +1451,7 @@ class WindowLv2_TestCategorizers(wx.Frame):
 			if categorizer=='Choose a new directory of the Categorizer':
 				dialog1=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
 				if dialog1.ShowModal()==wx.ID_OK:
-					self.path_to_categorizer=dialog1.GetPaths()
+					self.path_to_categorizer=dialog1.GetPath()
 				else:
 					self.path_to_categorizer=None
 				dialog1.Destroy()
