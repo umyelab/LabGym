@@ -7,7 +7,7 @@
 
 <!-- start elevator-pitch -->
 
-![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/LabGym_logo.jpg?raw=true)
+![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/LabGym_logo.png?raw=true)
 
 ## LabGym identifies social behaviors in multi-individual interactions
 
