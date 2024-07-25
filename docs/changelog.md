@@ -2,15 +2,15 @@
 
 ## v2.4.5
 ### What's Changed
-* Fix bugs in "Train Categorizers" module by @rohansatapathy in https://github.com/umyelab/LabGym/pull/148
-* Add internal notes section to documentation by @rohansatapathy in https://github.com/umyelab/LabGym/pull/149
+* Fix bugs in "Train Categorizers" module
+* Add internal notes section to documentation
 
 **Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.4.4...v2.4.5>
 
 ## v2.4.4
 ### What's Changed
-* Fix crash that occurs when no detectors are present by @rohansatapathy in https://github.com/umyelab/LabGym/pull/140
-* Constrain tensorflow version on non-Windows systems by @rohansatapathy in https://github.com/umyelab/LabGym/pull/141
+* Fix crash that occurs when no detectors are present
+* Constrain tensorflow version on non-Windows systems
 
 **Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.4.3...v2.4.4>
 
@@ -37,46 +37,46 @@
 
 ## v2.4.0
 ### What's Changed
-* Remove all references to `THE_ABSOLUTE_CURRENT_PATH` by @rohansatapathy in https://github.com/umyelab/LabGym/pull/120
-* Increase line length in format configuration by @rohansatapathy in https://github.com/umyelab/LabGym/pull/122
-* Add date/time changes by @rohansatapathy in https://github.com/umyelab/LabGym/pull/126
-* Refactor detector code by @rohansatapathy in https://github.com/umyelab/LabGym/pull/123
-* Add excel file with animal positions in analysis export by @rohansatapathy in https://github.com/umyelab/LabGym/pull/128
-* Fix text scale in annotated video by @rohansatapathy in https://github.com/umyelab/LabGym/pull/129
+* Remove all references to `THE_ABSOLUTE_CURRENT_PATH`
+* Increase line length in format configuration
+* Add date/time changes
+* Refactor detector code
+* Add excel file with animal positions in analysis export
+* Fix text scale in annotated video
 
 
 **Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.3.5...v2.4.0>
 
 ## v2.3.5
 ### What's Changed
-* Add ruff format rules by @rohansatapathy in https://github.com/umyelab/LabGym/pull/110
-* Update installation instructions by @rohansatapathy in https://github.com/umyelab/LabGym/pull/114
-* Add automated test suite by @rohansatapathy in https://github.com/umyelab/LabGym/pull/115
-* Fix bug in sorting behavior file name by @rohansatapathy in https://github.com/umyelab/LabGym/pull/116
-* Fix detector batch size bug by @rohansatapathy in https://github.com/umyelab/LabGym/pull/117
+* Add ruff format rules
+* Update installation instructions
+* Add automated test suite
+* Fix bug in sorting behavior file name
+* Fix detector batch size bug
 
 
 **Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.3.4...v2.3.5>
 
 ## v2.3.4
 ### What's Changed
-* Fix `cv2.typing` import error by @rohansatapathy in https://github.com/umyelab/LabGym/pull/109
+* Fix `cv2.typing` import error
 
 **Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.3.3...v2.3.4>
 
 ## v2.3.3
 ### What's Changed
-* Fix model path bug in `behavior_examples.py` by @rohansatapathy in https://github.com/umyelab/LabGym/pull/107
-* Update installation documentation by @rohansatapathy in https://github.com/umyelab/LabGym/pull/106
-* Release v2.3.3 by @rohansatapathy in https://github.com/umyelab/LabGym/pull/108
+* Fix model path bug in `behavior_examples.py`
+* Update installation documentation by
+* Release v2.3.3
 
 
 **Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.3.2...v2.3.3>
 
 ## v2.3.2
 ### What's Changed
-* Prevent crash when version checking fails by @rohansatapathy in https://github.com/umyelab/LabGym/pull/101
-* Update python-publish.yml by @rohansatapathy in https://github.com/umyelab/LabGym/pull/102
+* Prevent crash when version checking fails
+* Update python-publish.yml
 
 **Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.3.1...v2.3.2>
 
@@ -87,7 +87,7 @@
 * It's now possible to start LabGym by using the `LabGym` command at the terminal! Now, there's no need to type `from LabGym import gui; gui.gui()` at the terminal.
 
 ### What's Changed
-* Fix incompatibility issues with Python 3.9 by @rohansatapathy in https://github.com/umyelab/LabGym/pull/99
+* Fix incompatibility issues with Python 3.9
 
 **Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.3.0...v2.3.1>
 
@@ -97,10 +97,10 @@
 * It's now possible to start LabGym by using the `LabGym` command at the terminal! Now, there's no need to type `from LabGym import gui; gui.gui()` at the terminal.
 
 ### What's Changed
-* Refactor codebase by @rohansatapathy in https://github.com/umyelab/LabGym/pull/70, https://github.com/umyelab/LabGym/pull/85, https://github.com/umyelab/LabGym/pull/93
-* Move documentation to <https://labgym.readthedocs.io> by @rohansatapathy in https://github.com/umyelab/LabGym/pull/71, https://github.com/umyelab/LabGym/pull/80, https://github.com/umyelab/LabGym/pull/84, https://github.com/umyelab/LabGym/pull/86, https://github.com/umyelab/LabGym/pull/88, https://github.com/umyelab/LabGym/pull/90, https://github.com/umyelab/LabGym/pull/91
-* Start LabGym using the `LabGym` command at the terminal by @rohansatapathy in https://github.com/umyelab/LabGym/pull/73, https://github.com/umyelab/LabGym/pull/96
-* Add option to downscale video FPS in preprocessing module by @rohansatapathy in https://github.com/umyelab/LabGym/pull/72, https://github.com/umyelab/LabGym/pull/77
+* Refactor codebase
+* Move documentation to <https://labgym.readthedocs.io>
+* Start LabGym using the `LabGym` command at the terminal
+* Add option to downscale video FPS in preprocessing module
 
 **Full Changelog**: <https://github.com/umyelab/LabGym/commits/v2.3.0>
 
