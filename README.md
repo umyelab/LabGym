@@ -9,7 +9,9 @@
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/LabGym_logo.png?raw=true)
 
-## LabGym identifies social behaviors in multi-individual interactions
+<p>&nbsp;</p>
+
+## Identifies social behaviors in multi-individual interactions
 
 <p>&nbsp;</p>
 
@@ -21,7 +23,7 @@ Distinguishing different social roles of multiple similar-looking interacting in
 
 Distinguishing different interactive behaviors among multiple animal-object interactions
 
-![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_animal_object_1.gif?raw=true)    ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_animal_object_2.gif?raw=true)
+![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_animal_object_1.gif?raw=true)
 
 <p>&nbsp;</p>
 
@@ -31,7 +33,7 @@ Distinguishing different social roles of animals in the field with unstable reco
 
 <p>&nbsp;</p>
 
-## LabGym identifies non-social behaviors
+## Identifies non-social behaviors
 
 <p>&nbsp;</p>
 
@@ -48,7 +50,7 @@ Identifying behaviors with no posture changes such as cells 'changing color' and
 
 <p>&nbsp;</p>
 
-## LabGym quantifies each user-defined behavior
+## Quantifies each user-defined behavior
 
 Computes a range of motion and kinematics parameters for each behavior. The parameters include **count**, **duration**, and **latency** of behavioral incidents, as well as **speed**, **acceleration**, **distance traveled**, and the **intensity** and **vigor** of motions during the behaviors. These parameters are output in spreadsheets.
 
@@ -96,7 +98,7 @@ LabGym comprises three modules, each tailored to streamline the analysis process
 
 <p>&nbsp;</p>
 
-## LabGym workflow Step 1: detect animals / objects
+## Workflow Step 1: detect animals / objects
 
 LabGym employs two distinct methods for detecting animals or objects in different scenarios.
 
@@ -124,7 +126,7 @@ This method incorporates Detectron2 (https://github.com/facebookresearch/detectr
 
 <p>&nbsp;</p>
 
-## LabGym workflow Step 2: identify and quantify behaviors
+## Workflow Step 2: identify and quantify behaviors
 
 LabGym is equipped with four distinct modes of behavior identification to suit different scenarios.
 
