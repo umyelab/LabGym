@@ -495,7 +495,7 @@ class WindowLv3_DrawMarkers(wx.Frame):
 		self.circles=[]
 		self.current_circle=None
 		self.current_color=(255,0,0)
-		self.thickness=round((self.image.shape[0]+self.image.shape[1])/320)
+		self.thickness=max(1,round((self.image.shape[0]+self.image.shape[1])/320))
 
 		self.panel=wx.Panel(self)
 
@@ -632,7 +632,7 @@ class WindowLv3_DrawMarkers(wx.Frame):
 					w=width
 					h=height
 
-				thickness=round((w+h)/320)
+				thickness=max(1,round((w+h)/320))
 
 				writer=cv2.VideoWriter(os.path.join(self.result_path,name+'_marked.avi'),cv2.VideoWriter_fourcc(*'MJPG'),fps,(w,h),True)
 
