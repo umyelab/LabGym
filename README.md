@@ -1,9 +1,11 @@
-# LabGym identifies and quantifies user-defined behaviors
+# LabGym: quantifying user-defined behaviors
 
 [![PyPI - Version](https://img.shields.io/pypi/v/LabGym)](https://pypi.org/project/LabGym/)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/LabGym)](https://pypi.org/project/LabGym/)
 [![Downloads](https://static.pepy.tech/badge/LabGym)](https://pepy.tech/project/LabGym)
 [![Documentation Status](https://readthedocs.org/projects/labgym/badge/?version=latest)](https://labgym.readthedocs.io/en/latest/?badge=latest)
+
+<p>&nbsp;</p>
 
 <!-- start elevator-pitch -->
 
@@ -15,19 +17,19 @@
 
 <p>&nbsp;</p>
 
-Distinguishing different social roles of multiple similar-looking interacting individuals
+**Distinguishing different social roles of multiple similar-looking interacting individuals**
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_multi_individual_1.gif?raw=true)    ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_multi_individual_2.gif?raw=true)
 
 <p>&nbsp;</p>
 
-Distinguishing different interactive behaviors among multiple animal-object interactions
+**Distinguishing different interactive behaviors among multiple animal-object interactions**
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_animal_object_1.gif?raw=true)
 
 <p>&nbsp;</p>
 
-Distinguishing different social roles of animals in the field with unstable recording environments
+**Distinguishing different social roles of animals in the field with unstable recording environments**
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_wild_animal_1.gif?raw=true)    ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_wild_animal_2.gif?raw=true)
 
@@ -37,14 +39,14 @@ Distinguishing different social roles of animals in the field with unstable reco
 
 <p>&nbsp;</p>
 
-Identifying behaviors in diverse species in various recording environments
+**Identifying behaviors in diverse species in various recording environments**
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_non_social_1.gif?raw=true)    ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_non_social_2.gif?raw=true)
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_non_social_3.gif?raw=true)    ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_non_social_4.gif?raw=true)
 
 <p>&nbsp;</p>
 
-Identifying behaviors with no posture changes such as cells 'changing color' and neurons 'firing'
+**Identifying behaviors with no posture changes such as cells 'changing color' and neurons 'firing'**
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_non_posture_1.gif?raw=true)    ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_non_posture_2.gif?raw=true)
 
