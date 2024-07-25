@@ -56,7 +56,7 @@
 
 Computes a range of motion and kinematics parameters for each behavior. The parameters include **count**, **duration**, and **latency** of behavioral incidents, as well as **speed**, **acceleration**, **distance traveled**, and the **intensity** and **vigor** of motions during the behaviors. These parameters are output in spreadsheets.
 
-Also provides visualization of analysis results, including annotated videos / images that visually mark each behavior event, temporal raster plots that show every behavior event of every individual overtime.
+Also provides visualization of analysis results, including annotated videos/images that visually mark each behavior event, temporal raster plots that show every behavior event of every individual overtime.
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Quantify_behavior.jpg?raw=true)
 
@@ -94,13 +94,13 @@ LabGym comprises three modules, each tailored to streamline the analysis process
 
 1. **'Preprocessing Module'**: This module is for optimizing video footage for analysis. It can trim videos to focus solely on the necessary time windows, crop frames to remove irrelevant regions, enhance video contrast to make the relevant details more discernible, and reduce video fps to increase processing speed.
 
-2. **'Training Module'**: Here, you can customize LabGym according to your specific research needs. You can train a Detector in this module to detect animals or objects of your interest in videos / images. You can also train a Categorizer to recognize specific behaviors that are defined by you.
+2. **'Training Module'**: Here, you can customize LabGym according to your specific research needs. You can train a Detector in this module to detect animals or objects of your interest in videos/images. You can also train a Categorizer to recognize specific behaviors that are defined by you.
 
-3. **'Analysis Module'**: After customizing LabGym to your need, you can use this module for automated behavioral analysis in videos / images. It not only outputs comprehensive analysis results but also delves into these results to mine significant findings.
+3. **'Analysis Module'**: After customizing LabGym to your need, you can use this module for automated behavioral analysis in videos/images. It not only outputs comprehensive analysis results but also delves into these results to mine significant findings.
 
 <p>&nbsp;</p>
 
-## Workflow Step 1: detect animals / objects
+## Workflow Step 1: detect animals/objects
 
 LabGym employs two distinct methods for detecting animals or objects in different scenarios.
 
@@ -140,7 +140,7 @@ This mode is for analyzing the behavior of every individual in a group of animal
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_interactive_advanced.gif?raw=true)
 
-To train a **Categorizer** of this mode, you can sort the behavior examples (**Animation** and **Pattern Image**) according to the behaviors / social roles of the 'main character' highlighted in a magenta-color-coded 'spotlight'. In the four pairs of behavior examples below, behaviors are 'taking the offer', 'being taken', 'being held', and 'offering peanut', respectively.
+To train a **Categorizer** of this mode, you can sort the behavior examples (**Animation** and **Pattern Image**) according to the behaviors/social roles of the 'main character' highlighted in a magenta-color-coded 'spotlight'. In the four pairs of behavior examples below, behaviors are 'taking the offer', 'being taken', 'being held', and 'offering peanut', respectively.
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Behavior_examples_interactive_advanced.gif?raw=true)
 
