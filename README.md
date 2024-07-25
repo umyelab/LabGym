@@ -1,4 +1,4 @@
-# LabGym: quantifying user-defined behaviors
+# LabGym identifies and quantifies user-defined behaviors
 
 [![PyPI - Version](https://img.shields.io/pypi/v/LabGym)](https://pypi.org/project/LabGym/)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/LabGym)](https://pypi.org/project/LabGym/)
@@ -7,7 +7,7 @@
 
 <!-- start elevator-pitch -->
 
-![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/LabGym_logo.jpg?raw=true)
+![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/LabGym_logo.png?raw=true)
 
 ## LabGym identifies social behaviors in multi-individual interactions
 
@@ -179,3 +179,18 @@ https://github.com/yujiahu415/LabGym/blob/master/LabGym_extended_user_guide.pdf.
 
 # Installation
 https://labgym.readthedocs.io/en/latest/installation/index.html.
+
+<p>&nbsp;</p>
+
+# Reporting Issues
+https://labgym.readthedocs.io/en/latest/issues.html.
+
+<p>&nbsp;</p>
+
+# Changelog
+https://labgym.readthedocs.io/en/latest/changelog.html.
+
+<p>&nbsp;</p>
+
+# Contributing
+https://labgym.readthedocs.io/en/latest/contributing/index.html.
