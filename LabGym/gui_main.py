@@ -129,7 +129,7 @@ class WindowLv1_ProcessModule(wx.Frame):
 
 		button_drawmarkers=wx.Button(panel,label='Draw Markers',size=(300,40))
 		button_drawmarkers.Bind(wx.EVT_BUTTON,self.draw_markers)
-		wx.Button.SetToolTip(button_drawmarkers,'Generate a behavior plot given an all_events.xlsx file.')
+		wx.Button.SetToolTip(button_drawmarkers,'Draw locational markers in videos.')
 		boxsizer.Add(button_drawmarkers,0,wx.ALIGN_CENTER,10)
 		boxsizer.Add(0,30,0)
 
@@ -143,6 +143,10 @@ class WindowLv1_ProcessModule(wx.Frame):
 
 		WindowLv2_ProcessVideos('Preprocess Videos')
 
+
+	def draw_markers(self,event):
+
+		WindowLv2_DrawMarkers('Draw Markers')
 
 
 class WindowLv1_TrainingModule(wx.Frame):
