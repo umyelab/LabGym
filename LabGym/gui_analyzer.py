@@ -257,7 +257,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 			if categorizer=='Choose a new directory of the Categorizer':
 				dialog1=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
 				if dialog1.ShowModal()==wx.ID_OK:
-					self.path_to_categorizer=dialog1.GetPaths()
+					self.path_to_categorizer=dialog1.GetPath()
 				dialog1.Destroy()
 				dialog1=wx.NumberEntryDialog(self,"Enter the Categorizer's uncertainty level (0~100%)","If probability difference between\n1st- and 2nd-likely behaviors\nis less than uncertainty,\nclassfication outputs an 'NA'. Enter 0 if don't know how to set.",'Uncertainty level',0,0,100)
 				if dialog1.ShowModal()==wx.ID_OK:
@@ -502,7 +502,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 					if detector=='Choose a new directory of the Detector':
 						dialog2=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
 						if dialog2.ShowModal()==wx.ID_OK:
-							self.path_to_detector=dialog2.GetPaths()
+							self.path_to_detector=dialog2.GetPath()
 						dialog2.Destroy()
 					else:
 						self.path_to_detector=os.path.join(self.detector_path,detector)
@@ -518,6 +518,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 						dialog2.Destroy()
 					else:
 						self.animal_kinds=animal_names
+					self.animal_to_include=self.animal_kinds
 					if self.behavior_mode>=3:
 						dialog2=wx.NumberEntryDialog(self,"Enter the Detector's detection threshold (0~100%)","The higher detection threshold,\nthe higher detection accuracy,\nbut the lower detection sensitivity.\nEnter 0 if don't know how to set.",'Detection threshold',0,0,100)
 						if dialog2.ShowModal()==wx.ID_OK:
