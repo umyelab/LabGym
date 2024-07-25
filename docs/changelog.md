@@ -1,5 +1,14 @@
 # Changelog
 
+## v2.4.6
+### What's Changed
+* Added the function of outputting trajectories of detected animals/objects
+* Fixed bugs
+* Major code clean up
+* Added annotations for each function
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.4.5...v2.4.6>
+
 ## v2.4.5
 ### What's Changed
 * Fix bugs in "Train Categorizers" module
