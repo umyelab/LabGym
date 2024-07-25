@@ -463,11 +463,8 @@ class WindowLv2_DrawMarkers(wx.Frame):
 	def draw_markers(self,event):
 
 		if self.path_to_videos is None or self.result_path is None:
-
 			wx.MessageBox('No input video(s) / output folder.','Error',wx.OK|wx.ICON_ERROR)
-
 		else:
-
 			WindowLv3_DrawMarkers(self.path_to_videos,self.result_path,framewidth=self.framewidth)
 
 
@@ -497,7 +494,7 @@ class WindowLv3_DrawMarkers(wx.Frame):
 
 		self.circles=[]
 		self.current_circle=None
-		self.current_color=(0,0,255)
+		self.current_color=(255,0,0)
 		self.thickness=round((self.image.shape[0]+self.image.shape[1])/320)
 
 		self.panel=wx.Panel(self)
