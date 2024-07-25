@@ -72,7 +72,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
 		module_outputfolder=wx.BoxSizer(wx.HORIZONTAL)
 		button_outputfolder=wx.Button(panel,label='Select a folder to store\nthe processed videos',size=(300,40))
 		button_outputfolder.Bind(wx.EVT_BUTTON,self.select_outpath)
-		wx.Button.SetToolTip(button_outputfolder,'Will create a subfolder for each video in the selected folder. Each subfolder is named after the file name of the video.')
+		wx.Button.SetToolTip(button_outputfolder,'The preprocessed videos will be stored in this folder.')
 		self.text_outputfolder=wx.StaticText(panel,label='None.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_outputfolder.Add(button_outputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_outputfolder.Add(self.text_outputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
