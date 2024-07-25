@@ -474,6 +474,10 @@ class WindowLv2_DrawMarkers(wx.Frame):
 
 class WindowLv3_DrawMarkers(wx.Frame):
 
+	'''
+	The 'Draw Markers' window
+	'''
+
 	def __init__(self,path_to_videos,result_path,framewidth=None):
 
 		super().__init__(parent=None,title='Draw Makers in Videos')
