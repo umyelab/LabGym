@@ -176,22 +176,22 @@ This mode is for identifying solitary behaviors of individuals in static images.
 
 <p>&nbsp;</p>
 
-# Extended user guide
+## Extended user guide
 https://github.com/yujiahu415/LabGym/blob/master/LabGym_extended_user_guide.pdf.
 
 <p>&nbsp;</p>
 
-# Installation
+## Installation
 https://labgym.readthedocs.io/en/latest/installation/index.html.
 
 <p>&nbsp;</p>
 
-# Reporting Issues
+## Reporting Issues
 https://labgym.readthedocs.io/en/latest/issues.html.
 
 <p>&nbsp;</p>
 
-# Changelog
+## Changelog
 https://labgym.readthedocs.io/en/latest/changelog.html.
 
 <p>&nbsp;</p>
