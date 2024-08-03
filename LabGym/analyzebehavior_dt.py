@@ -945,7 +945,7 @@ class AnalyzeAnimalDetector():
 	def categorize_behaviors(self,path_to_categorizer,uncertain=0):
 
 		# path_to_categorizer: path to the Categorizer
-		# uncertain: a threshold between the highest the 2nd highest probablity of behaviors to determine if output an 'NA' in behavior classification
+		# uncertain: a threshold between the highest the 2nd highest probability of behaviors to determine if output an 'NA' in behavior classification
 
 		print('Categorizing behaviors...')
 		print(datetime.datetime.now())
