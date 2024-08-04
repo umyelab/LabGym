@@ -72,7 +72,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
 		module_outputfolder=wx.BoxSizer(wx.HORIZONTAL)
 		button_outputfolder=wx.Button(panel,label='Select a folder to store\nthe processed videos',size=(300,40))
 		button_outputfolder.Bind(wx.EVT_BUTTON,self.select_outpath)
-		wx.Button.SetToolTip(button_outputfolder,'Will create a subfolder for each video in the selected folder. Each subfolder is named after the file name of the video.')
+		wx.Button.SetToolTip(button_outputfolder,'The preprocessed videos will be stored in this folder.')
 		self.text_outputfolder=wx.StaticText(panel,label='None.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_outputfolder.Add(button_outputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_outputfolder.Add(self.text_outputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -363,5 +363,307 @@ class WindowLv2_ProcessVideos(wx.Frame):
 					crop_frame=self.crop_frame,left=self.left,right=self.right,top=self.top,bottom=self.bottom,fps_new=self.fps_new)
 
 			print('Preprocessing completed!')
+
+
+
+class WindowLv2_DrawMarkers(wx.Frame):
+
+	'''
+	The 'Draw Markers' functional unit
+	'''
+
+	def __init__(self,title):
+
+		super(WindowLv2_DrawMarkers,self).__init__(parent=None,title=title,size=(1000,220))
+		self.path_to_videos=None # path to a batch of videos for marker drawing
+		self.framewidth=None # if not None, will resize the video frame keeping the original w:h ratio
+		self.result_path=None # the folder for storing videos with markers
+
+		self.dispaly_window()
+
+
+	def dispaly_window(self):
+
+		panel=wx.Panel(self)
+		boxsizer=wx.BoxSizer(wx.VERTICAL)
+
+		module_inputvideos=wx.BoxSizer(wx.HORIZONTAL)
+		button_inputvideos=wx.Button(panel,label='Select the video(s)\nfor marker drawing',size=(300,40))
+		button_inputvideos.Bind(wx.EVT_BUTTON,self.select_videos)
+		wx.Button.SetToolTip(button_inputvideos,'Select one or more videos. Common video formats (mp4, mov, avi, m4v, mkv, mpg, mpeg) are supported except wmv format.')
+		self.text_inputvideos=wx.StaticText(panel,label='None.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
+		module_inputvideos.Add(button_inputvideos,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		module_inputvideos.Add(self.text_inputvideos,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(0,10,0)
+		boxsizer.Add(module_inputvideos,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(0,5,0)
+
+		module_outputfolder=wx.BoxSizer(wx.HORIZONTAL)
+		button_outputfolder=wx.Button(panel,label='Select a folder to store\nthe videos with markers',size=(300,40))
+		button_outputfolder.Bind(wx.EVT_BUTTON,self.select_outpath)
+		wx.Button.SetToolTip(button_outputfolder,'Videos with markers will be stored in the selected folder.')
+		self.text_outputfolder=wx.StaticText(panel,label='None.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
+		module_outputfolder.Add(button_outputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		module_outputfolder.Add(self.text_outputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(module_outputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(0,5,0)
+
+		button_preprocessvideos=wx.Button(panel,label='Start to draw markers',size=(300,40))
+		button_preprocessvideos.Bind(wx.EVT_BUTTON,self.draw_markers)
+		wx.Button.SetToolTip(button_preprocessvideos,'Draw markers in videos.')
+		boxsizer.Add(0,5,0)
+		boxsizer.Add(button_preprocessvideos,0,wx.RIGHT|wx.ALIGN_RIGHT,90)
+		boxsizer.Add(0,10,0)
+
+		panel.SetSizer(boxsizer)
+
+		self.Centre()
+		self.Show(True)
+
+
+	def select_videos(self,event):
+
+		wildcard='Video files(*.avi;*.mpg;*.mpeg;*.wmv;*.mp4;*.mkv;*.m4v;*.mov;*.mts)|*.avi;*.mpg;*.mpeg;*.wmv;*.mp4;*.mkv;*.m4v;*.mov;*.mts'
+		dialog=wx.FileDialog(self,'Select video(s)','','',wildcard,style=wx.FD_MULTIPLE)
+
+		if dialog.ShowModal()==wx.ID_OK:
+
+			self.path_to_videos=dialog.GetPaths()
+			self.path_to_videos.sort()
+			path=os.path.dirname(self.path_to_videos[0])
+			dialog1=wx.MessageDialog(self,'Proportional resize the video frames?','(Optional) resize the frames?',wx.YES_NO|wx.ICON_QUESTION)
+			if dialog1.ShowModal()==wx.ID_YES:
+				dialog2=wx.NumberEntryDialog(self,'Enter the desired frame width','The unit is pixel:','Desired frame width',480,1,10000)
+				if dialog2.ShowModal()==wx.ID_OK:
+					self.framewidth=int(dialog2.GetValue())
+					if self.framewidth<10:
+						self.framewidth=10
+					self.text_inputvideos.SetLabel('Selected '+str(len(self.path_to_videos))+' video(s) in: '+path+' (proportionally resize framewidth to '+str(self.framewidth)+').')
+				else:
+					self.framewidth=None
+					self.text_inputvideos.SetLabel('Selected '+str(len(self.path_to_videos))+' video(s) in: '+path+' (original framesize).')
+				dialog2.Destroy()
+			else:
+				self.framewidth=None
+				self.text_inputvideos.SetLabel('Selected '+str(len(self.path_to_videos))+' video(s) in: '+path+' (original framesize).')
+			dialog1.Destroy()
+
+		dialog.Destroy()
+
+
+	def select_outpath(self,event):
+
+		dialog=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
+		if dialog.ShowModal()==wx.ID_OK:
+			self.result_path=dialog.GetPath()
+			self.text_outputfolder.SetLabel('Videos with markers will be in: '+self.result_path+'.')
+		dialog.Destroy()
+
+
+	def draw_markers(self,event):
+
+		if self.path_to_videos is None or self.result_path is None:
+			wx.MessageBox('No input video(s) / output folder.','Error',wx.OK|wx.ICON_ERROR)
+		else:
+			WindowLv3_DrawMarkers(self.path_to_videos,self.result_path,framewidth=self.framewidth)
+
+
+
+class WindowLv3_DrawMarkers(wx.Frame):
+
+	'''
+	The 'Draw Markers' window
+	'''
+
+	def __init__(self,path_to_videos,result_path,framewidth=None):
+
+		super().__init__(parent=None,title='Draw Makers in Videos')
+
+		self.path_to_videos=path_to_videos
+		self.result_path=result_path
+		self.framewidth=framewidth
+		capture=cv2.VideoCapture(self.path_to_videos[0])
+		while True:
+			retval,frame=capture.read()
+			break
+		capture.release()
+		if self.framewidth is not None:
+			self.image=cv2.resize(frame,(self.framewidth,int(frame.shape[0]*self.framewidth/frame.shape[1])),interpolation=cv2.INTER_AREA)
+		else:
+			self.image=frame
+
+		self.circles=[]
+		self.current_circle=None
+		self.current_color=(255,0,0)
+		self.thickness=max(1,round((self.image.shape[0]+self.image.shape[1])/320))
+
+		self.panel=wx.Panel(self)
+
+		main_sizer=wx.BoxSizer(wx.VERTICAL)
+
+		self.image_panel=wx.Panel(self.panel)
+		self.image_panel.Bind(wx.EVT_PAINT,self.on_paint)
+		self.image_panel.Bind(wx.EVT_LEFT_DOWN,self.on_left_down)
+		self.image_panel.Bind(wx.EVT_LEFT_UP,self.on_left_up)
+		self.image_panel.Bind(wx.EVT_MOTION,self.on_motion)
+
+		button_sizer=wx.BoxSizer(wx.HORIZONTAL)
+
+		color_button=wx.Button(self.panel,label='Select Color')
+		color_button.Bind(wx.EVT_BUTTON,self.on_select_color)
+
+		undo_button=wx.Button(self.panel,label='Undo Drawing')
+		undo_button.Bind(wx.EVT_BUTTON,self.on_undo)
+
+		draw_button=wx.Button(self.panel,label='Draw Markers')
+		draw_button.Bind(wx.EVT_BUTTON,self.draw_markers)
+
+		button_sizer.Add(color_button,0,wx.ALIGN_CENTER|wx.ALL,5)
+		button_sizer.Add(undo_button,0,wx.ALIGN_CENTER|wx.ALL,5)
+		button_sizer.Add(draw_button,0,wx.ALIGN_CENTER|wx.ALL,5)
+
+		main_sizer.Add(self.image_panel,1,wx.EXPAND)
+		main_sizer.Add(button_sizer,0,wx.ALIGN_CENTER|wx.ALL,5)
+
+		self.panel.SetSizer(main_sizer)
+
+		self.SetSize((self.image.shape[1],self.image.shape[0]+50))
+		self.Centre()
+		self.Show()
+
+
+	def on_paint(self,event):
+
+		dc=wx.PaintDC(self.image_panel)
+		dc.Clear()
+
+		image=self.image.copy()
+
+		for circle in self.circles:
+			self.draw_circle(image,circle)
+
+		if self.current_circle:
+			self.draw_circle(image,self.current_circle)
+
+		height,width=image.shape[:2]
+		image_rgb=cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
+		bitmap=wx.Bitmap.FromBuffer(width,height,image_rgb)
+		dc.DrawBitmap(bitmap,0,0,False)
+
+
+	def on_left_down(self,event):
+
+		x,y=event.GetPosition()
+		self.current_circle={'start':(x,y),'end':(x,y),'color':self.current_color}
+
+
+	def on_left_up(self,event):
+
+		if self.current_circle:
+			x,y=event.GetPosition()
+			self.current_circle['end']=(x,y)
+			self.circles.append(self.current_circle)
+			self.current_circle=None
+			self.panel.Refresh()
+
+
+	def on_motion(self,event):
+
+		if event.Dragging() and event.LeftIsDown() and self.current_circle:
+			x,y=event.GetPosition()
+			self.current_circle['end']=(x,y)
+			self.panel.Refresh()
+
+
+	def draw_circle(self,image,circle):
+
+		start=circle['start']
+		end=circle['end']
+		color=circle['color']
+		radius=int(((end[0]-start[0])**2+(end[1]-start[1])**2)**0.5)
+		center=start
+
+		overlay=image.copy()
+		cv2.circle(overlay,center,radius,color,self.thickness)
+		alpha=1.0
+
+		cv2.addWeighted(overlay,alpha,image,1-alpha,0,image)
+
+
+	def on_undo(self,event):
+
+		if self.circles:
+			self.circles.pop()
+			self.panel.Refresh()
+
+
+	def on_select_color(self,event):
+
+		color_data=wx.ColourData()
+		color_dialog=wx.ColourDialog(self,color_data)
+
+		if color_dialog.ShowModal()==wx.ID_OK:
+			color_data=color_dialog.GetColourData()
+			color=color_data.GetColour()
+			self.current_color=(color.Blue(),color.Green(),color.Red())
+
+
+	def draw_markers(self,event):
+
+		if len(self.circles)==0:
+
+			wx.MessageBox('No Markers.','Error',wx.OK|wx.ICON_ERROR)
+
+		else:
+
+			for i in self.path_to_videos:
+
+				capture=cv2.VideoCapture(i)
+				name=os.path.basename(i).split('.')[0]
+				fps=round(capture.get(cv2.CAP_PROP_FPS))
+				num_frames=int(capture.get(cv2.CAP_PROP_FRAME_COUNT))
+				width=int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+				height=int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+				if self.framewidth is not None:
+					w=int(self.framewidth)
+					h=int(self.framewidth*height/width)
+				else:
+					w=width
+					h=height
+
+				thickness=max(1,round((w+h)/320))
+
+				writer=cv2.VideoWriter(os.path.join(self.result_path,name+'_marked.avi'),cv2.VideoWriter_fourcc(*'MJPG'),fps,(w,h),True)
+
+				while True:
+
+					ret,frame=capture.read()
+
+					if frame is None:
+						break
+
+					if self.framewidth is not None:
+						frame=cv2.resize(frame,(w,h),interpolation=cv2.INTER_AREA)
+
+					for circle in self.circles:
+
+						start=circle['start']
+						end=circle['end']
+						color=circle['color']
+						radius=int(((end[0]-start[0])**2+(end[1]-start[1])**2)**0.5)
+						center=start
+
+						cv2.circle(frame,center,radius,color,thickness)
+
+					writer.write(np.uint8(frame))
+
+				writer.release()
+				capture.release()
+
+
+			print('Marker Drawing completed!')
+
+
 
 

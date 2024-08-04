@@ -26,7 +26,7 @@ from urllib import request
 from pathlib import Path
 from .gui_categorizer import WindowLv2_GenerateExamples,WindowLv2_TrainCategorizers,WindowLv2_SortBehaviors,WindowLv2_TestCategorizers
 from .gui_detector import WindowLv2_GenerateImages,WindowLv2_TrainDetectors,WindowLv2_TestDetectors
-from .gui_preprocessor import WindowLv2_ProcessVideos
+from .gui_preprocessor import WindowLv2_ProcessVideos,WindowLv2_DrawMarkers
 from .gui_analyzer import WindowLv2_AnalyzeBehaviors,WindowLv2_MineResults,WindowLv2_PlotBehaviors
 from LabGym import __version__
 
@@ -111,7 +111,7 @@ class WindowLv1_ProcessModule(wx.Frame):
 
 	def __init__(self,title):
 
-		super(WindowLv1_ProcessModule,self).__init__(parent=None,title=title,size=(500,180))
+		super(WindowLv1_ProcessModule,self).__init__(parent=None,title=title,size=(500,230))
 		self.dispaly_window()
 
 
@@ -125,6 +125,12 @@ class WindowLv1_ProcessModule(wx.Frame):
 		button_processvideos.Bind(wx.EVT_BUTTON,self.process_videos)
 		wx.Button.SetToolTip(button_processvideos,'Enhance video contrast / crop frames to exclude unnecessary region / trim videos to only keep necessary time windows.')
 		boxsizer.Add(button_processvideos,0,wx.ALIGN_CENTER,10)
+		boxsizer.Add(0,20,0)
+
+		button_drawmarkers=wx.Button(panel,label='Draw Markers',size=(300,40))
+		button_drawmarkers.Bind(wx.EVT_BUTTON,self.draw_markers)
+		wx.Button.SetToolTip(button_drawmarkers,'Draw locational markers in videos.')
+		boxsizer.Add(button_drawmarkers,0,wx.ALIGN_CENTER,10)
 		boxsizer.Add(0,30,0)
 
 		panel.SetSizer(boxsizer)
@@ -137,6 +143,10 @@ class WindowLv1_ProcessModule(wx.Frame):
 
 		WindowLv2_ProcessVideos('Preprocess Videos')
 
+
+	def draw_markers(self,event):
+
+		WindowLv2_DrawMarkers('Draw Markers')
 
 
 class WindowLv1_TrainingModule(wx.Frame):

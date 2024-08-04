@@ -6,7 +6,7 @@ build-backend='pdm.backend'
 name='LabGym'
 description='Quantify user-defined behaviors.'
 authors=[
-    {name='Yujia Hu',email='henryhu@umich.edu'},
+    {name='Yujia Hu',email='yujiahu415@gmail.com'},
     {name='Rohan Satapathy',email='rohansat@umich.edu'},
     {name='M. Victor Struman',email='strmark@umich.edu'},
     {name='Kelly Goss',email='khgoss@umich.edu'},
@@ -16,6 +16,7 @@ dependencies=[
     'tensorflow>=2.10.1,<2.16.0;platform_system!="Windows"',
     'tensorflow<2.11;platform_system=="Windows"',
     'matplotlib',
+    'numpy<=1.26.4',
     'opencv-python',
     'opencv-contrib-python',
     'openpyxl',
