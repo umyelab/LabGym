@@ -25,7 +25,7 @@
 
 **Distinguishing different interactive behaviors among multiple animal-object interactions**
 
-![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_animal_object_1.gif?raw=true)
+![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_animal_object_1.gif?raw=true)    ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/Categorizer_animal_object_2.gif?raw=true)
 
 <p>&nbsp;</p>
 
