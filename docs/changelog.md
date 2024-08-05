@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.5.0
+### What's Changed
+* Added the function of 'draw markers in videos'
+* Added LabGym Zoo
+* Added documentation on how to use LabGym via command prompt (see extended user guide)
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.4.6...v2.5.0>
+
 ## v2.4.6
 ### What's Changed
 * Added the function of outputting trajectories of detected animals/objects
