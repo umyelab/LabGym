@@ -66,11 +66,7 @@ A tutorial video for a high-level understanding of what LabGym can do and how it
 
 [![Watch the video](https://img.youtube.com/vi/YoYhHMPbf_o/hqdefault.jpg)](https://youtu.be/YoYhHMPbf_o)
 
-Cite LabGym:
-
-LabGym 1.x <https://www.cell.com/cell-reports-methods/fulltext/S2667-2375(23)00026-7>
-
-LabGym 2.x <https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1>
+Cite LabGym: [LabGym 1.x](https://www.cell.com/cell-reports-methods/fulltext/S2667-2375(23)00026-7) & [LabGym 2.x](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1)
 
 <p>&nbsp;</p>
 
@@ -80,11 +76,11 @@ LabGym 2.x <https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1>
 
 ## Overview
 
-LabGym has a user interface and requires no coding knowledge to use.
-
-***Put your mouse cursor above each button in the user interface to see a detailed description for it***.
+You can use LabGym via its user interface (no coding knowledge needed), or via command prompt. See [**Extended User Guide**](https://github.com/yujiahu415/LabGym/blob/master/LabGym_extended_user_guide.pdf) for details. 
 
 <p>&nbsp;</p>
+
+***Put your mouse cursor above each button in the user interface to see a detailed description for it***.
 
 ![alt text](https://github.com/yujiahu415/LabGym/blob/master/Examples/User_interface.jpg?raw=true)
 
@@ -176,20 +172,12 @@ This mode is for identifying solitary behaviors of individuals in static images.
 
 <p>&nbsp;</p>
 
-## Extended user guide
-https://github.com/yujiahu415/LabGym/blob/master/LabGym_extended_user_guide.pdf.
+## [Installation](https://labgym.readthedocs.io/en/latest/installation/index.html)
 
-## Installation
-https://labgym.readthedocs.io/en/latest/installation/index.html.
+## [LabGym Zoo (trained models and training examples)](https://github.com/yujiahu415/LabGym/blob/master/LabGym_Zoo.md)
 
-## LabGym Zoo (trained models and training examples)
-https://github.com/yujiahu415/LabGym/blob/master/LabGym_Zoo.md
+## [Reporting Issues](https://labgym.readthedocs.io/en/latest/issues.html)
 
-## Reporting Issues
-https://labgym.readthedocs.io/en/latest/issues.html.
+## [Changelog](https://labgym.readthedocs.io/en/latest/changelog.html)
 
-## Changelog
-https://labgym.readthedocs.io/en/latest/changelog.html.
-
-## Contributing
-https://labgym.readthedocs.io/en/latest/contributing/index.html.
+## [Contributing](https://labgym.readthedocs.io/en/latest/contributing/index.html)
