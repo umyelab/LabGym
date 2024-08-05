@@ -16,7 +16,6 @@ dependencies=[
     'tensorflow>=2.10.1,<2.16.0;platform_system!="Windows"',
     'tensorflow<2.11;platform_system=="Windows"',
     'matplotlib',
-    'numpy<=1.26.4',
     'opencv-python',
     'opencv-contrib-python',
     'openpyxl',
