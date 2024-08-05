@@ -182,6 +182,9 @@ https://github.com/yujiahu415/LabGym/blob/master/LabGym_extended_user_guide.pdf.
 ## Installation
 https://labgym.readthedocs.io/en/latest/installation/index.html.
 
+## LabGym Zoo (trained models and training examples)
+https://github.com/yujiahu415/LabGym/blob/master/LabGym_Zoo.md
+
 ## Reporting Issues
 https://labgym.readthedocs.io/en/latest/issues.html.
 
