@@ -855,7 +855,7 @@ class AnalyzeAnimalDetector():
 
 							temp_contours.append(contours)
 							temp_inners.append(inners)
-							(y_bt,y_tp,x_lf,x_rt)=crop_frame(frame,functools.reduce(operator.iconcat,temp_contours,[]))
+							(y_bt,y_tp,x_lf,x_rt)=crop_frame(frame,functools.reduce(operator.iconcat,[ct for ct in temp_contours if ct is not None],[]))
 
 							self.animal_centers[name][0][frame_count_analyze+1-batch_size+batch_count]=(x_lf+20,y_bt+10)
 
@@ -1773,7 +1773,7 @@ class AnalyzeAnimalDetector():
 
 					if frame_count_analyze>=self.length and frame_count_analyze%skip_redundant==0:
 
-						(y_bt,y_tp,x_lf,x_rt)=crop_frame(self.background,functools.reduce(operator.iconcat,temp_contours,[]))
+						(y_bt,y_tp,x_lf,x_rt)=crop_frame(self.background,functools.reduce(operator.iconcat,[ct for ct in temp_contours if ct is not None],[]))
 
 						h=w=0
 
@@ -2048,7 +2048,7 @@ class AnalyzeAnimalDetector():
 
 							for n in self.animal_centers[animal_name]:
 
-								total_contours=functools.reduce(operator.iconcat,self.animal_other_contours[animal_name][n],[])
+								total_contours=functools.reduce(operator.iconcat,[ct for ct in self.animal_other_contours[animal_name][n] if ct is not None],[])
 								total_contours+=self.animal_contours[animal_name][n]
 								total_contours=[i for i in total_contours if i is not None]
 
