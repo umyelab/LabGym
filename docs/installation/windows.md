@@ -60,9 +60,9 @@ enter. All terminal commands going forward should be entered in this terminal.
    Build cuda_11.8.r11.8/compiler.31833905_0
    ```
 
-   Finally, install [cuDNN](https://developer.nvidia.com/cudnn-downloads?target_os=Windows&target_arch=x86_64). 
+   Finally, install [cuDNN](https://developer.nvidia.com/rdp/cudnn-archive). 
    You will need to register an Nvidia Developer account, which you can do for
-   free.
+   free. You can choose cuDNN v8.9.7 that supports CUDA toolkit v11.8. Choose 'Local Installer for Windows (Zip)', download and extract it. And then copy the three folders 'bin', 'lib', and 'include' into where the CUDA toolkit is installed (typcially, 'C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\'), and replace all the three folders with the same names. After that, you may need to add the 'C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8' to path via environmental variables.
 
    ```{important}
    If you're using Windows 11, when installing cuDNN, select "Tarball" then 
@@ -70,9 +70,6 @@ enter. All terminal commands going forward should be entered in this terminal.
    [these instructions](https://docs.nvidia.com/deeplearning/cudnn/installation/windows.html#installing-on-windows)
    to install cuDNN from the `.tar.gz` file.
    ```
-
-   As of February 2024, the latest version is cuDNN 9.0.0, which is compatible
-   with CUDA 11.8.
 
 5. Upgrade `pip`, `wheel`, `setuptools`.
    
