@@ -858,7 +858,7 @@ def generate_patternimage_interact(frame,outlines,other_outlines,inners=None,oth
 	std: a integer between 0 and 255, higher std, less inners are included in the pattern images
 	'''
 
-	total_outlines=functools.reduce(operator.iconcat,other_outlines,[])
+	total_outlines=functools.reduce(operator.iconcat,[ol for ol in other_outlines if ol is not None],[])
 	total_outlines+=outlines
 	(y_bt,y_tp,x_lf,x_rt)=crop_frame(frame,total_outlines)
 
@@ -885,7 +885,7 @@ def generate_patternimage_interact(frame,outlines,other_outlines,inners=None,oth
 
 			if inners is not None:
 				inner=inners[n]
-				other_inner=functools.reduce(operator.iconcat,other_inners[n],[])
+				other_inner=functools.reduce(operator.iconcat,[ir for ir in other_inners[n] if ir is not None],[])
 				if other_inner is not None:
 					cv2.drawContours(background_inners,other_inner,-1,(150,150,150),p_size)
 				if std>0:
