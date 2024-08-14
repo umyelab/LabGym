@@ -96,7 +96,7 @@ LabGym comprises three modules, each tailored to streamline the analysis process
 
 <p>&nbsp;</p>
 
-## Workflow Step 1: detect animals/objects
+## Usage Step 1: detect animals/objects
 
 LabGym employs two distinct methods for detecting animals or objects in different scenarios.
 
@@ -124,7 +124,7 @@ This method incorporates [Detectron2](https://github.com/facebookresearch/detect
 
 <p>&nbsp;</p>
 
-## Workflow Step 2: identify and quantify behaviors
+## Usage Step 2: identify and quantify behaviors
 
 LabGym is equipped with four distinct modes of behavior identification to suit different scenarios.
 
