@@ -88,7 +88,7 @@ You can use LabGym via its user interface (no coding knowledge needed), or via c
 
 LabGym comprises three modules, each tailored to streamline the analysis process. Together, these modules create a cohesive workflow, enabling users to prepare, train, and analyze their behavioral data with accuracy and ease.
 
-1. **'Preprocessing Module'**: This module is for optimizing video footage for analysis. It can trim videos to focus solely on the necessary time windows, crop frames to remove irrelevant regions, enhance video contrast to make the relevant details more discernible, and reduce video fps to increase processing speed.
+1. **'Preprocessing Module'**: This module is for optimizing video footage for analysis. It can trim videos to focus solely on the necessary time windows, crop frames to remove irrelevant regions, enhance video contrast to make the relevant details more discernible, reduce video fps to increase processing speed, or draw colored markers in videos to mark specific locations.
 
 2. **'Training Module'**: Here, you can customize LabGym according to your specific research needs. You can train a Detector in this module to detect animals or objects of your interest in videos/images. You can also train a Categorizer to recognize specific behaviors that are defined by you.
 
@@ -96,7 +96,7 @@ LabGym comprises three modules, each tailored to streamline the analysis process
 
 <p>&nbsp;</p>
 
-## Workflow Step 1: detect animals/objects
+## Usage Step 1: detect animals/objects
 
 LabGym employs two distinct methods for detecting animals or objects in different scenarios.
 
@@ -124,7 +124,7 @@ This method incorporates [Detectron2](https://github.com/facebookresearch/detect
 
 <p>&nbsp;</p>
 
-## Workflow Step 2: identify and quantify behaviors
+## Usage Step 2: identify and quantify behaviors
 
 LabGym is equipped with four distinct modes of behavior identification to suit different scenarios.
 

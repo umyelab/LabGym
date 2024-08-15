@@ -434,7 +434,7 @@ class AnalyzeAnimal():
 						self.register_counts[0]=frame_count_analyze
 					self.animal_contours[0][frame_count_analyze]=contours
 
-					(y_bt,y_tp,x_lf,x_rt)=crop_frame(frame,functools.reduce(operator.iconcat,temp_contours,[]))
+					(y_bt,y_tp,x_lf,x_rt)=crop_frame(frame,functools.reduce(operator.iconcat,[ct for ct in temp_contours if ct is not None],[]))
 					self.animal_centers[0][frame_count_analyze]=(x_lf+5,y_bt+10)
 
 					pattern_image=generate_patternimage_all(frame,y_bt,y_tp,x_lf,x_rt,temp_contours,temp_inners,std=self.std)
@@ -1266,7 +1266,7 @@ class AnalyzeAnimal():
 
 					if frame_count_analyze>=self.length and frame_count_analyze%skip_redundant==0:
 
-						(y_bt,y_tp,x_lf,x_rt)=crop_frame(frame,functools.reduce(operator.iconcat,temp_contours,[]))
+						(y_bt,y_tp,x_lf,x_rt)=crop_frame(frame,functools.reduce(operator.iconcat,[ct for ct in temp_contours if ct is not None],[]))
 
 						h=w=0
 						for i,f in enumerate(temp_frames):
