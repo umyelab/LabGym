@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.5.1
+### What's Changed
+* Optimized analysis flow allowing Detectors to fail on some frames without disrupting and aborting the analysis process
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.5.0...v2.5.1>
+
 ## v2.5.0
 ### What's Changed
 * Added the function of 'draw markers in videos'
