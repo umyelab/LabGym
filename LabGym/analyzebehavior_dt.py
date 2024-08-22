@@ -734,7 +734,8 @@ class AnalyzeAnimalDetector():
 
 		name=self.animal_kinds[0]
 		self.register_counts={}
-		self.register_counts[name]=None
+		self.register_counts[name]={}
+		self.register_counts[name][0]=None
 		if self.animation_analyzer is True:
 			self.animations={}
 			self.animations[name]={}
@@ -786,8 +787,6 @@ class AnalyzeAnimalDetector():
 				batch_count+=1
 
 				if batch_count==batch_size:
-
-					batch_count=0
 
 					tensor_frames=[torch.as_tensor(frame.astype("float32").transpose(2,0,1)) for frame in batch]
 					inputs=[{"image":tensor_frame} for tensor_frame in tensor_frames]
@@ -872,6 +871,7 @@ class AnalyzeAnimalDetector():
 									self.animations[name][0][frame_count_analyze+1-batch_size+batch_count]=np.array(animation)
 					
 					batch=[]
+					batch_count=0
 
 				frame_count_analyze+=1
 
