@@ -812,7 +812,8 @@ class AnalyzeAnimalDetector():
 
 						else:
 
-							self.register_counts[name][0]=frame_count_analyze+1-batch_size+batch_count
+							if self.register_counts[name][0] is None:
+								self.register_counts[name][0]=frame_count_analyze+1-batch_size+batch_count
 
 							mask_area=np.sum(np.array(masks),axis=(1,2))
 							exclusion_mask=np.zeros(len(masks),dtype=bool)
