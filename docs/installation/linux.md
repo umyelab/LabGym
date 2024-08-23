@@ -93,21 +93,21 @@ If you're using Arch Linux or one of its derivatives, we assume you have the
    $ python3 -m pip install LabGym
    ```
 
-If you want to use LabGym Detector function:
+6. If you want to use LabGym Detector function:
 
-   6. Install Pytorch v2.3.1 (Detectron2 needs PyTorch2.3.1 to install).
+   6.1 Install Pytorch v2.3.1 (Detectron2 needs PyTorch2.3.1 to install).
    
       ```console
       $ python3 -m pip install torch==2.3.1
       ```
    
-   7. Install [Detectron2][].
+   6.2 Install [Detectron2][].
    
       ```console
       $ python3 -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
       ```
    
-   8. Install Pytorch v2.0.1 (Detectron2 needs PyTorch2.0.1 to run).
+   6.3 Install Pytorch v2.0.1 (Detectron2 needs PyTorch2.0.1 to run).
    
       ```console
       $ python3 -m pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
