@@ -29,7 +29,7 @@ dependencies=[
     'packaging',
     'requests',
 ]
-requires-python='>=3.9,<3.11'
+requires-python='>=3.9'
 readme='README.md'
 license={text='GPL-3.0'}
 keywords=['behavior analysis','user defined behaviors','behavior quantification',]
