@@ -172,19 +172,19 @@ If you use `pipx`, from step #5:
 
 7. If you want to use LabGym Detector function:
 
-   7.1 Install PyTorch v2.3.1 (Detectron2 needs PyTorch2.3.1 to install) in LabGym's virtual environment.
+   7.1. Install PyTorch v2.3.1 (Detectron2 needs PyTorch2.3.1 to install) in LabGym's virtual environment.
    
       ```console
       $ pipx runpip LabGym install torch==2.3.1
       ```
    
-   7.2 Install [Detectron2][] in the LabGym's virtual environment.
+   7.2. Install [Detectron2][] in the LabGym's virtual environment.
       
       ```console
       $ pipx runpip LabGym install 'git+https://github.com/facebookresearch/detectron2.git'
       ```
    
-   7.3 Install PyTorch v2.0.1 (Detectron2 needs PyTorch2.0.1 to run) in LabGym's virtual environment.
+   7.3. Install PyTorch v2.0.1 (Detectron2 needs PyTorch2.0.1 to run) in LabGym's virtual environment.
    
       ```console
       $ pipx inject --index-url https://download.pytorch.org/whl/cu118 LabGym torch==2.0.1 torchvision==0.15.2
