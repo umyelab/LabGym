@@ -3,7 +3,7 @@
 In order to successfully install LabGym, you will need to have the following
 dependencies installed and available on `PATH`:
 
- - Python 3.9 or 3.10
+ - Python 3.9 or 3.10 or 3.11
  - Git
  - A C/C++ compiler (e.g. `gcc`, `clang`, or Microsoft Visual C++)
 
