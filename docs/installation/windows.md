@@ -74,37 +74,37 @@ enter. All terminal commands going forward should be entered in this terminal.
 5. Upgrade `pip`, `wheel`, `setuptools`.
    
    ```pwsh-session
-   > py -m pip install --upgrade pip wheel setuptools
+   > py -3.10 -m pip install --upgrade pip wheel setuptools
    ```
 
 6. Install LabGym via `pip`.
    
    ```pwsh-session
-   > py -m pip install LabGym
+   > py -3.10 -m pip install LabGym
    ```
 
 7. Install PyTorch v2.3.1 (Detectron2 needs PyTorch2.3.1 to install).
 
    ```pwsh-session
-   > py -m pip install torch==2.3.1
+   > py -3.10 -m pip install torch==2.3.1
    ```
 
 8. Install [Detectron2][].
 
    ```pwsh-session
-   > py -m pip install git+https://github.com/facebookresearch/detectron2.git
+   > py -3.10 -m pip install git+https://github.com/facebookresearch/detectron2.git
    ```
 
 9. Install PyTorch v2.0.1 with CUDA v11.8 (Detectron2 needs PyTorch2.0.1 to run).
 
    ```pwsh-session
-   > py -m pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
+   > py -3.10 -m pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
    ```
 
    If you are using LabGym without a GPU, use the following command instead.
 
    ```pwsh-session
-   > py -m pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cpu
+   > py -3.10 -m pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cpu
    ```
 
 10. Launch LabGym.
@@ -115,6 +115,15 @@ enter. All terminal commands going forward should be entered in this terminal.
    
    The GUI will take a few minutes to start up during the first launch. If the 
    LabGym GUI shows up, you have successfully installed LabGym!
+
+   If this doesn't work, which typically is because the python3/script is not in your environment path. You can google 'add python3 script to path in environmental variable in windows' to add it to path, or simply use the following commands to initiate LabGym:
+
+   ```pwsh-session
+   > py -3.10
+
+   >>>from LabGym import __main__
+   >>>__main__.main()
+   ```
 
 &nbsp;
 
