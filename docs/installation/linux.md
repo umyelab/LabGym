@@ -97,9 +97,9 @@ If you're using Arch Linux or one of its derivatives, we assume you have the
 
    6.1 Install Pytorch v2.3.1 (Detectron2 needs PyTorch2.3.1 to install).
    
-         ```console
-         $ python3 -m pip install torch==2.3.1
-         ```
+      ```console
+      $ python3 -m pip install torch==2.3.1
+      ```
    
    6.2 Install [Detectron2][].
    
