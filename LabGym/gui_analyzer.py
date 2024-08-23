@@ -891,7 +891,10 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 							names_and_colors=self.behaviornames_and_colors,framewidth=self.framewidth,dim_tconv=self.dim_tconv,dim_conv=self.dim_conv,channel=self.channel,
 							include_bodyparts=self.include_bodyparts,std=self.std,categorize_behavior=categorize_behavior,animation_analyzer=self.animation_analyzer,
 							t=self.t,duration=self.duration,length=self.length,social_distance=self.social_distance)
-						AAD.acquire_information(batch_size=self.detector_batch,background_free=self.background_free)
+						if self.behavior_mode==1:
+							AAD.acquire_information_interact_basic(batch_size=self.detector_batch,background_free=self.background_free)
+						else:
+							AAD.acquire_information(batch_size=self.detector_batch,background_free=self.background_free)
 						if self.behavior_mode!=1:
 							AAD.craft_data()
 						if self.path_to_categorizer is not None:

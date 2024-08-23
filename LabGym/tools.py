@@ -774,7 +774,11 @@ def generate_patternimage_all(frame,y_bt,y_tp,x_lf,x_rt,outlines_list,inners_lis
 	std: a integer between 0 and 255, higher std, less inners are included in the pattern images
 	'''
 
-	inners_length=len(inners_list[0])
+	if inners_list is None:
+		inners_length=0
+		std=0
+	else:
+		inners_length=len(inners_list[0])
 
 	if inners_length>0:
 		background_inners=np.zeros_like(frame)

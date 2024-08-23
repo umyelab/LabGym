@@ -734,7 +734,8 @@ class AnalyzeAnimalDetector():
 
 		name=self.animal_kinds[0]
 		self.register_counts={}
-		self.register_counts[name]=None
+		self.register_counts[name]={}
+		self.register_counts[name][0]=None
 		if self.animation_analyzer is True:
 			self.animations={}
 			self.animations[name]={}
@@ -787,8 +788,6 @@ class AnalyzeAnimalDetector():
 
 				if batch_count==batch_size:
 
-					batch_count=0
-
 					tensor_frames=[torch.as_tensor(frame.astype("float32").transpose(2,0,1)) for frame in batch]
 					inputs=[{"image":tensor_frame} for tensor_frame in tensor_frames]
 
@@ -813,7 +812,8 @@ class AnalyzeAnimalDetector():
 
 						else:
 
-							self.register_counts[name][0]=frame_count_analyze+1-batch_size+batch_count
+							if self.register_counts[name][0] is None:
+								self.register_counts[name][0]=frame_count_analyze+1-batch_size+batch_count
 
 							mask_area=np.sum(np.array(masks),axis=(1,2))
 							exclusion_mask=np.zeros(len(masks),dtype=bool)
@@ -872,6 +872,7 @@ class AnalyzeAnimalDetector():
 									self.animations[name][0][frame_count_analyze+1-batch_size+batch_count]=np.array(animation)
 					
 					batch=[]
+					batch_count=0
 
 				frame_count_analyze+=1
 
@@ -1790,11 +1791,11 @@ class AnalyzeAnimalDetector():
 							if self.include_bodyparts is True:
 								animation_name=os.path.splitext(self.basename)[0]+'_'+str(frame_count_analyze)+'_len'+str(self.length)+'_std'+str(self.std)+'_itbs.avi'
 								pattern_image_name=os.path.splitext(self.basename)[0]+'_'+str(frame_count_analyze)+'_len'+str(self.length)+'_std'+str(self.std)+'_itbs.jpg'
-								pattern_image=generate_patternimage_all(frame,y_bt,y_tp,x_lf,x_rt,temp_contours,temp_inners,std=self.std)
+								pattern_image=generate_patternimage_all(frame,y_bt,y_tp,x_lf,x_rt,[ct for ct in temp_contours if ct is not None],[inr for inr in temp_inners if inr is not None],std=self.std)
 							else:
 								animation_name=os.path.splitext(self.basename)[0]+'_'+str(frame_count_analyze)+'_len'+str(self.length)+'_itbs.avi'
 								pattern_image_name=os.path.splitext(self.basename)[0]+'_'+str(frame_count_analyze)+'_len'+str(self.length)+'_itbs.jpg'
-								pattern_image=generate_patternimage_all(frame,y_bt,y_tp,x_lf,x_rt,temp_contours,temp_inners,std=0)
+								pattern_image=generate_patternimage_all(frame,y_bt,y_tp,x_lf,x_rt,[ct for ct in temp_contours if ct is not None],None,std=0)
 
 							path_animation=os.path.join(self.results_path,'0',animation_name)
 							path_pattern_image=os.path.join(self.results_path,'0',pattern_image_name)
