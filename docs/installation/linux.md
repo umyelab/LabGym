@@ -122,13 +122,13 @@ Launch LabGym:
    The GUI will take a few minutes to start up during the first launch. If the 
    LabGym GUI shows up, you have successfully installed LabGym!
 
-   If this doesn't work, which typically is because the python3/script is not in your environment path. You can google 'add python3 script to path mac' to add it to path, or simply use the following commands to initiate LabGym:
+   If this doesn't work, which typically is because the python3/script is not in your environment path. You can google 'add python3 script to path linux' to add it to path, or simply use the following commands to initiate LabGym:
 
    ```console
-   % python3
+   $ python3
 
-   >>>from LabGym import __main__
-   >>>__main__.main()
+   >>> from LabGym import __main__
+   >>> __main__.main()
    ```
 
 &nbsp;
