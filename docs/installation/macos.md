@@ -29,13 +29,7 @@ to install LabGym.
 
 5. If you want to use LabGym Detector function:
    
-   5.1. Install PyTorch.
-   
-      ```console
-      % python3 -m pip install torch torchvision torchaudio
-      ```
-   
-   5.2. Install [Detectron2][].
+   5.1. Install [Detectron2][].
    
       ```console
       % python3 -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
@@ -86,13 +80,7 @@ If you use `pipx`, from step #4:
 
 6. If you want to use LabGym Detector function:
 
-   6.1. Install PyTorch in LabGym's virtual environment.
-
-      ```console
-      % pipx runpip LabGym install torch torchvision torchaudio
-      ```
-
-   6.2. Install [Detectron2][] in the LabGym's virtual environment.
+   6.1. Install [Detectron2][] in the LabGym's virtual environment.
 
       ```console
       % pipx runpip LabGym install 'git+https://github.com/facebookresearch/detectron2.git'
