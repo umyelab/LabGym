@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.5.2
+### What's Changed
+* bug fix in 'interactive basic' mode
+* restrain numpy version during installation
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.5.1...v2.5.2>
+
 ## v2.5.1
 ### What's Changed
 * Optimized analysis flow allowing Detectors to fail on some frames without disrupting and aborting the analysis process
