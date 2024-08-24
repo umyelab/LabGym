@@ -49,8 +49,8 @@ Launch LabGym:
    ```console
    % python3
 
-   >>>from LabGym import __main__
-   >>>__main__.main()
+   >>> from LabGym import __main__
+   >>> __main__.main()
    ```
 
 &nbsp;
