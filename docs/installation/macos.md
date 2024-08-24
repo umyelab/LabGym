@@ -37,9 +37,9 @@ to install LabGym.
 
    If you encounter the installation issues, we recommend you try downgrade PyTorch. You may try torch v2.0.1:
    
-    ```console
-      % python3 -m pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2
-    ```
+       ```console
+       % python3 -m pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2
+       ```
 
     And try installing Detectron2 again.
 
