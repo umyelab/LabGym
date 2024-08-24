@@ -28,8 +28,12 @@ dependencies=[
     'scikit-posthocs',
     'packaging',
     'requests',
+    'numpy<=1.26.4',
+    'torch',
+    'torchvision',
+    'torchaudio'
 ]
-requires-python='>=3.9'
+requires-python='>=3.9,<3.11'
 readme='README.md'
 license={text='GPL-3.0'}
 keywords=['behavior analysis','user defined behaviors','behavior quantification',]
@@ -39,7 +43,7 @@ classifiers=[
     'Programming Language :: Python :: 3',
     'Programming Language :: Python :: 3 :: Only',
     'Programming Language :: Python :: 3.9',
-    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.10'
 ]
 dynamic=['version']
 

@@ -21,7 +21,7 @@ import nox
 nox.options.error_on_missing_interpreters = True
 
 
-@nox.session(python=["3.9", "3.10", "3.11"], reuse_venv=True)
+@nox.session(python=["3.9", "3.10"], reuse_venv=True)
 def tests(session: nox.Session) -> None:
     """Run the test suite."""
     session.install("-e", ".")
