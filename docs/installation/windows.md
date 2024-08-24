@@ -84,20 +84,14 @@ enter. All terminal commands going forward should be entered in this terminal.
    ```
 
 7. If you want to use LabGym Detector function:
-
-   7.1. Install PyTorch v2.3.1 (Detectron2 needs PyTorch2.3.1 to install).
    
-      ```pwsh-session
-      > py -3.10 -m pip install torch==2.3.1
-      ```
-   
-   7.2. Install [Detectron2][].
+   7.1. Install [Detectron2][].
    
       ```pwsh-session
       > py -3.10 -m pip install git+https://github.com/facebookresearch/detectron2.git
       ```
    
-   7.3. Install PyTorch v2.0.1 with CUDA v11.8 (Detectron2 needs PyTorch2.0.1 to run).
+   7.2. Install PyTorch v2.0.1 with CUDA v11.8.
    
       ```pwsh-session
       > py -3.10 -m pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
@@ -153,20 +147,14 @@ If you use `pipx`, from step #6:
    ```
 
 8. If you want to use LabGym Detector function:
-
-   8.1. Install PyTorch v2.3.1 (Detectron2 needs PyTorch2.3.1 to install) in LabGym's virtual environment.
    
-      ```pwsh-session
-      > pipx runpip LabGym install torch==2.3.1
-      ```
-   
-   8.2. Install [Detectron2][] in LabGym's virtual environment.
+   8.1. Install [Detectron2][] in LabGym's virtual environment.
    
       ```pwsh-session
       > pipx runpip LabGym install git+https://github.com/facebookresearch/detectron2.git
       ```
    
-   8.3. Install PyTorch v2.0.1 with CUDA v11.8 (Detectron2 needs PyTorch2.0.1 to run) in LabGym's virtual environment.
+   8.2. Install PyTorch v2.0.1 with CUDA v11.8 in LabGym's virtual environment.
    
       ```pwsh-session
       > pipx inject --index-url https://download.pytorch.org/whl/cu118 LabGym torch==2.0.1 torchvision==0.15.2
