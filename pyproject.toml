@@ -28,7 +28,10 @@ dependencies=[
     'scikit-posthocs',
     'packaging',
     'requests',
-    'numpy<=1.26.4'
+    'numpy<=1.26.4',
+    'torch',
+    'torchvision',
+    'torchaudio'
 ]
 requires-python='>=3.9,<3.11'
 readme='README.md'

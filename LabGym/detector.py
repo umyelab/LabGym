@@ -22,8 +22,8 @@ Email: bingye@umich.edu
 import os
 import cv2
 import json
+import torch
 try:
-	import torch
 	from detectron2 import model_zoo
 	from detectron2.checkpoint import DetectionCheckpointer
 	from detectron2.config import get_cfg
