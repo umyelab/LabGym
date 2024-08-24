@@ -117,8 +117,8 @@ Launch LabGym:
    ```pwsh-session
    > py -3.10
 
-   >>>from LabGym import __main__
-   >>>__main__.main()
+   >>> from LabGym import __main__
+   >>> __main__.main()
    ```
 
 &nbsp;
