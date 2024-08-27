@@ -795,8 +795,17 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 				if self.path_to_categorizer is None or self.path_to_detector is None:
 					wx.MessageBox('You need to select a Categorizer / Detector.','Error',wx.OK|wx.ICON_ERROR)
 				else:
+					if len(self.animal_to_include)==0:
+						self.animal_to_include=self.animal_kinds
+					if self.detector_batch<=0:
+						self.detector_batch=1
+					if self.behavior_to_include[0]=='all':
+						self.behavior_to_include=list(self.behaviornames_and_colors.keys())
 					AAD=AnalyzeAnimalDetector()
-					AAD.analyze_images_individuals(self.path_to_detector,self.path_to_videos,self.result_path,self.animal_kinds,path_to_categorizer=self.path_to_categorizer,generate=False,animal_to_include=self.animal_to_include,behavior_to_include=self.behavior_to_include,names_and_colors=self.behaviornames_and_colors,imagewidth=self.framewidth,dim_conv=self.dim_conv,channel=self.channel,detection_threshold=self.detection_threshold,uncertain=self.uncertain,background_free=self.background_free,social_distance=0)
+					AAD.analyze_images_individuals(self.path_to_detector,self.path_to_videos,self.result_path,self.animal_kinds,path_to_categorizer=self.path_to_categorizer,
+						generate=False,animal_to_include=self.animal_to_include,behavior_to_include=self.behavior_to_include,names_and_colors=self.behaviornames_and_colors,
+						imagewidth=self.framewidth,dim_conv=self.dim_conv,channel=self.channel,detection_threshold=self.detection_threshold,uncertain=self.uncertain,
+						background_free=self.background_free,social_distance=0)
 
 			else:
 
