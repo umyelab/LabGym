@@ -442,7 +442,7 @@ class AnalyzeAnimal():
 
 					if self.animation_analyzer is True:
 						for i,f in enumerate(temp_frames):
-							if self.animal_contours[0][max(0,(frame_count_analyze-self.length+1)):frame_count_analyze+1][n] is None:
+							if self.animal_contours[0][max(0,(frame_count_analyze-self.length+1)):frame_count_analyze+1][i] is None:
 								blob=np.zeros((self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8')
 							else:
 								blob=extract_blob_all(f,y_bt,y_tp,x_lf,x_rt,contours=temp_contours[i],channel=self.channel,background_free=background_free)
