@@ -174,7 +174,7 @@ This mode is for identifying solitary behaviors of individuals in static images.
 
 ## [Installation](https://labgym.readthedocs.io/en/latest/installation/index.html)
 
-## [LabGym Zoo (trained models and training examples)](https://github.com/yujiahu415/LabGym/blob/master/LabGym_Zoo.md)
+## [LabGym Zoo (trained models and training examples)](https://github.com/umyelab/LabGym/blob/master/LabGym_Zoo.md)
 
 ## [Reporting Issues](https://labgym.readthedocs.io/en/latest/issues.html)
 
