@@ -811,7 +811,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 
 				all_events={}
 				event_data={}
-				all_lengths=[]
+				all_time=[]
 
 				if self.use_detector is True:
 					for animal_name in self.animal_kinds:
@@ -891,7 +891,8 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 						if self.path_to_categorizer is not None:
 							for n in AA.event_probability:
 								all_events[len(all_events)]=AA.event_probability[n]
-								all_lengths.append(len(AA.event_probability[n]))
+							if len(all_time)<len(AA.all_time):
+								all_time=AA.all_time
 
 					else:
 
@@ -917,18 +918,20 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 							for animal_name in self.animal_kinds:
 								for n in AAD.event_probability[animal_name]:
 									all_events[animal_name][len(all_events[animal_name])]=AAD.event_probability[animal_name][n]
-									all_lengths.append(len(AAD.event_probability[animal_name][n]))
+							if len(all_time)<len(AAD.all_time):
+								all_time=AAD.all_time
 					
 				if self.path_to_categorizer is not None:
+
+					max_length=len(all_time)
 
 					if self.use_detector is False:
 
 						for n in all_events:
-							event_data[len(event_data)]=all_events[n][:min(all_lengths)]
-						time_points=AA.all_time[:min(all_lengths)]
-						all_events_df=pd.DataFrame(event_data,index=time_points)
+							event_data[len(event_data)]=all_events[n]+[['NA',-1]]*(max_length-len(all_events[n]))
+						all_events_df=pd.DataFrame(event_data,index=all_time)
 						all_events_df.to_excel(os.path.join(self.result_path,'all_events.xlsx'),float_format='%.2f',index_label='time/ID')
-						plot_events(self.result_path,event_data,time_points,self.behaviornames_and_colors,self.behavior_to_include,width=0,height=0)
+						plot_events(self.result_path,event_data,all_time,self.behaviornames_and_colors,self.behavior_to_include,width=0,height=0)
 						folders=[i for i in os.listdir(self.result_path) if os.path.isdir(os.path.join(self.result_path,i))]
 						folders.sort()
 						for behavior_name in self.behaviornames_and_colors:
@@ -945,13 +948,12 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 
 						for animal_name in self.animal_to_include:
 							for n in all_events[animal_name]:
-								event_data[len(event_data)]=all_events[animal_name][n][:min(all_lengths)]
-							event_data[len(event_data)]=[['NA',-1]]*min(all_lengths)
+								event_data[len(event_data)]=all_events[animal_name][n]+[['NA',-1]]*(max_length-len(all_events[animal_name][n]))
+							event_data[len(event_data)]=[['NA',-1]]*max_length
 						del event_data[len(event_data)-1]
-						time_points=AAD.all_time[:min(all_lengths)]
-						all_events_df=pd.DataFrame(event_data,index=time_points)
+						all_events_df=pd.DataFrame(event_data,index=all_time)
 						all_events_df.to_excel(os.path.join(self.result_path,'all_events.xlsx'),float_format='%.2f',index_label='time/ID')
-						plot_events(self.result_path,event_data,time_points,self.behaviornames_and_colors,self.behavior_to_include,width=0,height=0)
+						plot_events(self.result_path,event_data,all_time,self.behaviornames_and_colors,self.behavior_to_include,width=0,height=0)
 						folders=[i for i in os.listdir(self.result_path) if os.path.isdir(os.path.join(self.result_path,i))]
 						folders.sort()
 						for animal_name in self.animal_kinds:
