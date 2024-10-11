@@ -78,6 +78,8 @@ Cite LabGym: [LabGym 1.x](https://www.cell.com/cell-reports-methods/fulltext/S26
 
 You can use LabGym via its user interface (no coding knowledge needed), or via command prompt. See [**Extended User Guide**](https://github.com/yujiahu415/LabGym/blob/master/LabGym_extended_user_guide.pdf) for details. 
 
+If the extended user guide is difficult to follow, see this [**Practical "How To" Guide**](https://github.com/yujiahu415/LabGym/blob/master/LabGym_practical_guide.pdf) with layman language and examples.
+
 <p>&nbsp;</p>
 
 ***Put your mouse cursor above each button in the user interface to see a detailed description for it***.
