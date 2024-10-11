@@ -198,7 +198,7 @@ class WindowLv2_GenerateExamples(wx.Frame):
 				self.behavior_mode=1
 			elif behavior_mode=='Interactive advanced: behaviors of each individual and social groups (each example contains either one or multiple animals / objects)':
 				self.behavior_mode=2
-				dialog1=wx.NumberEntryDialog(self,'Interactions happen within the social distance.','(See Extended Guide for details)\nHow many folds of square root of the animals area\nis the social distance (0=infinity far):','Social distance (Enter an integer)',0,0,100000000000000)
+				dialog1=wx.NumberEntryDialog(self,'Interactions happen within the interaction distance.','(See Extended Guide for details)\nHow many folds of square root of the animals area\nis the interaction distance (0=infinity far):','interaction distance (Enter an integer)',0,0,100000000000000)
 				if dialog1.ShowModal()==wx.ID_OK:
 					self.social_distance=int(dialog1.GetValue())
 				else:
@@ -217,7 +217,7 @@ class WindowLv2_GenerateExamples(wx.Frame):
 			self.behavior_mode=0
 			behavior_mode='Non-interactive: behaviors of each individual (each example contains one animal / object)'
 		if self.behavior_mode==2:
-			self.text_specifymode.SetLabel('Behavior mode: '+behavior_mode+' with social distance: '+str(self.social_distance)+' folds of the animal diameter.')
+			self.text_specifymode.SetLabel('Behavior mode: '+behavior_mode+' with interaction distance: '+str(self.social_distance)+' folds of the animal diameter.')
 		else:
 			self.text_specifymode.SetLabel('Behavior mode: '+behavior_mode+'.')
 		dialog.Destroy()
@@ -1090,7 +1090,7 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 			elif behavior_mode=='Interact advanced (identify behavior for both each individual and each interactive pair / group)':
 				self.behavior_mode=2
 				self.channel=3
-				dialog1=wx.NumberEntryDialog(self,'Interactions happen within the social distance.',"How many folds of the animals's diameter\nis the social distance (0=inf):",'Social distance (Enter an integer)',0,0,100000000000000)
+				dialog1=wx.NumberEntryDialog(self,'Interactions happen within the interaction distance.',"How many folds of the animals's diameter\nis the interaction distance (0=inf):",'interaction distance (Enter an integer)',0,0,100000000000000)
 				if dialog1.ShowModal()==wx.ID_OK:
 					self.social_distance=int(dialog1.GetValue())
 				else:
@@ -1136,7 +1136,7 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 		elif self.behavior_mode==1:
 			self.text_categorizertype.SetLabel(categorizer_tp+' (LV '+str(level)+') to identify behaviors of the interactive group.')
 		elif self.behavior_mode==2:
-			self.text_categorizertype.SetLabel(categorizer_tp+' (LV '+str(level)+') to identify behaviors of the interactive individuals and groups. Social distance: '+str(self.social_distance)+' folds of the animal diameter.')
+			self.text_categorizertype.SetLabel(categorizer_tp+' (LV '+str(level)+') to identify behaviors of the interactive individuals and groups. interaction distance: '+str(self.social_distance)+' folds of the animal diameter.')
 		else:
 			self.text_categorizertype.SetLabel(categorizer_tp+' (LV '+str(level)+') to identify behaviors of each non-interactive individual in static images.')
 
