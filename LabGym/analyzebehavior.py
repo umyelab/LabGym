@@ -437,7 +437,10 @@ class AnalyzeAnimal():
 					(y_bt,y_tp,x_lf,x_rt)=crop_frame(frame,functools.reduce(operator.iconcat,[ct for ct in temp_contours if ct is not None],[]))
 					self.animal_centers[0][frame_count_analyze]=(x_lf+5,y_bt+10)
 
-					pattern_image=generate_patternimage_all(frame,y_bt,y_tp,x_lf,x_rt,temp_contours,temp_inners,std=self.std)
+					if self.include_bodyparts is True:
+						pattern_image=generate_patternimage_all(frame,y_bt,y_tp,x_lf,x_rt,[ct for ct in temp_contours if ct is not None],[inr for inr in temp_inners if inr is not None],std=self.std)
+					else:
+						pattern_image=generate_patternimage_all(frame,y_bt,y_tp,x_lf,x_rt,[ct for ct in temp_contours if ct is not None],None,std=0)
 					self.pattern_images[0][frame_count_analyze]=np.array(cv2.resize(pattern_image,(self.dim_conv,self.dim_conv),interpolation=cv2.INTER_AREA))
 
 					if self.animation_analyzer is True:
