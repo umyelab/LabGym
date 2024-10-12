@@ -430,7 +430,7 @@ class AnalyzeAnimal():
 					temp_contours.append(contours)
 					temp_inners.append(inners)
 					length=len(temp_frames)
-					if length==1:
+					if self.register_counts[0] is None:
 						self.register_counts[0]=frame_count_analyze
 					self.animal_contours[0][frame_count_analyze]=contours
 
