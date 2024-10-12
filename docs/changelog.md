@@ -1,9 +1,18 @@
 # Changelog
 
+## v2.5.3
+### What's Changed
+* Bug fix in 'interactive basic' mode
+* Changed output raster plot according to the longest instead of shortest video in a batch
+* Changed the wording 'social distance' to 'interaction distance'
+* Added a LabGym practical 'How to' guide
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.5.2...v2.5.3>
+
 ## v2.5.2
 ### What's Changed
-* bug fix in 'interactive basic' mode
-* restrain numpy version during installation
+* Bug fix in 'interactive basic' mode
+* Restrain numpy version during installation
 
 **Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.5.1...v2.5.2>
 
