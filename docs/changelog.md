@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.5.6
+### What's Changed
+* Bug fix in 'interactive basic' mode
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.5.5...v2.5.6>
+
 ## v2.5.5
 ### What's Changed
 * Bug fix in 'interactive basic' mode
