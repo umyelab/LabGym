@@ -365,10 +365,16 @@ class AnalyzeAnimal():
 		print('Acquiring information in each frame...')
 		print(datetime.datetime.now())
 
+		self.register_counts={}
+		self.register_counts[0]=None
 		if self.animation_analyzer is True:
+			self.animations={}
 			self.animations[0]=[np.zeros((self.length,self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8')]*self.total_analysis_framecount
+		self.pattern_images={}
 		self.pattern_images[0]=[np.zeros((self.dim_conv,self.dim_conv,3),dtype='uint8')]*self.total_analysis_framecount
+		self.animal_contours={}
 		self.animal_contours[0]=[None]*self.total_analysis_framecount
+		self.animal_centers={}
 		self.animal_centers[0]=[None]*self.total_analysis_framecount
 
 		background=self.background
