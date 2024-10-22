@@ -21,7 +21,7 @@ Email: bingye@umich.edu
 
 from .tools import *
 import matplotlib
-matplotlib.use("Agg")
+matplotlib.use('Agg')
 import os
 import cv2
 import datetime
