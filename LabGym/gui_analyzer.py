@@ -113,6 +113,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 		self.include_bodyparts=False # whether to include body parts in the pattern images
 		self.std=0 # a value between 0 and 255, higher value, less body parts will be included in the pattern images
 		self.uncertain=0 # a threshold between the highest the 2nd highest probablity of behaviors to determine if output an 'NA' in behavior classification
+		self.min_length=None # the minimum length (in frames) a behavior should last, can be used to filter out the brief false positives
 		self.show_legend=True # whether to show legend of behavior names in the annotated videos
 		self.background_free=True # whether to include background in animations
 		self.normalize_distance=True # whether to normalize the distance (in pixel) to the animal contour area
@@ -263,8 +264,28 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 				if dialog1.ShowModal()==wx.ID_OK:
 					uncertain=dialog1.GetValue()
 					self.uncertain=uncertain/100
+				else:
+					uncertain=0
+					self.uncertain=0
 				dialog1.Destroy()
-				self.text_selectcategorizer.SetLabel('The path to the Categorizer is: '+self.path_to_categorizer+' with uncertainty of '+str(uncertain)+'%.')
+				if self.behavior_mode<3:
+					dialog1=wx.MessageDialog(self,"Set a minimum length (in frames) for a behavior episode\nto output 'NA' if the duration of a identified behavior\nis shorter than the minimun length?",'Minimum length?',wx.YES_NO|wx.ICON_QUESTION)
+					if dialog1.ShowModal()==wx.ID_YES:
+						dialog2=wx.NumberEntryDialog(self,'Enter the minimun length (in frames)',"If the duration of a identified behavior\nis shorter than the minimun length,\nthe behavior categorization will output as 'NA'.",'Minimum length',2,1,10000)
+						if dialog2.ShowModal()==wx.ID_OK:
+							self.min_length=int(dialog2.GetValue())
+							if self.min_length<2:
+								self.min_length=2
+						else:
+							self.min_length=None
+						dialog2.Destroy()
+					else:
+						self.min_length=None
+					dialog1.Destroy()
+				if self.min_length is None:
+					self.text_selectcategorizer.SetLabel('The path to the Categorizer is: '+self.path_to_categorizer+' with uncertainty of '+str(uncertain)+'%.')
+				else:
+					self.text_selectcategorizer.SetLabel('The path to the Categorizer is: '+self.path_to_categorizer+' with uncertainty of '+str(uncertain)+'%; minimun length of '+str(self.min_length)+'.')
 				self.text_selectbehaviors.SetLabel('All the behaviors in the selected Categorizer with default colors.')
 			elif categorizer=='No behavior classification, just track animals and quantify motion kinematics':
 				self.path_to_categorizer=None
@@ -283,7 +304,28 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 				if dialog1.ShowModal()==wx.ID_OK:
 					uncertain=dialog1.GetValue()
 					self.uncertain=uncertain/100
+				else:
+					uncertain=0
+					self.uncertain=0
+				dialog1.Destroy()
+				if self.behavior_mode<3:
+					dialog1=wx.MessageDialog(self,"Set a minimum length (in frames) for a behavior episode\nto output 'NA' if the duration of a identified behavior\nis shorter than the minimun length?",'Minimum length?',wx.YES_NO|wx.ICON_QUESTION)
+					if dialog1.ShowModal()==wx.ID_YES:
+						dialog2=wx.NumberEntryDialog(self,'Enter the minimun length (in frames)',"If the duration of a identified behavior\nis shorter than the minimun length,\nthe behavior categorization will output as 'NA'.",'Minimum length',2,1,10000)
+						if dialog2.ShowModal()==wx.ID_OK:
+							self.min_length=int(dialog2.GetValue())
+							if self.min_length<2:
+								self.min_length=2
+						else:
+							self.min_length=None
+						dialog2.Destroy()
+					else:
+						self.min_length=None
+					dialog1.Destroy()
+				if self.min_length is None:
 					self.text_selectcategorizer.SetLabel('Categorizer: '+categorizer+' with uncertainty of '+str(uncertain)+'%.')
+				else:
+					self.text_selectcategorizer.SetLabel('Categorizer: '+categorizer+' with uncertainty of '+str(uncertain)+'%; minimun length of '+str(self.min_length)+'.')
 				self.text_selectbehaviors.SetLabel('All the behaviors in the selected Categorizer with default colors.')
 
 			if self.path_to_categorizer is not None:
@@ -884,7 +926,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 							AA.acquire_information_interact_basic(background_free=self.background_free)
 							interact_all=True
 						if self.path_to_categorizer is not None:
-							AA.categorize_behaviors(self.path_to_categorizer,uncertain=self.uncertain)
+							AA.categorize_behaviors(self.path_to_categorizer,uncertain=self.uncertain,min_length=self.min_length)
 						AA.annotate_video(self.behavior_to_include,show_legend=self.show_legend,interact_all=interact_all)
 						AA.export_results(normalize_distance=self.normalize_distance,parameter_to_analyze=self.parameter_to_analyze)
 
@@ -908,7 +950,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 						if self.behavior_mode!=1:
 							AAD.craft_data()
 						if self.path_to_categorizer is not None:
-							AAD.categorize_behaviors(self.path_to_categorizer,uncertain=self.uncertain)
+							AAD.categorize_behaviors(self.path_to_categorizer,uncertain=self.uncertain,min_length=self.min_length)
 						if self.correct_ID is True:
 							AAD.correct_identity(self.specific_behaviors)
 						AAD.annotate_video(self.animal_to_include,self.behavior_to_include,show_legend=self.show_legend)
