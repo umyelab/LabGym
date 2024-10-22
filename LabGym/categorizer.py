@@ -935,7 +935,7 @@ class Categorizers():
 				if out_path is not None:
 					pd.DataFrame(report).transpose().to_excel(os.path.join(out_path,'training_metrics.xlsx'),float_format='%.2f')
 				
-				plt.style.use('seaborn-bright')
+				plt.style.use('classic')
 				plt.figure()
 				plt.plot(H.history['loss'],label='train_loss')
 				plt.plot(H.history['val_loss'],label='val_loss')
@@ -1090,7 +1090,7 @@ class Categorizers():
 				if out_path is not None:
 					pd.DataFrame(report).transpose().to_excel(os.path.join(out_path,'training_metrics.xlsx'),float_format='%.2f')
 
-				plt.style.use('seaborn-bright')
+				plt.style.use('classic')
 				plt.figure()
 				plt.plot(H.history['loss'],label='train_loss')
 				plt.plot(H.history['val_loss'],label='val_loss')
@@ -1238,7 +1238,7 @@ class Categorizers():
 				if out_path is not None:
 					pd.DataFrame(report).transpose().to_excel(os.path.join(out_path,'training_metrics.xlsx'),float_format='%.2f')
 
-				plt.style.use('seaborn-bright')
+				plt.style.use('classic')
 				plt.figure()
 				plt.plot(H.history['loss'],label='train_loss')
 				plt.plot(H.history['val_loss'],label='val_loss')
