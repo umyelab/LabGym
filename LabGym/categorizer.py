@@ -924,8 +924,9 @@ class Categorizers():
 				predictions=model.predict(testX,batch_size=batch_size)
 
 				if len(self.classnames)==2:
-					print(classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=[self.classnames[0]]))
-					report=classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=[self.classnames[0]],output_dict=True)
+					predictions=[round(i[0]) for i in predictions]
+					print(classification_report(testY,predictions,target_names=self.classnames))
+					report=classification_report(testY,predictions,target_names=self.classnames,output_dict=True)
 				else:
 					print(classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=self.classnames))
 					report=classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=self.classnames,output_dict=True)
