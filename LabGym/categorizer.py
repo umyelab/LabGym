@@ -1386,8 +1386,13 @@ class Categorizers():
 			else:
 				predictions=model.predict([animations,pattern_images],batch_size=32)
 
-			print(classification_report(labels,predictions.argmax(axis=1),target_names=classnames))
-			report=classification_report(labels,predictions.argmax(axis=1),target_names=classnames,output_dict=True)
+			if len(classnames)==2:
+				predictions=[round(i[0]) for i in predictions]
+				print(classification_report(labels,predictions,target_names=classnames))
+				report=classification_report(labels,predictions,target_names=classnames,output_dict=True)
+			else:
+				print(classification_report(labels,predictions.argmax(axis=1),target_names=classnames))
+				report=classification_report(labels,predictions.argmax(axis=1),target_names=classnames,output_dict=True)
 
 			if result_path is not None:
 				pd.DataFrame(report).transpose().to_excel(os.path.join(result_path,'testing_reports.xlsx'),float_format='%.2f')
