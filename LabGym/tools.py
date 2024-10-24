@@ -1328,3 +1328,17 @@ def calculate_distances(path_to_folder,behavior_to_include,out_path):
 			traveling_distance=0.0
 			centers_for_calculation=[]
 			indices_for_calculation=[]
+
+			for behavior in start_centers[idx]:
+				if behavior in included_behaviors[idx]:
+					centers_for_calculation.append(start_centers[idx][behavior])
+					indices_for_calculation.append(start_indices[idx][behavior])
+
+			n=0
+			while n<len(centers_for_calculation):
+				if n!=len(centers_for_calculation)-1:
+					shortest_distance+=math.dist(centers_for_calculation[n],centers_for_calculation[n+1])
+				cv2.circle(frame,(centers_for_calculation[n]),5,(255,max(0,255-int(n*diff)),min(255,int(n*diff))),-1)
+				n+=1
+
+			centers_traveled=centers[idx][indices_for_calculation[0]:indices_for_calculation[-1]+1]
