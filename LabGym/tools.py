@@ -1306,3 +1306,13 @@ def calculate_distances(path_to_folder,behavior_to_include,out_path):
 					included_behaviors[idx]=behavior_names[idx]
 				else:
 					included_behaviors[idx]=behavior_to_include
+
+		capture=cv2.VideoCapture(os.path.join(path_to_folder,'Annotated video.avi'))
+		while True:
+			ret,frame=capture.read()
+			if frame_count>frame_index:
+				break
+			if frame is None:
+				break
+			frame_count+=1
+		capture.release()
