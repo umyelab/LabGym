@@ -1397,7 +1397,10 @@ class WindowLv2_CalculateDistances(wx.Frame):
 			behavior_names=[]
 			for i in os.listdir(self.path_to_analysis_results):
 				if os.path.isdir(os.path.join(self.path_to_analysis_results,i)):
-					behavior_names.append(i)
+					for behavior in os.listdir(os.path.join(self.path_to_analysis_results,i)):
+						if os.path.isdir(os.path.join(self.path_to_analysis_results,i,behavior)):
+							if behavior not in behavior_names:
+								behavior_names.append(behavior)
 
 			if len(behavior_names)==0:
 				wx.MessageBox('No identified behavior in the LabGym analysis results.','Error',wx.OK|wx.ICON_ERROR)
@@ -1408,8 +1411,22 @@ class WindowLv2_CalculateDistances(wx.Frame):
 				else:
 					self.behavior_to_include=behavior_names
 				dialog.Destroy()
-
 				if len(self.behavior_to_include)==0:
 					self.behavior_to_include=behavior_names
+				self.text_selectbehaviors.SetLabel('Behaviors to include: '+str(self.behavior_to_include)+'.')
+
+
+	def calculate_distances(self,event):
+
+		if self.path_to_analysis_results is None or self.out_path is None or self.behavior_to_include is None:
+
+			wx.MessageBox('No input / output folder / behaviors selected.','Error',wx.OK|wx.ICON_ERROR)
+
+		else:
+
+			for filename in os.listdir(self.path_to_analysis_results):
+				filefolder=os.path.join(self.path_to_analysis_results,filename)
+				if os.path.isdir(filefolder):
+					calculate_distances(filefolder,self.behavior_to_include,self.out_path)
 
 
