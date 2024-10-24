@@ -1373,4 +1373,6 @@ def calculate_distances(path_to_folder,filename,behavior_to_include,out_path):
 			pd.concat(out_spreadsheet,axis=1).to_excel(os.path.join(out_path,filename+'_'+animal+'_distance_calculation.xlsx'),float_format='%.2f',index_label='ID/parameter')
 			cv2.imwrite(os.path.join(out_path,filename+'_'+animal+'_shortest_distance.jpg'),frame)
 
+	print('Distances calculation completed!')
+
 
