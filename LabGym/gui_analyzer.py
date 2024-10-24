@@ -1368,5 +1368,12 @@ class WindowLv2_CalculateDistances(wx.Frame):
 		self.Show(True)
 
 
+	def select_filepath(self,event):
+
+		dialog=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
+		if dialog.ShowModal()==wx.ID_OK:
+			self.path_to_analysis_results=dialog.GetPath()
+			self.text_inputfolder.SetLabel('Selected: '+self.path_to_analysis_results+'.')
+		dialog.Destroy()
 
 
