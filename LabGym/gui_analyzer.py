@@ -1303,3 +1303,18 @@ class WindowLv2_PlotBehaviors(wx.Frame):
 
 
 
+class WindowLv2_CalculateDistances(wx.Frame):
+
+	'''
+	The 'Calculate Distances' functional unit
+	'''
+
+	def __init__(self,title):
+
+		super(WindowLv2_CalculateDistances,self).__init__(parent=None,title=title,size=(1000,260))
+		self.file_path=None # the path to LabGym analysis results
+		self.result_path=None # the folder to store data mining results
+
+
+
+
