@@ -1326,7 +1326,7 @@ class WindowLv2_CalculateDistances(wx.Frame):
 
 		module_inputfolder=wx.BoxSizer(wx.HORIZONTAL)
 		button_inputfolder=wx.Button(panel,label='Select the folder that stores\nLabGym analysis results',size=(300,40))
-		button_inputfolder.Bind(wx.EVT_BUTTON,self.select_filepath)
+		button_inputfolder.Bind(wx.EVT_BUTTON,self.select_inputpath)
 		wx.Button.SetToolTip(button_inputfolder,'This is the folder that stores the raster plot after LabGym behavioral analysis')
 		self.text_inputfolder=wx.StaticText(panel,label='None.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_inputfolder.Add(button_inputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -1337,7 +1337,7 @@ class WindowLv2_CalculateDistances(wx.Frame):
 
 		module_outputfolder=wx.BoxSizer(wx.HORIZONTAL)
 		button_outputfolder=wx.Button(panel,label='Select the folder to store\nthe calculated distances',size=(300,40))
-		button_outputfolder.Bind(wx.EVT_BUTTON,self.select_result_path)
+		button_outputfolder.Bind(wx.EVT_BUTTON,self.select_outputpath)
 		wx.Button.SetToolTip(button_outputfolder,'In this folder there will be a spreadsheet storing the calculated distances for each video.')
 		self.text_outputfolder=wx.StaticText(panel,label='None.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_outputfolder.Add(button_outputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -1368,7 +1368,7 @@ class WindowLv2_CalculateDistances(wx.Frame):
 		self.Show(True)
 
 
-	def select_filepath(self,event):
+	def select_inputpath(self,event):
 
 		dialog=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
 		if dialog.ShowModal()==wx.ID_OK:
@@ -1377,3 +1377,10 @@ class WindowLv2_CalculateDistances(wx.Frame):
 		dialog.Destroy()
 
 
+	def select_outputpath(self,event):
+
+		dialog=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
+		if dialog.ShowModal()==wx.ID_OK:
+			self.out_path=dialog.GetPath()
+			self.text_outputfolder.SetLabel('Calculated distances are in: '+self.out_path+'.')
+		dialog.Destroy()
