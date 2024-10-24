@@ -1286,3 +1286,23 @@ def calculate_distances(path_to_folder,behavior_to_include,out_path):
 					except:
 						value=None
 					centers[idx].append(value)
+
+		for col_name,col in all_events_probability_df.items():
+
+			if col_name!='time/ID':
+				idx=int(col_name)
+				for n,i in enumerate(col):
+					event=eval(i)
+					behavior=event[0]
+					if behavior!='NA':
+						if frame_index is None:
+							frame_index=n
+						if behavior not in behavior_names[idx]:
+							behavior_names[idx].append(behavior)
+							start_centers[idx][behavior]=centers[idx][n]
+							start_indices[idx][behavior]=n
+
+				if len(behavior_names[idx])<len(behavior_to_include):
+					included_behaviors[idx]=behavior_names[idx]
+				else:
+					included_behaviors[idx]=behavior_to_include
