@@ -27,7 +27,7 @@ from pathlib import Path
 from .gui_categorizer import WindowLv2_GenerateExamples,WindowLv2_TrainCategorizers,WindowLv2_SortBehaviors,WindowLv2_TestCategorizers
 from .gui_detector import WindowLv2_GenerateImages,WindowLv2_TrainDetectors,WindowLv2_TestDetectors
 from .gui_preprocessor import WindowLv2_ProcessVideos,WindowLv2_DrawMarkers
-from .gui_analyzer import WindowLv2_AnalyzeBehaviors,WindowLv2_MineResults,WindowLv2_PlotBehaviors
+from .gui_analyzer import WindowLv2_AnalyzeBehaviors,WindowLv2_MineResults,WindowLv2_PlotBehaviors,WindowLv2_CalculateDistances
 from LabGym import __version__
 
 
@@ -263,7 +263,7 @@ class WindowLv1_AnalysisModule(wx.Frame):
 
 	def __init__(self,title):
 
-		super(WindowLv1_AnalysisModule,self).__init__(parent=None,title=title,size=(500,290))
+		super(WindowLv1_AnalysisModule,self).__init__(parent=None,title=title,size=(500,320))
 		self.dispaly_window()
 
 
@@ -320,7 +320,7 @@ class WindowLv1_AnalysisModule(wx.Frame):
 
 	def calculate_distances(self,event):
 
-		WindowLv2_PlotBehaviors('Generate Behavior Plot')
+		WindowLv2_CalculateDistances('Calculate Distances')
 
 
 
