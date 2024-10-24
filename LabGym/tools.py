@@ -1238,3 +1238,22 @@ def calculate_distances(path_to_folder,behavior_to_include,out_path):
 
 	behavior_to_include: the behaviors used in calculation
 	'''
+
+	animals=[]
+	all_centers=[]
+	all_event_probability=[]
+
+	for i in os.listdir(path_to_folder):
+		if i.endswith('_centers.xlsx') or i.endswith('_centers.xls') or i.endswith('_centers.XLSX') or i.endswith('_centers.XLS'):
+			all_centers.append(i)
+		if i.endswith('_event_probability.xlsx') or i.endswith('_event_probability.xls') or i.endswith('_event_probability.XLSX') or i.endswith('_event_probability.XLS'):
+			all_event_probability.append(i)
+
+	if len(all_centers)>1:
+		for i in all_centers:
+			animals.append(i.split('_')[0])
+	else:
+		if len(all_centers[0].split('_'))>2:
+			animals.append(all_centers[0].split('_')[0])
+		else:
+			animals=['']
