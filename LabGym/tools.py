@@ -1342,14 +1342,19 @@ def calculate_distances(path_to_folder,filename,behavior_to_include,out_path):
 				if n!=len(centers_for_calculation)-1:
 					shortest_distance+=math.dist(centers_for_calculation[n],centers_for_calculation[n+1])
 				cv2.circle(frame,(centers_for_calculation[n]),5,(255,max(0,255-int(n*diff)),min(255,int(n*diff))),-1)
+				cv2.line(frame,centers_for_calculation[n],centers_for_calculation[n+1],(255,max(0,255-int(n*diff)),min(255,int(n*diff))),5)
 				n+=1
 
 			centers_traveled=centers[idx][indices_for_calculation[0]:indices_for_calculation[-1]+1]
 
 			n=0
 			while n<len(centers_traveled)-1:
-				if centers_traveled[n] is not None and centers_traveled[n+1] is not None:
-					traveling_distance+=math.dist(centers_traveled[n],centers_traveled[n+1])
+				if centers_traveled[n] is not None:
+					if centers_traveled[n+1] is not None:
+						cv2.line(frame,centers_traveled[n],centers_traveled[n+1],(0,255,0),2)
+						traveling_distance+=math.dist(centers_traveled[n],centers_traveled[n+1])
+					else:
+						cv2.circle(frame,(centers_traveled[n]),2,(0,255,0),-1)
 				n+=1
 
 			shortest_distances[idx]=shortest_distance
