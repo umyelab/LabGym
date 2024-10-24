@@ -1270,3 +1270,19 @@ def calculate_distances(path_to_folder,behavior_to_include,out_path):
 		start_indices={}
 		frame_count=0
 		frame_index=None
+
+		for col_name,col in all_centers_df.items():
+
+			if col_name!='time/ID':
+				idx=int(col_name)
+				centers[idx]=[]
+				behavior_names[idx]=[]
+				included_behaviors[idx]=[]
+				start_centers[idx]={}
+				start_indices[idx]={}
+				for i in col:
+					try:
+						value=eval(i)
+					except:
+						value=None
+					centers[idx].append(value)
