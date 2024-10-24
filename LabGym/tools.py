@@ -1257,3 +1257,16 @@ def calculate_distances(path_to_folder,behavior_to_include,out_path):
 			animals.append(all_centers[0].split('_')[0])
 		else:
 			animals=['']
+
+	for a,animal in enumerate(animals):
+
+		all_centers_df=pd.read_excel(os.path.join(path_to_folder,all_centers[a]))
+		all_events_probability_df=pd.read_excel(os.path.join(path_to_folder,all_event_probability[a]))
+
+		centers={}
+		behavior_names={}
+		included_behaviors={}
+		start_centers={}
+		start_indices={}
+		frame_count=0
+		frame_index=None
