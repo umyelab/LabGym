@@ -1314,7 +1314,7 @@ class WindowLv2_CalculateDistances(wx.Frame):
 		super(WindowLv2_CalculateDistances,self).__init__(parent=None,title=title,size=(1000,260))
 		self.path_to_analysis_results=None # the folder that stores LabGym analysis results
 		self.out_path=None # the folder to store the calculated distances
-		self.behavior_to_include=['all'] # the behaviors used in calculation
+		self.behavior_to_include=None # the behaviors used in calculation
 
 		self.display_window()
 
@@ -1384,3 +1384,32 @@ class WindowLv2_CalculateDistances(wx.Frame):
 			self.out_path=dialog.GetPath()
 			self.text_outputfolder.SetLabel('Calculated distances are in: '+self.out_path+'.')
 		dialog.Destroy()
+
+
+	def select_behaviors(self,event):
+
+		if self.path_to_analysis_results is None:
+
+			wx.MessageBox('No input folder selected.','Error',wx.OK|wx.ICON_ERROR)
+
+		else:
+
+			behavior_names=[]
+			for i in os.listdir(self.path_to_analysis_results):
+				if os.path.isdir(os.path.join(self.path_to_analysis_results,i)):
+					behavior_names.append(i)
+
+			if len(behavior_names)==0:
+				wx.MessageBox('No identified behavior in the LabGym analysis results.','Error',wx.OK|wx.ICON_ERROR)
+			else:
+				dialog=wx.MultiChoiceDialog(self,message='Select behaviors',caption='Behaviors to include',choices=behavior_names)
+				if dialog.ShowModal()==wx.ID_OK:
+					self.behavior_to_include=[behavior_names[i] for i in dialog.GetSelections()]
+				else:
+					self.behavior_to_include=behavior_names
+				dialog.Destroy()
+
+				if len(self.behavior_to_include)==0:
+					self.behavior_to_include=behavior_names
+
+
