@@ -263,7 +263,7 @@ class WindowLv1_AnalysisModule(wx.Frame):
 
 	def __init__(self,title):
 
-		super(WindowLv1_AnalysisModule,self).__init__(parent=None,title=title,size=(500,320))
+		super(WindowLv1_AnalysisModule,self).__init__(parent=None,title=title,size=(500,340))
 		self.dispaly_window()
 
 
