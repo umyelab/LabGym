@@ -1316,3 +1316,15 @@ def calculate_distances(path_to_folder,behavior_to_include,out_path):
 				break
 			frame_count+=1
 		capture.release()
+
+		shortest_distances={}
+		traveling_distances={}
+		distance_ratios={}
+		diff=int(255/len(behavior_to_include))+25
+
+		for idx in start_centers:
+
+			shortest_distance=0.0
+			traveling_distance=0.0
+			centers_for_calculation=[]
+			indices_for_calculation=[]
