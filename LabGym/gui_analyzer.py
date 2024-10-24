@@ -1040,9 +1040,9 @@ class WindowLv2_MineResults(wx.Frame):
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
 
 		module_inputfolder=wx.BoxSizer(wx.HORIZONTAL)
-		button_inputfolder=wx.Button(panel,label='Select the folder that stores\nthe data files',size=(300,40))
+		button_inputfolder=wx.Button(panel,label='Select the folder that contains\nthe LabGym analysis output folders',size=(300,40))
 		button_inputfolder.Bind(wx.EVT_BUTTON,self.select_filepath)
-		wx.Button.SetToolTip(button_inputfolder,'Put all folders that store analysis results (each folder contains one raster plot) for control / experimental groups into this folder.')
+		wx.Button.SetToolTip(button_inputfolder,'Put all LabGym analysis output folders of different batches (each folder contains one raster plot for one batch) that you want to compare into this folder.')
 		self.text_inputfolder=wx.StaticText(panel,label='None.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_inputfolder.Add(button_inputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_inputfolder.Add(self.text_inputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -1312,8 +1312,60 @@ class WindowLv2_CalculateDistances(wx.Frame):
 	def __init__(self,title):
 
 		super(WindowLv2_CalculateDistances,self).__init__(parent=None,title=title,size=(1000,260))
-		self.file_path=None # the folder that stores LabGym analysis results
-		self.result_path=None # the folder to store the calculated distances
+		self.path_to_analysis_results=None # the folder that stores LabGym analysis results
+		self.out_path=None # the folder to store the calculated distances
+		self.behavior_to_include=['all'] # the behaviors used in calculation
+
+		self.display_window()
+
+
+	def display_window(self):
+
+		panel=wx.Panel(self)
+		boxsizer=wx.BoxSizer(wx.VERTICAL)
+
+		module_inputfolder=wx.BoxSizer(wx.HORIZONTAL)
+		button_inputfolder=wx.Button(panel,label='Select the folder that stores\nLabGym analysis results',size=(300,40))
+		button_inputfolder.Bind(wx.EVT_BUTTON,self.select_filepath)
+		wx.Button.SetToolTip(button_inputfolder,'This is the folder that stores the raster plot after LabGym behavioral analysis')
+		self.text_inputfolder=wx.StaticText(panel,label='None.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
+		module_inputfolder.Add(button_inputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		module_inputfolder.Add(self.text_inputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(0,10,0)
+		boxsizer.Add(module_inputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(0,5,0)
+
+		module_outputfolder=wx.BoxSizer(wx.HORIZONTAL)
+		button_outputfolder=wx.Button(panel,label='Select the folder to store\nthe calculated distances',size=(300,40))
+		button_outputfolder.Bind(wx.EVT_BUTTON,self.select_result_path)
+		wx.Button.SetToolTip(button_outputfolder,'In this folder there will be a spreadsheet storing the calculated distances for each video.')
+		self.text_outputfolder=wx.StaticText(panel,label='None.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
+		module_outputfolder.Add(button_outputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		module_outputfolder.Add(self.text_outputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(module_outputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(0,5,0)
+
+		module_selectbehaviors=wx.BoxSizer(wx.HORIZONTAL)
+		button_selectbehaviors=wx.Button(panel,label='Select behaviors to be\nincluded in the calculation',size=(300,40))
+		button_selectbehaviors.Bind(wx.EVT_BUTTON,self.select_behaviors)
+		wx.Button.SetToolTip(button_selectbehaviors,'The locations where the animals perform the selected behaviors for the first time will be used to calculate shortest distances among these locations, as well as the total traveling distances of the actual route.')
+		self.text_selectbehaviors=wx.StaticText(panel,label='All identified behaviors in the experiments.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
+		module_selectbehaviors.Add(button_selectbehaviors,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		module_selectbehaviors.Add(self.text_selectbehaviors,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(module_selectbehaviors,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(0,5,0)
+
+		button_calculatedistances=wx.Button(panel,label='Start to calculate distances',size=(300,40))
+		button_calculatedistances.Bind(wx.EVT_BUTTON,self.calculate_distances)
+		wx.Button.SetToolTip(button_calculatedistances,'Two types of distances will be calculated: 1. The shortest distances among the locations where animals perform the selected behaviors for the first time. 2. The total traveling distances of the actual route.')
+		boxsizer.Add(0,5,0)
+		boxsizer.Add(button_calculatedistances,0,wx.RIGHT|wx.ALIGN_RIGHT,90)
+		boxsizer.Add(0,10,0)
+
+		panel.SetSizer(boxsizer)
+
+		self.Centre()
+		self.Show(True)
 
 
 
