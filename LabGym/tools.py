@@ -1220,3 +1220,21 @@ def parse_all_events_file(path_to_events):
 	return (event_probability,time_points,behavior_names)
 
 
+def calculate_distances(path_to_folder,behavior_to_include,out_path):
+
+	'''
+	This function is used to calculate the shortes distance and the total 
+	traveling dsitance and their ratio among the locations of the animals 
+	when a selected behavior occurs for the first time.
+
+	For example, an animal explores locations A, B, and C in sequence.
+	This function will calculate the shortes distance that connects 
+	locations A, B, and C, in the exploration sequence of the aninmal.
+	It will also calculate the traveling distance of the actual route of 
+	the animal.
+	
+	path_to_folder: The path to the folder that stores the 'all_event_probability.xlsx',
+	'all_centers.xlsx', and 'Annotated video.avi'.
+
+	behavior_to_include: the behaviors used in calculation
+	'''
