@@ -1220,7 +1220,7 @@ def parse_all_events_file(path_to_events):
 	return (event_probability,time_points,behavior_names)
 
 
-def calculate_distances(path_to_folder,behavior_to_include,out_path):
+def calculate_distances(path_to_folder,filename,behavior_to_include,out_path):
 
 	'''
 	This function is used to calculate the shortes distance and the total 
@@ -1235,6 +1235,8 @@ def calculate_distances(path_to_folder,behavior_to_include,out_path):
 	
 	path_to_folder: The path to the folder that stores the 'all_event_probability.xlsx',
 	'all_centers.xlsx', and 'Annotated video.avi'.
+
+	filename: the name of the path_to_folder
 
 	behavior_to_include: the behaviors used in calculation
 	'''
@@ -1358,10 +1360,10 @@ def calculate_distances(path_to_folder,behavior_to_include,out_path):
 		out_spreadsheet.append(pd.DataFrame.from_dict(traveling_distances,orient='index',columns=['traveling_distances']).reset_index(drop=True))
 		out_spreadsheet.append(pd.DataFrame.from_dict(distance_ratios,orient='index',columns=['distance_ratios']).reset_index(drop=True))
 		if animals[0]=='':
-			pd.concat(out_spreadsheet,axis=1).to_excel(os.path.join(out_path,'distance_calculation.xlsx'),float_format='%.2f',index_label='ID/parameter')
-			cv2.imwrite(os.path.join(out_path,'shortest_distance.jpg'),frame)
+			pd.concat(out_spreadsheet,axis=1).to_excel(os.path.join(out_path,filename+'_distance_calculation.xlsx'),float_format='%.2f',index_label='ID/parameter')
+			cv2.imwrite(os.path.join(out_path,filename+'_shortest_distance.jpg'),frame)
 		else:
-			pd.concat(out_spreadsheet,axis=1).to_excel(os.path.join(out_path,animal+'_distance_calculation.xlsx'),float_format='%.2f',index_label='ID/parameter')
-			cv2.imwrite(os.path.join(out_path,animal+'_shortest_distance.jpg'),frame)
+			pd.concat(out_spreadsheet,axis=1).to_excel(os.path.join(out_path,filename+'_'+animal+'_distance_calculation.xlsx'),float_format='%.2f',index_label='ID/parameter')
+			cv2.imwrite(os.path.join(out_path,filename+'_'+animal+'_shortest_distance.jpg'),frame)
 
 
