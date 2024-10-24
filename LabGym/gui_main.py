@@ -289,6 +289,12 @@ class WindowLv1_AnalysisModule(wx.Frame):
 		button_rasterplot.Bind(wx.EVT_BUTTON,self.plot_behavior)
 		wx.Button.SetToolTip(button_rasterplot,'Generate a behavior plot given an all_events.xlsx file.')
 		boxsizer.Add(button_rasterplot,0,wx.ALIGN_CENTER,10)
+		boxsizer.Add(0,20,0)
+
+		button_calculatedistances=wx.Button(panel,label='Calculate Distances',size=(300,40))
+		button_calculatedistances.Bind(wx.EVT_BUTTON,self.calculate_distances)
+		wx.Button.SetToolTip(button_calculatedistances,'Using LabGym analysis results to calculate: 1. The shortest distances among the locations where animals perform the selected behaviors for the first time, in chronological order. 2. The total traveling distances of the actual route the animals.')
+		boxsizer.Add(button_calculatedistances,0,wx.ALIGN_CENTER,10)
 		boxsizer.Add(0,30,0)
 
 		panel.SetSizer(boxsizer)
@@ -308,6 +314,11 @@ class WindowLv1_AnalysisModule(wx.Frame):
 
 
 	def plot_behavior(self,event):
+
+		WindowLv2_PlotBehaviors('Generate Behavior Plot')
+
+
+	def calculate_distances(self,event):
 
 		WindowLv2_PlotBehaviors('Generate Behavior Plot')
 
