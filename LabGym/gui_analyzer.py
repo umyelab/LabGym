@@ -28,7 +28,7 @@ import torch
 import json
 from .analyzebehavior import AnalyzeAnimal
 from .analyzebehavior_dt import AnalyzeAnimalDetector
-from .tools import plot_events,parse_all_events_file
+from .tools import plot_events,parse_all_events_file,calculate_distances
 from .minedata import data_mining
 
 
@@ -1427,6 +1427,6 @@ class WindowLv2_CalculateDistances(wx.Frame):
 			for filename in os.listdir(self.path_to_analysis_results):
 				filefolder=os.path.join(self.path_to_analysis_results,filename)
 				if os.path.isdir(filefolder):
-					calculate_distances(filefolder,self.behavior_to_include,self.out_path)
+					calculate_distances(filefolder,filename,self.behavior_to_include,self.out_path)
 
 
