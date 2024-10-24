@@ -1352,3 +1352,16 @@ def calculate_distances(path_to_folder,behavior_to_include,out_path):
 			shortest_distances[idx]=shortest_distance
 			traveling_distances[idx]=traveling_distance
 			distance_ratios[idx]=traveling_distance/shortest_distance
+
+		out_spreadsheet=[]
+		out_spreadsheet.append(pd.DataFrame.from_dict(shortest_distances,orient='index',columns=['shortest_distances']).reset_index(drop=True))
+		out_spreadsheet.append(pd.DataFrame.from_dict(traveling_distances,orient='index',columns=['traveling_distances']).reset_index(drop=True))
+		out_spreadsheet.append(pd.DataFrame.from_dict(distance_ratios,orient='index',columns=['distance_ratios']).reset_index(drop=True))
+		if animals[0]=='':
+			pd.concat(out_spreadsheet,axis=1).to_excel(os.path.join(out_path,'distance_calculation.xlsx'),float_format='%.2f',index_label='ID/parameter')
+			cv2.imwrite(os.path.join(out_path,'shortest_distance.jpg'),frame)
+		else:
+			pd.concat(out_spreadsheet,axis=1).to_excel(os.path.join(out_path,animal+'_distance_calculation.xlsx'),float_format='%.2f',index_label='ID/parameter')
+			cv2.imwrite(os.path.join(out_path,animal+'_shortest_distance.jpg'),frame)
+
+
