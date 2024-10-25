@@ -28,7 +28,7 @@ import torch
 import json
 from .analyzebehavior import AnalyzeAnimal
 from .analyzebehavior_dt import AnalyzeAnimalDetector
-from .tools import plot_events,parse_all_events_file
+from .tools import plot_events,parse_all_events_file,calculate_distances
 from .minedata import data_mining
 
 
@@ -113,6 +113,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 		self.include_bodyparts=False # whether to include body parts in the pattern images
 		self.std=0 # a value between 0 and 255, higher value, less body parts will be included in the pattern images
 		self.uncertain=0 # a threshold between the highest the 2nd highest probablity of behaviors to determine if output an 'NA' in behavior classification
+		self.min_length=None # the minimum length (in frames) a behavior should last, can be used to filter out the brief false positives
 		self.show_legend=True # whether to show legend of behavior names in the annotated videos
 		self.background_free=True # whether to include background in animations
 		self.normalize_distance=True # whether to normalize the distance (in pixel) to the animal contour area
@@ -263,8 +264,28 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 				if dialog1.ShowModal()==wx.ID_OK:
 					uncertain=dialog1.GetValue()
 					self.uncertain=uncertain/100
+				else:
+					uncertain=0
+					self.uncertain=0
 				dialog1.Destroy()
-				self.text_selectcategorizer.SetLabel('The path to the Categorizer is: '+self.path_to_categorizer+' with uncertainty of '+str(uncertain)+'%.')
+				if self.behavior_mode<3:
+					dialog1=wx.MessageDialog(self,"Set a minimum length (in frames) for a behavior episode\nto output 'NA' if the duration of a identified behavior\nis shorter than the minimun length?",'Minimum length?',wx.YES_NO|wx.ICON_QUESTION)
+					if dialog1.ShowModal()==wx.ID_YES:
+						dialog2=wx.NumberEntryDialog(self,'Enter the minimun length (in frames)',"If the duration of a identified behavior\nis shorter than the minimun length,\nthe behavior categorization will output as 'NA'.",'Minimum length',2,1,10000)
+						if dialog2.ShowModal()==wx.ID_OK:
+							self.min_length=int(dialog2.GetValue())
+							if self.min_length<2:
+								self.min_length=2
+						else:
+							self.min_length=None
+						dialog2.Destroy()
+					else:
+						self.min_length=None
+					dialog1.Destroy()
+				if self.min_length is None:
+					self.text_selectcategorizer.SetLabel('The path to the Categorizer is: '+self.path_to_categorizer+' with uncertainty of '+str(uncertain)+'%.')
+				else:
+					self.text_selectcategorizer.SetLabel('The path to the Categorizer is: '+self.path_to_categorizer+' with uncertainty of '+str(uncertain)+'%; minimun length of '+str(self.min_length)+'.')
 				self.text_selectbehaviors.SetLabel('All the behaviors in the selected Categorizer with default colors.')
 			elif categorizer=='No behavior classification, just track animals and quantify motion kinematics':
 				self.path_to_categorizer=None
@@ -283,7 +304,28 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 				if dialog1.ShowModal()==wx.ID_OK:
 					uncertain=dialog1.GetValue()
 					self.uncertain=uncertain/100
+				else:
+					uncertain=0
+					self.uncertain=0
+				dialog1.Destroy()
+				if self.behavior_mode<3:
+					dialog1=wx.MessageDialog(self,"Set a minimum length (in frames) for a behavior episode\nto output 'NA' if the duration of a identified behavior\nis shorter than the minimun length?",'Minimum length?',wx.YES_NO|wx.ICON_QUESTION)
+					if dialog1.ShowModal()==wx.ID_YES:
+						dialog2=wx.NumberEntryDialog(self,'Enter the minimun length (in frames)',"If the duration of a identified behavior\nis shorter than the minimun length,\nthe behavior categorization will output as 'NA'.",'Minimum length',2,1,10000)
+						if dialog2.ShowModal()==wx.ID_OK:
+							self.min_length=int(dialog2.GetValue())
+							if self.min_length<2:
+								self.min_length=2
+						else:
+							self.min_length=None
+						dialog2.Destroy()
+					else:
+						self.min_length=None
+					dialog1.Destroy()
+				if self.min_length is None:
 					self.text_selectcategorizer.SetLabel('Categorizer: '+categorizer+' with uncertainty of '+str(uncertain)+'%.')
+				else:
+					self.text_selectcategorizer.SetLabel('Categorizer: '+categorizer+' with uncertainty of '+str(uncertain)+'%; minimun length of '+str(self.min_length)+'.')
 				self.text_selectbehaviors.SetLabel('All the behaviors in the selected Categorizer with default colors.')
 
 			if self.path_to_categorizer is not None:
@@ -884,7 +926,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 							AA.acquire_information_interact_basic(background_free=self.background_free)
 							interact_all=True
 						if self.path_to_categorizer is not None:
-							AA.categorize_behaviors(self.path_to_categorizer,uncertain=self.uncertain)
+							AA.categorize_behaviors(self.path_to_categorizer,uncertain=self.uncertain,min_length=self.min_length)
 						AA.annotate_video(self.behavior_to_include,show_legend=self.show_legend,interact_all=interact_all)
 						AA.export_results(normalize_distance=self.normalize_distance,parameter_to_analyze=self.parameter_to_analyze)
 
@@ -908,7 +950,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 						if self.behavior_mode!=1:
 							AAD.craft_data()
 						if self.path_to_categorizer is not None:
-							AAD.categorize_behaviors(self.path_to_categorizer,uncertain=self.uncertain)
+							AAD.categorize_behaviors(self.path_to_categorizer,uncertain=self.uncertain,min_length=self.min_length)
 						if self.correct_ID is True:
 							AAD.correct_identity(self.specific_behaviors)
 						AAD.annotate_video(self.animal_to_include,self.behavior_to_include,show_legend=self.show_legend)
@@ -998,9 +1040,9 @@ class WindowLv2_MineResults(wx.Frame):
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
 
 		module_inputfolder=wx.BoxSizer(wx.HORIZONTAL)
-		button_inputfolder=wx.Button(panel,label='Select the folder that stores\nthe data files',size=(300,40))
+		button_inputfolder=wx.Button(panel,label='Select the folder that contains\nthe LabGym analysis output folders',size=(300,40))
 		button_inputfolder.Bind(wx.EVT_BUTTON,self.select_filepath)
-		wx.Button.SetToolTip(button_inputfolder,'Put all folders that store analysis results (each folder contains one raster plot) for control / experimental groups into this folder.')
+		wx.Button.SetToolTip(button_inputfolder,'Put all LabGym analysis output folders of different batches (each folder contains one raster plot for one batch) that you want to compare into this folder.')
 		self.text_inputfolder=wx.StaticText(panel,label='None.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_inputfolder.Add(button_inputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_inputfolder.Add(self.text_inputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -1259,5 +1301,132 @@ class WindowLv2_PlotBehaviors(wx.Frame):
 		else:
 			plot_events(self.results_folder,self.events_probability,self.time_points,self.names_and_colors,list(self.names_and_colors.keys()))
 
+
+
+class WindowLv2_CalculateDistances(wx.Frame):
+
+	'''
+	The 'Calculate Distances' functional unit
+	'''
+
+	def __init__(self,title):
+
+		super(WindowLv2_CalculateDistances,self).__init__(parent=None,title=title,size=(1000,260))
+		self.path_to_analysis_results=None # the folder that stores LabGym analysis results
+		self.out_path=None # the folder to store the calculated distances
+		self.behavior_to_include=None # the behaviors used in calculation
+
+		self.display_window()
+
+
+	def display_window(self):
+
+		panel=wx.Panel(self)
+		boxsizer=wx.BoxSizer(wx.VERTICAL)
+
+		module_inputfolder=wx.BoxSizer(wx.HORIZONTAL)
+		button_inputfolder=wx.Button(panel,label='Select the folder that stores\nLabGym analysis results',size=(300,40))
+		button_inputfolder.Bind(wx.EVT_BUTTON,self.select_inputpath)
+		wx.Button.SetToolTip(button_inputfolder,'This is the folder that stores the raster plot after LabGym behavioral analysis')
+		self.text_inputfolder=wx.StaticText(panel,label='None.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
+		module_inputfolder.Add(button_inputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		module_inputfolder.Add(self.text_inputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(0,10,0)
+		boxsizer.Add(module_inputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(0,5,0)
+
+		module_outputfolder=wx.BoxSizer(wx.HORIZONTAL)
+		button_outputfolder=wx.Button(panel,label='Select the folder to store\nthe calculated distances',size=(300,40))
+		button_outputfolder.Bind(wx.EVT_BUTTON,self.select_outputpath)
+		wx.Button.SetToolTip(button_outputfolder,'In this folder there will be a spreadsheet storing the calculated distances for each video.')
+		self.text_outputfolder=wx.StaticText(panel,label='None.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
+		module_outputfolder.Add(button_outputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		module_outputfolder.Add(self.text_outputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(module_outputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(0,5,0)
+
+		module_selectbehaviors=wx.BoxSizer(wx.HORIZONTAL)
+		button_selectbehaviors=wx.Button(panel,label='Select behaviors to be\nincluded in the calculation',size=(300,40))
+		button_selectbehaviors.Bind(wx.EVT_BUTTON,self.select_behaviors)
+		wx.Button.SetToolTip(button_selectbehaviors,'The locations where the animals perform the selected behaviors for the first time will be used to calculate shortest distances among these locations, as well as the total traveling distances of the actual route.')
+		self.text_selectbehaviors=wx.StaticText(panel,label='All identified behaviors in the experiments.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
+		module_selectbehaviors.Add(button_selectbehaviors,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		module_selectbehaviors.Add(self.text_selectbehaviors,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(module_selectbehaviors,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(0,5,0)
+
+		button_calculatedistances=wx.Button(panel,label='Start to calculate distances',size=(300,40))
+		button_calculatedistances.Bind(wx.EVT_BUTTON,self.calculate_distances)
+		wx.Button.SetToolTip(button_calculatedistances,'Two types of distances will be calculated: 1. The shortest distances among the locations where animals perform the selected behaviors for the first time. 2. The total traveling distances of the actual route.')
+		boxsizer.Add(0,5,0)
+		boxsizer.Add(button_calculatedistances,0,wx.RIGHT|wx.ALIGN_RIGHT,90)
+		boxsizer.Add(0,10,0)
+
+		panel.SetSizer(boxsizer)
+
+		self.Centre()
+		self.Show(True)
+
+
+	def select_inputpath(self,event):
+
+		dialog=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
+		if dialog.ShowModal()==wx.ID_OK:
+			self.path_to_analysis_results=dialog.GetPath()
+			self.text_inputfolder.SetLabel('Selected: '+self.path_to_analysis_results+'.')
+		dialog.Destroy()
+
+
+	def select_outputpath(self,event):
+
+		dialog=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
+		if dialog.ShowModal()==wx.ID_OK:
+			self.out_path=dialog.GetPath()
+			self.text_outputfolder.SetLabel('Calculated distances are in: '+self.out_path+'.')
+		dialog.Destroy()
+
+
+	def select_behaviors(self,event):
+
+		if self.path_to_analysis_results is None:
+
+			wx.MessageBox('No input folder selected.','Error',wx.OK|wx.ICON_ERROR)
+
+		else:
+
+			behavior_names=[]
+			for i in os.listdir(self.path_to_analysis_results):
+				if os.path.isdir(os.path.join(self.path_to_analysis_results,i)):
+					for behavior in os.listdir(os.path.join(self.path_to_analysis_results,i)):
+						if os.path.isdir(os.path.join(self.path_to_analysis_results,i,behavior)):
+							if behavior not in behavior_names:
+								behavior_names.append(behavior)
+
+			if len(behavior_names)==0:
+				wx.MessageBox('No identified behavior in the LabGym analysis results.','Error',wx.OK|wx.ICON_ERROR)
+			else:
+				dialog=wx.MultiChoiceDialog(self,message='Select behaviors',caption='Behaviors to include',choices=behavior_names)
+				if dialog.ShowModal()==wx.ID_OK:
+					self.behavior_to_include=[behavior_names[i] for i in dialog.GetSelections()]
+				else:
+					self.behavior_to_include=behavior_names
+				dialog.Destroy()
+				if len(self.behavior_to_include)==0:
+					self.behavior_to_include=behavior_names
+				self.text_selectbehaviors.SetLabel('Behaviors to include: '+str(self.behavior_to_include)+'.')
+
+
+	def calculate_distances(self,event):
+
+		if self.path_to_analysis_results is None or self.out_path is None or self.behavior_to_include is None:
+
+			wx.MessageBox('No input / output folder / behaviors selected.','Error',wx.OK|wx.ICON_ERROR)
+
+		else:
+
+			for filename in os.listdir(self.path_to_analysis_results):
+				filefolder=os.path.join(self.path_to_analysis_results,filename)
+				if os.path.isdir(filefolder):
+					calculate_distances(filefolder,filename,self.behavior_to_include,self.out_path)
 
 

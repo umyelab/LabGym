@@ -21,7 +21,7 @@ Email: bingye@umich.edu
 
 from .tools import *
 import matplotlib
-matplotlib.use("Agg")
+matplotlib.use('Agg')
 import os
 import cv2
 import datetime
@@ -924,8 +924,9 @@ class Categorizers():
 				predictions=model.predict(testX,batch_size=batch_size)
 
 				if len(self.classnames)==2:
-					print(classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=[self.classnames[0]]))
-					report=classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=[self.classnames[0]],output_dict=True)
+					predictions=[round(i[0]) for i in predictions]
+					print(classification_report(testY,predictions,target_names=self.classnames))
+					report=classification_report(testY,predictions,target_names=self.classnames,output_dict=True)
 				else:
 					print(classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=self.classnames))
 					report=classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=self.classnames,output_dict=True)
@@ -934,7 +935,7 @@ class Categorizers():
 				if out_path is not None:
 					pd.DataFrame(report).transpose().to_excel(os.path.join(out_path,'training_metrics.xlsx'),float_format='%.2f')
 				
-				plt.style.use('seaborn-bright')
+				plt.style.use('classic')
 				plt.figure()
 				plt.plot(H.history['loss'],label='train_loss')
 				plt.plot(H.history['val_loss'],label='val_loss')
@@ -1078,8 +1079,9 @@ class Categorizers():
 				predictions=model.predict(testX,batch_size=batch_size)
 
 				if len(self.classnames)==2:
-					print(classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=[self.classnames[0]]))
-					report=classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=[self.classnames[0]],output_dict=True)
+					predictions=[round(i[0]) for i in predictions]
+					print(classification_report(testY,predictions,target_names=self.classnames))
+					report=classification_report(testY,predictions,target_names=self.classnames,output_dict=True)
 				else:
 					print(classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=self.classnames))
 					report=classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=self.classnames,output_dict=True)
@@ -1088,7 +1090,7 @@ class Categorizers():
 				if out_path is not None:
 					pd.DataFrame(report).transpose().to_excel(os.path.join(out_path,'training_metrics.xlsx'),float_format='%.2f')
 
-				plt.style.use('seaborn-bright')
+				plt.style.use('classic')
 				plt.figure()
 				plt.plot(H.history['loss'],label='train_loss')
 				plt.plot(H.history['val_loss'],label='val_loss')
@@ -1225,8 +1227,9 @@ class Categorizers():
 				predictions=model.predict([test_animations,test_pattern_images],batch_size=batch_size)
 
 				if len(self.classnames)==2:
-					print(classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=[self.classnames[0]]))
-					report=classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=[self.classnames[0]],output_dict=True)
+					predictions=[round(i[0]) for i in predictions]
+					print(classification_report(testY,predictions,target_names=self.classnames))
+					report=classification_report(testY,predictions,target_names=self.classnames,output_dict=True)
 				else:
 					print(classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=self.classnames))
 					report=classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=self.classnames,output_dict=True)
@@ -1235,7 +1238,7 @@ class Categorizers():
 				if out_path is not None:
 					pd.DataFrame(report).transpose().to_excel(os.path.join(out_path,'training_metrics.xlsx'),float_format='%.2f')
 
-				plt.style.use('seaborn-bright')
+				plt.style.use('classic')
 				plt.figure()
 				plt.plot(H.history['loss'],label='train_loss')
 				plt.plot(H.history['val_loss'],label='val_loss')
@@ -1386,8 +1389,13 @@ class Categorizers():
 			else:
 				predictions=model.predict([animations,pattern_images],batch_size=32)
 
-			print(classification_report(labels,predictions.argmax(axis=1),target_names=classnames))
-			report=classification_report(labels,predictions.argmax(axis=1),target_names=classnames,output_dict=True)
+			if len(classnames)==2:
+				predictions=[round(i[0]) for i in predictions]
+				print(classification_report(labels,predictions,target_names=classnames))
+				report=classification_report(labels,predictions,target_names=classnames,output_dict=True)
+			else:
+				print(classification_report(labels,predictions.argmax(axis=1),target_names=classnames))
+				report=classification_report(labels,predictions.argmax(axis=1),target_names=classnames,output_dict=True)
 
 			if result_path is not None:
 				pd.DataFrame(report).transpose().to_excel(os.path.join(result_path,'testing_reports.xlsx'),float_format='%.2f')

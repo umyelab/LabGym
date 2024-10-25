@@ -521,10 +521,11 @@ class AnalyzeAnimal():
 		print('Data crafting completed!')
 
 
-	def categorize_behaviors(self,path_to_categorizer,uncertain=0):
+	def categorize_behaviors(self,path_to_categorizer,uncertain=0,min_length=None):
 
 		# path_to_categorizer: path to the Categorizer
 		# uncertain: a threshold between the highest the 2nd highest probablity of behaviors to determine if output an 'NA' in behavior classification
+		# min_length: the minimum length (in frames) a behavior should last, can be used to filter out the brief false positives
 
 		print('Categorizing behaviors...')
 		print(datetime.datetime.now())
@@ -591,16 +592,28 @@ class AnalyzeAnimal():
 									self.event_probability[n][i]=[behavior_names[1],prediction[0]]
 							if prediction[0]<0.5:
 								if (1-prediction[0])-prediction[0]>uncertain:
-									self.event_probability[n][i]=[behavior_names[0],1-prediction[0]]
+									self.event_probability[n][i]=[behavior_names[0],1-prediction[0]]		
 						else:
 							if sorted(prediction)[-1]-sorted(prediction)[-2]>uncertain:
 								self.event_probability[n][i]=[behavior_names[np.argmax(prediction)],max(prediction)]
-				
 				idx+=1
 				i+=1
 
 		del predictions
 		gc.collect()
+
+		if min_length is not None:
+			for n in IDs:
+				i=self.length+self.register_counts[n]
+				continued_length=1
+				while i<len(self.event_probability[n]):
+					if self.event_probability[n][i][0]==self.event_probability[n][i-1][0]:
+						continued_length+=1
+					else:
+						if continued_length<min_length:
+							self.event_probability[n][i-continued_length:i]=[['NA',-1]]*continued_length
+						continued_length=1
+					i+=1
 
 		print('Behavioral categorization completed!')
 
@@ -691,7 +704,13 @@ class AnalyzeAnimal():
 
 								cx=self.animal_centers[i][frame_count_analyze][0]
 								cy=self.animal_centers[i][frame_count_analyze][1]
-								cv2.circle(self.background,(cx,cy),int(text_tk),(abs(int(color_diff*(total_animal_number-current_animal_number)-255)),int(color_diff*current_animal_number/2),int(color_diff*(total_animal_number-current_animal_number)/2)),-1)
+
+								if self.animal_centers[i][max(frame_count_analyze-1,0)] is not None:
+									cxp=self.animal_centers[i][max(frame_count_analyze-1,0)][0]
+									cyp=self.animal_centers[i][max(frame_count_analyze-1,0)][1]
+									cv2.line(self.background,(cx,cy),(cxp,cyp),(abs(int(color_diff*(total_animal_number-current_animal_number)-255)),int(color_diff*current_animal_number/2),int(color_diff*(total_animal_number-current_animal_number)/2)),int(text_tk))
+								else:
+									cv2.circle(self.background,(cx,cy),int(text_tk),(abs(int(color_diff*(total_animal_number-current_animal_number)-255)),int(color_diff*current_animal_number/2),int(color_diff*(total_animal_number-current_animal_number)/2)),-1)
 
 								if interact_all is False:
 									cv2.putText(frame,str(i),(cx-10,cy-10),cv2.FONT_HERSHEY_SIMPLEX,text_scl,(255,255,255),text_tk)

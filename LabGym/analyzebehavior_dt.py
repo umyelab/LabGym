@@ -946,10 +946,11 @@ class AnalyzeAnimalDetector():
 		print('Data crafting completed!')
 
 
-	def categorize_behaviors(self,path_to_categorizer,uncertain=0):
+	def categorize_behaviors(self,path_to_categorizer,uncertain=0,min_length=None):
 
 		# path_to_categorizer: path to the Categorizer
 		# uncertain: a threshold between the highest the 2nd highest probability of behaviors to determine if output an 'NA' in behavior classification
+		# min_length: the minimum length (in frames) a behavior should last, can be used to filter out the brief false positives
 
 		print('Categorizing behaviors...')
 		print(datetime.datetime.now())
@@ -1027,12 +1028,25 @@ class AnalyzeAnimalDetector():
 							else:
 								if sorted(prediction)[-1]-sorted(prediction)[-2]>uncertain:
 									self.event_probability[animal_name][n][i]=[behavior_names[np.argmax(prediction)],max(prediction)]
-
 					idx+=1
 					i+=1
 
 			del predictions
 			gc.collect()
+
+		if min_length is not None:
+			for animal_name in self.animal_kinds:
+				for n in IDs:
+					i=self.length+self.register_counts[animal_name][n]
+					continued_length=1
+					while i<len(self.event_probability[animal_name][n]):
+						if self.event_probability[animal_name][n][i][0]==self.event_probability[animal_name][n][i-1][0]:
+							continued_length+=1
+						else:
+							if continued_length<min_length:
+								self.event_probability[animal_name][n][i-continued_length:i]=[['NA',-1]]*continued_length
+							continued_length=1
+						i+=1
 
 		print('Behavioral categorization completed!')
 
@@ -1171,8 +1185,15 @@ class AnalyzeAnimalDetector():
 
 									cx=self.animal_centers[animal_name][i][frame_count_analyze][0]
 									cy=self.animal_centers[animal_name][i][frame_count_analyze][1]
-									cv2.circle(self.background,(cx,cy),int(text_tk),(abs(int(color_diff*(total_animal_number-current_animal_number)-255)),int(color_diff*current_animal_number/2),int(color_diff*(total_animal_number-current_animal_number)/2)),-1)
-									cv2.circle(background,(cx,cy),int(text_tk),(abs(int(color_diff*(total_animal_number-current_animal_number)-255)),int(color_diff*current_animal_number/2),int(color_diff*(total_animal_number-current_animal_number)/2)),-1)
+
+									if self.animal_centers[animal_name][i][max(frame_count_analyze-1,0)] is not None:
+										cxp=self.animal_centers[animal_name][i][max(frame_count_analyze-1,0)][0]
+										cyp=self.animal_centers[animal_name][i][max(frame_count_analyze-1,0)][1]
+										cv2.line(self.background,(cx,cy),(cxp,cyp),(abs(int(color_diff*(total_animal_number-current_animal_number)-255)),int(color_diff*current_animal_number/2),int(color_diff*(total_animal_number-current_animal_number)/2)),int(text_tk))
+										cv2.line(background,(cx,cy),(cxp,cyp),(abs(int(color_diff*(total_animal_number-current_animal_number)-255)),int(color_diff*current_animal_number/2),int(color_diff*(total_animal_number-current_animal_number)/2)),int(text_tk))
+									else:
+										cv2.circle(self.background,(cx,cy),int(text_tk),(abs(int(color_diff*(total_animal_number-current_animal_number)-255)),int(color_diff*current_animal_number/2),int(color_diff*(total_animal_number-current_animal_number)/2)),-1)
+										cv2.circle(background,(cx,cy),int(text_tk),(abs(int(color_diff*(total_animal_number-current_animal_number)-255)),int(color_diff*current_animal_number/2),int(color_diff*(total_animal_number-current_animal_number)/2)),-1)
 
 									if self.behavior_mode!=1:
 										cv2.circle(frame,(cx,cy),int(text_tk*3),(255,0,0),-1)
