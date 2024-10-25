@@ -1360,7 +1360,7 @@ def calculate_distances(path_to_folder,filename,behavior_to_include,out_path):
 
 			shortest_distances[idx]=shortest_distance
 			traveling_distances[idx]=traveling_distance
-			distance_ratios[idx]=traveling_distance/shortest_distance
+			distance_ratios[idx]=shortest_distance/traveling_distance
 
 		out_spreadsheet=[]
 		out_spreadsheet.append(pd.DataFrame.from_dict(shortest_distances,orient='index',columns=['shortest_distances']).reset_index(drop=True))
