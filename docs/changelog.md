@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.6.0
+### What's Changed
+* Added the function of 'calculate distances', which calculates the shortest distance and actual traveling distance among locations when animals perform the selected behaviors.
+* Added an option for users to specify a minimum length (duration in frames) for an identified behavior to filter out potential false positive identifications.
+* Fixed a bug when outputing the testing metrics of binary behavior categorization in both training and testing Categorizers.
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.5.6...v2.6.0>
+
 ## v2.5.6
 ### What's Changed
 * Bug fix in 'interactive basic' mode
