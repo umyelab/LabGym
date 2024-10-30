@@ -377,8 +377,8 @@ class AnalyzeAnimalDetector():
 		# frame_count_analyze: the analyzed frame count
 		# background_free: whether to include background in animations
 
-		tensor_frames=[torch.as_tensor(frame.astype("float32").transpose(2,0,1)) for frame in frames]
-		inputs=[{"image":tensor_frame} for tensor_frame in tensor_frames]
+		tensor_frames=[torch.as_tensor(frame.astype('float32').transpose(2,0,1)) for frame in frames]
+		inputs=[{'image':tensor_frame} for tensor_frame in tensor_frames]
 
 		outputs=self.detector.inference(inputs)
 
@@ -505,8 +505,8 @@ class AnalyzeAnimalDetector():
 		# frame_count_analyze: the analyzed frame count
 		# background_free: whether to include background in animations
 
-		tensor_frames=[torch.as_tensor(frame.astype("float32").transpose(2,0,1)) for frame in frames]
-		inputs=[{"image":tensor_frame} for tensor_frame in tensor_frames]
+		tensor_frames=[torch.as_tensor(frame.astype('float32').transpose(2,0,1)) for frame in frames]
+		inputs=[{'image':tensor_frame} for tensor_frame in tensor_frames]
 
 		outputs=self.detector.inference(inputs)
 
@@ -788,8 +788,8 @@ class AnalyzeAnimalDetector():
 
 				if batch_count==batch_size:
 
-					tensor_frames=[torch.as_tensor(frame.astype("float32").transpose(2,0,1)) for frame in batch]
-					inputs=[{"image":tensor_frame} for tensor_frame in tensor_frames]
+					tensor_frames=[torch.as_tensor(frame.astype('float32').transpose(2,0,1)) for frame in batch]
+					inputs=[{'image':tensor_frame} for tensor_frame in tensor_frames]
 
 					outputs=self.detector.inference(inputs)
 
@@ -1742,8 +1742,8 @@ class AnalyzeAnimalDetector():
 					frame=cv2.resize(frame,(self.framewidth,self.frameheight),interpolation=cv2.INTER_AREA)
 
 				self.temp_frames.append(frame)
-				tensor_frame=torch.as_tensor(frame.astype("float32").transpose(2,0,1))
-				output=self.detector.inference([{"image":tensor_frame}])
+				tensor_frame=torch.as_tensor(frame.astype('float32').transpose(2,0,1))
+				output=self.detector.inference([{'image':tensor_frame}])
 				instances=output[0]['instances'].to('cpu')
 				masks=instances.pred_masks.numpy().astype(np.uint8)
 				classes=instances.pred_classes.numpy()
@@ -1886,8 +1886,8 @@ class AnalyzeAnimalDetector():
 				if self.framewidth is not None:
 					frame=cv2.resize(frame,(self.framewidth,self.frameheight),interpolation=cv2.INTER_AREA)
 
-				tensor_frame=torch.as_tensor(frame.astype("float32").transpose(2,0,1))
-				output=self.detector.inference([{"image":tensor_frame}])
+				tensor_frame=torch.as_tensor(frame.astype('float32').transpose(2,0,1))
+				output=self.detector.inference([{'image':tensor_frame}])
 				instances=output[0]['instances'].to('cpu')
 				masks=instances.pred_masks.numpy().astype(np.uint8)
 				classes=instances.pred_classes.numpy()
@@ -2220,8 +2220,8 @@ class AnalyzeAnimalDetector():
 			else:
 				kernel=9
 
-			tensor_image=torch.as_tensor(image.astype("float32").transpose(2,0,1))
-			output=self.detector.inference([{"image":tensor_image}])
+			tensor_image=torch.as_tensor(image.astype('float32').transpose(2,0,1))
+			output=self.detector.inference([{'image':tensor_image}])
 			instances=output[0]['instances'].to('cpu')
 			masks=instances.pred_masks.numpy().astype(np.uint8)
 			classes=instances.pred_classes.numpy()
