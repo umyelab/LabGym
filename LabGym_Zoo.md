@@ -24,6 +24,7 @@ All the trained Categorizers are stored in '../LabGym/models/'. Use `pip show La
 | [Fly_CourtshipPreference_TopView_25fps](https://drive.google.com/file/d/1j0LOSi3H0cNiHbedMz6gGfx2_-K0JKyM/view?usp=sharing) | Categorizing 6 fly behaviors in 5-fly courtship preference assay | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
 | [Mouse_SocialRecognition_TopView_15fps](https://drive.google.com/file/d/1jBJq--yPdVitFEUjGajEZdgOMoZdB9LE/view?usp=sharing) | Categorizing 9 mouse behaviors in mouse-boxes interactions | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
 | [Vole_PairBound_TopView_30fps](https://drive.google.com/file/d/1x_wLN494PEILFOAXcgyW4xhssiU4U1W3/view?usp=sharing) | Categorizing 9 vole behaviors in two-vole interactions | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [Macaque_SocialGroom_FrontView_25fps](https://drive.google.com/file/d/1JNzZC0YvFUUshwvLNoC-pYbY4R7PcMBa/view?usp=sharing) | Categorizing 3 macaque behaviors in their social interactions in the field | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
 
 <p>&nbsp;</p>
 
