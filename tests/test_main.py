@@ -19,7 +19,7 @@ Email: bingye@umich.edu
 
 
 
-def test_import_gui() -> None:
+def test_import_gui():
 
 	pass
 

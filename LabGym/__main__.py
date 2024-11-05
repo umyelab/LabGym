@@ -31,8 +31,8 @@ def main():
 	try:
 
 		current_version=version.parse(__version__)
-		pypi_json=requests.get("https://pypi.org/pypi/LabGym/json").json()
-		latest_version=version.parse(pypi_json["info"]["version"])
+		pypi_json=requests.get('https://pypi.org/pypi/LabGym/json').json()
+		latest_version=version.parse(pypi_json['info']['version'])
 
 		if latest_version>current_version:
 
