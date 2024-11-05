@@ -37,4 +37,4 @@ All the trained Categorizers are stored in '../LabGym/models/'. Use `pip show La
 | [5-fly courtship preference](https://drive.google.com/file/d/1VGCyhvgGyoT_5P8uNHC1xJq8jX75a_K5/view?usp=sharing) | Used to train 'Fly_CourtshipPreference_TopView_25fps' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
 | [One mouse two boxes](https://drive.google.com/file/d/1PPCNyHlTYSijU0AqQOIpsfKyNyvOhP_l/view?usp=sharing) | Used to train 'Mouse_SocialRecognition_TopView_15fps' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
 | [Two voles](https://drive.google.com/file/d/15EMsQyS1ZH12UsvrakPufeL8t24MQ7xv/view?usp=sharing) | Used to train 'Vole_PairBound_TopView_30fps' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
-
+| [Macaques in the field](https://drive.google.com/file/d/1Y7MgBWpffNYE4d6gHeXeHikchg5RL_u9/view?usp=sharing) | Used to train 'Macaque_SocialGroom_FrontView_25fps' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
