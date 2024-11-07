@@ -1299,7 +1299,8 @@ def calculate_distances(path_to_folder,filename,behavior_to_include,out_path):
 					behavior=event[0]
 					if behavior!='NA':
 						if frame_index is None:
-							frame_index=n
+							if behavior in behavior_to_include:
+								frame_index=n
 						if behavior not in behavior_names[idx]:
 							behavior_names[idx].append(behavior)
 							start_centers[idx][behavior]=centers[idx][n]
