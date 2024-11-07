@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.6.1
+### What's Changed
+* Increased the limit of iteration number of training a Detector.
+* Changed the model saving method in training a Detector so that only the final model will be saved, which minimizes the size of a trained Detector.
+* Changed the colors for shortest and traveling distances in the function of 'calculate distances'.
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.6.0...v2.6.1>
+
 ## v2.6.0
 ### What's Changed
 * Added the function of 'calculate distances', which calculates the shortest distance and actual traveling distance among locations when animals perform the selected behaviors.
