@@ -95,7 +95,7 @@ class Detector():
 		cfg.SOLVER.GAMMA=0.5
 		cfg.SOLVER.IMS_PER_BATCH=4
 		cfg.MODEL.DEVICE=self.device
-		cfg.SOLVER.CHECKPOINT_PERIOD=10000000
+		cfg.SOLVER.CHECKPOINT_PERIOD=10000000000
 		cfg.INPUT.MIN_SIZE_TEST=int(inference_size)
 		cfg.INPUT.MAX_SIZE_TEST=int(inference_size)
 		cfg.INPUT.MIN_SIZE_TRAIN=(int(inference_size),)
