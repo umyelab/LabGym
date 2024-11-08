@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.6.2
+### What's Changed
+* Bug fixed in the function of 'calculate distances'.
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.6.1...v2.6.2>
+
 ## v2.6.1
 ### What's Changed
 * Increased the limit of iteration number of training a Detector.
