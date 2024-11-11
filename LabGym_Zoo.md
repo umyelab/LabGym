@@ -8,7 +8,11 @@ The LabGym Zoo contains pre-trained Detector and Categorizer models as well as b
 
 All the trained Detectors are stored in '../LabGym/detectors/'. Use `pip show LabGym` to find where '../LabGym/' folder locates in your computer. Copy the folder of a Detector to '../LabGym/detectors/' and access it from LabGym GUI. 
 
-Coming soon!
+| Name             | Description | Source |
+|------------------|-----------|--------|
+| [MouseBoxes_TopView_960](https://drive.google.com/file/d/1EYPS-EO7kzH_eMnwKZGdWyDH1Eu2t34H/view?usp=sharing) | Detecting a mouse interacting with two boxes | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [MacaqueInField_FrontView_960](https://drive.google.com/file/d/1keX4wY3hPuf7RZQ4_WXi8tzvE0Oeabw7/view?usp=sharing) | Detecting macaques in the field | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [VolePaired_TopView_800](https://drive.google.com/file/d/1JcdQ3I7MZZ5XGqSzTbwqpWpyitmshYjv/view?usp=sharing) | Detecting two interacting voles | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
 
 <p>&nbsp;</p>
 
