@@ -621,14 +621,16 @@ class AnalyzeAnimalDetector():
 							(y_bt,y_tp,x_lf,x_rt)=crop_frame(self.background,total_contours)
 							if background_free is True:
 								blob=frame*cv2.cvtColor(all_masks[i],cv2.COLOR_GRAY2BGR)
-								if black_background is False:
-									blob[~all_masks[i]]=255
 								if other_mask is not None:
 									other_blob=cv2.cvtColor(cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)*other_mask,cv2.COLOR_GRAY2BGR)
-									if black_background is False:
-										other_blob[~other_mask]=255
 									blob=cv2.add(blob,other_blob)
-									blob=np.uint8(exposure.rescale_intensity(blob,out_range=(0,255)))
+								if black_background is False:
+									if other_mask is not None:
+										complete_masks=all_masks[i]|other_mask
+									else:
+										complete_masks=all_masks[i]
+									blob[~complete_masks]=255
+								blob=np.uint8(exposure.rescale_intensity(blob,out_range=(0,255)))
 							else:
 								blob=np.uint8(exposure.rescale_intensity(frame,out_range=(0,255)))
 							cv2.drawContours(blob,[contour],0,(255,0,255),2)
@@ -2001,7 +2003,10 @@ class AnalyzeAnimalDetector():
 									other_blob=cv2.cvtColor(cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)*other_mask,cv2.COLOR_GRAY2BGR)
 									blob=cv2.add(blob,other_blob)
 								if black_background is False:
-									complete_masks=all_masks[i]|other_mask
+									if other_mask is not None:
+										complete_masks=all_masks[i]|other_mask
+									else:
+										complete_masks=all_masks[i]
 									blob[~complete_masks]=255
 								blob=np.uint8(exposure.rescale_intensity(blob,out_range=(0,255)))
 							else:
