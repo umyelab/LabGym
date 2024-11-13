@@ -494,7 +494,7 @@ def crop_frame(frame,contours):
 	return (y_bt,y_tp,x_lf,x_rt)
 
 
-def extract_blob(frame,contour,channel=1):
+def extract_blob(frame,contour,channel=1,black_background=True):
 
 	'''
 	This function is used to keep the pixels for the area
@@ -503,6 +503,7 @@ def extract_blob(frame,contour,channel=1):
 
 	channel: 1--gray scale blob
 			 3--RGB scale blob
+	black_background: whether to set background black
 	'''
 
 	mask=np.zeros_like(frame)
@@ -525,6 +526,8 @@ def extract_blob(frame,contour,channel=1):
 		x_rt=min(x+w+difference+1,frame.shape[1])
 
 	masked_frame=frame*(mask/255.0)
+	if black_background is False:
+		masked_frame[mask==0]=255
 	blob=masked_frame[y_bt:y_tp,x_lf:x_rt]
 	blob=np.uint8(exposure.rescale_intensity(blob,out_range=(0,255)))
 
