@@ -269,9 +269,10 @@ class AnalyzeAnimal():
 					self.animal_inners[i].append(None)
 
 
-	def acquire_information(self,background_free=True):
+	def acquire_information(self,background_free=True,black_background=True):
 
 		# background_free: whether to include background in animations
+		# black_background: whether to set background black
 
 		print('Acquiring information in each frame...')
 		print(datetime.datetime.now())
