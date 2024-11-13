@@ -640,21 +640,21 @@ def contour_frame(frame,animal_number,background,background_low,background_high,
 	else:
 		frame_dt=frame
 
-	if np.mean(frame)<np.mean(background)/delta:
+	if np.mean(frame_dt)<np.mean(background)/delta:
 		if animal_vs_bg==2:
-			foreground=cv2.absdiff(frame,background_low)
+			foreground=cv2.absdiff(frame_dt,background_low)
 		else:
-			foreground=cv2.subtract(frame,background_low)
-	elif np.mean(frame)>delta*np.mean(background):
+			foreground=cv2.subtract(frame_dt,background_low)
+	elif np.mean(frame_dt)>delta*np.mean(background):
 		if animal_vs_bg==2:
-			foreground=cv2.absdiff(frame,background_high)
+			foreground=cv2.absdiff(frame_dt,background_high)
 		else:
-			foreground=cv2.subtract(frame,background_high)
+			foreground=cv2.subtract(frame_dt,background_high)
 	else:
 		if animal_vs_bg==2:
-			foreground=cv2.absdiff(frame,background)
+			foreground=cv2.absdiff(frame_dt,background)
 		else:
-			foreground=cv2.subtract(frame,background)
+			foreground=cv2.subtract(frame_dt,background)
 			
 	foreground=cv2.cvtColor(foreground,cv2.COLOR_BGR2GRAY)
 	thred=cv2.threshold(foreground,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]
@@ -687,11 +687,11 @@ def contour_frame(frame,animal_number,background,background_low,background_high,
 				mask=np.zeros_like(frame)
 				cv2.drawContours(mask,[i],0,(255,255,255),-1)
 				mask=cv2.dilate(mask,np.ones((5,5),np.uint8))
-				masked_frame=frame*(mask/255)
+				masked_frame=frame_dt*(mask/255)
 				gray=cv2.cvtColor(np.uint8(masked_frame),cv2.COLOR_BGR2GRAY)
 				inners.append(get_inner(gray,i))
 			if animation_analyzer is True:
-				blobs.append(extract_blob(frame,i,channel=channel))
+				blobs.append(extract_blob(frame,i,channel=channel,black_background=black_background))
 
 	return (contours,centers,heights,inners,blobs)
 
