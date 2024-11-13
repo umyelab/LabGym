@@ -296,7 +296,10 @@ class Categorizers():
 							frame_contrast=np.uint8(exposure.rescale_intensity(frame,out_range=(0,255)))
 
 							if background_free is True:
-								frame_gray=cv2.cvtColor(frame_contrast,cv2.COLOR_BGR2GRAY)
+								if black_background is True:
+									frame_gray=np.uint8(255-cv2.cvtColor(frame_contrast,cv2.COLOR_BGR2GRAY))
+								else:
+									frame_gray=cv2.cvtColor(frame_contrast,cv2.COLOR_BGR2GRAY)
 								thred=cv2.threshold(frame_gray,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]
 								cnts,_=cv2.findContours(thred,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
 								if len(cnts)==0:
