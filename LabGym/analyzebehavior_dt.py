@@ -465,6 +465,8 @@ class AnalyzeAnimalDetector():
 								inners.append(get_inner(masked_frame,cnt))
 							if self.animation_analyzer is True:
 								masked_frame=frame*cv2.cvtColor(mask,cv2.COLOR_GRAY2BGR)
+								if black_background is False:
+									masked_frame[~mask]=255
 								x,y,w,h=cv2.boundingRect(cnt)
 								difference=int(abs(w-h)/2)+1
 								if w>h:
@@ -499,12 +501,13 @@ class AnalyzeAnimalDetector():
 									self.animations[animal_name][i][frame_count_analyze+1-batch_size+batch_count]=np.array(animation)
 
 
-	def detect_track_interact(self,frames,batch_size,frame_count_analyze,background_free=True):
+	def detect_track_interact(self,frames,batch_size,frame_count_analyze,background_free=True,black_background=True):
 
 		# frames: frames that the Detector runs on
 		# batch_size: for batch inferencing by the Detector
 		# frame_count_analyze: the analyzed frame count
 		# background_free: whether to include background in animations
+		# black_background: whether to set background black
 
 		tensor_frames=[torch.as_tensor(frame.astype('float32').transpose(2,0,1)) for frame in frames]
 		inputs=[{'image':tensor_frame} for tensor_frame in tensor_frames]
@@ -618,8 +621,12 @@ class AnalyzeAnimalDetector():
 							(y_bt,y_tp,x_lf,x_rt)=crop_frame(self.background,total_contours)
 							if background_free is True:
 								blob=frame*cv2.cvtColor(all_masks[i],cv2.COLOR_GRAY2BGR)
+								if black_background is False:
+									blob[~all_masks[i]]=255
 								if other_mask is not None:
 									other_blob=cv2.cvtColor(cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)*other_mask,cv2.COLOR_GRAY2BGR)
+									if black_background is False:
+										other_blob[~other_mask]=255
 									blob=cv2.add(blob,other_blob)
 									blob=np.uint8(exposure.rescale_intensity(blob,out_range=(0,255)))
 							else:
@@ -639,6 +646,8 @@ class AnalyzeAnimalDetector():
 							other_inners=None
 						if background_free is True:
 							blob=frame*cv2.cvtColor(all_masks[0],cv2.COLOR_GRAY2BGR)
+							if black_background is False:
+								blob[~all_masks[0]]=255
 							blob=np.uint8(exposure.rescale_intensity(blob,out_range=(0,255)))
 						else:
 							blob=np.uint8(exposure.rescale_intensity(frame,out_range=(0,255)))
@@ -662,10 +671,11 @@ class AnalyzeAnimalDetector():
 						self.track_animal_interact(frame_count_analyze+1-batch_size+batch_count,all_contours,other_contours,all_centers,all_heights,inners=all_inners,other_inners=other_inners,blobs=all_blobs)
 
 
-	def acquire_information(self,batch_size=1,background_free=True):
+	def acquire_information(self,batch_size=1,background_free=True,black_background=True):
 
 		# batch_size: for batch inferencing by the Detector
 		# background_free: whether to include background in animations
+		# black_background: whether to set background black
 
 		print('Acquiring information in each frame...')
 		print(datetime.datetime.now())
@@ -708,9 +718,9 @@ class AnalyzeAnimalDetector():
 				if batch_count==batch_size:
 					batch_count=0
 					if self.behavior_mode==2:
-						self.detect_track_interact(batch,batch_size,frame_count_analyze,background_free=background_free)
+						self.detect_track_interact(batch,batch_size,frame_count_analyze,background_free=background_free,black_background=black_background)
 					else:
-						self.detect_track_individuals(batch,batch_size,frame_count_analyze,background_free=background_free,animation=animation)
+						self.detect_track_individuals(batch,batch_size,frame_count_analyze,background_free=background_free,black_background=black_background,animation=animation)
 					batch=[]
 
 				frame_count_analyze+=1
