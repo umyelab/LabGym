@@ -2142,6 +2142,7 @@ class AnalyzeAnimalDetector():
 		detection_threshold=0.5, # the treshold for determine whether a detected animal / object is of interest
 		uncertain=0, # a threshold between the highest the 2nd highest probablity of behaviors to determine if output an 'NA' in behavior classification
 		background_free=True, # whether to include background in animations
+		black_background=True, # whether to set background black
 		social_distance=0 # a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
 		):
 
