@@ -278,7 +278,7 @@ class WindowLv2_TrainDetectors(wx.Frame):
 		button_iterations=wx.Button(panel,label='Specify the iteration number\nfor the Detector training',size=(300,40))
 		button_iterations.Bind(wx.EVT_BUTTON,self.input_iterations)
 		wx.Button.SetToolTip(button_iterations,'More training iterations typically yield higher accuracy but take longer. A number between 200 ~ 2000 is good for most scenarios. For "Interactive advanced" mode, more iterations (>2000) may be needed. You may also increase the diversity and amount of training images for higher accuracy.')
-		self.text_iterations=wx.StaticText(panel,label='Default: 200.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
+		self.text_iterations=wx.StaticText(panel,label='Default: 1000.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_iterations.Add(button_iterations,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_iterations.Add(self.text_iterations,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		boxsizer.Add(module_iterations,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
