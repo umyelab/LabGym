@@ -370,12 +370,13 @@ class AnalyzeAnimalDetector():
 				n+=self.animal_present[animal_name]
 
 
-	def detect_track_individuals(self,frames,batch_size,frame_count_analyze,background_free=True,animation=None):
+	def detect_track_individuals(self,frames,batch_size,frame_count_analyze,background_free=True,black_background=True,animation=None):
 
 		# frames: frames that the Detector runs on
 		# batch_size: for batch inferencing by the Detector
 		# frame_count_analyze: the analyzed frame count
 		# background_free: whether to include background in animations
+		# black_background: whether to set background black
 
 		tensor_frames=[torch.as_tensor(frame.astype('float32').transpose(2,0,1)) for frame in frames]
 		inputs=[{'image':tensor_frame} for tensor_frame in tensor_frames]
