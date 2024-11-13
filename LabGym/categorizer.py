@@ -307,7 +307,7 @@ class Categorizers():
 								else:
 									if behavior_mode==0:
 										contour=sorted(cnts,key=cv2.contourArea,reverse=True)[0]
-										blob=extract_blob(frame,contour,channel=3)
+										blob=extract_blob(frame,contour,channel=3,black_background=black_background)
 									else:
 										(y_bt,y_tp,x_lf,x_rt)=crop_frame(frame,cnts)
 										blob=frame_contrast[y_bt:y_tp,x_lf:x_rt]
@@ -320,7 +320,10 @@ class Categorizers():
 							if beta is not None:
 								blob=blob.astype('float')
 								if background_free is True:
-									blob[blob>30]+=beta
+									if black_background is True:
+										blob[blob>30]+=beta
+									else:
+										blob[blob<225]+=beta
 								else:
 									blob+=beta
 								blob=np.uint8(np.clip(blob,0,255))
@@ -334,6 +337,8 @@ class Categorizers():
 
 							if scale is not None:
 								blob_black=np.zeros_like(blob)
+								if black_background is False:
+									blob_black=np.uint8(blob_black+255)
 								if width==0:
 									blob_scl=cv2.resize(blob,(blob.shape[1],int(blob.shape[0]*scale)),interpolation=cv2.INTER_AREA)
 								else:
@@ -366,15 +371,20 @@ class Categorizers():
 					if beta is not None:
 						if background_free is True:
 							pattern_image_gray=cv2.cvtColor(pattern_image,cv2.COLOR_BGR2GRAY)
+							if black_background is False:
+								pattern_image_gray=np.uint8(255-pattern_image_gray)
 							thred=cv2.threshold(pattern_image_gray,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]
 							cnts,_=cv2.findContours(thred,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
 							if len(cnts)==0:
 								pattern_image=np.zeros_like(pattern_image)
 							else:
 								contour=sorted(cnts,key=cv2.contourArea,reverse=True)[0]
-								pattern_image=extract_blob(pattern_image,contour,channel=3)
+								pattern_image=extract_blob(pattern_image,contour,channel=3,black_background=black_background)
 							pattern_image=pattern_image.astype('float')
-							pattern_image[pattern_image>30]+=beta
+							if black_background is True:
+								pattern_image[pattern_image>30]+=beta
+							else:
+								pattern_image[pattern_image<225]+=beta
 						else:
 							pattern_image=pattern_image.astype('float')
 							pattern_image+=beta
