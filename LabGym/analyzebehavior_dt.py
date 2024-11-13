@@ -2252,6 +2252,8 @@ class AnalyzeAnimalDetector():
 						contours.append(cnt)
 						if background_free is True:
 							masked_image=image*cv2.cvtColor(mask,cv2.COLOR_GRAY2BGR)
+							if black_background is False:
+								masked_image[~mask]=255
 						else:
 							masked_image=image
 						x,y,w,h=cv2.boundingRect(cnt)
