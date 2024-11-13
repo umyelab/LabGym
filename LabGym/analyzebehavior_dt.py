@@ -1669,7 +1669,7 @@ class AnalyzeAnimalDetector():
 				if self.framewidth is not None:
 					frame=cv2.resize(frame,(self.framewidth,self.frameheight),interpolation=cv2.INTER_AREA)
 
-				self.detect_track_individuals([frame],1,frame_count_analyze,background_free=background_free,animation=animation)
+				self.detect_track_individuals([frame],1,frame_count_analyze,background_free=background_free,black_background=black_background,animation=animation)
 
 				for animal_name in self.animal_kinds:
 						
@@ -1854,9 +1854,10 @@ class AnalyzeAnimalDetector():
 		print('Behavior example generation completed!')
 
 
-	def generate_data_interact_advance(self,background_free=True,skip_redundant=1):
+	def generate_data_interact_advance(self,background_free=True,black_background=True,skip_redundant=1):
 
 		# background_free: whether to include background in animations
+		# black_background: whether to set background black
 		# skip_redundant: the interval (in frames) of two consecutively generated behavior example pairs
 
 		print('Generating behavior examples...')
@@ -1999,7 +2000,10 @@ class AnalyzeAnimalDetector():
 								if other_mask is not None:
 									other_blob=cv2.cvtColor(cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)*other_mask,cv2.COLOR_GRAY2BGR)
 									blob=cv2.add(blob,other_blob)
-									blob=np.uint8(exposure.rescale_intensity(blob,out_range=(0,255)))
+								if black_background is False:
+									complete_masks=all_masks[i]|other_mask
+									blob[~complete_masks]=255
+								blob=np.uint8(exposure.rescale_intensity(blob,out_range=(0,255)))
 							else:
 								blob=np.uint8(exposure.rescale_intensity(frame,out_range=(0,255)))
 							cv2.drawContours(blob,[all_contours[i]],0,(255,0,255),2)
@@ -2013,6 +2017,8 @@ class AnalyzeAnimalDetector():
 								other_inners=[[None]]
 							if background_free is True:
 								blob=frame*cv2.cvtColor(all_masks[0],cv2.COLOR_GRAY2BGR)
+								if black_background is False:
+									blob[~all_masks[0]]=255
 								blob=np.uint8(exposure.rescale_intensity(blob,out_range=(0,255)))
 							else:
 								blob=np.uint8(exposure.rescale_intensity(frame,out_range=(0,255)))
