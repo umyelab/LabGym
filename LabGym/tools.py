@@ -538,7 +538,7 @@ def extract_blob(frame,contour,channel=1,black_background=True):
 	return blob
 
 
-def extract_blob_background(frame,contours,contour=None,channel=1,background_free=False):
+def extract_blob_background(frame,contours,contour=None,channel=1,background_free=False,black_background=True):
 
 	'''
 	This function is used to keep the pixels for the area
@@ -547,6 +547,7 @@ def extract_blob_background(frame,contours,contour=None,channel=1,background_fre
 
 	channel: 1--gray scale blob
 			 3--RGB scale blob
+	black_background: whether to set background black
 	'''
 
 	(y_bt,y_tp,x_lf,x_rt)=crop_frame(frame,contours)
@@ -554,6 +555,8 @@ def extract_blob_background(frame,contours,contour=None,channel=1,background_fre
 		mask=np.zeros_like(frame)
 		cv2.drawContours(mask,[contour],0,(255,255,255),-1)
 		masked_frame=frame*(mask/255.0)
+		if black_background is False:
+			masked_frame[mask==0]=255
 	else:
 		masked_frame=frame
 	blob=masked_frame[y_bt:y_tp,x_lf:x_rt]
@@ -566,7 +569,7 @@ def extract_blob_background(frame,contours,contour=None,channel=1,background_fre
 	return blob
 
 
-def extract_blob_all(frame,y_bt,y_tp,x_lf,x_rt,contours=None,channel=1,background_free=False):
+def extract_blob_all(frame,y_bt,y_tp,x_lf,x_rt,contours=None,channel=1,background_free=False,black_background=True):
 
 	'''
 	This function is used to keep the pixels for the area
@@ -575,12 +578,15 @@ def extract_blob_all(frame,y_bt,y_tp,x_lf,x_rt,contours=None,channel=1,backgroun
 
 	channel: 1--gray scale blob
 			 3--RGB scale blob
+	black_background: whether to set background black
 	'''
 
 	if background_free is True:
 		mask=np.zeros_like(frame)
 		cv2.drawContours(mask,contours,-1,(255,255,255),-1)
 		masked_frame=frame*(mask/255.0)
+		if black_background is False:
+			masked_frame[mask==0]=255
 	else:
 		masked_frame=frame
 	blob=masked_frame[y_bt:y_tp,x_lf:x_rt]
@@ -612,7 +618,7 @@ def get_inner(masked_frame_gray,contour):
 	return inner
 
 
-def contour_frame(frame,animal_number,background,background_low,background_high,delta,contour_area,animal_vs_bg=0,include_bodyparts=False,animation_analyzer=False,channel=1,kernel=5):
+def contour_frame(frame,animal_number,background,background_low,background_high,delta,contour_area,animal_vs_bg=0,include_bodyparts=False,animation_analyzer=False,channel=1,kernel=5,black_background=True):
 
 	'''
 	This function is used in 'background subtraction based detection method',
@@ -626,10 +632,13 @@ def contour_frame(frame,animal_number,background,background_low,background_high,
 	channel: 1--gray scale blob
 			 3--RGB scale blob
 	kernel: determines how fine the erosion or dilation operation is
+	black_background: whether to set background black
 	'''
 
 	if animal_vs_bg==1:
-		frame=np.uint8(255-frame)
+		frame_dt=np.uint8(255-frame)
+	else:
+		frame_dt=frame
 
 	if np.mean(frame)<np.mean(background)/delta:
 		if animal_vs_bg==2:
