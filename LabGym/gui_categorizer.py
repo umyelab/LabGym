@@ -72,6 +72,7 @@ class WindowLv2_GenerateExamples(wx.Frame):
 		self.include_bodyparts=False # whether to include body parts in the pattern images
 		self.std=0 # a value between 0 and 255, higher value, less body parts will be included in the pattern images
 		self.background_free=True # whether to include background in animations
+		self.black_background=True # whether to set background black
 		self.social_distance=0 # a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
 
 		self.dispaly_window()
@@ -564,6 +565,11 @@ class WindowLv2_GenerateExamples(wx.Frame):
 				self.background_free=False
 			else:
 				self.background_free=True
+				dialog1=wx.MessageDialog(self,'Set background black? "Yes"=black background;\n"No"=white background (if animals are black).','Black background?',wx.YES_NO|wx.ICON_QUESTION)
+				if dialog1.ShowModal()==wx.ID_YES:
+					self.black_background=True
+				else:
+					self.black_background=False
 			dialog.Destroy()
 
 			if self.behavior_mode>=3:
@@ -572,7 +578,7 @@ class WindowLv2_GenerateExamples(wx.Frame):
 					wx.MessageBox('You need to select a Detector.','Error',wx.OK|wx.ICON_ERROR)
 				else:
 					AAD=AnalyzeAnimalDetector()
-					AAD.analyze_images_individuals(self.path_to_detector,self.path_to_videos,self.result_path,self.animal_kinds,generate=True,imagewidth=self.framewidth,detection_threshold=self.detection_threshold,background_free=self.background_free)
+					AAD.analyze_images_individuals(self.path_to_detector,self.path_to_videos,self.result_path,self.animal_kinds,generate=True,imagewidth=self.framewidth,detection_threshold=self.detection_threshold,background_free=self.background_free,black_background=self.black_background)
 
 			else:
 
@@ -637,18 +643,18 @@ class WindowLv2_GenerateExamples(wx.Frame):
 							AA=AnalyzeAnimal()
 							AA.prepare_analysis(i,self.result_path,self.animal_number,delta=self.delta,framewidth=self.framewidth,stable_illumination=self.stable_illumination,channel=3,include_bodyparts=self.include_bodyparts,std=self.std,categorize_behavior=False,animation_analyzer=False,path_background=self.background_path,autofind_t=self.autofind_t,t=self.t,duration=self.duration,ex_start=self.ex_start,ex_end=self.ex_end,length=self.length,animal_vs_bg=self.animal_vs_bg)
 							if self.behavior_mode==0:
-								AA.generate_data(background_free=self.background_free,skip_redundant=self.skip_redundant)
+								AA.generate_data(background_free=self.background_free,black_background=self.black_background,skip_redundant=self.skip_redundant)
 							else:
-								AA.generate_data_interact_basic(background_free=self.background_free,skip_redundant=self.skip_redundant)
+								AA.generate_data_interact_basic(background_free=self.background_free,black_background=self.black_background,skip_redundant=self.skip_redundant)
 						else:
 							AAD=AnalyzeAnimalDetector()
 							AAD.prepare_analysis(self.path_to_detector,i,self.result_path,self.animal_number,self.animal_kinds,self.behavior_mode,framewidth=self.framewidth,channel=3,include_bodyparts=self.include_bodyparts,std=self.std,categorize_behavior=False,animation_analyzer=False,t=self.t,duration=self.duration,length=self.length,social_distance=self.social_distance)
 							if self.behavior_mode==0:
-								AAD.generate_data(background_free=self.background_free,skip_redundant=self.skip_redundant)
+								AAD.generate_data(background_free=self.background_free,black_background=self.black_background,skip_redundant=self.skip_redundant)
 							elif self.behavior_mode==1:
-								AAD.generate_data_interact_basic(background_free=self.background_free,skip_redundant=self.skip_redundant)
+								AAD.generate_data_interact_basic(background_free=self.background_free,black_background=self.black_background,skip_redundant=self.skip_redundant)
 							else:
-								AAD.generate_data_interact_advance(background_free=self.background_free,skip_redundant=self.skip_redundant)
+								AAD.generate_data_interact_advance(background_free=self.background_free,black_background=self.black_background,skip_redundant=self.skip_redundant)
 
 
 
@@ -825,7 +831,7 @@ class WindowLv2_SortBehaviors(wx.Frame):
 								continue
 							frame=cv2.resize(frame,(600,600),interpolation=cv2.INTER_AREA)
 							combined=np.hstack((frame,pattern_image))
-							cv2.putText(combined,'frame count: '+frame_count,(10,15),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,255),1)
+							cv2.putText(combined,'frame count: '+frame_count,(10,15),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,0,255),1)
 							x_begin=550
 						else:
 							combined=pattern_image
@@ -833,11 +839,11 @@ class WindowLv2_SortBehaviors(wx.Frame):
 
 						n=1
 						for i in ['o: Prev','p: Next','q: Quit','u: Undo']:
-							cv2.putText(combined,i,(x_begin,15*n),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,255),1)
+							cv2.putText(combined,i,(x_begin,15*n),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,0,255),1)
 							n+=1
 						n+=1
 						for i in self.keys_behaviors:
-							cv2.putText(combined,i+': '+self.keys_behaviors[i],(x_begin,15*n),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,255),1)
+							cv2.putText(combined,i+': '+self.keys_behaviors[i],(x_begin,15*n),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,0,255),1)
 							n+=1
 
 						cv2.imshow('Sorting Behavior Examples',combined)
