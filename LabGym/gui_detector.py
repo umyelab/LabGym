@@ -333,7 +333,7 @@ class WindowLv2_TrainDetectors(wx.Frame):
 
 	def input_iterations(self,event):
 
-		dialog=wx.NumberEntryDialog(self,'Input the iteration number\nfor the Detector training','Enter a number:','Iterations',200,1,1000000)
+		dialog=wx.NumberEntryDialog(self,'Input the iteration number\nfor the Detector training','Enter a number:','Iterations',1000,1,1000000)
 		if dialog.ShowModal()==wx.ID_OK:
 			self.iteration_num=int(dialog.GetValue())
 			self.text_iterations.SetLabel('Training iteration number: '+str(self.iteration_num)+'.')
