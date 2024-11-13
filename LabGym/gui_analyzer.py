@@ -116,6 +116,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 		self.min_length=None # the minimum length (in frames) a behavior should last, can be used to filter out the brief false positives
 		self.show_legend=True # whether to show legend of behavior names in the annotated videos
 		self.background_free=True # whether to include background in animations
+		self.black_background=True # whether to set background black
 		self.normalize_distance=True # whether to normalize the distance (in pixel) to the animal contour area
 		self.social_distance=0 # a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
 		self.specific_behaviors={} # sex or identity-specific behaviors
@@ -381,6 +382,9 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 					self.text_duration.SetLabel('No need to specify this since the selected behavior mode is "Static images".')
 					self.text_animalnumber.SetLabel('No need to specify this since the selected behavior mode is "Static images".')
 					self.text_selectparameters.SetLabel('No need to specify this since the selected behavior mode is "Static images".')
+				if 'black_background' in parameters:
+					if int(parameters['black_background'][0])==1:
+						self.black_background=False
 
 		dialog.Destroy()
 
