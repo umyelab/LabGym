@@ -493,7 +493,7 @@ class AnalyzeAnimalDetector():
 										if self.animal_contours[animal_name][i][max(0,frame_count_analyze+1-batch_size+batch_count-self.length+1):frame_count_analyze+1-batch_size+batch_count+1][n] is None:
 											blob=np.zeros((self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8')
 										else:
-											blob=extract_blob_background(f,self.animal_contours[animal_name][i][max(0,frame_count_analyze+1-batch_size+batch_count-self.length+1):frame_count_analyze+1-batch_size+batch_count+1],contour=None,channel=self.channel,background_free=False)
+											blob=extract_blob_background(f,self.animal_contours[animal_name][i][max(0,frame_count_analyze+1-batch_size+batch_count-self.length+1):frame_count_analyze+1-batch_size+batch_count+1],contour=None,channel=self.channel,background_free=False,black_background=black_background)
 											blob=cv2.resize(blob,(self.dim_tconv,self.dim_tconv),interpolation=cv2.INTER_AREA)
 										animation.append(img_to_array(blob))
 									self.animations[animal_name][i][frame_count_analyze+1-batch_size+batch_count]=np.array(animation)
@@ -725,10 +725,11 @@ class AnalyzeAnimalDetector():
 		print('Information acquisition completed!')
 
 
-	def acquire_information_interact_basic(self,batch_size=1,background_free=True):
+	def acquire_information_interact_basic(self,batch_size=1,background_free=True,black_background=True):
 
 		# batch_size: for batch inferencing by the Detector
 		# background_free: whether to include background in animations
+		# black_background: whether to set background black
 
 		print('Acquiring information in each frame...')
 		print(datetime.datetime.now())
@@ -870,7 +871,7 @@ class AnalyzeAnimalDetector():
 									if self.animal_contours[name][0][max(0,frame_count_analyze+1-batch_size+batch_count-self.length+1):frame_count_analyze+1-batch_size+batch_count+1][i] is None:
 										blob=np.zeros((self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8')
 									else:
-										blob=extract_blob_all(f,y_bt,y_tp,x_lf,x_rt,contours=temp_contours[i],channel=self.channel,background_free=background_free)
+										blob=extract_blob_all(f,y_bt,y_tp,x_lf,x_rt,contours=temp_contours[i],channel=self.channel,background_free=background_free,black_background=black_background)
 										blob=cv2.resize(blob,(self.dim_tconv,self.dim_tconv),interpolation=cv2.INTER_AREA)
 									animation.append(img_to_array(blob))
 									self.animations[name][0][frame_count_analyze+1-batch_size+batch_count]=np.array(animation)
@@ -1621,9 +1622,10 @@ class AnalyzeAnimalDetector():
 		print('All results exported in: '+str(self.results_path))
 
 
-	def generate_data(self,background_free=True,skip_redundant=1):
+	def generate_data(self,background_free=True,black_background=True,skip_redundant=1):
 
 		# background_free: whether to include background in animations
+		# black_background: whether to set background black
 		# skip_redundant: the interval (in frames) of two consecutively generated behavior example pairs
 		
 		print('Generating behavior examples...')
@@ -1672,7 +1674,7 @@ class AnalyzeAnimalDetector():
 								if contour is None:
 									blob=np.zeros_like(self.background)
 								else:
-									blob=extract_blob_background(f,self.animal_contours[animal_name][n][frame_count_analyze-self.length+1:frame_count_analyze+1],contour=contour,channel=3,background_free=background_free)
+									blob=extract_blob_background(f,self.animal_contours[animal_name][n][frame_count_analyze-self.length+1:frame_count_analyze+1],contour=contour,channel=3,background_free=background_free,black_background=black_background)
 									h,w=blob.shape[:2]
 								animation.append(blob)
 
@@ -1706,9 +1708,10 @@ class AnalyzeAnimalDetector():
 		print('Behavior example generation completed!')
 
 
-	def generate_data_interact_basic(self,background_free=True,skip_redundant=1):
+	def generate_data_interact_basic(self,background_free=True,black_background=True,skip_redundant=1):
 
 		# background_free: whether to include background in animations
+		# black_background: whether to set background black
 		# skip_redundant: the interval (in frames) of two consecutively generated behavior example pairs
 
 		print('Generating behavior examples...')
@@ -1807,7 +1810,7 @@ class AnalyzeAnimalDetector():
 							if temp_contours[i] is None:
 								blob=np.zeros_like(self.background)
 							else:
-								blob=extract_blob_all(f,y_bt,y_tp,x_lf,x_rt,contours=temp_contours[i],channel=3,background_free=background_free)
+								blob=extract_blob_all(f,y_bt,y_tp,x_lf,x_rt,contours=temp_contours[i],channel=3,background_free=background_free,black_background=black_background)
 								h,w=blob.shape[:2]
 							animation.append(blob)
 

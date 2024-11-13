@@ -345,7 +345,7 @@ class AnalyzeAnimal():
 									if self.animal_contours[i][max(0,(frame_count_analyze-self.length+1)):frame_count_analyze+1][n] is None:
 										blob=np.zeros((self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8')
 									else:
-										blob=extract_blob_background(f,self.animal_contours[i][max(0,(frame_count_analyze-self.length+1)):frame_count_analyze+1],contour=None,channel=self.channel,background_free=False)
+										blob=extract_blob_background(f,self.animal_contours[i][max(0,(frame_count_analyze-self.length+1)):frame_count_analyze+1],contour=None,channel=self.channel,background_free=False,black_background=black_background)
 										blob=cv2.resize(blob,(self.dim_tconv,self.dim_tconv),interpolation=cv2.INTER_AREA)
 									animation.append(img_to_array(blob))
 								self.animations[i][frame_count_analyze]=np.array(animation)
@@ -359,9 +359,10 @@ class AnalyzeAnimal():
 		print('Information acquisition completed!')
 
 
-	def acquire_information_interact_basic(self,background_free=True):
+	def acquire_information_interact_basic(self,background_free=True,black_background=True):
 
 		# background_free: whether to include background in animations
+		# black_background: whether to set background black
 
 		print('Acquiring information in each frame...')
 		print(datetime.datetime.now())
@@ -455,7 +456,7 @@ class AnalyzeAnimal():
 							if self.animal_contours[0][max(0,(frame_count_analyze-self.length+1)):frame_count_analyze+1][i] is None:
 								blob=np.zeros((self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8')
 							else:
-								blob=extract_blob_all(f,y_bt,y_tp,x_lf,x_rt,contours=temp_contours[i],channel=self.channel,background_free=background_free)
+								blob=extract_blob_all(f,y_bt,y_tp,x_lf,x_rt,contours=temp_contours[i],channel=self.channel,background_free=background_free,black_background=black_background)
 							blob=cv2.resize(blob,(self.dim_tconv,self.dim_tconv),interpolation=cv2.INTER_AREA)
 							animation.append(img_to_array(blob))
 							self.animations[0][frame_count_analyze]=np.array(animation)
@@ -1136,9 +1137,10 @@ class AnalyzeAnimal():
 		print('All results exported in: '+str(self.results_path))
 
 
-	def generate_data(self,background_free=True,skip_redundant=1):
+	def generate_data(self,background_free=True,black_background=True,skip_redundant=1):
 
 		# background_free: whether to include background in animations
+		# black_background: whether to set background black
 		# skip_redundant: the interval (in frames) of two consecutively generated behavior example pairs
 		
 		print('Generating behavior examples...')
@@ -1199,7 +1201,7 @@ class AnalyzeAnimal():
 								if contour is None:
 									blob=np.zeros_like(f)
 								else:
-									blob=extract_blob_background(f,self.animal_contours[n][frame_count_analyze-self.length+1:frame_count_analyze+1],contour=contour,channel=3,background_free=background_free)
+									blob=extract_blob_background(f,self.animal_contours[n][frame_count_analyze-self.length+1:frame_count_analyze+1],contour=contour,channel=3,background_free=background_free,black_background=black_background)
 									h,w=blob.shape[:2]
 								animation.append(blob)
 
@@ -1233,9 +1235,10 @@ class AnalyzeAnimal():
 		print('Behavior example generation completed!')
 
 
-	def generate_data_interact_basic(self,background_free=True,skip_redundant=1):
+	def generate_data_interact_basic(self,background_free=True,black_background=True,skip_redundant=1):
 
 		# background_free: whether to include background in animations
+		# black_background: whether to set background black
 		# skip_redundant: the interval (in frames) of two consecutively generated behavior example pairs
 
 		print('Generating behavior examples...')
@@ -1302,7 +1305,7 @@ class AnalyzeAnimal():
 							if temp_contours[i] is None:
 								blob=np.zeros_like(f)
 							else:
-								blob=extract_blob_all(f,y_bt,y_tp,x_lf,x_rt,contours=temp_contours[i],channel=3,background_free=background_free)
+								blob=extract_blob_all(f,y_bt,y_tp,x_lf,x_rt,contours=temp_contours[i],channel=3,background_free=background_free,black_background=black_background)
 								h,w=blob.shape[:2]
 							animation.append(blob)
 
