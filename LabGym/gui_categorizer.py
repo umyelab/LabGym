@@ -570,6 +570,7 @@ class WindowLv2_GenerateExamples(wx.Frame):
 					self.black_background=True
 				else:
 					self.black_background=False
+				dialog1.Destroy()
 			dialog.Destroy()
 
 			if self.behavior_mode>=3:
@@ -933,6 +934,7 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 		self.std=0 # a value between 0 and 255, higher value, less body parts will be included in the pattern images
 		self.resize=None # resize the frames and pattern images before data augmentation
 		self.background_free=True # whether to include background in animations
+		self.black_background=True # whether to set background black
 		self.social_distance=0 # a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
 
 		self.dispaly_window()
@@ -1224,6 +1226,12 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 				dialog=wx.MessageDialog(self,'Are the images in\ntraining examples background free?','Background-free images?',wx.YES_NO|wx.ICON_QUESTION)
 				if dialog.ShowModal()==wx.ID_YES:
 					self.background_free=True
+					dialog1=wx.MessageDialog(self,'Are the background in images black? "Yes"=black background;\n"No"=white background.','Black background?',wx.YES_NO|wx.ICON_QUESTION)
+					if dialog1.ShowModal()==wx.ID_YES:
+						self.black_background=True
+					else:
+						self.black_background=False
+					dialog1.Destroy()
 					self.text_trainingfolder.SetLabel('Static images w/o background in: '+self.data_path+'.')
 				else:
 					self.background_free=False
@@ -1236,6 +1244,12 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 					dialog=wx.MessageDialog(self,'Are the animations (in any) in\ntraining examples background free?','Background-free animations?',wx.YES_NO|wx.ICON_QUESTION)
 					if dialog.ShowModal()==wx.ID_YES:
 						self.background_free=True
+						dialog1=wx.MessageDialog(self,'Are the background in animations black?\n"Yes"=black background; "No"=white background.','Black background?',wx.YES_NO|wx.ICON_QUESTION)
+						if dialog1.ShowModal()==wx.ID_YES:
+							self.black_background=True
+						else:
+							self.black_background=False
+						dialog1.Destroy()
 					else:
 						self.background_free=False
 					dialog.Destroy()
@@ -1356,12 +1370,12 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 						self.include_bodyparts=False
 					else:
 						self.channel=3
-					CA.train_pattern_recognizer(self.data_path,self.path_to_categorizer,self.out_path,dim=self.dim_conv,channel=self.channel,time_step=self.length,level=self.level_conv,aug_methods=self.aug_methods,augvalid=self.augvalid,include_bodyparts=self.include_bodyparts,std=self.std,background_free=self.background_free,behavior_mode=self.behavior_mode,social_distance=self.social_distance)
+					CA.train_pattern_recognizer(self.data_path,self.path_to_categorizer,self.out_path,dim=self.dim_conv,channel=self.channel,time_step=self.length,level=self.level_conv,aug_methods=self.aug_methods,augvalid=self.augvalid,include_bodyparts=self.include_bodyparts,std=self.std,background_free=self.background_free,black_background=self.black_background,behavior_mode=self.behavior_mode,social_distance=self.social_distance)
 				else:
 					if self.behavior_mode==2:
 						self.channel=3
 					CA=Categorizers()
-					CA.train_combnet(self.data_path,self.path_to_categorizer,self.out_path,dim_tconv=self.dim_tconv,dim_conv=self.dim_conv,channel=self.channel,time_step=self.length,level_tconv=self.level_tconv,level_conv=self.level_conv,aug_methods=self.aug_methods,augvalid=self.augvalid,include_bodyparts=self.include_bodyparts,std=self.std,background_free=self.background_free,behavior_mode=self.behavior_mode,social_distance=self.social_distance)
+					CA.train_combnet(self.data_path,self.path_to_categorizer,self.out_path,dim_tconv=self.dim_tconv,dim_conv=self.dim_conv,channel=self.channel,time_step=self.length,level_tconv=self.level_tconv,level_conv=self.level_conv,aug_methods=self.aug_methods,augvalid=self.augvalid,include_bodyparts=self.include_bodyparts,std=self.std,background_free=self.background_free,black_background=self.black_background,behavior_mode=self.behavior_mode,social_distance=self.social_distance)
 
 
 

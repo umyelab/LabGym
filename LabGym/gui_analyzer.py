@@ -923,11 +923,11 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 							path_background=self.background_path,autofind_t=self.autofind_t,t=self.t,duration=self.duration,ex_start=self.ex_start,ex_end=self.ex_end,
 							length=self.length,animal_vs_bg=self.animal_vs_bg)
 						if self.behavior_mode==0:
-							AA.acquire_information(background_free=self.background_free)
+							AA.acquire_information(background_free=self.background_free,black_background=self.black_background)
 							AA.craft_data()
 							interact_all=False
 						else:
-							AA.acquire_information_interact_basic(background_free=self.background_free)
+							AA.acquire_information_interact_basic(background_free=self.background_free,black_background=self.black_background)
 							interact_all=True
 						if self.path_to_categorizer is not None:
 							AA.categorize_behaviors(self.path_to_categorizer,uncertain=self.uncertain,min_length=self.min_length)
@@ -948,9 +948,9 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 							include_bodyparts=self.include_bodyparts,std=self.std,categorize_behavior=categorize_behavior,animation_analyzer=self.animation_analyzer,
 							t=self.t,duration=self.duration,length=self.length,social_distance=self.social_distance)
 						if self.behavior_mode==1:
-							AAD.acquire_information_interact_basic(batch_size=self.detector_batch,background_free=self.background_free)
+							AAD.acquire_information_interact_basic(batch_size=self.detector_batch,background_free=self.background_free,black_background=self.black_background)
 						else:
-							AAD.acquire_information(batch_size=self.detector_batch,background_free=self.background_free)
+							AAD.acquire_information(batch_size=self.detector_batch,background_free=self.background_free,black_background=self.black_background)
 						if self.behavior_mode!=1:
 							AAD.craft_data()
 						if self.path_to_categorizer is not None:
