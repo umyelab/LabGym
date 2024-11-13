@@ -836,7 +836,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 
 		else:
 
-			if self.behavior_mode>=3:
+			if self.behavior_mode==3:
 
 				if self.path_to_categorizer is None or self.path_to_detector is None:
 					wx.MessageBox('You need to select a Categorizer / Detector.','Error',wx.OK|wx.ICON_ERROR)
@@ -851,7 +851,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 					AAD.analyze_images_individuals(self.path_to_detector,self.path_to_videos,self.result_path,self.animal_kinds,path_to_categorizer=self.path_to_categorizer,
 						generate=False,animal_to_include=self.animal_to_include,behavior_to_include=self.behavior_to_include,names_and_colors=self.behaviornames_and_colors,
 						imagewidth=self.framewidth,dim_conv=self.dim_conv,channel=self.channel,detection_threshold=self.detection_threshold,uncertain=self.uncertain,
-						background_free=self.background_free,social_distance=0)
+						background_free=self.background_free,black_background=self.black_background,social_distance=0)
 
 			else:
 
