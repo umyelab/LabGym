@@ -669,7 +669,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 				method=dialog.GetStringSelection()
 				if method=='Enter the number of animals':
 					self.decode_animalnumber=False
-					if self.use_detector is True:
+					if self.use_detector:
 						self.animal_number={}
 						for animal_name in self.animal_kinds:
 							dialog1=wx.NumberEntryDialog(self,'','The number of '+str(animal_name)+': ',str(animal_name)+' number',1,1,100)
@@ -761,7 +761,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 							self.behaviornames_and_colors[self.behavior_to_include[n]]=colors[n]
 					dialog2.Destroy()
 					n+=1
-				if self.correct_ID is True:
+				if self.correct_ID:
 					self.text_selectbehaviors.SetLabel('Selected: '+str(list(names_colors.keys()))+'. Specific behaviors: '+str(self.specific_behaviors)+'.')
 				else:
 					self.text_selectbehaviors.SetLabel('Selected: '+str(list(names_colors.keys()))+'.')
@@ -771,7 +771,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 					if index<len(self.behavior_to_include):
 						behavior_name=list(self.behaviornames_and_colors.keys())[index]
 						self.behaviornames_and_colors[behavior_name]=color
-				if self.correct_ID is True:
+				if self.correct_ID:
 					self.text_selectbehaviors.SetLabel('Selected: '+str(self.behavior_to_include)+' with default colors. Specific behaviors:'+str(self.specific_behaviors)+'.')
 				else:
 					self.text_selectbehaviors.SetLabel('Selected: '+str(self.behavior_to_include)+' with default colors.')
@@ -859,7 +859,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 				event_data={}
 				all_time=[]
 
-				if self.use_detector is True:
+				if self.use_detector:
 					for animal_name in self.animal_kinds:
 						all_events[animal_name]={}
 					if len(self.animal_to_include)==0:
@@ -876,8 +876,8 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 				for i in self.path_to_videos:
 
 					filename=os.path.splitext(os.path.basename(i))[0].split('_')
-					if self.decode_animalnumber is True:
-						if self.use_detector is True:
+					if self.decode_animalnumber:
+						if self.use_detector:
 							self.animal_number={}
 							number=[x[1:] for x in filename if len(x)>1 and x[0]=='n']
 							for a,animal_name in enumerate(self.animal_kinds):
@@ -887,12 +887,12 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 								if len(x)>1:
 									if x[0]=='n':
 										self.animal_number=int(x[1:])
-					if self.decode_t is True:
+					if self.decode_t:
 						for x in filename:
 							if len(x)>1:
 								if x[0]=='b':
 									self.t=float(x[1:])
-					if self.decode_extraction is True:
+					if self.decode_extraction:
 						for x in filename:
 							if len(x)>2:
 								if x[:2]=='xs':
@@ -901,7 +901,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 									self.ex_end=int(x[2:])
 
 					if self.animal_number is None:
-						if self.use_detector is True:
+						if self.use_detector:
 							self.animal_number={}
 							for animal_name in self.animal_kinds:
 								self.animal_number[animal_name]=1
@@ -955,7 +955,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 							AAD.craft_data()
 						if self.path_to_categorizer is not None:
 							AAD.categorize_behaviors(self.path_to_categorizer,uncertain=self.uncertain,min_length=self.min_length)
-						if self.correct_ID is True:
+						if self.correct_ID:
 							AAD.correct_identity(self.specific_behaviors)
 						AAD.annotate_video(self.animal_to_include,self.behavior_to_include,show_legend=self.show_legend)
 						AAD.export_results(normalize_distance=self.normalize_distance,parameter_to_analyze=self.parameter_to_analyze)
@@ -984,7 +984,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 							all_summary=[]
 							for folder in folders:
 								individual_summary=os.path.join(self.result_path,folder,behavior_name,'all_summary.xlsx')
-								if os.path.exists(individual_summary) is True:
+								if os.path.exists(individual_summary):
 									all_summary.append(pd.read_excel(individual_summary))
 							if len(all_summary)>=1:
 								all_summary=pd.concat(all_summary,ignore_index=True)
@@ -1007,7 +1007,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 								all_summary=[]
 								for folder in folders:
 									individual_summary=os.path.join(self.result_path,folder,behavior_name,animal_name+'_all_summary.xlsx')
-									if os.path.exists(individual_summary) is True:
+									if os.path.exists(individual_summary):
 										all_summary.append(pd.read_excel(individual_summary))
 								if len(all_summary)>=1:
 									all_summary=pd.concat(all_summary,ignore_index=True)
@@ -1099,7 +1099,7 @@ class WindowLv2_MineResults(wx.Frame):
 		dialog=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
 		if dialog.ShowModal()==wx.ID_OK:
 			self.file_path=dialog.GetPath()
-			if self.paired is True:
+			if self.paired:
 				self.text_inputfolder.SetLabel('Paired input data is in: '+self.file_path+'.')
 			else:
 				self.text_inputfolder.SetLabel('Unpaired input data is in: '+self.file_path+'.')
