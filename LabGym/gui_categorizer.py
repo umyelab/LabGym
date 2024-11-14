@@ -491,7 +491,7 @@ class WindowLv2_GenerateExamples(wx.Frame):
 				method=dialog.GetStringSelection()
 				if method=='Enter the number of animals':
 					self.decode_animalnumber=False
-					if self.use_detector is True:
+					if self.use_detector:
 						self.animal_number={}
 						for animal_name in self.animal_kinds:
 							dialog1=wx.NumberEntryDialog(self,'','The number of '+str(animal_name)+': ',str(animal_name)+' number',1,1,100)
@@ -608,8 +608,8 @@ class WindowLv2_GenerateExamples(wx.Frame):
 					for i in self.path_to_videos:
 					
 						filename=os.path.splitext(os.path.basename(i))[0].split('_')
-						if self.decode_animalnumber is True:
-							if self.use_detector is True:
+						if self.decode_animalnumber:
+							if self.use_detector:
 								self.animal_number={}
 								number=[x[1:] for x in filename if len(x)>1 and x[0]=='n']
 								for a,animal_name in enumerate(self.animal_kinds):
@@ -619,12 +619,12 @@ class WindowLv2_GenerateExamples(wx.Frame):
 									if len(x)>1:
 										if x[0]=='n':
 											self.animal_number=int(x[1:])
-						if self.decode_t is True:
+						if self.decode_t:
 							for x in filename:
 								if len(x)>1:
 									if x[0]=='b':
 										self.t=float(x[1:])
-						if self.decode_extraction is True:
+						if self.decode_extraction:
 							for x in filename:
 								if len(x)>2:
 									if x[:2]=='xs':
@@ -633,7 +633,7 @@ class WindowLv2_GenerateExamples(wx.Frame):
 										self.ex_end=int(x[2:])
 
 						if self.animal_number is None:
-							if self.use_detector is True:
+							if self.use_detector:
 								self.animal_number={}
 								for animal_name in self.animal_kinds:
 									self.animal_number[animal_name]=1
@@ -804,7 +804,7 @@ class WindowLv2_SortBehaviors(wx.Frame):
 
 			while stop is False:
 
-				if moved is True:
+				if moved:
 					moved=False
 					if only_image is False:
 						shutil.move(os.path.join(self.input_path,example_name+'.avi'),os.path.join(self.keys_behaviorpaths[shortcutkey],example_name+'.avi'))
@@ -861,7 +861,7 @@ class WindowLv2_SortBehaviors(wx.Frame):
 								actions.append([shortcutkey,example_name])
 								moved=True
 								break
-						if moved is True:
+						if moved:
 							break
 
 						if key==ord('u'):
@@ -1151,7 +1151,7 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 
 	def set_categorizer(self,event):
 
-		if self.animation_analyzer is True:
+		if self.animation_analyzer:
 			dialog=wx.NumberEntryDialog(self,'Input dimension of Animation Analyzer\nlarger dimension = wider network','Enter a number:','Animation Analyzer input',32,1,300)
 			if dialog.ShowModal()==wx.ID_OK:
 				self.dim_tconv=int(dialog.GetValue())
@@ -1240,7 +1240,7 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 		
 			else:
 
-				if self.animation_analyzer is True:
+				if self.animation_analyzer:
 					dialog=wx.MessageDialog(self,'Are the animations (in any) in\ntraining examples background free?','Background-free animations?',wx.YES_NO|wx.ICON_QUESTION)
 					if dialog.ShowModal()==wx.ID_YES:
 						self.background_free=True
@@ -1267,17 +1267,17 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 					self.include_bodyparts=False
 				dialog.Destroy()
 
-				if self.include_bodyparts is True:
-					if self.animation_analyzer is True:
-						if self.background_free is True:
+				if self.include_bodyparts:
+					if self.animation_analyzer:
+						if self.background_free:
 							self.text_trainingfolder.SetLabel('Animations w/o background, pattern images w/ bodyparts ('+str(self.std)+') in: '+self.data_path+'.')
 						else:
 							self.text_trainingfolder.SetLabel('Animations w/ background, pattern images w/ bodyparts ('+str(self.std)+') in: '+self.data_path+'.')
 					else:
 						self.text_trainingfolder.SetLabel('Pattern images w/ bodyparts ('+str(self.std)+') in: '+self.data_path+'.')
 				else:
-					if self.animation_analyzer is True:
-						if self.background_free is True:
+					if self.animation_analyzer:
+						if self.background_free:
 							self.text_trainingfolder.SetLabel('Animations w/o background, pattern images w/o bodyparts in: '+self.data_path+'.')
 						else:
 							self.text_trainingfolder.SetLabel('Animations w/ background, pattern images w/o bodyparts in: '+self.data_path+'.')
