@@ -1428,6 +1428,9 @@ class WindowLv2_CalculateDistances(wx.Frame):
 
 		else:
 
+			all_data=[]
+			names=[]
+
 			for filename in os.listdir(self.path_to_analysis_results):
 				filefolder=os.path.join(self.path_to_analysis_results,filename)
 				if os.path.isdir(filefolder):
