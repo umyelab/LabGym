@@ -1440,5 +1440,12 @@ class WindowLv2_CalculateDistances(wx.Frame):
 				if file.endswith('_distance_calculation.xlsx') or file.endswith('_distance_calculation.xls') or file.endswith('_distance_calculation.XLSX') or file.endswith('_distance_calculation.XLS'):
 					individual_data=os.path.join(self.out_path,file)
 					if os.path.exists(individual_data):
+						all_data.append(pd.read_excel(individual_data))
+						names.append(file.split('_distance_calculation')[0])
+
+			if len(all_data)>=1:
+				all_data=pd.concat(all_data,keys=names,names=['File name','ID/parameter'])
+				all_data.drop(all_data.columns[0],axis=1,inplace=True)
+				all_data.to_excel(os.path.join(self.out_path,'all_summary.xlsx'),float_format='%.2f')
 
 
