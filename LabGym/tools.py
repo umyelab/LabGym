@@ -1288,7 +1288,9 @@ def calculate_distances(path_to_folder,filename,behavior_to_include,out_path):
 
 		for col_name,col in all_centers_df.items():
 
-			if col_name!='time/ID':
+			if col_name=='time/ID':
+				time_points=[float(i) for i in col]
+			else:
 				idx=int(col_name)
 				centers[idx]=[]
 				behavior_names[idx]=[]
@@ -1335,6 +1337,9 @@ def calculate_distances(path_to_folder,filename,behavior_to_include,out_path):
 
 		shortest_distances={}
 		traveling_distances={}
+		durations={}
+		speeds={}
+		velocities={}
 		distance_ratios={}
 		diff=int(255/len(behavior_to_include))+25
 		diff_animal=int(255/len(centers))+25
@@ -1372,11 +1377,18 @@ def calculate_distances(path_to_folder,filename,behavior_to_include,out_path):
 
 			shortest_distances[idx]=shortest_distance
 			traveling_distances[idx]=traveling_distance
+			duration=time_points[indices_for_calculation[-1]]-time_points[indices_for_calculation[0]]
+			durations[idx]=duration
+			speeds[idx]=traveling_distance/duration
+			velocities[idx]=shortest_distance/duration
 			distance_ratios[idx]=shortest_distance/traveling_distance
 
 		out_spreadsheet=[]
 		out_spreadsheet.append(pd.DataFrame.from_dict(shortest_distances,orient='index',columns=['shortest_distances']).reset_index(drop=True))
 		out_spreadsheet.append(pd.DataFrame.from_dict(traveling_distances,orient='index',columns=['traveling_distances']).reset_index(drop=True))
+		out_spreadsheet.append(pd.DataFrame.from_dict(durations,orient='index',columns=['durations']).reset_index(drop=True))
+		out_spreadsheet.append(pd.DataFrame.from_dict(speeds,orient='index',columns=['speeds']).reset_index(drop=True))
+		out_spreadsheet.append(pd.DataFrame.from_dict(velocities,orient='index',columns=['velocities']).reset_index(drop=True))
 		out_spreadsheet.append(pd.DataFrame.from_dict(distance_ratios,orient='index',columns=['distance_ratios']).reset_index(drop=True))
 		if animals[0]=='':
 			pd.concat(out_spreadsheet,axis=1).to_excel(os.path.join(out_path,filename+'_distance_calculation.xlsx'),float_format='%.2f',index_label='ID/parameter')
