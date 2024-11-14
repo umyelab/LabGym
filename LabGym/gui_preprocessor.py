@@ -181,7 +181,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
 			self.text_duration.SetLabel('Not to trim the videos.')
 		dialog.Destroy()
 
-		if self.trim_video is True:
+		if self.trim_video:
 			methods=['Decode from filenames: "_stt_" and "_edt_"','Enter time points']
 			dialog=wx.SingleChoiceDialog(self,message='Specify the time windows for trimming videos',caption='Time windows for trimming videos',choices=methods)
 			if dialog.ShowModal()==wx.ID_OK:
@@ -350,7 +350,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
 
 			for i in self.path_to_videos:
 
-				if self.decode_t is True:
+				if self.decode_t:
 					self.time_windows=[]
 					filename=os.path.splitext(os.path.basename(i))[0].split('_')
 					starttime_windows=[x[2:] for x in filename if len(x)>2 and x[:2]=='st']
