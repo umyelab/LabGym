@@ -90,7 +90,7 @@ def extract_background(frames,stable_illumination=True,animal_vs_bg=0):
 
 		else:
 
-			if stable_illumination is True:
+			if stable_illumination:
 
 				if animal_vs_bg==1:
 					background=np.uint8(frames.max(0))
@@ -551,7 +551,7 @@ def extract_blob_background(frame,contours,contour=None,channel=1,background_fre
 	'''
 
 	(y_bt,y_tp,x_lf,x_rt)=crop_frame(frame,contours)
-	if background_free is True:
+	if background_free:
 		mask=np.zeros_like(frame)
 		cv2.drawContours(mask,[contour],0,(255,255,255),-1)
 		masked_frame=frame*(mask/255.0)
@@ -581,7 +581,7 @@ def extract_blob_all(frame,y_bt,y_tp,x_lf,x_rt,contours=None,channel=1,backgroun
 	black_background: whether to set background black
 	'''
 
-	if background_free is True:
+	if background_free:
 		mask=np.zeros_like(frame)
 		cv2.drawContours(mask,contours,-1,(255,255,255),-1)
 		masked_frame=frame*(mask/255.0)
@@ -683,14 +683,14 @@ def contour_frame(frame,animal_number,background,background_low,background_high,
 			centers.append((int(cv2.moments(i)['m10']/cv2.moments(i)['m00']),int(cv2.moments(i)['m01']/cv2.moments(i)['m00'])))
 			(_,_),(w,h),_=cv2.minAreaRect(i)
 			heights.append(max(w,h))
-			if include_bodyparts is True:
+			if include_bodyparts:
 				mask=np.zeros_like(frame)
 				cv2.drawContours(mask,[i],0,(255,255,255),-1)
 				mask=cv2.dilate(mask,np.ones((5,5),np.uint8))
 				masked_frame=frame_dt*(mask/255)
 				gray=cv2.cvtColor(np.uint8(masked_frame),cv2.COLOR_BGR2GRAY)
 				inners.append(get_inner(gray,i))
-			if animation_analyzer is True:
+			if animation_analyzer:
 				blobs.append(extract_blob(frame,i,channel=channel,black_background=black_background))
 
 	return (contours,centers,heights,inners,blobs)
@@ -1126,7 +1126,7 @@ def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_w
 			h=height
 
 	added_name=''
-	if trim_video is True:
+	if trim_video:
 		for start,end in time_windows:
 			added_name+='_'+str(start)+'-'+str(end)
 
@@ -1162,16 +1162,16 @@ def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_w
 		if framewidth is not None:
 			frame=cv2.resize(frame,(w_resize,h_resize),interpolation=cv2.INTER_AREA)
 
-		if crop_frame is True:
+		if crop_frame:
 			frame=frame[top:bottom,left:right,:]
 
-		if enhance_contrast is True:
+		if enhance_contrast:
 			frame=frame*contrast
 			frame[frame>255]=255
 
 		frame=np.uint8(frame)
 
-		if trim_video is True:
+		if trim_video:
 			t=frame_count/fps
 			for i in time_windows:
 				if float(i[0])<=t<=float(i[1]):
