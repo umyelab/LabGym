@@ -85,7 +85,7 @@ class Categorizers():
 			
 				for i in name_list:
 
-					if imagedata is True:
+					if imagedata:
 
 						image=os.path.join(file_path,folder,i)
 						new_image=os.path.join(new_path,str(name_list.index(i))+'_'+folder+'.jpg')
@@ -295,8 +295,8 @@ class Categorizers():
 
 							frame_contrast=np.uint8(exposure.rescale_intensity(frame,out_range=(0,255)))
 
-							if background_free is True:
-								if black_background is True:
+							if background_free:
+								if black_background:
 									frame_gray=cv2.cvtColor(frame_contrast,cv2.COLOR_BGR2GRAY)
 								else:
 									frame_gray=np.uint8(255-cv2.cvtColor(frame_contrast,cv2.COLOR_BGR2GRAY))
@@ -319,8 +319,8 @@ class Categorizers():
 
 							if beta is not None:
 								blob=blob.astype('float')
-								if background_free is True:
-									if black_background is True:
+								if background_free:
+									if black_background:
 										blob[blob>30]+=beta
 									else:
 										blob[blob<225]+=beta
@@ -369,7 +369,7 @@ class Categorizers():
 
 				if behavior_mode==3:
 					if beta is not None:
-						if background_free is True:
+						if background_free:
 							pattern_image_gray=cv2.cvtColor(pattern_image,cv2.COLOR_BGR2GRAY)
 							if black_background is False:
 								pattern_image_gray=np.uint8(255-pattern_image_gray)
@@ -381,7 +381,7 @@ class Categorizers():
 								contour=sorted(cnts,key=cv2.contourArea,reverse=True)[0]
 								pattern_image=extract_blob(pattern_image,contour,channel=3,black_background=black_background)
 							pattern_image=pattern_image.astype('float')
-							if black_background is True:
+							if black_background:
 								pattern_image[pattern_image>30]+=beta
 							else:
 								pattern_image[pattern_image<225]+=beta
@@ -550,7 +550,7 @@ class Categorizers():
 
 		shortcut=x
 
-		if basic is True:
+		if basic:
 
 			x=ZeroPadding2D((1,1))(x)
 			x=Conv2D(filters,(3,3),strides=(strides,strides))(x)
@@ -566,7 +566,7 @@ class Categorizers():
 		x=Conv2D(filters,(3,3),strides=(1,1))(x)
 		x=BatchNormalization()(x)
 
-		if basic is True:
+		if basic:
 
 			if block is False:
 				shortcut=Conv2D(filters,(1,1),strides=(strides,strides))(shortcut)
@@ -599,7 +599,7 @@ class Categorizers():
 
 		shortcut=x
 
-		if basic is True:
+		if basic:
 
 			x=TimeDistributed(ZeroPadding2D((1,1)))(x)
 			x=TimeDistributed(Conv2D(filters,(3,3),strides=(strides,strides)))(x)
@@ -615,7 +615,7 @@ class Categorizers():
 		x=TimeDistributed(Conv2D(filters,(3,3),strides=(1,1)))(x)
 		x=TimeDistributed(BatchNormalization())(x)
 
-		if basic is True:
+		if basic:
 
 			if block is False:
 				shortcut=TimeDistributed(Conv2D(filters,(1,1),strides=(strides,strides)))(shortcut)
@@ -863,17 +863,17 @@ class Categorizers():
 
 			print('Found behavior names: '+str(self.classnames))
 
-			if include_bodyparts is True:
+			if include_bodyparts:
 				inner_code=0
 			else:
 				inner_code=1
 
-			if background_free is True:
+			if background_free:
 				background_code=0
 			else:
 				background_code=1
 
-			if black_background is True:
+			if black_background:
 				black_code=0
 			else:
 				black_code=1
@@ -896,7 +896,7 @@ class Categorizers():
 			_,trainX,trainY=self.build_data(train_files,dim_tconv=0,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode)
 			trainY=lb.fit_transform(trainY)
 			print('Start to augment validation examples...')
-			if augvalid is True:
+			if augvalid:
 				_,testX,testY=self.build_data(test_files,dim_tconv=0,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode)
 			else:
 				_,testX,testY=self.build_data(test_files,dim_tconv=0,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free,black_background=black_background,behavior_mode=behavior_mode)
@@ -1027,17 +1027,17 @@ class Categorizers():
 
 			print('Found behavior names: '+str(self.classnames))
 
-			if include_bodyparts is True:
+			if include_bodyparts:
 				inner_code=0
 			else:
 				inner_code=1
 
-			if background_free is True:
+			if background_free:
 				background_code=0
 			else:
 				background_code=1
 
-			if black_background is True:
+			if black_background:
 				black_code=0
 			else:
 				black_code=1
@@ -1056,7 +1056,7 @@ class Categorizers():
 			trainX,_,trainY=self.build_data(train_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode)
 			trainY=lb.fit_transform(trainY)
 			print('Start to augment validation examples...')
-			if augvalid is True:
+			if augvalid:
 				testX,_,testY=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode)
 			else:
 				testX,_,testY=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free,black_background=black_background,behavior_mode=behavior_mode)
@@ -1183,17 +1183,17 @@ class Categorizers():
 
 			print('Found behavior names: '+str(self.classnames))
 
-			if include_bodyparts is True:
+			if include_bodyparts:
 				inner_code=0
 			else:
 				inner_code=1
 
-			if background_free is True:
+			if background_free:
 				background_code=0
 			else:
 				background_code=1
 
-			if black_background is True:
+			if black_background:
 				black_code=0
 			else:
 				black_code=1
@@ -1212,7 +1212,7 @@ class Categorizers():
 			train_animations,train_pattern_images,trainY=self.build_data(train_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode)
 			trainY=lb.fit_transform(trainY)
 			print('Start to augment validation examples...')
-			if augvalid is True:
+			if augvalid:
 				test_animations,test_pattern_images,testY=self.build_data(test_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode)
 			else:
 				test_animations,test_pattern_images,testY=self.build_data(test_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free,black_background=black_background,behavior_mode=behavior_mode)
