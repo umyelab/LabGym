@@ -1435,5 +1435,6 @@ class WindowLv2_CalculateDistances(wx.Frame):
 				filefolder=os.path.join(self.path_to_analysis_results,filename)
 				if os.path.isdir(filefolder):
 					calculate_distances(filefolder,filename,self.behavior_to_include,self.out_path)
+					individual_data=os.path.join(self.out_path,neuro_name+'_summary.xlsx')
 
 
