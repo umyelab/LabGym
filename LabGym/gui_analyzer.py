@@ -116,6 +116,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 		self.min_length=None # the minimum length (in frames) a behavior should last, can be used to filter out the brief false positives
 		self.show_legend=True # whether to show legend of behavior names in the annotated videos
 		self.background_free=True # whether to include background in animations
+		self.black_background=True # whether to set background black
 		self.normalize_distance=True # whether to normalize the distance (in pixel) to the animal contour area
 		self.social_distance=0 # a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
 		self.specific_behaviors={} # sex or identity-specific behaviors
@@ -381,6 +382,9 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 					self.text_duration.SetLabel('No need to specify this since the selected behavior mode is "Static images".')
 					self.text_animalnumber.SetLabel('No need to specify this since the selected behavior mode is "Static images".')
 					self.text_selectparameters.SetLabel('No need to specify this since the selected behavior mode is "Static images".')
+				if 'black_background' in parameters:
+					if int(parameters['black_background'][0])==1:
+						self.black_background=False
 
 		dialog.Destroy()
 
@@ -665,7 +669,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 				method=dialog.GetStringSelection()
 				if method=='Enter the number of animals':
 					self.decode_animalnumber=False
-					if self.use_detector is True:
+					if self.use_detector:
 						self.animal_number={}
 						for animal_name in self.animal_kinds:
 							dialog1=wx.NumberEntryDialog(self,'','The number of '+str(animal_name)+': ',str(animal_name)+' number',1,1,100)
@@ -757,7 +761,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 							self.behaviornames_and_colors[self.behavior_to_include[n]]=colors[n]
 					dialog2.Destroy()
 					n+=1
-				if self.correct_ID is True:
+				if self.correct_ID:
 					self.text_selectbehaviors.SetLabel('Selected: '+str(list(names_colors.keys()))+'. Specific behaviors: '+str(self.specific_behaviors)+'.')
 				else:
 					self.text_selectbehaviors.SetLabel('Selected: '+str(list(names_colors.keys()))+'.')
@@ -767,7 +771,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 					if index<len(self.behavior_to_include):
 						behavior_name=list(self.behaviornames_and_colors.keys())[index]
 						self.behaviornames_and_colors[behavior_name]=color
-				if self.correct_ID is True:
+				if self.correct_ID:
 					self.text_selectbehaviors.SetLabel('Selected: '+str(self.behavior_to_include)+' with default colors. Specific behaviors:'+str(self.specific_behaviors)+'.')
 				else:
 					self.text_selectbehaviors.SetLabel('Selected: '+str(self.behavior_to_include)+' with default colors.')
@@ -832,7 +836,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 
 		else:
 
-			if self.behavior_mode>=3:
+			if self.behavior_mode==3:
 
 				if self.path_to_categorizer is None or self.path_to_detector is None:
 					wx.MessageBox('You need to select a Categorizer / Detector.','Error',wx.OK|wx.ICON_ERROR)
@@ -847,7 +851,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 					AAD.analyze_images_individuals(self.path_to_detector,self.path_to_videos,self.result_path,self.animal_kinds,path_to_categorizer=self.path_to_categorizer,
 						generate=False,animal_to_include=self.animal_to_include,behavior_to_include=self.behavior_to_include,names_and_colors=self.behaviornames_and_colors,
 						imagewidth=self.framewidth,dim_conv=self.dim_conv,channel=self.channel,detection_threshold=self.detection_threshold,uncertain=self.uncertain,
-						background_free=self.background_free,social_distance=0)
+						background_free=self.background_free,black_background=self.black_background,social_distance=0)
 
 			else:
 
@@ -855,7 +859,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 				event_data={}
 				all_time=[]
 
-				if self.use_detector is True:
+				if self.use_detector:
 					for animal_name in self.animal_kinds:
 						all_events[animal_name]={}
 					if len(self.animal_to_include)==0:
@@ -872,8 +876,8 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 				for i in self.path_to_videos:
 
 					filename=os.path.splitext(os.path.basename(i))[0].split('_')
-					if self.decode_animalnumber is True:
-						if self.use_detector is True:
+					if self.decode_animalnumber:
+						if self.use_detector:
 							self.animal_number={}
 							number=[x[1:] for x in filename if len(x)>1 and x[0]=='n']
 							for a,animal_name in enumerate(self.animal_kinds):
@@ -883,12 +887,12 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 								if len(x)>1:
 									if x[0]=='n':
 										self.animal_number=int(x[1:])
-					if self.decode_t is True:
+					if self.decode_t:
 						for x in filename:
 							if len(x)>1:
 								if x[0]=='b':
 									self.t=float(x[1:])
-					if self.decode_extraction is True:
+					if self.decode_extraction:
 						for x in filename:
 							if len(x)>2:
 								if x[:2]=='xs':
@@ -897,7 +901,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 									self.ex_end=int(x[2:])
 
 					if self.animal_number is None:
-						if self.use_detector is True:
+						if self.use_detector:
 							self.animal_number={}
 							for animal_name in self.animal_kinds:
 								self.animal_number[animal_name]=1
@@ -919,11 +923,11 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 							path_background=self.background_path,autofind_t=self.autofind_t,t=self.t,duration=self.duration,ex_start=self.ex_start,ex_end=self.ex_end,
 							length=self.length,animal_vs_bg=self.animal_vs_bg)
 						if self.behavior_mode==0:
-							AA.acquire_information(background_free=self.background_free)
+							AA.acquire_information(background_free=self.background_free,black_background=self.black_background)
 							AA.craft_data()
 							interact_all=False
 						else:
-							AA.acquire_information_interact_basic(background_free=self.background_free)
+							AA.acquire_information_interact_basic(background_free=self.background_free,black_background=self.black_background)
 							interact_all=True
 						if self.path_to_categorizer is not None:
 							AA.categorize_behaviors(self.path_to_categorizer,uncertain=self.uncertain,min_length=self.min_length)
@@ -944,14 +948,14 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 							include_bodyparts=self.include_bodyparts,std=self.std,categorize_behavior=categorize_behavior,animation_analyzer=self.animation_analyzer,
 							t=self.t,duration=self.duration,length=self.length,social_distance=self.social_distance)
 						if self.behavior_mode==1:
-							AAD.acquire_information_interact_basic(batch_size=self.detector_batch,background_free=self.background_free)
+							AAD.acquire_information_interact_basic(batch_size=self.detector_batch,background_free=self.background_free,black_background=self.black_background)
 						else:
-							AAD.acquire_information(batch_size=self.detector_batch,background_free=self.background_free)
+							AAD.acquire_information(batch_size=self.detector_batch,background_free=self.background_free,black_background=self.black_background)
 						if self.behavior_mode!=1:
 							AAD.craft_data()
 						if self.path_to_categorizer is not None:
 							AAD.categorize_behaviors(self.path_to_categorizer,uncertain=self.uncertain,min_length=self.min_length)
-						if self.correct_ID is True:
+						if self.correct_ID:
 							AAD.correct_identity(self.specific_behaviors)
 						AAD.annotate_video(self.animal_to_include,self.behavior_to_include,show_legend=self.show_legend)
 						AAD.export_results(normalize_distance=self.normalize_distance,parameter_to_analyze=self.parameter_to_analyze)
@@ -980,7 +984,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 							all_summary=[]
 							for folder in folders:
 								individual_summary=os.path.join(self.result_path,folder,behavior_name,'all_summary.xlsx')
-								if os.path.exists(individual_summary) is True:
+								if os.path.exists(individual_summary):
 									all_summary.append(pd.read_excel(individual_summary))
 							if len(all_summary)>=1:
 								all_summary=pd.concat(all_summary,ignore_index=True)
@@ -1003,7 +1007,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 								all_summary=[]
 								for folder in folders:
 									individual_summary=os.path.join(self.result_path,folder,behavior_name,animal_name+'_all_summary.xlsx')
-									if os.path.exists(individual_summary) is True:
+									if os.path.exists(individual_summary):
 										all_summary.append(pd.read_excel(individual_summary))
 								if len(all_summary)>=1:
 									all_summary=pd.concat(all_summary,ignore_index=True)
@@ -1095,7 +1099,7 @@ class WindowLv2_MineResults(wx.Frame):
 		dialog=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
 		if dialog.ShowModal()==wx.ID_OK:
 			self.file_path=dialog.GetPath()
-			if self.paired is True:
+			if self.paired:
 				self.text_inputfolder.SetLabel('Paired input data is in: '+self.file_path+'.')
 			else:
 				self.text_inputfolder.SetLabel('Unpaired input data is in: '+self.file_path+'.')
@@ -1424,9 +1428,24 @@ class WindowLv2_CalculateDistances(wx.Frame):
 
 		else:
 
+			all_data=[]
+			names=[]
+
 			for filename in os.listdir(self.path_to_analysis_results):
 				filefolder=os.path.join(self.path_to_analysis_results,filename)
 				if os.path.isdir(filefolder):
 					calculate_distances(filefolder,filename,self.behavior_to_include,self.out_path)
+
+			for file in os.listdir(self.out_path):
+				if file.endswith('_distance_calculation.xlsx') or file.endswith('_distance_calculation.xls') or file.endswith('_distance_calculation.XLSX') or file.endswith('_distance_calculation.XLS'):
+					individual_data=os.path.join(self.out_path,file)
+					if os.path.exists(individual_data):
+						all_data.append(pd.read_excel(individual_data))
+						names.append(file.split('_distance_calculation')[0])
+
+			if len(all_data)>=1:
+				all_data=pd.concat(all_data,keys=names,names=['File name','ID/parameter'])
+				all_data.drop(all_data.columns[0],axis=1,inplace=True)
+				all_data.to_excel(os.path.join(self.out_path,'all_summary.xlsx'),float_format='%.2f')
 
 

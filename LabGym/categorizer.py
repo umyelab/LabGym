@@ -85,7 +85,7 @@ class Categorizers():
 			
 				for i in name_list:
 
-					if imagedata is True:
+					if imagedata:
 
 						image=os.path.join(file_path,folder,i)
 						new_image=os.path.join(new_path,str(name_list.index(i))+'_'+folder+'.jpg')
@@ -132,7 +132,7 @@ class Categorizers():
 			print('All prepared training examples stored in: '+str(new_path))
 
 
-	def build_data(self,path_to_animations,dim_tconv=0,dim_conv=64,channel=1,time_step=15,aug_methods=[],background_free=True,behavior_mode=0):
+	def build_data(self,path_to_animations,dim_tconv=0,dim_conv=64,channel=1,time_step=15,aug_methods=[],background_free=True,black_background=True,behavior_mode=0):
 
 		# path_to_animations: the folder that stores all the prepared training examples
 		# dim_tconv: the input dimension of Animation Analyzer
@@ -141,6 +141,7 @@ class Categorizers():
 		# time_step: the duration of an animation, also the input length of Animation Analyzer
 		# aug_methods: the augmentation methods that are used in training
 		# background_free: whether the background is included in animations
+		# black_background: whether to set background black
 		# behavior_mode:  0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
 
 		animations=deque()
@@ -294,8 +295,11 @@ class Categorizers():
 
 							frame_contrast=np.uint8(exposure.rescale_intensity(frame,out_range=(0,255)))
 
-							if background_free is True:
-								frame_gray=cv2.cvtColor(frame_contrast,cv2.COLOR_BGR2GRAY)
+							if background_free:
+								if black_background:
+									frame_gray=cv2.cvtColor(frame_contrast,cv2.COLOR_BGR2GRAY)
+								else:
+									frame_gray=np.uint8(255-cv2.cvtColor(frame_contrast,cv2.COLOR_BGR2GRAY))
 								thred=cv2.threshold(frame_gray,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]
 								cnts,_=cv2.findContours(thred,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
 								if len(cnts)==0:
@@ -303,7 +307,7 @@ class Categorizers():
 								else:
 									if behavior_mode==0:
 										contour=sorted(cnts,key=cv2.contourArea,reverse=True)[0]
-										blob=extract_blob(frame,contour,channel=3)
+										blob=extract_blob(frame,contour,channel=3,black_background=black_background)
 									else:
 										(y_bt,y_tp,x_lf,x_rt)=crop_frame(frame,cnts)
 										blob=frame_contrast[y_bt:y_tp,x_lf:x_rt]
@@ -315,8 +319,11 @@ class Categorizers():
 
 							if beta is not None:
 								blob=blob.astype('float')
-								if background_free is True:
-									blob[blob>30]+=beta
+								if background_free:
+									if black_background:
+										blob[blob>30]+=beta
+									else:
+										blob[blob<225]+=beta
 								else:
 									blob+=beta
 								blob=np.uint8(np.clip(blob,0,255))
@@ -330,6 +337,8 @@ class Categorizers():
 
 							if scale is not None:
 								blob_black=np.zeros_like(blob)
+								if black_background is False:
+									blob_black=np.uint8(blob_black+255)
 								if width==0:
 									blob_scl=cv2.resize(blob,(blob.shape[1],int(blob.shape[0]*scale)),interpolation=cv2.INTER_AREA)
 								else:
@@ -360,17 +369,22 @@ class Categorizers():
 
 				if behavior_mode==3:
 					if beta is not None:
-						if background_free is True:
+						if background_free:
 							pattern_image_gray=cv2.cvtColor(pattern_image,cv2.COLOR_BGR2GRAY)
+							if black_background is False:
+								pattern_image_gray=np.uint8(255-pattern_image_gray)
 							thred=cv2.threshold(pattern_image_gray,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]
 							cnts,_=cv2.findContours(thred,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
 							if len(cnts)==0:
 								pattern_image=np.zeros_like(pattern_image)
 							else:
 								contour=sorted(cnts,key=cv2.contourArea,reverse=True)[0]
-								pattern_image=extract_blob(pattern_image,contour,channel=3)
+								pattern_image=extract_blob(pattern_image,contour,channel=3,black_background=black_background)
 							pattern_image=pattern_image.astype('float')
-							pattern_image[pattern_image>30]+=beta
+							if black_background:
+								pattern_image[pattern_image>30]+=beta
+							else:
+								pattern_image[pattern_image<225]+=beta
 						else:
 							pattern_image=pattern_image.astype('float')
 							pattern_image+=beta
@@ -536,7 +550,7 @@ class Categorizers():
 
 		shortcut=x
 
-		if basic is True:
+		if basic:
 
 			x=ZeroPadding2D((1,1))(x)
 			x=Conv2D(filters,(3,3),strides=(strides,strides))(x)
@@ -552,7 +566,7 @@ class Categorizers():
 		x=Conv2D(filters,(3,3),strides=(1,1))(x)
 		x=BatchNormalization()(x)
 
-		if basic is True:
+		if basic:
 
 			if block is False:
 				shortcut=Conv2D(filters,(1,1),strides=(strides,strides))(shortcut)
@@ -585,7 +599,7 @@ class Categorizers():
 
 		shortcut=x
 
-		if basic is True:
+		if basic:
 
 			x=TimeDistributed(ZeroPadding2D((1,1)))(x)
 			x=TimeDistributed(Conv2D(filters,(3,3),strides=(strides,strides)))(x)
@@ -601,7 +615,7 @@ class Categorizers():
 		x=TimeDistributed(Conv2D(filters,(3,3),strides=(1,1)))(x)
 		x=TimeDistributed(BatchNormalization())(x)
 
-		if basic is True:
+		if basic:
 
 			if block is False:
 				shortcut=TimeDistributed(Conv2D(filters,(1,1),strides=(strides,strides)))(shortcut)
@@ -798,7 +812,7 @@ class Categorizers():
 		return model
 
 
-	def train_pattern_recognizer(self,data_path,model_path,out_path=None,dim=64,channel=3,time_step=15,level=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,behavior_mode=0,social_distance=0):
+	def train_pattern_recognizer(self,data_path,model_path,out_path=None,dim=64,channel=3,time_step=15,level=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,black_background=True,behavior_mode=0,social_distance=0):
 
 		# data_path: the folder that stores all the prepared training examples
 		# model_path: the path to the trained Animation Analyzer
@@ -812,6 +826,7 @@ class Categorizers():
 		# whether to include body parts in the pattern images
 		# std: a value between 0 and 255, higher value, less body parts will be included in the pattern images
 		# background_free: whether to include background in animations
+		# black_background: whether to set background
 		# behavior_mode:  0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
 		# social_distance: a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
 
@@ -848,21 +863,26 @@ class Categorizers():
 
 			print('Found behavior names: '+str(self.classnames))
 
-			if include_bodyparts is True:
+			if include_bodyparts:
 				inner_code=0
 			else:
 				inner_code=1
 
-			if background_free is True:
+			if background_free:
 				background_code=0
 			else:
 				background_code=1
+
+			if black_background:
+				black_code=0
+			else:
+				black_code=1
 
 			if behavior_mode>=3:
 				time_step=std=0
 				inner_code=1
 
-			parameters={'classnames':list(self.classnames),'dim_conv':int(dim),'channel':int(channel),'time_step':int(time_step),'network':0,'level_conv':int(level),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code),'behavior_kind':int(behavior_mode),'social_distance':int(social_distance)}
+			parameters={'classnames':list(self.classnames),'dim_conv':int(dim),'channel':int(channel),'time_step':int(time_step),'network':0,'level_conv':int(level),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code),'black_background':int(black_code),'behavior_kind':int(behavior_mode),'social_distance':int(social_distance)}
 			pd_parameters=pd.DataFrame.from_dict(parameters)
 			pd_parameters.to_csv(os.path.join(model_path,'model_parameters.txt'),index=False)
 
@@ -873,13 +893,13 @@ class Categorizers():
 			print(datetime.datetime.now())
 
 			print('Start to augment training examples...')
-			_,trainX,trainY=self.build_data(train_files,dim_tconv=0,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,behavior_mode=behavior_mode)
+			_,trainX,trainY=self.build_data(train_files,dim_tconv=0,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode)
 			trainY=lb.fit_transform(trainY)
 			print('Start to augment validation examples...')
-			if augvalid is True:
-				_,testX,testY=self.build_data(test_files,dim_tconv=0,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,behavior_mode=behavior_mode)
+			if augvalid:
+				_,testX,testY=self.build_data(test_files,dim_tconv=0,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode)
 			else:
-				_,testX,testY=self.build_data(test_files,dim_tconv=0,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free,behavior_mode=behavior_mode)
+				_,testX,testY=self.build_data(test_files,dim_tconv=0,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free,black_background=black_background,behavior_mode=behavior_mode)
 			testY=lb.fit_transform(testY)
 
 			with tf.device('CPU'):
@@ -956,7 +976,7 @@ class Categorizers():
 				pass
 
 
-	def train_animation_analyzer(self,data_path,model_path,out_path=None,dim=64,channel=1,time_step=15,level=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,behavior_mode=0,social_distance=0):
+	def train_animation_analyzer(self,data_path,model_path,out_path=None,dim=64,channel=1,time_step=15,level=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,black_background=True,behavior_mode=0,social_distance=0):
 
 		# data_path: the folder that stores all the prepared training examples
 		# model_path: the path to the trained Animation Analyzer
@@ -970,6 +990,7 @@ class Categorizers():
 		# whether to include body parts in the pattern images
 		# std: a value between 0 and 255, higher value, less body parts will be included in the pattern images
 		# background_free: whether to include background in animations
+		# black_background: whether to set background
 		# behavior_mode:  0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
 		# social_distance: a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
 
@@ -1006,17 +1027,22 @@ class Categorizers():
 
 			print('Found behavior names: '+str(self.classnames))
 
-			if include_bodyparts is True:
+			if include_bodyparts:
 				inner_code=0
 			else:
 				inner_code=1
 
-			if background_free is True:
+			if background_free:
 				background_code=0
 			else:
 				background_code=1
 
-			parameters={'classnames':list(self.classnames),'dim_tconv':int(dim),'channel':int(channel),'time_step':int(time_step),'network':1,'level_tconv':int(level),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code),'behavior_kind':int(behavior_mode),'social_distance':int(social_distance)}
+			if black_background:
+				black_code=0
+			else:
+				black_code=1
+
+			parameters={'classnames':list(self.classnames),'dim_tconv':int(dim),'channel':int(channel),'time_step':int(time_step),'network':1,'level_tconv':int(level),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code),'black_background':int(black_code),'behavior_kind':int(behavior_mode),'social_distance':int(social_distance)}
 			pd_parameters=pd.DataFrame.from_dict(parameters)
 			pd_parameters.to_csv(os.path.join(model_path,'model_parameters.txt'),index=False)
 
@@ -1027,13 +1053,13 @@ class Categorizers():
 			print(datetime.datetime.now())
 
 			print('Start to augment training examples...')
-			trainX,_,trainY=self.build_data(train_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,behavior_mode=behavior_mode)
+			trainX,_,trainY=self.build_data(train_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode)
 			trainY=lb.fit_transform(trainY)
 			print('Start to augment validation examples...')
-			if augvalid is True:
-				testX,_,testY=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,behavior_mode=behavior_mode)
+			if augvalid:
+				testX,_,testY=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode)
 			else:
-				testX,_,testY=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free,behavior_mode=behavior_mode)
+				testX,_,testY=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free,black_background=black_background,behavior_mode=behavior_mode)
 			testY=lb.fit_transform(testY)
 
 			with tf.device('CPU'):
@@ -1111,7 +1137,7 @@ class Categorizers():
 				pass
 
 
-	def train_combnet(self,data_path,model_path,out_path=None,dim_tconv=32,dim_conv=64,channel=1,time_step=15,level_tconv=1,level_conv=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,behavior_mode=0,social_distance=0):
+	def train_combnet(self,data_path,model_path,out_path=None,dim_tconv=32,dim_conv=64,channel=1,time_step=15,level_tconv=1,level_conv=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,black_background=True,behavior_mode=0,social_distance=0):
 
 		# data_path: the folder that stores all the prepared training examples
 		# model_path: the path to the trained Animation Analyzer
@@ -1127,6 +1153,7 @@ class Categorizers():
 		# whether to include body parts in the pattern images
 		# std: a value between 0 and 255, higher value, less body parts will be included in the pattern images
 		# background_free: whether to include background in animations
+		# black_background: whether to set background
 		# behavior_mode:  0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
 		# social_distance: a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
 
@@ -1156,17 +1183,22 @@ class Categorizers():
 
 			print('Found behavior names: '+str(self.classnames))
 
-			if include_bodyparts is True:
+			if include_bodyparts:
 				inner_code=0
 			else:
 				inner_code=1
 
-			if background_free is True:
+			if background_free:
 				background_code=0
 			else:
 				background_code=1
 
-			parameters={'classnames':list(self.classnames),'dim_tconv':int(dim_tconv),'dim_conv':int(dim_conv),'channel':int(channel),'time_step':int(time_step),'network':2,'level_tconv':int(level_tconv),'level_conv':int(level_conv),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code),'behavior_kind':int(behavior_mode),'social_distance':int(social_distance)}
+			if black_background:
+				black_code=0
+			else:
+				black_code=1
+
+			parameters={'classnames':list(self.classnames),'dim_tconv':int(dim_tconv),'dim_conv':int(dim_conv),'channel':int(channel),'time_step':int(time_step),'network':2,'level_tconv':int(level_tconv),'level_conv':int(level_conv),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code),'black_background':int(black_code),'behavior_kind':int(behavior_mode),'social_distance':int(social_distance)}
 			pd_parameters=pd.DataFrame.from_dict(parameters)
 			pd_parameters.to_csv(os.path.join(model_path,'model_parameters.txt'),index=False)
 
@@ -1177,13 +1209,13 @@ class Categorizers():
 			print(datetime.datetime.now())
 
 			print('Start to augment training examples...')
-			train_animations,train_pattern_images,trainY=self.build_data(train_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,behavior_mode=behavior_mode)
+			train_animations,train_pattern_images,trainY=self.build_data(train_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode)
 			trainY=lb.fit_transform(trainY)
 			print('Start to augment validation examples...')
-			if augvalid is True:
-				test_animations,test_pattern_images,testY=self.build_data(test_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,behavior_mode=behavior_mode)
+			if augvalid:
+				test_animations,test_pattern_images,testY=self.build_data(test_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode)
 			else:
-				test_animations,test_pattern_images,testY=self.build_data(test_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free,behavior_mode=behavior_mode)
+				test_animations,test_pattern_images,testY=self.build_data(test_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free,black_background=black_background,behavior_mode=behavior_mode)
 			testY=lb.fit_transform(testY)
 
 			with tf.device('CPU'):
@@ -1315,6 +1347,9 @@ class Categorizers():
 			print('The Categorizer does not include background in analysis.')
 		else:
 			print('The Categorizer includes background in analysis.')
+		if 'black_background' in parameters:
+			if int(parameters['black_background'][0])==1:
+				print('The background is white in the Categorizer.')
 		classnames=list(parameters['classnames'])
 		print('Behavior names in the Categorizer: '+str(classnames))
 		behaviornames=[i for i in os.listdir(groundtruth_path) if os.path.isdir(os.path.join(groundtruth_path,i))]

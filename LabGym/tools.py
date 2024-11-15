@@ -90,7 +90,7 @@ def extract_background(frames,stable_illumination=True,animal_vs_bg=0):
 
 		else:
 
-			if stable_illumination is True:
+			if stable_illumination:
 
 				if animal_vs_bg==1:
 					background=np.uint8(frames.max(0))
@@ -494,7 +494,7 @@ def crop_frame(frame,contours):
 	return (y_bt,y_tp,x_lf,x_rt)
 
 
-def extract_blob(frame,contour,channel=1):
+def extract_blob(frame,contour,channel=1,black_background=True):
 
 	'''
 	This function is used to keep the pixels for the area
@@ -503,6 +503,7 @@ def extract_blob(frame,contour,channel=1):
 
 	channel: 1--gray scale blob
 			 3--RGB scale blob
+	black_background: whether to set background black
 	'''
 
 	mask=np.zeros_like(frame)
@@ -525,6 +526,8 @@ def extract_blob(frame,contour,channel=1):
 		x_rt=min(x+w+difference+1,frame.shape[1])
 
 	masked_frame=frame*(mask/255.0)
+	if black_background is False:
+		masked_frame[mask==0]=255
 	blob=masked_frame[y_bt:y_tp,x_lf:x_rt]
 	blob=np.uint8(exposure.rescale_intensity(blob,out_range=(0,255)))
 
@@ -535,7 +538,7 @@ def extract_blob(frame,contour,channel=1):
 	return blob
 
 
-def extract_blob_background(frame,contours,contour=None,channel=1,background_free=False):
+def extract_blob_background(frame,contours,contour=None,channel=1,background_free=False,black_background=True):
 
 	'''
 	This function is used to keep the pixels for the area
@@ -544,13 +547,16 @@ def extract_blob_background(frame,contours,contour=None,channel=1,background_fre
 
 	channel: 1--gray scale blob
 			 3--RGB scale blob
+	black_background: whether to set background black
 	'''
 
 	(y_bt,y_tp,x_lf,x_rt)=crop_frame(frame,contours)
-	if background_free is True:
+	if background_free:
 		mask=np.zeros_like(frame)
 		cv2.drawContours(mask,[contour],0,(255,255,255),-1)
 		masked_frame=frame*(mask/255.0)
+		if black_background is False:
+			masked_frame[mask==0]=255
 	else:
 		masked_frame=frame
 	blob=masked_frame[y_bt:y_tp,x_lf:x_rt]
@@ -563,7 +569,7 @@ def extract_blob_background(frame,contours,contour=None,channel=1,background_fre
 	return blob
 
 
-def extract_blob_all(frame,y_bt,y_tp,x_lf,x_rt,contours=None,channel=1,background_free=False):
+def extract_blob_all(frame,y_bt,y_tp,x_lf,x_rt,contours=None,channel=1,background_free=False,black_background=True):
 
 	'''
 	This function is used to keep the pixels for the area
@@ -572,12 +578,15 @@ def extract_blob_all(frame,y_bt,y_tp,x_lf,x_rt,contours=None,channel=1,backgroun
 
 	channel: 1--gray scale blob
 			 3--RGB scale blob
+	black_background: whether to set background black
 	'''
 
-	if background_free is True:
+	if background_free:
 		mask=np.zeros_like(frame)
 		cv2.drawContours(mask,contours,-1,(255,255,255),-1)
 		masked_frame=frame*(mask/255.0)
+		if black_background is False:
+			masked_frame[mask==0]=255
 	else:
 		masked_frame=frame
 	blob=masked_frame[y_bt:y_tp,x_lf:x_rt]
@@ -609,7 +618,7 @@ def get_inner(masked_frame_gray,contour):
 	return inner
 
 
-def contour_frame(frame,animal_number,background,background_low,background_high,delta,contour_area,animal_vs_bg=0,include_bodyparts=False,animation_analyzer=False,channel=1,kernel=5):
+def contour_frame(frame,animal_number,background,background_low,background_high,delta,contour_area,animal_vs_bg=0,include_bodyparts=False,animation_analyzer=False,channel=1,kernel=5,black_background=True):
 
 	'''
 	This function is used in 'background subtraction based detection method',
@@ -623,26 +632,29 @@ def contour_frame(frame,animal_number,background,background_low,background_high,
 	channel: 1--gray scale blob
 			 3--RGB scale blob
 	kernel: determines how fine the erosion or dilation operation is
+	black_background: whether to set background black
 	'''
 
 	if animal_vs_bg==1:
-		frame=np.uint8(255-frame)
+		frame_dt=np.uint8(255-frame)
+	else:
+		frame_dt=frame
 
-	if np.mean(frame)<np.mean(background)/delta:
+	if np.mean(frame_dt)<np.mean(background)/delta:
 		if animal_vs_bg==2:
-			foreground=cv2.absdiff(frame,background_low)
+			foreground=cv2.absdiff(frame_dt,background_low)
 		else:
-			foreground=cv2.subtract(frame,background_low)
-	elif np.mean(frame)>delta*np.mean(background):
+			foreground=cv2.subtract(frame_dt,background_low)
+	elif np.mean(frame_dt)>delta*np.mean(background):
 		if animal_vs_bg==2:
-			foreground=cv2.absdiff(frame,background_high)
+			foreground=cv2.absdiff(frame_dt,background_high)
 		else:
-			foreground=cv2.subtract(frame,background_high)
+			foreground=cv2.subtract(frame_dt,background_high)
 	else:
 		if animal_vs_bg==2:
-			foreground=cv2.absdiff(frame,background)
+			foreground=cv2.absdiff(frame_dt,background)
 		else:
-			foreground=cv2.subtract(frame,background)
+			foreground=cv2.subtract(frame_dt,background)
 			
 	foreground=cv2.cvtColor(foreground,cv2.COLOR_BGR2GRAY)
 	thred=cv2.threshold(foreground,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]
@@ -671,15 +683,15 @@ def contour_frame(frame,animal_number,background,background_low,background_high,
 			centers.append((int(cv2.moments(i)['m10']/cv2.moments(i)['m00']),int(cv2.moments(i)['m01']/cv2.moments(i)['m00'])))
 			(_,_),(w,h),_=cv2.minAreaRect(i)
 			heights.append(max(w,h))
-			if include_bodyparts is True:
+			if include_bodyparts:
 				mask=np.zeros_like(frame)
 				cv2.drawContours(mask,[i],0,(255,255,255),-1)
 				mask=cv2.dilate(mask,np.ones((5,5),np.uint8))
-				masked_frame=frame*(mask/255)
+				masked_frame=frame_dt*(mask/255)
 				gray=cv2.cvtColor(np.uint8(masked_frame),cv2.COLOR_BGR2GRAY)
 				inners.append(get_inner(gray,i))
-			if animation_analyzer is True:
-				blobs.append(extract_blob(frame,i,channel=channel))
+			if animation_analyzer:
+				blobs.append(extract_blob(frame,i,channel=channel,black_background=black_background))
 
 	return (contours,centers,heights,inners,blobs)
 
@@ -1114,7 +1126,7 @@ def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_w
 			h=height
 
 	added_name=''
-	if trim_video is True:
+	if trim_video:
 		for start,end in time_windows:
 			added_name+='_'+str(start)+'-'+str(end)
 
@@ -1150,16 +1162,16 @@ def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_w
 		if framewidth is not None:
 			frame=cv2.resize(frame,(w_resize,h_resize),interpolation=cv2.INTER_AREA)
 
-		if crop_frame is True:
+		if crop_frame:
 			frame=frame[top:bottom,left:right,:]
 
-		if enhance_contrast is True:
+		if enhance_contrast:
 			frame=frame*contrast
 			frame[frame>255]=255
 
 		frame=np.uint8(frame)
 
-		if trim_video is True:
+		if trim_video:
 			t=frame_count/fps
 			for i in time_windows:
 				if float(i[0])<=t<=float(i[1]):
@@ -1276,7 +1288,9 @@ def calculate_distances(path_to_folder,filename,behavior_to_include,out_path):
 
 		for col_name,col in all_centers_df.items():
 
-			if col_name!='time/ID':
+			if col_name=='time/ID':
+				time_points=[float(i) for i in col]
+			else:
 				idx=int(col_name)
 				centers[idx]=[]
 				behavior_names[idx]=[]
@@ -1323,6 +1337,9 @@ def calculate_distances(path_to_folder,filename,behavior_to_include,out_path):
 
 		shortest_distances={}
 		traveling_distances={}
+		durations={}
+		speeds={}
+		velocities={}
 		distance_ratios={}
 		diff=int(255/len(behavior_to_include))+25
 		diff_animal=int(255/len(centers))+25
@@ -1360,11 +1377,18 @@ def calculate_distances(path_to_folder,filename,behavior_to_include,out_path):
 
 			shortest_distances[idx]=shortest_distance
 			traveling_distances[idx]=traveling_distance
+			duration=time_points[indices_for_calculation[-1]]-time_points[indices_for_calculation[0]]
+			durations[idx]=duration
+			speeds[idx]=traveling_distance/duration
+			velocities[idx]=shortest_distance/duration
 			distance_ratios[idx]=shortest_distance/traveling_distance
 
 		out_spreadsheet=[]
 		out_spreadsheet.append(pd.DataFrame.from_dict(shortest_distances,orient='index',columns=['shortest_distances']).reset_index(drop=True))
 		out_spreadsheet.append(pd.DataFrame.from_dict(traveling_distances,orient='index',columns=['traveling_distances']).reset_index(drop=True))
+		out_spreadsheet.append(pd.DataFrame.from_dict(durations,orient='index',columns=['durations']).reset_index(drop=True))
+		out_spreadsheet.append(pd.DataFrame.from_dict(speeds,orient='index',columns=['speeds']).reset_index(drop=True))
+		out_spreadsheet.append(pd.DataFrame.from_dict(velocities,orient='index',columns=['velocities']).reset_index(drop=True))
 		out_spreadsheet.append(pd.DataFrame.from_dict(distance_ratios,orient='index',columns=['distance_ratios']).reset_index(drop=True))
 		if animals[0]=='':
 			pd.concat(out_spreadsheet,axis=1).to_excel(os.path.join(out_path,filename+'_distance_calculation.xlsx'),float_format='%.2f',index_label='ID/parameter')

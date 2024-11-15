@@ -13,6 +13,39 @@ All the trained Detectors are stored in '../LabGym/detectors/'. Use `pip show La
 | [MouseBoxes_TopView_960](https://drive.google.com/file/d/1EYPS-EO7kzH_eMnwKZGdWyDH1Eu2t34H/view?usp=sharing) | Detecting a mouse interacting with two boxes | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
 | [MacaqueInField_FrontView_960](https://drive.google.com/file/d/1keX4wY3hPuf7RZQ4_WXi8tzvE0Oeabw7/view?usp=sharing) | Detecting macaques in the field | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
 | [VolePaired_TopView_800](https://drive.google.com/file/d/1JcdQ3I7MZZ5XGqSzTbwqpWpyitmshYjv/view?usp=sharing) | Detecting two interacting voles | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [Fly_TopView_640_01](https://drive.google.com/file/d/1PRHeSY3Kd8FUQSY_Yvm-LuP6-FWJKKxQ/view?usp=sharing) | Detecting 5 interacting flies with 0 ID switching, dedicated to [this video](https://drive.google.com/file/d/1I-bSz-PUzKHEJ1jKqknxs5PtceLKuxBv/view?usp=sharing) | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [Fly_TopView_640_02](https://drive.google.com/file/d/1woNsroKPDlxqnyTlDV-YrBWw7YcHFfHq/view?usp=sharing) | Detecting 5 interacting flies with 0 ID switching, dedicated to [this video](https://drive.google.com/file/d/17LAbc0SyudmfGrU6uzOR7mI2cuahNUgU/view?usp=sharing) | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [Fly_TopView_640_03](https://drive.google.com/file/d/1xU0dVjebZdKyH3jBYJG-dowxHdxYQNh6/view?usp=sharing) | Detecting 5 interacting flies with 0 ID switching, dedicated to [this video](https://drive.google.com/file/d/1Qcht6vOyuJhZyIfX2e5jYNjucblFVtzn/view?usp=sharing) | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [Fly_TopView_640_04](https://drive.google.com/file/d/1Ob1x5s5MVRIOwhf5p40L2kJL-0f_mp_d/view?usp=sharing) | Detecting 5 interacting flies with 0 ID switching, dedicated to [this video](https://drive.google.com/file/d/1781zrL2j2m5t3dVPfE4pht0zHB5c3ziq/view?usp=sharing) | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [Fly_TopView_640_05](https://drive.google.com/file/d/1e_gnBE1XmhAYrq339851mRi3MqAbNud8/view?usp=sharing) | Detecting 5 interacting flies with 0 ID switching, dedicated to [this video](https://drive.google.com/file/d/1lp7ckzeNGyLhiYkoVfP7HMePfxtUyf62/view?usp=sharing) | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [Fly_TopView_640_06](https://drive.google.com/file/d/1D0AbXVj7cWOeBh3lVuPDjJVNib_WDPrG/view?usp=sharing) | Detecting 5 interacting flies with 0 ID switching, dedicated to [this video](https://drive.google.com/file/d/1ecgUnFwLLAYEsQNnsj16OcwQTdku3vQt/view?usp=sharing) | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [Fly_TopView_640_07](https://drive.google.com/file/d/1hfCU-kV-VSralmy76qsjYjzYmGl7ryzj/view?usp=sharing) | Detecting 5 interacting flies with 0 ID switching, dedicated to [this video](https://drive.google.com/file/d/16EbqC-QOPLfwaF6xbW0dvT-NPlqNDabw/view?usp=sharing) | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [Fly_TopView_640_08](https://drive.google.com/file/d/1_U-i9DbXVGMhop3NAtUrRX58uWo-sT2R/view?usp=sharing) | Detecting 5 interacting flies with 0 ID switching, dedicated to [this video](https://drive.google.com/file/d/1AfLG3WE9MTyJKeGqnooDmpafuyNJ-EbN/view?usp=sharing) | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [Fly_TopView_640_09](https://drive.google.com/file/d/1U6Y9A11AuwrEEsTAp22o-jNmFWMSJSVJ/view?usp=sharing) | Detecting 5 interacting flies with 0 ID switching, dedicated to [this video](https://drive.google.com/file/d/1CK_K8K2ULqeZ9mQYo1ZaVXFHSsXKstQV/view?usp=sharing) | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [Fly_TopView_640_10](https://drive.google.com/file/d/1sHRWi3FCuW-ayjwMtuILvAO8A4pjvJrp/view?usp=sharing) | Detecting 5 interacting flies with 0 ID switching, dedicated to [this video](https://drive.google.com/file/d/1SUxojWr7lsCMMRAzkSUBn601tQzY1CwW/view?usp=sharing) | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [Fly_TopView_640_11](https://drive.google.com/file/d/15dUoPBYl1ORTmnJPLAqf3DfW46O5x71v/view?usp=sharing) | Detecting 5 interacting flies with 0 ID switching, dedicated to [this video](https://drive.google.com/file/d/17H_PZJuHX5dEdRSTA3PXHhYPcwyi68i1/view?usp=sharing) | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [Fly_TopView_640_12](https://drive.google.com/file/d/1gnhviMCvncE3AlXc8hd_bHIV-fT1SAIA/view?usp=sharing) | Detecting 5 interacting flies with 0 ID switching, dedicated to [this video](https://drive.google.com/file/d/1TQ3-W5KBFbYSHS4AX0t3uxMDLXz-vJtP/view?usp=sharing) | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+
+<p>&nbsp;</p>
+
+## Image Examples (used to train Detector Models)
+
+| Name             | Description | Source |
+|------------------|-----------|--------|
+| [One mouse two boxes](https://drive.google.com/file/d/1OpLOo-2YAGXr86_NZuRN2oFgDiXtVYqO/view?usp=sharing) | Used to train 'MouseBoxes_TopView_960' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [Macaques in the field](https://drive.google.com/file/d/1Ydv1jO0RiK92cd2xPlLmmkEGQGgT-GdI/view?usp=sharing) | Used to train 'MacaqueInField_FrontView_960' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [5 flies 01](https://drive.google.com/file/d/1nR6LSzWnMuwDea_aBcRRg3OedA9UUmbA/view?usp=sharing) | Used to train 'Fly_TopView_640_01' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [5 flies 02](https://drive.google.com/file/d/1wgASMuhxNfwLbQNdQlqIJ645yKGGjqas/view?usp=sharing) | Used to train 'Fly_TopView_640_02' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [5 flies 03](https://drive.google.com/file/d/1n-JJdUbPJxa5q6DM1P-F7CEW_88So-P9/view?usp=sharing) | Used to train 'Fly_TopView_640_03' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [5 flies 04](https://drive.google.com/file/d/1XNCNkJqyTIKchUO7n5mSxr6H3mU3CWYL/view?usp=sharing) | Used to train 'Fly_TopView_640_04' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [5 flies 05](https://drive.google.com/file/d/1QiGDK40IS75zdS956wD6p20LD0CoWfB3/view?usp=sharing) | Used to train 'Fly_TopView_640_05' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [5 flies 06](https://drive.google.com/file/d/12yRV4-jBlyV_umfbcJnzQHx9oJQXFJfK/view?usp=sharing) | Used to train 'Fly_TopView_640_06' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [5 flies 07](https://drive.google.com/file/d/1NNoj8no7DySI9_uSYTHb4r49A_t4UZ0Q/view?usp=sharing) | Used to train 'Fly_TopView_640_07' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [5 flies 08](https://drive.google.com/file/d/1sa8uzsLIz1iHaJ3t3TP9Z4CnNx2J012J/view?usp=sharing) | Used to train 'Fly_TopView_640_08' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [5 flies 09](https://drive.google.com/file/d/10xK-Lnz6Ubg_dWVLht8-9ff9tiIgSE37/view?usp=sharing) | Used to train 'Fly_TopView_640_09' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [5 flies 10](https://drive.google.com/file/d/1_hGbXQ9Ydbrj8id04VIzymfMBatIqM3p/view?usp=sharing) | Used to train 'Fly_TopView_640_10' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [5 flies 11](https://drive.google.com/file/d/19iNXDAs42FkJco7ex6Tp8dqkLJ-KG0YK/view?usp=sharing) | Used to train 'Fly_TopView_640_11' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [5 flies 12](https://drive.google.com/file/d/1evhT_iNWt85AHs0hjFZFLQyKr6yW2Ehq/view?usp=sharing) | Used to train 'Fly_TopView_640_12' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
 
 <p>&nbsp;</p>
 
@@ -32,7 +65,7 @@ All the trained Categorizers are stored in '../LabGym/models/'. Use `pip show La
 
 <p>&nbsp;</p>
 
-## Behavior Examples
+## Behavior Examples (used to train Categorizer Models)
 
 | Name             | Description | Source |
 |------------------|-----------|--------|

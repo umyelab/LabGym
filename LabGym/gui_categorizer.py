@@ -72,6 +72,7 @@ class WindowLv2_GenerateExamples(wx.Frame):
 		self.include_bodyparts=False # whether to include body parts in the pattern images
 		self.std=0 # a value between 0 and 255, higher value, less body parts will be included in the pattern images
 		self.background_free=True # whether to include background in animations
+		self.black_background=True # whether to set background black
 		self.social_distance=0 # a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
 
 		self.dispaly_window()
@@ -490,7 +491,7 @@ class WindowLv2_GenerateExamples(wx.Frame):
 				method=dialog.GetStringSelection()
 				if method=='Enter the number of animals':
 					self.decode_animalnumber=False
-					if self.use_detector is True:
+					if self.use_detector:
 						self.animal_number={}
 						for animal_name in self.animal_kinds:
 							dialog1=wx.NumberEntryDialog(self,'','The number of '+str(animal_name)+': ',str(animal_name)+' number',1,1,100)
@@ -564,6 +565,12 @@ class WindowLv2_GenerateExamples(wx.Frame):
 				self.background_free=False
 			else:
 				self.background_free=True
+				dialog1=wx.MessageDialog(self,'Set background black? "Yes"=black background;\n"No"=white background (if animals are black).','Black background?',wx.YES_NO|wx.ICON_QUESTION)
+				if dialog1.ShowModal()==wx.ID_YES:
+					self.black_background=True
+				else:
+					self.black_background=False
+				dialog1.Destroy()
 			dialog.Destroy()
 
 			if self.behavior_mode>=3:
@@ -572,7 +579,7 @@ class WindowLv2_GenerateExamples(wx.Frame):
 					wx.MessageBox('You need to select a Detector.','Error',wx.OK|wx.ICON_ERROR)
 				else:
 					AAD=AnalyzeAnimalDetector()
-					AAD.analyze_images_individuals(self.path_to_detector,self.path_to_videos,self.result_path,self.animal_kinds,generate=True,imagewidth=self.framewidth,detection_threshold=self.detection_threshold,background_free=self.background_free)
+					AAD.analyze_images_individuals(self.path_to_detector,self.path_to_videos,self.result_path,self.animal_kinds,generate=True,imagewidth=self.framewidth,detection_threshold=self.detection_threshold,background_free=self.background_free,black_background=self.black_background)
 
 			else:
 
@@ -601,8 +608,8 @@ class WindowLv2_GenerateExamples(wx.Frame):
 					for i in self.path_to_videos:
 					
 						filename=os.path.splitext(os.path.basename(i))[0].split('_')
-						if self.decode_animalnumber is True:
-							if self.use_detector is True:
+						if self.decode_animalnumber:
+							if self.use_detector:
 								self.animal_number={}
 								number=[x[1:] for x in filename if len(x)>1 and x[0]=='n']
 								for a,animal_name in enumerate(self.animal_kinds):
@@ -612,12 +619,12 @@ class WindowLv2_GenerateExamples(wx.Frame):
 									if len(x)>1:
 										if x[0]=='n':
 											self.animal_number=int(x[1:])
-						if self.decode_t is True:
+						if self.decode_t:
 							for x in filename:
 								if len(x)>1:
 									if x[0]=='b':
 										self.t=float(x[1:])
-						if self.decode_extraction is True:
+						if self.decode_extraction:
 							for x in filename:
 								if len(x)>2:
 									if x[:2]=='xs':
@@ -626,7 +633,7 @@ class WindowLv2_GenerateExamples(wx.Frame):
 										self.ex_end=int(x[2:])
 
 						if self.animal_number is None:
-							if self.use_detector is True:
+							if self.use_detector:
 								self.animal_number={}
 								for animal_name in self.animal_kinds:
 									self.animal_number[animal_name]=1
@@ -637,18 +644,18 @@ class WindowLv2_GenerateExamples(wx.Frame):
 							AA=AnalyzeAnimal()
 							AA.prepare_analysis(i,self.result_path,self.animal_number,delta=self.delta,framewidth=self.framewidth,stable_illumination=self.stable_illumination,channel=3,include_bodyparts=self.include_bodyparts,std=self.std,categorize_behavior=False,animation_analyzer=False,path_background=self.background_path,autofind_t=self.autofind_t,t=self.t,duration=self.duration,ex_start=self.ex_start,ex_end=self.ex_end,length=self.length,animal_vs_bg=self.animal_vs_bg)
 							if self.behavior_mode==0:
-								AA.generate_data(background_free=self.background_free,skip_redundant=self.skip_redundant)
+								AA.generate_data(background_free=self.background_free,black_background=self.black_background,skip_redundant=self.skip_redundant)
 							else:
-								AA.generate_data_interact_basic(background_free=self.background_free,skip_redundant=self.skip_redundant)
+								AA.generate_data_interact_basic(background_free=self.background_free,black_background=self.black_background,skip_redundant=self.skip_redundant)
 						else:
 							AAD=AnalyzeAnimalDetector()
 							AAD.prepare_analysis(self.path_to_detector,i,self.result_path,self.animal_number,self.animal_kinds,self.behavior_mode,framewidth=self.framewidth,channel=3,include_bodyparts=self.include_bodyparts,std=self.std,categorize_behavior=False,animation_analyzer=False,t=self.t,duration=self.duration,length=self.length,social_distance=self.social_distance)
 							if self.behavior_mode==0:
-								AAD.generate_data(background_free=self.background_free,skip_redundant=self.skip_redundant)
+								AAD.generate_data(background_free=self.background_free,black_background=self.black_background,skip_redundant=self.skip_redundant)
 							elif self.behavior_mode==1:
-								AAD.generate_data_interact_basic(background_free=self.background_free,skip_redundant=self.skip_redundant)
+								AAD.generate_data_interact_basic(background_free=self.background_free,black_background=self.black_background,skip_redundant=self.skip_redundant)
 							else:
-								AAD.generate_data_interact_advance(background_free=self.background_free,skip_redundant=self.skip_redundant)
+								AAD.generate_data_interact_advance(background_free=self.background_free,black_background=self.black_background,skip_redundant=self.skip_redundant)
 
 
 
@@ -797,7 +804,7 @@ class WindowLv2_SortBehaviors(wx.Frame):
 
 			while stop is False:
 
-				if moved is True:
+				if moved:
 					moved=False
 					if only_image is False:
 						shutil.move(os.path.join(self.input_path,example_name+'.avi'),os.path.join(self.keys_behaviorpaths[shortcutkey],example_name+'.avi'))
@@ -825,7 +832,7 @@ class WindowLv2_SortBehaviors(wx.Frame):
 								continue
 							frame=cv2.resize(frame,(600,600),interpolation=cv2.INTER_AREA)
 							combined=np.hstack((frame,pattern_image))
-							cv2.putText(combined,'frame count: '+frame_count,(10,15),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,255),1)
+							cv2.putText(combined,'frame count: '+frame_count,(10,15),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,0,255),1)
 							x_begin=550
 						else:
 							combined=pattern_image
@@ -833,11 +840,11 @@ class WindowLv2_SortBehaviors(wx.Frame):
 
 						n=1
 						for i in ['o: Prev','p: Next','q: Quit','u: Undo']:
-							cv2.putText(combined,i,(x_begin,15*n),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,255),1)
+							cv2.putText(combined,i,(x_begin,15*n),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,0,255),1)
 							n+=1
 						n+=1
 						for i in self.keys_behaviors:
-							cv2.putText(combined,i+': '+self.keys_behaviors[i],(x_begin,15*n),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,255),1)
+							cv2.putText(combined,i+': '+self.keys_behaviors[i],(x_begin,15*n),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,0,255),1)
 							n+=1
 
 						cv2.imshow('Sorting Behavior Examples',combined)
@@ -854,7 +861,7 @@ class WindowLv2_SortBehaviors(wx.Frame):
 								actions.append([shortcutkey,example_name])
 								moved=True
 								break
-						if moved is True:
+						if moved:
 							break
 
 						if key==ord('u'):
@@ -927,6 +934,7 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 		self.std=0 # a value between 0 and 255, higher value, less body parts will be included in the pattern images
 		self.resize=None # resize the frames and pattern images before data augmentation
 		self.background_free=True # whether to include background in animations
+		self.black_background=True # whether to set background black
 		self.social_distance=0 # a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
 
 		self.dispaly_window()
@@ -1143,7 +1151,7 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 
 	def set_categorizer(self,event):
 
-		if self.animation_analyzer is True:
+		if self.animation_analyzer:
 			dialog=wx.NumberEntryDialog(self,'Input dimension of Animation Analyzer\nlarger dimension = wider network','Enter a number:','Animation Analyzer input',32,1,300)
 			if dialog.ShowModal()==wx.ID_OK:
 				self.dim_tconv=int(dialog.GetValue())
@@ -1218,6 +1226,12 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 				dialog=wx.MessageDialog(self,'Are the images in\ntraining examples background free?','Background-free images?',wx.YES_NO|wx.ICON_QUESTION)
 				if dialog.ShowModal()==wx.ID_YES:
 					self.background_free=True
+					dialog1=wx.MessageDialog(self,'Are the background in images black? "Yes"=black background;\n"No"=white background.','Black background?',wx.YES_NO|wx.ICON_QUESTION)
+					if dialog1.ShowModal()==wx.ID_YES:
+						self.black_background=True
+					else:
+						self.black_background=False
+					dialog1.Destroy()
 					self.text_trainingfolder.SetLabel('Static images w/o background in: '+self.data_path+'.')
 				else:
 					self.background_free=False
@@ -1226,10 +1240,16 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 		
 			else:
 
-				if self.animation_analyzer is True:
+				if self.animation_analyzer:
 					dialog=wx.MessageDialog(self,'Are the animations (in any) in\ntraining examples background free?','Background-free animations?',wx.YES_NO|wx.ICON_QUESTION)
 					if dialog.ShowModal()==wx.ID_YES:
 						self.background_free=True
+						dialog1=wx.MessageDialog(self,'Are the background in animations black?\n"Yes"=black background; "No"=white background.','Black background?',wx.YES_NO|wx.ICON_QUESTION)
+						if dialog1.ShowModal()==wx.ID_YES:
+							self.black_background=True
+						else:
+							self.black_background=False
+						dialog1.Destroy()
 					else:
 						self.background_free=False
 					dialog.Destroy()
@@ -1247,17 +1267,17 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 					self.include_bodyparts=False
 				dialog.Destroy()
 
-				if self.include_bodyparts is True:
-					if self.animation_analyzer is True:
-						if self.background_free is True:
+				if self.include_bodyparts:
+					if self.animation_analyzer:
+						if self.background_free:
 							self.text_trainingfolder.SetLabel('Animations w/o background, pattern images w/ bodyparts ('+str(self.std)+') in: '+self.data_path+'.')
 						else:
 							self.text_trainingfolder.SetLabel('Animations w/ background, pattern images w/ bodyparts ('+str(self.std)+') in: '+self.data_path+'.')
 					else:
 						self.text_trainingfolder.SetLabel('Pattern images w/ bodyparts ('+str(self.std)+') in: '+self.data_path+'.')
 				else:
-					if self.animation_analyzer is True:
-						if self.background_free is True:
+					if self.animation_analyzer:
+						if self.background_free:
 							self.text_trainingfolder.SetLabel('Animations w/o background, pattern images w/o bodyparts in: '+self.data_path+'.')
 						else:
 							self.text_trainingfolder.SetLabel('Animations w/ background, pattern images w/o bodyparts in: '+self.data_path+'.')
@@ -1350,12 +1370,12 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 						self.include_bodyparts=False
 					else:
 						self.channel=3
-					CA.train_pattern_recognizer(self.data_path,self.path_to_categorizer,self.out_path,dim=self.dim_conv,channel=self.channel,time_step=self.length,level=self.level_conv,aug_methods=self.aug_methods,augvalid=self.augvalid,include_bodyparts=self.include_bodyparts,std=self.std,background_free=self.background_free,behavior_mode=self.behavior_mode,social_distance=self.social_distance)
+					CA.train_pattern_recognizer(self.data_path,self.path_to_categorizer,self.out_path,dim=self.dim_conv,channel=self.channel,time_step=self.length,level=self.level_conv,aug_methods=self.aug_methods,augvalid=self.augvalid,include_bodyparts=self.include_bodyparts,std=self.std,background_free=self.background_free,black_background=self.black_background,behavior_mode=self.behavior_mode,social_distance=self.social_distance)
 				else:
 					if self.behavior_mode==2:
 						self.channel=3
 					CA=Categorizers()
-					CA.train_combnet(self.data_path,self.path_to_categorizer,self.out_path,dim_tconv=self.dim_tconv,dim_conv=self.dim_conv,channel=self.channel,time_step=self.length,level_tconv=self.level_tconv,level_conv=self.level_conv,aug_methods=self.aug_methods,augvalid=self.augvalid,include_bodyparts=self.include_bodyparts,std=self.std,background_free=self.background_free,behavior_mode=self.behavior_mode,social_distance=self.social_distance)
+					CA.train_combnet(self.data_path,self.path_to_categorizer,self.out_path,dim_tconv=self.dim_tconv,dim_conv=self.dim_conv,channel=self.channel,time_step=self.length,level_tconv=self.level_tconv,level_conv=self.level_conv,aug_methods=self.aug_methods,augvalid=self.augvalid,include_bodyparts=self.include_bodyparts,std=self.std,background_free=self.background_free,black_background=self.black_background,behavior_mode=self.behavior_mode,social_distance=self.social_distance)
 
 
 
