@@ -26,8 +26,6 @@ All the trained Detectors are stored in '../LabGym/detectors/'. Use `pip show La
 | [Fly_TopView_640_11](https://drive.google.com/file/d/15dUoPBYl1ORTmnJPLAqf3DfW46O5x71v/view?usp=sharing) | Detecting 5 interacting flies with 0 ID switching, dedicated to [this video](https://drive.google.com/file/d/17H_PZJuHX5dEdRSTA3PXHhYPcwyi68i1/view?usp=sharing) | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
 | [Fly_TopView_640_12](https://drive.google.com/file/d/1gnhviMCvncE3AlXc8hd_bHIV-fT1SAIA/view?usp=sharing) | Detecting 5 interacting flies with 0 ID switching, dedicated to [this video](https://drive.google.com/file/d/1TQ3-W5KBFbYSHS4AX0t3uxMDLXz-vJtP/view?usp=sharing) | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
 
-
-
 <p>&nbsp;</p>
 
 ## Image Examples (used to train Detector Models)
@@ -36,7 +34,18 @@ All the trained Detectors are stored in '../LabGym/detectors/'. Use `pip show La
 |------------------|-----------|--------|
 | [One mouse two boxes](https://drive.google.com/file/d/1OpLOo-2YAGXr86_NZuRN2oFgDiXtVYqO/view?usp=sharing) | Used to train 'MouseBoxes_TopView_960' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
 | [Macaques in the field](https://drive.google.com/file/d/1Ydv1jO0RiK92cd2xPlLmmkEGQGgT-GdI/view?usp=sharing) | Used to train 'MacaqueInField_FrontView_960' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
-
+| [5 flies 01](https://drive.google.com/file/d/1nR6LSzWnMuwDea_aBcRRg3OedA9UUmbA/view?usp=sharing) | Used to train 'Fly_TopView_640_01' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [5 flies 02](https://drive.google.com/file/d/1wgASMuhxNfwLbQNdQlqIJ645yKGGjqas/view?usp=sharing) | Used to train 'Fly_TopView_640_02' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [5 flies 03](https://drive.google.com/file/d/1n-JJdUbPJxa5q6DM1P-F7CEW_88So-P9/view?usp=sharing) | Used to train 'Fly_TopView_640_03' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [5 flies 04](https://drive.google.com/file/d/1XNCNkJqyTIKchUO7n5mSxr6H3mU3CWYL/view?usp=sharing) | Used to train 'Fly_TopView_640_04' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [5 flies 05](https://drive.google.com/file/d/1QiGDK40IS75zdS956wD6p20LD0CoWfB3/view?usp=sharing) | Used to train 'Fly_TopView_640_05' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [5 flies 06](https://drive.google.com/file/d/12yRV4-jBlyV_umfbcJnzQHx9oJQXFJfK/view?usp=sharing) | Used to train 'Fly_TopView_640_06' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [5 flies 07](https://drive.google.com/file/d/1NNoj8no7DySI9_uSYTHb4r49A_t4UZ0Q/view?usp=sharing) | Used to train 'Fly_TopView_640_07' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [5 flies 08](https://drive.google.com/file/d/1sa8uzsLIz1iHaJ3t3TP9Z4CnNx2J012J/view?usp=sharing) | Used to train 'Fly_TopView_640_08' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [5 flies 09](https://drive.google.com/file/d/10xK-Lnz6Ubg_dWVLht8-9ff9tiIgSE37/view?usp=sharing) | Used to train 'Fly_TopView_640_09' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [5 flies 10](https://drive.google.com/file/d/1_hGbXQ9Ydbrj8id04VIzymfMBatIqM3p/view?usp=sharing) | Used to train 'Fly_TopView_640_10' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [5 flies 11](https://drive.google.com/file/d/19iNXDAs42FkJco7ex6Tp8dqkLJ-KG0YK/view?usp=sharing) | Used to train 'Fly_TopView_640_11' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [5 flies 12](https://drive.google.com/file/d/1evhT_iNWt85AHs0hjFZFLQyKr6yW2Ehq/view?usp=sharing) | Used to train 'Fly_TopView_640_12' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
 
 <p>&nbsp;</p>
 
