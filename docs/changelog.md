@@ -1,5 +1,14 @@
 # Changelog
 
+## v2.7.0
+### What's Changed
+* Added an option of generating behavior examples with white background, which can benefit both the sorting and Categorizer training in the scenarios when the color of animals are completely black.
+* Added the calculations of speed and duration in the function of 'calculate distances'.
+* Added a summary sheet in the function of 'calculate distances'.
+* Updated LabGym Zoo.
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.6.2...v2.7.0>
+
 ## v2.6.2
 ### What's Changed
 * Bug fixed in the function of 'calculate distances'.
