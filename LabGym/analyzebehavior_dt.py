@@ -1289,6 +1289,7 @@ class AnalyzeAnimalDetector():
 		cv2.imwrite(os.path.join(self.results_path,'Trajectory_black.jpg'),background)
 
 		print('Video annotation completed!')
+		self.log.append('Video annotation completed!')
 
 
 	def analyze_parameters(self,normalize_distance=True,parameter_to_analyze=[]):
@@ -1595,7 +1596,9 @@ class AnalyzeAnimalDetector():
 		# parameter_to_analyze: the behavior parameters that are selected in the analysis
 
 		print('Quantifying behaviors...')
+		self.log.append('Quantifying behaviors...')
 		print(datetime.datetime.now())
+		self.log.append(str(datetime.datetime.now()))
 
 		self.analyze_parameters(normalize_distance=normalize_distance,parameter_to_analyze=parameter_to_analyze)
 
