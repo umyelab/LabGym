@@ -1212,6 +1212,7 @@ class Categorizers():
 		else:
 
 			print('Found behavior names: '+str(self.classnames))
+			self.log.append('Found behavior names: '+str(self.classnames))
 
 			if include_bodyparts:
 				inner_code=0
@@ -1235,13 +1236,17 @@ class Categorizers():
 			(train_files,test_files,y1,y2)=train_test_split(path_files,labels,test_size=0.2,stratify=labels)
 
 			print('Perform augmentation for the behavior examples...')
+			self.log.append('Perform augmentation for the behavior examples...')
 			print('This might take hours or days, depending on the capacity of your computer.')
 			print(datetime.datetime.now())
+			self.log.append(str(datetime.datetime.now()))
 
 			print('Start to augment training examples...')
+			self.log.append('Start to augment training examples...')
 			train_animations,train_pattern_images,trainY=self.build_data(train_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode)
 			trainY=lb.fit_transform(trainY)
 			print('Start to augment validation examples...')
+			self.log.append('Start to augment validation examples...')
 			if augvalid:
 				test_animations,test_pattern_images,testY=self.build_data(test_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode)
 			else:
@@ -1257,10 +1262,15 @@ class Categorizers():
 				testY_tensor=tf.convert_to_tensor(testY)
 
 			print('Training example shape : '+str(train_animations.shape)+', '+str(train_pattern_images.shape))
+			self.log.append('Training example shape : '+str(train_animations.shape)+', '+str(train_pattern_images.shape))
 			print('Training label shape : '+str(trainY.shape))
+			self.log.append('Training label shape : '+str(trainY.shape))
 			print('Validation example shape : '+str(test_animations.shape)+', '+str(test_pattern_images.shape))
+			self.log.append('Validation example shape : '+str(test_animations.shape)+', '+str(test_pattern_images.shape))
 			print('Validation label shape : '+str(testY.shape))
+			self.log.append('Validation label shape : '+str(testY.shape))
 			print(datetime.datetime.now())
+			self.log.append(str(datetime.datetime.now()))
 
 			if train_animations.shape[0]<5000:
 				batch_size=8
@@ -1283,6 +1293,7 @@ class Categorizers():
 
 			model.save(model_path)
 			print('Trained Categorizer saved in: '+str(model_path))
+			self.log.append('Trained Categorizer saved in: '+str(model_path))
 
 			try:
 
@@ -1314,6 +1325,9 @@ class Categorizers():
 				if out_path is not None:
 					plt.savefig(os.path.join(out_path,'training_history.png'))
 					print('Training reports saved in: '+str(out_path))
+					if len(self.log)>0:
+						with open(os.path.join(out_path,'Training log.txt'),'w') as training_log:
+							training_log.write('\n'.join(str(i) for i in self.log))
 				plt.close('all')
 
 			except:
