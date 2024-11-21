@@ -54,6 +54,7 @@ class Categorizers():
 		self.extension_image=('.png','.PNG','.jpeg','.JPEG','.jpg','.JPG','.tiff','.TIFF','.bmp','.BMP') # the image formats that LabGym can accept
 		self.extension_video=('.avi','.mpg','.wmv','.mp4','.mkv','.m4v','.mov') # the video formats that LabGym can accept
 		self.classnames=None # the behavior category names in the trained Categorizer
+		self.log=[]
 
 
 	def rename_label(self,file_path,new_path,resize=None):
@@ -283,7 +284,9 @@ class Categorizers():
 						for diff in range(time_step-frames_length):
 							frames.append(np.zeros_like(original_frame))
 						print('Inconsistent duration of animation detected at: '+str(i)+'.')
+						self.log.append('Inconsistent duration of animation detected at: '+str(i)+'.')
 						print('Zero padding has been used, which may decrease the training accuracy.')
+						self.log.append('Zero padding has been used, which may decrease the training accuracy.')
 
 					for frame in frames:
 
@@ -421,7 +424,9 @@ class Categorizers():
 				amount+=1
 				if amount%10000==0:
 					print('The augmented example amount: '+str(amount))
+					self.log.append('The augmented example amount: '+str(amount))
 					print(datetime.datetime.now())
+					self.log.append(str(datetime.datetime.now()))
 
 		if dim_tconv!=0:
 			animations=np.array(animations,dtype='float32')/255.0
