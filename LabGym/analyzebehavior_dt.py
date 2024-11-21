@@ -1468,7 +1468,7 @@ class AnalyzeAnimalDetector():
 								if normalize_distance:
 									calibrator=math.sqrt(self.animal_area[animal_name])
 									distance_traveled=distance_traveled/calibrator
-								speed=distance_traveled/(self.length/self.fps)
+								self.all_behavior_parameters[animal_name]['speed'][i][n]=distance_traveled/(self.length/self.fps)
 								end_center=self.animal_centers[animal_name][i][n]
 								if end_center is not None:
 									displacements=[]
@@ -1482,6 +1482,12 @@ class AnalyzeAnimalDetector():
 										displacement=displacement/calibrator
 									velocity=displacement/((self.length-np.argmax(displacements))/self.fps)
 									self.all_behavior_parameters[animal_name]['velocity'][i][n]=velocity
+									start_center=self.animal_centers[animal_name][i][n-1]
+									if start_center is not None:
+										dt=math.dist(end_center,start_center)
+										if normalize_distance:
+											dt=dt/calibrator
+										self.all_behavior_parameters[animal_name]['distance'][i]+=dt
 								velocities_max=[]
 								velocities_min=[]
 								for v in self.all_behavior_parameters[animal_name]['velocity'][i][n-self.length+1:n+1]:
@@ -1497,8 +1503,6 @@ class AnalyzeAnimalDetector():
 									if np.argmax(velocities_max)!=np.argmin(velocities_min):
 										t=abs(np.argmax(velocities_max)-np.argmin(velocities_min))/self.fps
 										self.all_behavior_parameters[animal_name]['acceleration'][i][n]=(vmax-vmin)/t
-								self.all_behavior_parameters[animal_name]['distance'][i]+=distance_traveled
-								self.all_behavior_parameters[animal_name]['speed'][i][n]=speed
 
 							if '3 areal parameters' in parameter_to_analyze:
 								mask=np.zeros_like(self.background)
