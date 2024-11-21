@@ -541,6 +541,7 @@ class AnalyzeAnimal():
 			self.pattern_images[i]=self.pattern_images[i][:length]
 
 		print('Data crafting completed!')
+		self.log.append('Data crafting completed!')
 
 
 	def categorize_behaviors(self,path_to_categorizer,uncertain=0,min_length=None):
@@ -550,7 +551,9 @@ class AnalyzeAnimal():
 		# min_length: the minimum length (in frames) a behavior should last, can be used to filter out the brief false positives
 
 		print('Categorizing behaviors...')
+		self.log.append('Categorizing behaviors...')
 		print(datetime.datetime.now())
+		self.log.append(str(datetime.datetime.now()))
 
 		IDs=list(self.pattern_images.keys())
 
@@ -638,6 +641,7 @@ class AnalyzeAnimal():
 					i+=1
 
 		print('Behavioral categorization completed!')
+		self.log.append('Behavioral categorization completed!')
 
 
 	def annotate_video(self,behavior_to_include,show_legend=True,interact_all=False):
@@ -647,7 +651,9 @@ class AnalyzeAnimal():
 		# interact_all: whether is the interactive basic mode
 
 		print('Annotating video...')
+		self.log.append('Annotating video...')
 		print(datetime.datetime.now())
+		self.log.append(str(datetime.datetime.now()))
 
 		text_scl=max(0.5,round((self.background.shape[0]+self.background.shape[1])/1080,1))
 		text_tk=max(1,round((self.background.shape[0]+self.background.shape[1])/540))
@@ -784,6 +790,7 @@ class AnalyzeAnimal():
 		cv2.imwrite(os.path.join(self.results_path,'Trajectory.jpg'),self.background)
 
 		print('Video annotation completed!')
+		self.log.append('Video annotation completed!')
 
 
 	def analyze_parameters(self,normalize_distance=True,parameter_to_analyze=[]):
@@ -1092,14 +1099,19 @@ class AnalyzeAnimal():
 		# parameter_to_analyze: the behavior parameters that are selected in the analysis
 
 		print('Quantifying behaviors...')
+		self.log.append('Quantifying behaviors...')
 		print(datetime.datetime.now())
+		self.log.append(str(datetime.datetime.now()))
 
 		self.analyze_parameters(normalize_distance=normalize_distance,parameter_to_analyze=parameter_to_analyze)
 
 		print('Behavioral quantification completed!')
+		self.log.append('Behavioral quantification Completed!')
 
 		print('Exporting results...')
+		self.log.append('Exporting results...')
 		print(datetime.datetime.now())
+		self.log.append(str(datetime.datetime.now()))
 
 		if self.categorize_behavior:
 			events_df=pd.DataFrame(self.event_probability,index=self.all_time)
@@ -1164,6 +1176,11 @@ class AnalyzeAnimal():
 				pd.concat(summary,axis=1).to_excel(os.path.join(self.results_path,'all_summary.xlsx'),float_format='%.2f',index_label='ID/parameter')			
 
 		print('All results exported in: '+str(self.results_path))
+		self.log.append('All results exported in: '+str(self.results_path))
+		self.log.append('Analysis completed!')
+		if len(self.log)>0:
+			with open(os.path.join(self.results_path,'Analysis log.txt'),'w') as analysis_log:
+				analysis_log.write('\n'.join(str(i) for i in self.log))
 
 
 	def generate_data(self,background_free=True,black_background=True,skip_redundant=1):
