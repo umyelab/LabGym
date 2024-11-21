@@ -181,6 +181,7 @@ class AnalyzeAnimal():
 			es_start=self.t
 		constants=estimate_constants(self.path_to_video,self.delta,self.animal_number,framewidth=self.framewidth,frameheight=self.frameheight,stable_illumination=stable_illumination,ex_start=ex_start,ex_end=ex_end,t=es_start,duration=self.duration,animal_vs_bg=self.animal_vs_bg,path_background=path_background,kernel=self.kernel)
 		self.animal_area=constants[4]
+		self.log.append('The area of single animal is: '+str(self.animal_area)+'.')
 		self.background=constants[0]
 		self.background_low=constants[1]
 		self.background_high=constants[2]
@@ -430,7 +431,9 @@ class AnalyzeAnimal():
 				
 				if (frame_count_analyze+1)%1000==0:
 					print(str(frame_count_analyze+1)+' frames processed...')
+					self.log.append(str(frame_count_analyze+1)+' frames processed...')
 					print(datetime.datetime.now())
+					self.log.append(str(datetime.datetime.now()))
 
 				if self.framewidth is not None:
 					frame=cv2.resize(frame,(self.framewidth,self.frameheight),interpolation=cv2.INTER_AREA)
@@ -487,12 +490,15 @@ class AnalyzeAnimal():
 		self.animal_centers[0]=self.animal_centers[0][:len(self.all_time)]
 
 		print('Information acquisition completed!')
+		self.log.append('Information acquisition completed!')
 
 
 	def craft_data(self):
 
 		print('Crafting data...')
+		self.log.append('Crafting data...')
 		print(datetime.datetime.now())
+		self.log.append(str(datetime.datetime.now()))
 
 		lengths=[]
 		length=len(self.all_time)
