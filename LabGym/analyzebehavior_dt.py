@@ -1374,7 +1374,10 @@ class AnalyzeAnimalDetector():
 										self.all_behavior_parameters[animal_name][behavior_name]['velocity'][i][n]=velocity
 										start_center=self.animal_centers[animal_name][i][n-1]
 										if start_center is not None:
-											self.all_behavior_parameters[animal_name][behavior_name]['distance'][i]+=math.dist(end_center,start_center)
+											dt=math.dist(end_center,start_center)
+											if normalize_distance:
+												dt=dt/calibrator
+											self.all_behavior_parameters[animal_name][behavior_name]['distance'][i]+=dt
 									velocities_max=[]
 									velocities_min=[]
 									for v in self.all_behavior_parameters[animal_name][behavior_name]['velocity'][i][n-self.length+1:n+1]:
