@@ -90,6 +90,7 @@ class AnalyzeAnimalDetector():
 		self.animal_present={}
 		self.temp_frames=None
 		self.social_distance=0
+		self.log=[]
 
 
 	def prepare_analysis(self,
@@ -115,7 +116,9 @@ class AnalyzeAnimalDetector():
 		):
 		
 		print('Preparation started...')
+		self.log.append('Preparation started...')
 		print(datetime.datetime.now())
+		self.log.append(str(datetime.datetime.now()))
 
 		self.detector=Detector()
 		self.detector.load(path_to_detector,animal_kinds)
@@ -156,12 +159,15 @@ class AnalyzeAnimalDetector():
 		capture.release()
 
 		print('Video fps: '+str(self.fps))
+		self.log.append('Video fps: '+str(self.fps))
 		print('The original video framesize: '+str(int(frame.shape[0]))+' X '+str(int(frame.shape[1])))
+		self.log.append('The original video framesize: '+str(int(frame.shape[0]))+' X '+str(int(frame.shape[1])))
 
 		if self.framewidth is not None:
 			self.frameheight=int(frame.shape[0]*self.framewidth/frame.shape[1])
 			self.background=cv2.resize(frame,(self.framewidth,self.frameheight),interpolation=cv2.INTER_AREA)
 			print('The resized video framesize: '+str(self.frameheight)+' X '+str(self.framewidth))
+			self.log.append('The resized video framesize: '+str(self.frameheight)+' X '+str(self.framewidth))
 		else:
 			self.background=frame
 		self.temp_frames=deque(maxlen=self.length)
@@ -232,6 +238,7 @@ class AnalyzeAnimalDetector():
 			self.kernel=11
 
 		print('Preparation completed!')
+		self.log.append('Preparation completed!')
 
 
 	def track_animal(self,frame_count_analyze,animal_name,contours,centers,heights,inners=None,blobs=None):
@@ -680,7 +687,9 @@ class AnalyzeAnimalDetector():
 		# black_background: whether to set background black
 
 		print('Acquiring information in each frame...')
+		self.log.append('Acquiring information in each frame...')
 		print(datetime.datetime.now())
+		self.log.append(str(datetime.datetime.now()))
 
 		capture=cv2.VideoCapture(self.path_to_video)
 		batch=[]
@@ -709,7 +718,9 @@ class AnalyzeAnimalDetector():
 				
 				if (frame_count_analyze+1)%1000==0:
 					print(str(frame_count_analyze+1)+' frames processed...')
+					self.log.append(str(frame_count_analyze+1)+' frames processed...')
 					print(datetime.datetime.now())
+					self.log.append(str(datetime.datetime.now()))
 
 				if self.framewidth is not None:
 					frame=cv2.resize(frame,(self.framewidth,self.frameheight),interpolation=cv2.INTER_AREA)
@@ -733,8 +744,10 @@ class AnalyzeAnimalDetector():
 
 		for animal_name in self.animal_kinds:
 			print('The area of '+str(animal_name)+' is: '+str(self.animal_area[animal_name])+'.')
+			self.log.append('The area of '+str(animal_name)+' is: '+str(self.animal_area[animal_name])+'.')
 
 		print('Information acquisition completed!')
+		self.log.append('Information acquisition completed!')
 
 
 	def acquire_information_interact_basic(self,batch_size=1,background_free=True,black_background=True):
@@ -744,7 +757,9 @@ class AnalyzeAnimalDetector():
 		# black_background: whether to set background black
 
 		print('Acquiring information in each frame...')
+		self.log.append('Acquiring information in each frame...')
 		print(datetime.datetime.now())
+		self.log.append(str(datetime.datetime.now()))
 
 		name=self.animal_kinds[0]
 		self.register_counts={}
@@ -792,7 +807,9 @@ class AnalyzeAnimalDetector():
 				
 				if (frame_count_analyze+1)%1000==0:
 					print(str(frame_count_analyze+1)+' frames processed...')
+					self.log.append(str(frame_count_analyze+1)+' frames processed...')
 					print(datetime.datetime.now())
+					self.log.append(str(datetime.datetime.now()))
 
 				if self.framewidth is not None:
 					frame=cv2.resize(frame,(self.framewidth,self.frameheight),interpolation=cv2.INTER_AREA)
@@ -904,12 +921,15 @@ class AnalyzeAnimalDetector():
 		self.animal_centers[name][0]=self.animal_centers[name][0][:length]
 		
 		print('Information acquisition completed!')
+		self.log.append('Information acquisition completed!')
 
 
 	def craft_data(self):
 
 		print('Crafting data...')
+		self.log.append('Crafting data...')
 		print(datetime.datetime.now())
+		self.log.append(str(datetime.datetime.now()))
 
 		for animal_name in self.animal_kinds:
 
@@ -958,6 +978,7 @@ class AnalyzeAnimalDetector():
 				self.pattern_images[animal_name][i]=self.pattern_images[animal_name][i][:length]
 
 		print('Data crafting completed!')
+		self.log.append('Data crafting completed!')
 
 
 	def categorize_behaviors(self,path_to_categorizer,uncertain=0,min_length=None):
@@ -967,7 +988,9 @@ class AnalyzeAnimalDetector():
 		# min_length: the minimum length (in frames) a behavior should last, can be used to filter out the brief false positives
 
 		print('Categorizing behaviors...')
+		self.log.append('Categorizing behaviors...')
 		print(datetime.datetime.now())
+		self.log.append(str(datetime.datetime.now()))
 
 		categorizer=load_model(path_to_categorizer)
 
@@ -1063,6 +1086,7 @@ class AnalyzeAnimalDetector():
 						i+=1
 
 		print('Behavioral categorization completed!')
+		self.log.append('Behavioral categorization completed!')
 
 
 	def correct_identity(self,specific_behaviors):
@@ -1070,7 +1094,9 @@ class AnalyzeAnimalDetector():
 		# specific_behaviors: the sex / identity specific behaviors
 
 		print('Initiating behavior-guided identity correction...')
+		self.log.append('Initiating behavior-guided identity correction...')
 		print(datetime.datetime.now())
+		self.log.append(str(datetime.datetime.now()))
 
 		for animal_name in self.animal_kinds:
 
@@ -1104,6 +1130,7 @@ class AnalyzeAnimalDetector():
 									self.all_behavior_parameters[animal_name][behavior_name]['probability'][i][idx]=temp
 
 		print('Identity correction completed!')
+		self.log.append('Identity correction completed!')
 
 
 	def annotate_video(self,animal_to_include,behavior_to_include,show_legend=True):
