@@ -83,6 +83,7 @@ class AnalyzeAnimal():
 		self.pattern_images={}
 		self.event_probability={}
 		self.all_behavior_parameters={}
+		self.log=[]
 		
 
 	def prepare_analysis(self,
@@ -111,7 +112,9 @@ class AnalyzeAnimal():
 		):
 		
 		print('Preparation started...')
+		self.log.append('Preparation started...')
 		print(datetime.datetime.now())
+		self.log.append(str(datetime.datetime.now()))
 
 		self.path_to_video=path_to_video
 		self.basename=os.path.basename(self.path_to_video)
