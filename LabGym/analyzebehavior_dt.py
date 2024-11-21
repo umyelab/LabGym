@@ -1603,9 +1603,12 @@ class AnalyzeAnimalDetector():
 		self.analyze_parameters(normalize_distance=normalize_distance,parameter_to_analyze=parameter_to_analyze)
 
 		print('Behavioral quantification Completed!')
+		self.log.append('Behavioral quantification Completed!')
 
 		print('Exporting results...')
+		self.log.append('Exporting results...')
 		print(datetime.datetime.now())
+		self.log.append(str(datetime.datetime.now()))
 
 		for animal_name in self.animal_kinds:
 
@@ -1672,6 +1675,11 @@ class AnalyzeAnimalDetector():
 					pd.concat(summary,axis=1).to_excel(os.path.join(self.results_path,animal_name+'_all_summary.xlsx'),float_format='%.2f',index_label='ID/parameter')			
 
 		print('All results exported in: '+str(self.results_path))
+		self.log.append('All results exported in: '+str(self.results_path))
+		self.log.append('Analysis completed!')
+		with open(os.path.join(self.results_path,'Analysis log.txt'),'w') as analysis_log:
+			analysis_log.write('\n'.join(str(i) for i in self.log))
+
 
 
 	def generate_data(self,background_free=True,black_background=True,skip_redundant=1):
