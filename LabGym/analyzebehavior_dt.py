@@ -1677,8 +1677,9 @@ class AnalyzeAnimalDetector():
 		print('All results exported in: '+str(self.results_path))
 		self.log.append('All results exported in: '+str(self.results_path))
 		self.log.append('Analysis completed!')
-		with open(os.path.join(self.results_path,'Analysis log.txt'),'w') as analysis_log:
-			analysis_log.write('\n'.join(str(i) for i in self.log))
+		if len(self.log)>0:
+			with open(os.path.join(self.results_path,'Analysis log.txt'),'w') as analysis_log:
+				analysis_log.write('\n'.join(str(i) for i in self.log))
 
 
 
