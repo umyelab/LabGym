@@ -1140,7 +1140,9 @@ class AnalyzeAnimalDetector():
 		# show_legend: whether to show the legend of behavior names in video frames
 
 		print('Annotating video...')
+		self.log.append('Annotating video...')
 		print(datetime.datetime.now())
+		self.log.append(str(datetime.datetime.now()))
 
 		text_scl=max(0.5,round((self.background.shape[0]+self.background.shape[1])/1080,1))
 		text_tk=max(1,round((self.background.shape[0]+self.background.shape[1])/540))
