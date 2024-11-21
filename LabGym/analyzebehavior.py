@@ -148,12 +148,15 @@ class AnalyzeAnimal():
 		capture.release()
 
 		print('Video fps: '+str(self.fps))
+		self.log.append('Video fps: '+str(self.fps))
 		print('The original video framesize: '+str(int(frame.shape[0]))+' X '+str(int(frame.shape[1])))
+		self.log.append('The original video framesize: '+str(int(frame.shape[0]))+' X '+str(int(frame.shape[1])))
 
 		if self.framewidth is not None:
 			self.frameheight=int(frame.shape[0]*self.framewidth/frame.shape[1])
 			self.background=cv2.resize(frame,(self.framewidth,self.frameheight),interpolation=cv2.INTER_AREA)
 			print('The resized video framesize: '+str(self.frameheight)+' X '+str(self.framewidth))
+			self.log.append('The resized video framesize: '+str(self.frameheight)+' X '+str(self.framewidth))
 		else:
 			self.background=frame
 		framesize=min(self.background.shape[0],self.background.shape[1])
@@ -214,6 +217,7 @@ class AnalyzeAnimal():
 			self.pattern_images[i]=[np.zeros((self.dim_conv,self.dim_conv,3),dtype='uint8')]*self.total_analysis_framecount
 
 		print('Preparation completed!')
+		self.log.append('Preparation completed!')
 
 
 	def track_animal(self,frame_count_analyze,contours,centers,heights,inners=None,blobs=None):
@@ -278,7 +282,9 @@ class AnalyzeAnimal():
 		# black_background: whether to set background black
 
 		print('Acquiring information in each frame...')
+		self.log.append('Acquiring information in each frame...')
 		print(datetime.datetime.now())
+		self.log.append(str(datetime.datetime.now()))
 
 		capture=cv2.VideoCapture(self.path_to_video)
 
@@ -317,7 +323,9 @@ class AnalyzeAnimal():
 				
 				if (frame_count_analyze+1)%1000==0:
 					print(str(frame_count_analyze+1)+' frames processed...')
+					self.log.append(str(frame_count_analyze+1)+' frames processed...')
 					print(datetime.datetime.now())
+					self.log.append(str(datetime.datetime.now()))
 
 				if self.framewidth is not None:
 					frame=cv2.resize(frame,(self.framewidth,self.frameheight),interpolation=cv2.INTER_AREA)
@@ -360,6 +368,7 @@ class AnalyzeAnimal():
 		capture.release()
 
 		print('Information acquisition completed!')
+		self.log.append('Information acquisition completed!')
 
 
 	def acquire_information_interact_basic(self,background_free=True,black_background=True):
@@ -368,7 +377,9 @@ class AnalyzeAnimal():
 		# black_background: whether to set background black
 
 		print('Acquiring information in each frame...')
+		self.log.append('Acquiring information in each frame...')
 		print(datetime.datetime.now())
+		self.log.append(str(datetime.datetime.now()))
 
 		self.register_counts={}
 		self.register_counts[0]=None
