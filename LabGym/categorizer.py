@@ -843,6 +843,7 @@ class Categorizers():
 		inputs=Input(shape=(dim,dim,channel))
 
 		print('Training the Categorizer w/ only Pattern Recognizer using the behavior examples in: '+str(data_path))
+		self.log.append('Training the Categorizer w/ only Pattern Recognizer using the behavior examples in: '+str(data_path))
 
 		files=[i for i in os.listdir(data_path) if i.endswith(self.extension_image)]
 
@@ -1018,6 +1019,7 @@ class Categorizers():
 		inputs=Input(shape=(time_step,dim,dim,channel))
 
 		print('Training the Categorizer w/o Pattern Recognizer using the behavior examples in: '+str(data_path))
+		self.log.append('Training the Categorizer w/ only Pattern Recognizer using the behavior examples in: '+str(data_path))
 
 		files=[i for i in os.listdir(data_path) if i.endswith(self.extension_video)]
 
