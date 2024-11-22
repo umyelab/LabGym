@@ -986,6 +986,9 @@ class Categorizers():
 				if out_path is not None:
 					plt.savefig(os.path.join(out_path,'training_history.png'))
 					print('Training reports saved in: '+str(out_path))
+					if len(self.log)>0:
+						with open(os.path.join(out_path,'Training log.txt'),'w') as training_log:
+							training_log.write('\n'.join(str(i) for i in self.log))
 				plt.close('all')
 
 			except:
@@ -1159,6 +1162,9 @@ class Categorizers():
 				if out_path is not None:
 					plt.savefig(os.path.join(out_path,'training_history.png'))
 					print('Training reports saved in: '+str(out_path))
+					if len(self.log)>0:
+						with open(os.path.join(out_path,'Training log.txt'),'w') as training_log:
+							training_log.write('\n'.join(str(i) for i in self.log))
 				plt.close('all')
 
 			except:
