@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.7.1
+### What's Changed
+* Changed the way of calculating 'traveling distance' when quantifying behaviors to make this parameter better reflect the actual distance in pixels.
+* Added a log in .txt file to record the training and analysis processes shown in the terminal / cmd.
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.7.0...v2.7.1>
+
 ## v2.7.0
 ### What's Changed
 * Added an option of generating behavior examples with white background, which can benefit both the sorting and Categorizer training in the scenarios when the color of animals are completely black.
