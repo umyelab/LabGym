@@ -83,6 +83,7 @@ class AnalyzeAnimal():
 		self.pattern_images={}
 		self.event_probability={}
 		self.all_behavior_parameters={}
+		self.log=[]
 		
 
 	def prepare_analysis(self,
@@ -111,7 +112,9 @@ class AnalyzeAnimal():
 		):
 		
 		print('Preparation started...')
+		self.log.append('Preparation started...')
 		print(datetime.datetime.now())
+		self.log.append(str(datetime.datetime.now()))
 
 		self.path_to_video=path_to_video
 		self.basename=os.path.basename(self.path_to_video)
@@ -145,12 +148,15 @@ class AnalyzeAnimal():
 		capture.release()
 
 		print('Video fps: '+str(self.fps))
+		self.log.append('Video fps: '+str(self.fps))
 		print('The original video framesize: '+str(int(frame.shape[0]))+' X '+str(int(frame.shape[1])))
+		self.log.append('The original video framesize: '+str(int(frame.shape[0]))+' X '+str(int(frame.shape[1])))
 
 		if self.framewidth is not None:
 			self.frameheight=int(frame.shape[0]*self.framewidth/frame.shape[1])
 			self.background=cv2.resize(frame,(self.framewidth,self.frameheight),interpolation=cv2.INTER_AREA)
 			print('The resized video framesize: '+str(self.frameheight)+' X '+str(self.framewidth))
+			self.log.append('The resized video framesize: '+str(self.frameheight)+' X '+str(self.framewidth))
 		else:
 			self.background=frame
 		framesize=min(self.background.shape[0],self.background.shape[1])
@@ -175,6 +181,7 @@ class AnalyzeAnimal():
 			es_start=self.t
 		constants=estimate_constants(self.path_to_video,self.delta,self.animal_number,framewidth=self.framewidth,frameheight=self.frameheight,stable_illumination=stable_illumination,ex_start=ex_start,ex_end=ex_end,t=es_start,duration=self.duration,animal_vs_bg=self.animal_vs_bg,path_background=path_background,kernel=self.kernel)
 		self.animal_area=constants[4]
+		self.log.append('The area of single animal is: '+str(self.animal_area)+'.')
 		self.background=constants[0]
 		self.background_low=constants[1]
 		self.background_high=constants[2]
@@ -211,6 +218,7 @@ class AnalyzeAnimal():
 			self.pattern_images[i]=[np.zeros((self.dim_conv,self.dim_conv,3),dtype='uint8')]*self.total_analysis_framecount
 
 		print('Preparation completed!')
+		self.log.append('Preparation completed!')
 
 
 	def track_animal(self,frame_count_analyze,contours,centers,heights,inners=None,blobs=None):
@@ -275,7 +283,9 @@ class AnalyzeAnimal():
 		# black_background: whether to set background black
 
 		print('Acquiring information in each frame...')
+		self.log.append('Acquiring information in each frame...')
 		print(datetime.datetime.now())
+		self.log.append(str(datetime.datetime.now()))
 
 		capture=cv2.VideoCapture(self.path_to_video)
 
@@ -314,7 +324,9 @@ class AnalyzeAnimal():
 				
 				if (frame_count_analyze+1)%1000==0:
 					print(str(frame_count_analyze+1)+' frames processed...')
+					self.log.append(str(frame_count_analyze+1)+' frames processed...')
 					print(datetime.datetime.now())
+					self.log.append(str(datetime.datetime.now()))
 
 				if self.framewidth is not None:
 					frame=cv2.resize(frame,(self.framewidth,self.frameheight),interpolation=cv2.INTER_AREA)
@@ -357,6 +369,7 @@ class AnalyzeAnimal():
 		capture.release()
 
 		print('Information acquisition completed!')
+		self.log.append('Information acquisition completed!')
 
 
 	def acquire_information_interact_basic(self,background_free=True,black_background=True):
@@ -365,7 +378,9 @@ class AnalyzeAnimal():
 		# black_background: whether to set background black
 
 		print('Acquiring information in each frame...')
+		self.log.append('Acquiring information in each frame...')
 		print(datetime.datetime.now())
+		self.log.append(str(datetime.datetime.now()))
 
 		self.register_counts={}
 		self.register_counts[0]=None
@@ -416,7 +431,9 @@ class AnalyzeAnimal():
 				
 				if (frame_count_analyze+1)%1000==0:
 					print(str(frame_count_analyze+1)+' frames processed...')
+					self.log.append(str(frame_count_analyze+1)+' frames processed...')
 					print(datetime.datetime.now())
+					self.log.append(str(datetime.datetime.now()))
 
 				if self.framewidth is not None:
 					frame=cv2.resize(frame,(self.framewidth,self.frameheight),interpolation=cv2.INTER_AREA)
@@ -473,12 +490,15 @@ class AnalyzeAnimal():
 		self.animal_centers[0]=self.animal_centers[0][:len(self.all_time)]
 
 		print('Information acquisition completed!')
+		self.log.append('Information acquisition completed!')
 
 
 	def craft_data(self):
 
 		print('Crafting data...')
+		self.log.append('Crafting data...')
 		print(datetime.datetime.now())
+		self.log.append(str(datetime.datetime.now()))
 
 		lengths=[]
 		length=len(self.all_time)
@@ -521,6 +541,7 @@ class AnalyzeAnimal():
 			self.pattern_images[i]=self.pattern_images[i][:length]
 
 		print('Data crafting completed!')
+		self.log.append('Data crafting completed!')
 
 
 	def categorize_behaviors(self,path_to_categorizer,uncertain=0,min_length=None):
@@ -530,7 +551,9 @@ class AnalyzeAnimal():
 		# min_length: the minimum length (in frames) a behavior should last, can be used to filter out the brief false positives
 
 		print('Categorizing behaviors...')
+		self.log.append('Categorizing behaviors...')
 		print(datetime.datetime.now())
+		self.log.append(str(datetime.datetime.now()))
 
 		IDs=list(self.pattern_images.keys())
 
@@ -618,6 +641,7 @@ class AnalyzeAnimal():
 					i+=1
 
 		print('Behavioral categorization completed!')
+		self.log.append('Behavioral categorization completed!')
 
 
 	def annotate_video(self,behavior_to_include,show_legend=True,interact_all=False):
@@ -627,7 +651,9 @@ class AnalyzeAnimal():
 		# interact_all: whether is the interactive basic mode
 
 		print('Annotating video...')
+		self.log.append('Annotating video...')
 		print(datetime.datetime.now())
+		self.log.append(str(datetime.datetime.now()))
 
 		text_scl=max(0.5,round((self.background.shape[0]+self.background.shape[1])/1080,1))
 		text_tk=max(1,round((self.background.shape[0]+self.background.shape[1])/540))
@@ -764,6 +790,7 @@ class AnalyzeAnimal():
 		cv2.imwrite(os.path.join(self.results_path,'Trajectory.jpg'),self.background)
 
 		print('Video annotation completed!')
+		self.log.append('Video annotation completed!')
 
 
 	def analyze_parameters(self,normalize_distance=True,parameter_to_analyze=[]):
@@ -863,7 +890,7 @@ class AnalyzeAnimal():
 								if normalize_distance:
 									calibrator=math.sqrt(self.animal_area)
 									distance_traveled=distance_traveled/calibrator
-								speed=distance_traveled/(self.length/self.fps)
+								self.all_behavior_parameters[behavior_name]['speed'][i][n]=distance_traveled/(self.length/self.fps)
 								end_center=self.animal_centers[i][n]
 								if end_center is not None:
 									displacements=[]
@@ -877,6 +904,12 @@ class AnalyzeAnimal():
 										displacement=displacement/calibrator
 									velocity=displacement/((self.length-np.argmax(displacements))/self.fps)
 									self.all_behavior_parameters[behavior_name]['velocity'][i][n]=velocity
+									start_center=self.animal_centers[i][n-1]
+									if start_center is not None:
+										dt=math.dist(end_center,start_center)
+										if normalize_distance:
+											dt=dt/calibrator
+										self.all_behavior_parameters[behavior_name]['distance'][i]+=dt
 								velocities_max=[]
 								velocities_min=[]
 								for v in self.all_behavior_parameters[behavior_name]['velocity'][i][n-self.length+1:n+1]:
@@ -892,8 +925,6 @@ class AnalyzeAnimal():
 									if np.argmax(velocities_max)!=np.argmin(velocities_min):
 										t=abs(np.argmax(velocities_max)-np.argmin(velocities_min))/self.fps
 										self.all_behavior_parameters[behavior_name]['acceleration'][i][n]=(vmax-vmin)/t
-								self.all_behavior_parameters[behavior_name]['distance'][i]+=distance_traveled
-								self.all_behavior_parameters[behavior_name]['speed'][i][n]=speed
 
 							if '3 areal parameters' in parameter_to_analyze:
 								mask=np.zeros_like(self.background)
@@ -969,7 +1000,7 @@ class AnalyzeAnimal():
 							if normalize_distance:
 								calibrator=math.sqrt(self.animal_area)
 								distance_traveled=distance_traveled/calibrator
-							speed=distance_traveled/(self.length/self.fps)
+							self.all_behavior_parameters['speed'][i][n]=distance_traveled/(self.length/self.fps)
 							end_center=self.animal_centers[i][n]
 							if end_center is not None:
 								displacements=[]
@@ -983,6 +1014,13 @@ class AnalyzeAnimal():
 									displacement=displacement/calibrator
 								velocity=displacement/((self.length-np.argmax(displacements))/self.fps)
 								self.all_behavior_parameters['velocity'][i][n]=velocity
+								start_center=self.animal_centers[i][n-1]
+								if start_center is not None:
+									dt=math.dist(end_center,start_center)
+									if normalize_distance:
+										dt=dt/calibrator
+									self.all_behavior_parameters['distance'][i]+=dt
+
 							velocities_max=[]
 							velocities_min=[]
 							for v in self.all_behavior_parameters['velocity'][i][n-self.length+1:n+1]:
@@ -998,8 +1036,6 @@ class AnalyzeAnimal():
 								if np.argmax(velocities_max)!=np.argmin(velocities_min):
 									t=abs(np.argmax(velocities_max)-np.argmin(velocities_min))/self.fps
 									self.all_behavior_parameters['acceleration'][i][n]=(vmax-vmin)/t
-							self.all_behavior_parameters['distance'][i]+=distance_traveled
-							self.all_behavior_parameters['speed'][i][n]=speed
 
 						if '3 areal parameters' in parameter_to_analyze:
 							mask=np.zeros_like(self.background)
@@ -1063,14 +1099,19 @@ class AnalyzeAnimal():
 		# parameter_to_analyze: the behavior parameters that are selected in the analysis
 
 		print('Quantifying behaviors...')
+		self.log.append('Quantifying behaviors...')
 		print(datetime.datetime.now())
+		self.log.append(str(datetime.datetime.now()))
 
 		self.analyze_parameters(normalize_distance=normalize_distance,parameter_to_analyze=parameter_to_analyze)
 
 		print('Behavioral quantification completed!')
+		self.log.append('Behavioral quantification Completed!')
 
 		print('Exporting results...')
+		self.log.append('Exporting results...')
 		print(datetime.datetime.now())
+		self.log.append(str(datetime.datetime.now()))
 
 		if self.categorize_behavior:
 			events_df=pd.DataFrame(self.event_probability,index=self.all_time)
@@ -1135,6 +1176,11 @@ class AnalyzeAnimal():
 				pd.concat(summary,axis=1).to_excel(os.path.join(self.results_path,'all_summary.xlsx'),float_format='%.2f',index_label='ID/parameter')			
 
 		print('All results exported in: '+str(self.results_path))
+		self.log.append('All results exported in: '+str(self.results_path))
+		self.log.append('Analysis completed!')
+		if len(self.log)>0:
+			with open(os.path.join(self.results_path,'Analysis log.txt'),'w') as analysis_log:
+				analysis_log.write('\n'.join(str(i) for i in self.log))
 
 
 	def generate_data(self,background_free=True,black_background=True,skip_redundant=1):
