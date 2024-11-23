@@ -473,7 +473,7 @@ class AnalyzeAnimalDetector():
 							if self.animation_analyzer:
 								masked_frame=frame*cv2.cvtColor(mask,cv2.COLOR_GRAY2BGR)
 								if black_background is False:
-									masked_frame[~mask]=255
+									masked_frame[mask==0]=255
 								x,y,w,h=cv2.boundingRect(cnt)
 								difference=int(abs(w-h)/2)+1
 								if w>h:
@@ -636,7 +636,7 @@ class AnalyzeAnimalDetector():
 										complete_masks=all_masks[i]|other_mask
 									else:
 										complete_masks=all_masks[i]
-									blob[~complete_masks]=255
+									blob[complete_masks==0]=255
 								blob=np.uint8(exposure.rescale_intensity(blob,out_range=(0,255)))
 							else:
 								blob=np.uint8(exposure.rescale_intensity(frame,out_range=(0,255)))
@@ -656,7 +656,7 @@ class AnalyzeAnimalDetector():
 						if background_free:
 							blob=frame*cv2.cvtColor(all_masks[0],cv2.COLOR_GRAY2BGR)
 							if black_background is False:
-								blob[~all_masks[0]]=255
+								blob[all_masks[0]==0]=255
 							blob=np.uint8(exposure.rescale_intensity(blob,out_range=(0,255)))
 						else:
 							blob=np.uint8(exposure.rescale_intensity(frame,out_range=(0,255)))
@@ -2056,7 +2056,7 @@ class AnalyzeAnimalDetector():
 										complete_masks=all_masks[i]|other_mask
 									else:
 										complete_masks=all_masks[i]
-									blob[~complete_masks]=255
+									blob[complete_masks==0]=255
 								blob=np.uint8(exposure.rescale_intensity(blob,out_range=(0,255)))
 							else:
 								blob=np.uint8(exposure.rescale_intensity(frame,out_range=(0,255)))
@@ -2072,7 +2072,7 @@ class AnalyzeAnimalDetector():
 							if background_free:
 								blob=frame*cv2.cvtColor(all_masks[0],cv2.COLOR_GRAY2BGR)
 								if black_background is False:
-									blob[~all_masks[0]]=255
+									blob[all_masks[0]==0]=255
 								blob=np.uint8(exposure.rescale_intensity(blob,out_range=(0,255)))
 							else:
 								blob=np.uint8(exposure.rescale_intensity(frame,out_range=(0,255)))
@@ -2327,7 +2327,7 @@ class AnalyzeAnimalDetector():
 						if background_free:
 							masked_image=image*cv2.cvtColor(mask,cv2.COLOR_GRAY2BGR)
 							if black_background is False:
-								masked_image[~mask]=255
+								masked_image[mask==0]=255
 						else:
 							masked_image=image
 						x,y,w,h=cv2.boundingRect(cnt)
