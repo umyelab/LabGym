@@ -4,7 +4,7 @@
 ### What's Changed
 * Bug fix in the option of making the background white instead of black.
 
-**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.7.0...v2.7.1>
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.7.1...v2.7.2>
 
 ## v2.7.1
 ### What's Changed
