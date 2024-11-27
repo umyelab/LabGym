@@ -1439,6 +1439,7 @@ class Categorizers():
 						capture.release()
 
 						for frame in frames:
+							frame=np.uint8(exposure.rescale_intensity(frame,out_range=(0,255)))
 							if channel==1:
 								frame=cv2.cvtColor(np.uint8(frame),cv2.COLOR_BGR2GRAY)
 							frame=cv2.resize(frame,(dim_tconv,dim_tconv),interpolation=cv2.INTER_AREA)
@@ -1451,6 +1452,9 @@ class Categorizers():
 
 						path_to_pattern_image=os.path.splitext(os.path.join(groundtruth_path,behavior,i))[0]+'.jpg'
 						pattern_image=cv2.imread(path_to_pattern_image)
+						if behavior_mode==3:
+							if channel==1:
+								pattern_image=cv2.cvtColor(pattern_image,cv2.COLOR_BGR2GRAY)
 						pattern_image=cv2.resize(pattern_image,(dim_conv,dim_conv),interpolation=cv2.INTER_AREA)
 						pattern_images.append(img_to_array(pattern_image))
 
