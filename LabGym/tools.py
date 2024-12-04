@@ -1415,14 +1415,12 @@ def sort_examples_from_csv(path_to_examples,out_path):
 
 	path_to_csv=None
 	path_to_animations=[]
-	path_to_pattern_images=[]
 
 	for i in os.listdir(path_to_examples):
 		if i.endswith('.csv'):
 			path_to_csv=os.path.join(path_to_examples,i)
 		if i.endswith('.avi'):
 			path_to_animations.append(os.path.join(path_to_examples,i))
-			path_to_pattern_images.append(os.path.join(path_to_examples,os.path.splitext(i)[0]+'.jpg'))
 
 	if path_to_csv is None or len(path_to_animations)==0:
 
@@ -1430,5 +1428,20 @@ def sort_examples_from_csv(path_to_examples,out_path):
 
 	else:
 
-		pass
+		annotation=pd.read_csv(path_to_csv)
+		for i in list(annotation.columns):
+			if i!='Unnamed: 0':
+				os.makedirs(os.path.join(out_path,i),exist_ok=True)
+
+		for path_to_animation in path_to_animations:
+			basename=os.path.basename(path_to_animation)
+			path_to_pattern_image=os.path.splitext(path_to_animation)[0]+'.jpg'
+			frame_index=int(basename.split('_len')[0].split('_')[-1])
+			row_in_annotation=annotation.loc[frame_index]
+			for behavior_name,score in row_in_annotation.items():
+				if str(behavior_name)!='Unnamed: 0':
+					if score==1:
+						shutil.move(path_to_animation,os.path.join(out_path,str(behavior_name),basename))
+						shutil.move(path_to_pattern_image,os.path.join(out_path,str(behavior_name),os.path.splitext(basename)[0]+'.jpg'))
+
 
