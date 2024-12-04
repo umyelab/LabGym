@@ -29,6 +29,7 @@ import numpy as np
 from .analyzebehavior import AnalyzeAnimal
 from .analyzebehavior_dt import AnalyzeAnimalDetector
 from .categorizer import Categorizers
+from .tools import sort_examples_from_csv
 
 
 
