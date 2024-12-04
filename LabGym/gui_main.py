@@ -24,7 +24,7 @@ import wx.lib.agw.hyperlink as hl
 import json
 from urllib import request
 from pathlib import Path
-from .gui_categorizer import WindowLv2_GenerateExamples,WindowLv2_TrainCategorizers,WindowLv2_SortBehaviors,WindowLv2_TestCategorizers
+from .gui_categorizer import WindowLv2_GenerateExamples,WindowLv2_TrainCategorizers,WindowLv2_SortExamples,WindowLv2_TestCategorizers
 from .gui_detector import WindowLv2_GenerateImages,WindowLv2_TrainDetectors,WindowLv2_TestDetectors
 from .gui_preprocessor import WindowLv2_ProcessVideos,WindowLv2_DrawMarkers
 from .gui_analyzer import WindowLv2_AnalyzeBehaviors,WindowLv2_MineResults,WindowLv2_PlotBehaviors,WindowLv2_CalculateDistances
@@ -241,7 +241,7 @@ class WindowLv1_TrainingModule(wx.Frame):
 
 	def sort_behaviorexamples(self,event):
 
-		WindowLv2_SortBehaviors('Sort Behavior Examples')
+		WindowLv2_SortExamples('Sort Behavior Examples')
 
 
 	def train_categorizers(self,event):
