@@ -35,6 +35,7 @@ import seaborn as sb
 import functools
 import operator
 import math
+import shutil
 
 
 
@@ -1248,9 +1249,7 @@ def calculate_distances(path_to_folder,filename,behavior_to_include,out_path):
 	
 	path_to_folder: The path to the folder that stores the 'all_event_probability.xlsx',
 	'all_centers.xlsx', and 'Annotated video.avi'.
-
 	filename: the name of the path_to_folder
-
 	behavior_to_include: the behaviors used in calculation
 	'''
 
@@ -1414,5 +1413,22 @@ def sort_examples_from_csv(path_to_examples,out_path):
 	out_path: the folder to store the sorted behavior examples
 	'''
 
-	pass
+	path_to_csv=None
+	path_to_animations=[]
+	path_to_pattern_images=[]
+
+	for i in os.listdir(path_to_examples):
+		if i.endswith('.csv'):
+			path_to_csv=os.path.join(path_to_examples,i)
+		if i.endswith('.avi'):
+			path_to_animations.append(os.path.join(path_to_examples,i))
+			path_to_pattern_images.append(os.path.join(path_to_examples,os.path.splitext(i)[0]+'.jpg'))
+
+	if path_to_csv is None or len(path_to_animations)==0:
+
+		print('No .csv file or behavior example!')
+
+	else:
+
+		pass
 
