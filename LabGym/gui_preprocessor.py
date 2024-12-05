@@ -50,10 +50,10 @@ class WindowLv2_ProcessVideos(wx.Frame):
 		self.bottom=0 # frame cropping coordinates bottom
 		self.fps_new=None # the target fps to downsize
 
-		self.dispaly_window()
+		self.display_window()
 
 
-	def dispaly_window(self):
+	def display_window(self):
 
 		panel=wx.Panel(self)
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
@@ -379,10 +379,10 @@ class WindowLv2_DrawMarkers(wx.Frame):
 		self.framewidth=None # if not None, will resize the video frame keeping the original w:h ratio
 		self.result_path=None # the folder for storing videos with markers
 
-		self.dispaly_window()
+		self.display_window()
 
 
-	def dispaly_window(self):
+	def display_window(self):
 
 		panel=wx.Panel(self)
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
