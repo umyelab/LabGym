@@ -1444,4 +1444,6 @@ def sort_examples_from_csv(path_to_examples,out_path):
 						shutil.move(path_to_animation,os.path.join(out_path,str(behavior_name),basename))
 						shutil.move(path_to_pattern_image,os.path.join(out_path,str(behavior_name),os.path.splitext(basename)[0]+'.jpg'))
 
+	print('Sorting completed!')
+
 
