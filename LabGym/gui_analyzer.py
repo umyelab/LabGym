@@ -122,10 +122,10 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 		self.specific_behaviors={} # sex or identity-specific behaviors
 		self.correct_ID=False # whether to use sex or identity-specific behaviors to guide ID correction when ID switching is likely to happen
 
-		self.dispaly_window()
+		self.display_window()
 
 
-	def dispaly_window(self):
+	def display_window(self):
 
 		panel=wx.Panel(self)
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
