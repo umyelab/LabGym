@@ -1073,9 +1073,9 @@ class Categorizers():
 			print(datetime.datetime.now())
 			self.log.append(str(datetime.datetime.now()))
 
-			if dim<128:
+			if dim<=128:
 				batch_size=32
-			elif dim<256:
+			elif dim<=256:
 				batch_size=16
 			else:
 				batch_size=8
@@ -1243,12 +1243,14 @@ class Categorizers():
 			print(datetime.datetime.now())
 			self.log.append(str(datetime.datetime.now()))
 
-			if dim_conv<128:
+			if dim<=32:
 				batch_size=32
-			elif dim_conv<256:
+			elif dim<=64:
 				batch_size=16
-			else:
+			elif dim<=128:
 				batch_size=8
+			else:
+				batch_size=4
 
 			if level<5:
 				model=self.simple_tvgg(inputs,filters,classes=len(self.classnames),level=level,with_classifier=True)
