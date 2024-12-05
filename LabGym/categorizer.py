@@ -1073,12 +1073,12 @@ class Categorizers():
 			print(datetime.datetime.now())
 			self.log.append(str(datetime.datetime.now()))
 
-			if trainX.shape[0]<5000:
-				batch_size=8
-			elif trainX.shape[0]<50000:
+			if dim_conv<128:
+				batch_size=32
+			elif dim_conv<256:
 				batch_size=16
 			else:
-				batch_size=32
+				batch_size=8
 
 			if level<5:
 				model=self.simple_vgg(inputs,filters,classes=len(self.classnames),level=level,with_classifier=True)
