@@ -51,9 +51,9 @@ class WindowLv2_GenerateImages(wx.Frame):
 		self.duration=0 # the duration of generating images
 		self.skip_redundant=1000 # the interval (in frames) of two consecutively generated images
 
-		self.dispaly_window()
+		self.display_window()
 
-	def dispaly_window(self):
+	def display_window(self):
 
 		panel=wx.Panel(self)
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
@@ -235,10 +235,10 @@ class WindowLv2_TrainDetectors(wx.Frame):
 		self.detector_path=os.path.join(the_absolute_current_path,'detectors') # the 'LabGym/detectors' folder, which stores all the trained Detectors
 		self.path_to_detector=None # path to the Detector
 
-		self.dispaly_window()
+		self.display_window()
 
 
-	def dispaly_window(self):
+	def display_window(self):
 
 		panel=wx.Panel(self)
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
@@ -387,10 +387,10 @@ class WindowLv2_TestDetectors(wx.Frame):
 		self.path_to_detector=None # path to the Detector
 		self.output_path=None # the folder that stores the testing images with annotations
 
-		self.dispaly_window()
+		self.display_window()
 
 
-	def dispaly_window(self):
+	def display_window(self):
 
 		panel=wx.Panel(self)
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
