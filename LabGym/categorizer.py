@@ -1471,6 +1471,129 @@ class Categorizers():
 			plt.close('all')
 
 
+	def train_pattern_recognizer_onfly(self,data_path,model_path,out_path=None,dim=32,channel=3,time_step=15,level=2,include_bodyparts=True,std=0,background_free=True,black_background=True,behavior_mode=0,social_distance=0):
+
+		# data_path: the folder that stores all the prepared training examples
+		# model_path: the path to the trained Animation Analyzer
+		# out_path: if not None, will store the training reports in this folder
+		# dim: the input dimension of Pattern Recognizer
+		# channel: the input color channel of Animation Analyzer, 1 is gray scale, 3 is RGB
+		# time_step: the duration of an animation, also the input length of Animation Analyzer
+		# level: complexity level of Pattern Recognizer, determines how deep the neural network is
+		# include_bodyparts: whether to include body parts in the pattern images
+		# std: a value between 0 and 255, higher value, less body parts will be included in the pattern images
+		# background_free: whether to include background in animations
+		# black_background: whether to set background
+		# behavior_mode:  0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
+		# social_distance: a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
+
+		filters=8
+
+		for i in range(round(dim/60)):
+			filters=min(int(filters*2),64)
+
+		inputs=Input(shape=(dim,dim,channel))
+
+		print('Training Categorizer with both Animation Analyzer and Pattern Recognizer using the behavior examples in: '+str(data_path))
+		self.log.append('Training Categorizer with both Animation Analyzer and Pattern Recognizer using the behavior examples in: '+str(data_path))
+		print(datetime.datetime.now())
+		self.log.append(str(datetime.datetime.now()))
+
+		train_folder=os.path.join(data_path,'train')
+		validation_folder=os.path.join(data_path,'validation')
+
+		if os.path.isdir(train_folder) and os.path.isdir(validation_folder):
+
+			if dim<=128:
+				batch_size=32
+			elif dim<=256:
+				batch_size=16
+			else:
+				batch_size=8
+
+			train_data=DatasetFromPath_AA(train_folder,batch_size=batch_size,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel)
+			validation_data=DatasetFromPath_AA(validation_folder,batch_size=batch_size,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel)
+
+			if include_bodyparts:
+				inner_code=0
+			else:
+				inner_code=1
+
+			if background_free:
+				background_code=0
+			else:
+				background_code=1
+
+			if black_background:
+				black_code=0
+			else:
+				black_code=1
+
+			if behavior_mode>=3:
+				time_step=std=0
+				inner_code=1
+
+			parameters={'classnames':list(train_data.classmapping.keys()),'dim_conv':int(dim),'channel':int(channel),'time_step':int(time_step),'network':0,'level_conv':int(level),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code),'black_background':int(black_code),'behavior_kind':int(behavior_mode),'social_distance':int(social_distance)}
+			pd_parameters=pd.DataFrame.from_dict(parameters)
+			pd_parameters.to_csv(os.path.join(model_path,'model_parameters.txt'),index=False)
+
+			if level<5:
+				model=self.simple_vgg(inputs,filters,classes=len(list(train_data.classmapping.keys())),level=level,with_classifier=True)
+			else:
+				model=self.simple_resnet(inputs,filters,classes=len(list(train_data.classmapping.keys())),level=level,with_classifier=True)
+			if len(list(train_data.classmapping.keys()))==2:
+				model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='binary_crossentropy',metrics=['accuracy'])
+			else:
+				model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='categorical_crossentropy',metrics=['accuracy'])
+
+			cp=ModelCheckpoint(model_path,monitor='val_loss',verbose=1,save_best_only=True,save_weights_only=False,mode='min',save_freq='epoch')
+			es=EarlyStopping(monitor='val_loss',min_delta=0.001,mode='min',verbose=1,patience=6,restore_best_weights=True)
+			rl=ReduceLROnPlateau(monitor='val_loss',min_delta=0.001,factor=0.2,patience=3,verbose=1,mode='min',min_lr=1e-7)
+
+			H=model.fit(train_data,validation_data=(validation_data),epochs=1000000,callbacks=[cp,es,rl])
+
+			model.save(model_path)
+			print('Trained Categorizer saved in: '+str(model_path))
+			self.log.append('Trained Categorizer saved in: '+str(model_path))
+
+			predictions=model.predict(validation_data)
+
+			if len(list(train_data.classmapping.keys()))==2:
+				predictions=[round(i[0]) for i in predictions]
+				print(classification_report(testY,predictions,target_names=list(train_data.classmapping.keys())))
+				report=classification_report(testY,predictions,target_names=list(train_data.classmapping.keys()),output_dict=True)
+			else:
+				print(classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=list(train_data.classmapping.keys())))
+				report=classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=list(train_data.classmapping.keys()),output_dict=True)
+
+			pd.DataFrame(report).transpose().to_csv(os.path.join(model_path,'training_metrics.csv'),float_format='%.2f')
+			if out_path is not None:
+				pd.DataFrame(report).transpose().to_excel(os.path.join(out_path,'training_metrics.xlsx'),float_format='%.2f')
+
+			plt.style.use('classic')
+			plt.figure()
+			plt.plot(H.history['loss'],label='train_loss')
+			plt.plot(H.history['val_loss'],label='val_loss')
+			plt.plot(H.history['accuracy'],label='train_accuracy')
+			plt.plot(H.history['val_accuracy'],label='val_accuracy')
+			plt.title('Loss and Accuracy')
+			plt.xlabel('Epoch')
+			plt.ylabel('Loss/Accuracy')
+			plt.legend(loc='center right')
+			plt.savefig(os.path.join(model_path,'training_history.png'))
+			if out_path is not None:
+				plt.savefig(os.path.join(out_path,'training_history.png'))
+				print('Training reports saved in: '+str(out_path))
+				if len(self.log)>0:
+					with open(os.path.join(out_path,'Training log.txt'),'w') as training_log:
+						training_log.write('\n'.join(str(i) for i in self.log))
+			plt.close('all')
+
+		else:
+
+			print('No train / validation folder!')
+
+
 	def train_combnet_onfly(self,data_path,model_path,out_path=None,dim_tconv=32,dim_conv=64,channel=1,time_step=15,level_tconv=1,level_conv=2,include_bodyparts=True,std=0,background_free=True,black_background=True,behavior_mode=0,social_distance=0):
 
 		# data_path: the folder that stores all the prepared training examples
