@@ -49,6 +49,10 @@ import pandas as pd
 
 class DatasetFromPath_AA(Sequence):
 
+	'''
+	Load batches of training examples (including animations) from path
+	'''
+
 	def __init__(self,path_to_examples,batch_size=32,dim_tconv=16,dim_conv=32,channel=1):
 
 		self.path_to_examples=path_to_examples
@@ -124,6 +128,10 @@ class DatasetFromPath_AA(Sequence):
 
 
 class DatasetFromPath(Sequence):
+
+	'''
+	Load batches of training examples (not including animations) from path
+	'''
 
 	def __init__(self,path_to_examples,batch_size=32,dim_conv=32):
 
