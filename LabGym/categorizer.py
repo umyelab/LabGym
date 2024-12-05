@@ -39,11 +39,146 @@ from tensorflow.keras.layers import Conv2D,Dropout,Flatten,Dense,LSTM,concatenat
 from tensorflow.keras.models import Model,Sequential,load_model
 from tensorflow.keras.optimizers import SGD
 from tensorflow.keras.callbacks import ModelCheckpoint,EarlyStopping,ReduceLROnPlateau
-from tensorflow.keras.utils import plot_model
+from tensorflow.keras.utils import plot_model,Sequence
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
 import pandas as pd
+
+
+
+class DatasetFromPath_AA(Sequence):
+
+	def __init__(self,path_to_examples,batch_size=32,dim_tconv=16,dim_conv=32,channel=1):
+
+		self.path_to_examples=path_to_examples
+		self.length=None
+		self.batch_size=batch_size
+		self.dim_tconv=dim_tconv
+		self.dim_conv=dim_conv
+		self.channel=channel
+		self.pattern_image_paths,self.classmapping=self.load_info()
+
+
+	def load_info(self):
+
+		pattern_image_paths=[]
+		classnames=[]
+
+		for pattern_image in os.listdir(self.path_to_examples):
+			if pattern_image.endswith('.jpg'):
+				pattern_image_paths.append(os.path.join(self.path_to_examples,pattern_image))
+				classname=pattern_image.split('.jpg')[0].split('_')[-1]
+				if classname not in classnames:
+					classnames.append(classname)
+
+		classnames.sort()
+		labels=np.array(classnames)
+		lb=LabelBinarizer()
+		labels=lb.fit_transform(labels)
+		labels=[list(i) for i in labels]
+		classmapping={name:labels[i] for i,name in enumerate(classnames)}
+
+		return pattern_image_paths,classmapping
+
+
+	def __len__(self):
+
+		return int(np.floor(len(self.pattern_image_paths)/self.batch_size))
+
+
+	def __getitem__(self,idx):
+
+		batch=self.pattern_image_paths[idx*self.batch_size:(idx+1)*self.batch_size]
+		animations=[]
+		pattern_images=[]
+		labels=[]
+
+		for path_to_pattern_image in batch:
+
+			animation=deque([np.zeros((self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8')],maxlen=self.length)*self.length
+			capture=cv2.VideoCapture(path_to_pattern_image.split('.jpg')[0]+'.avi')
+			while True:
+				retval,frame=capture.read()
+				if frame is None:
+					break
+				if channel==1:
+					frame=cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
+				frame=cv2.resize(frame,(self.dim_tconv,self.dim_tconv),interpolation=cv2.INTER_AREA)
+				animation.append(img_to_array(frame))
+			animations.append(np.array(animation))
+			animations=np.array(animations)
+			animations=animations.astype('float32')/255.0
+
+			pattern_image=cv2.imread(path_to_pattern_image)
+			pattern_image=cv2.resize(pattern_image,(self.dim_conv,self.dim_conv),interpolation=cv2.INTER_AREA)
+			pattern_images.append(img_to_array(pattern_image))
+			pattern_images=np.array(pattern_images)
+			pattern_images=pattern_images.astype('float32')/255.0
+
+			labels.append(np.array(self.classmapping[path_to_pattern_image.split('.jpg')[0].split('_')[-1]]))
+			labels=np.array(labels)
+
+		return animations,pattern_images,labels
+
+
+
+class DatasetFromPath(Sequence):
+
+	def __init__(self,path_to_examples,batch_size=32,dim_conv=32):
+
+		self.path_to_examples=path_to_examples
+		self.length=None
+		self.batch_size=batch_size
+		self.dim_conv=dim_conv
+		self.pattern_image_paths,self.classmapping=self.load_info()
+
+
+	def load_info(self):
+
+		pattern_image_paths=[]
+		classnames=[]
+
+		for pattern_image in os.listdir(self.path_to_examples):
+			if pattern_image.endswith('.jpg'):
+				pattern_image_paths.append(os.path.join(self.path_to_examples,pattern_image))
+				classname=pattern_image.split('.jpg')[0].split('_')[-1]
+				if classname not in classnames:
+					classnames.append(classname)
+
+		classnames.sort()
+		labels=np.array(classnames)
+		lb=LabelBinarizer()
+		labels=lb.fit_transform(labels)
+		labels=[list(i) for i in labels]
+		classmapping={name:labels[i] for i,name in enumerate(classnames)}
+
+		return pattern_image_paths,classmapping
+
+
+	def __len__(self):
+
+		return int(np.floor(len(self.pattern_image_paths)/self.batch_size))
+
+
+	def __getitem__(self,idx):
+
+		batch=self.pattern_image_paths[idx*self.batch_size:(idx+1)*self.batch_size]
+		pattern_images=[]
+		labels=[]
+
+		for path_to_pattern_image in batch:
+
+			pattern_image=cv2.imread(path_to_pattern_image)
+			pattern_image=cv2.resize(pattern_image,(self.dim_conv,self.dim_conv),interpolation=cv2.INTER_AREA)
+			pattern_images.append(img_to_array(pattern_image))
+			pattern_images=np.array(pattern_images)
+			pattern_images=pattern_images.astype('float32')/255.0
+
+			labels.append(np.array(self.classmapping[path_to_pattern_image.split('.jpg')[0].split('_')[-1]]))
+			labels=np.array(labels)
+
+		return pattern_images,labels
 
 
 
