@@ -1073,9 +1073,9 @@ class Categorizers():
 			print(datetime.datetime.now())
 			self.log.append(str(datetime.datetime.now()))
 
-			if dim_conv<128:
+			if dim<128:
 				batch_size=32
-			elif dim_conv<256:
+			elif dim<256:
 				batch_size=16
 			else:
 				batch_size=8
@@ -1099,44 +1099,39 @@ class Categorizers():
 			print('Trained Categorizer saved in: '+str(model_path))
 			self.log.append('Trained Categorizer saved in: '+str(model_path))
 
-			try:
+			predictions=model.predict(testX,batch_size=batch_size)
+
+			if len(self.classnames)==2:
+				predictions=[round(i[0]) for i in predictions]
+				print(classification_report(testY,predictions,target_names=self.classnames))
+				report=classification_report(testY,predictions,target_names=self.classnames,output_dict=True)
+			else:
+				print(classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=self.classnames))
+				report=classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=self.classnames,output_dict=True)
+
+			pd.DataFrame(report).transpose().to_csv(os.path.join(model_path,'training_metrics.csv'),float_format='%.2f')
+			if out_path is not None:
+				pd.DataFrame(report).transpose().to_excel(os.path.join(out_path,'training_metrics.xlsx'),float_format='%.2f')
 			
-				predictions=model.predict(testX,batch_size=batch_size)
+			plt.style.use('classic')
+			plt.figure()
+			plt.plot(H.history['loss'],label='train_loss')
+			plt.plot(H.history['val_loss'],label='val_loss')
+			plt.plot(H.history['accuracy'],label='train_accuracy')
+			plt.plot(H.history['val_accuracy'],label='val_accuracy')
+			plt.title('Loss and Accuracy')
+			plt.xlabel('Epoch')
+			plt.ylabel('Loss/Accuracy')
+			plt.legend(loc='center right')
+			plt.savefig(os.path.join(model_path,'training_history.png'))
+			if out_path is not None:
+				plt.savefig(os.path.join(out_path,'training_history.png'))
+				print('Training reports saved in: '+str(out_path))
+				if len(self.log)>0:
+					with open(os.path.join(out_path,'Training log.txt'),'w') as training_log:
+						training_log.write('\n'.join(str(i) for i in self.log))
+			plt.close('all')
 
-				if len(self.classnames)==2:
-					predictions=[round(i[0]) for i in predictions]
-					print(classification_report(testY,predictions,target_names=self.classnames))
-					report=classification_report(testY,predictions,target_names=self.classnames,output_dict=True)
-				else:
-					print(classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=self.classnames))
-					report=classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=self.classnames,output_dict=True)
-
-				pd.DataFrame(report).transpose().to_csv(os.path.join(model_path,'training_metrics.csv'),float_format='%.2f')
-				if out_path is not None:
-					pd.DataFrame(report).transpose().to_excel(os.path.join(out_path,'training_metrics.xlsx'),float_format='%.2f')
-				
-				plt.style.use('classic')
-				plt.figure()
-				plt.plot(H.history['loss'],label='train_loss')
-				plt.plot(H.history['val_loss'],label='val_loss')
-				plt.plot(H.history['accuracy'],label='train_accuracy')
-				plt.plot(H.history['val_accuracy'],label='val_accuracy')
-				plt.title('Loss and Accuracy')
-				plt.xlabel('Epoch')
-				plt.ylabel('Loss/Accuracy')
-				plt.legend(loc='center right')
-				plt.savefig(os.path.join(model_path,'training_history.png'))
-				if out_path is not None:
-					plt.savefig(os.path.join(out_path,'training_history.png'))
-					print('Training reports saved in: '+str(out_path))
-					if len(self.log)>0:
-						with open(os.path.join(out_path,'Training log.txt'),'w') as training_log:
-							training_log.write('\n'.join(str(i) for i in self.log))
-				plt.close('all')
-
-			except:
-
-				pass
 
 
 	def train_animation_analyzer(self,data_path,model_path,out_path=None,dim=64,channel=1,time_step=15,level=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,black_background=True,behavior_mode=0,social_distance=0):
@@ -1248,12 +1243,12 @@ class Categorizers():
 			print(datetime.datetime.now())
 			self.log.append(str(datetime.datetime.now()))
 
-			if trainX.shape[0]<5000:
-				batch_size=8
-			elif trainX.shape[0]<50000:
+			if dim_conv<128:
+				batch_size=32
+			elif dim_conv<256:
 				batch_size=16
 			else:
-				batch_size=32
+				batch_size=8
 
 			if level<5:
 				model=self.simple_tvgg(inputs,filters,classes=len(self.classnames),level=level,with_classifier=True)
