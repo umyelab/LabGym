@@ -1327,7 +1327,7 @@ class Categorizers():
 
 
 
-	def train_combnet(self,data_path,model_path,out_path=None,dim_tconv=32,dim_conv=64,channel=1,time_step=15,level_tconv=1,level_conv=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,black_background=True,behavior_mode=0,social_distance=0,out_path=None):
+	def train_combnet(self,data_path,model_path,out_path=None,dim_tconv=32,dim_conv=64,channel=1,time_step=15,level_tconv=1,level_conv=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,black_background=True,behavior_mode=0,social_distance=0,out_folder=None):
 
 		# data_path: the folder that stores all the prepared training examples
 		# model_path: the path to the trained Animation Analyzer
@@ -1346,7 +1346,7 @@ class Categorizers():
 		# black_background: whether to set background
 		# behavior_mode:  0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
 		# social_distance: a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
-		# out_path: if not None, will output all the augmented data to this path
+		# out_folder: if not None, will output all the augmented data to this folder
 
 		print('Training Categorizer with both Animation Analyzer and Pattern Recognizer using the behavior examples in: '+str(data_path))
 		self.log.append('Training Categorizer with both Animation Analyzer and Pattern Recognizer using the behavior examples in: '+str(data_path))
@@ -1376,7 +1376,7 @@ class Categorizers():
 			print('Found behavior names: '+str(self.classnames))
 			self.log.append('Found behavior names: '+str(self.classnames))
 
-			if out_path is None:
+			if out_folder is None:
 
 				if include_bodyparts:
 					inner_code=0
@@ -1498,25 +1498,27 @@ class Categorizers():
 
 				(train_files,test_files,_,_)=train_test_split(path_files,labels,test_size=0.2,stratify=labels)
 
-				print('Perform augmentation for the behavior examples and export them to: '+str(out_path))
-				self.log.append('Perform augmentation for the behavior examples and export them to: '+str(out_path))
+				print('Perform augmentation for the behavior examples and export them to: '+str(out_folder))
+				self.log.append('Perform augmentation for the behavior examples and export them to: '+str(out_folder))
 				print('This might take hours or days, depending on the capacity of your computer.')
 				print(datetime.datetime.now())
 				self.log.append(str(datetime.datetime.now()))
 
 				print('Start to augment training examples...')
 				self.log.append('Start to augment training examples...')
-				train_folder=os.path.join(out_path,'train')
+				train_folder=os.path.join(out_folder,'train')
 				os.makedirs(train_folder,exist_ok=True)
 				_,_,_=self.build_data(train_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode,out_path=train_folder)
 				print('Start to augment validation examples...')
 				self.log.append('Start to augment validation examples...')
-				validation_folder=os.path.join(out_path,'validation')
+				validation_folder=os.path.join(out_folder,'validation')
 				os.makedirs(validation_folder,exist_ok=True)
 				if augvalid:
 					_,_,_=self.build_data(test_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode,out_path=validation_folder)
 				else:
 					_,_,_=self.build_data(test_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free,black_background=black_background,behavior_mode=behavior_mode,out_path=validation_folder)
+
+				self.train_combnet_onfly(out_folder,model_path,out_path=out_path,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,level_tconv=level_tconv,level_conv=level_conv,include_bodyparts=include_bodyparts,std=std,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode,social_distance=social_distance)
 
 
 	def train_pattern_recognizer_onfly(self,data_path,model_path,out_path=None,dim=32,channel=3,time_step=15,level=2,include_bodyparts=True,std=0,background_free=True,black_background=True,behavior_mode=0,social_distance=0):
