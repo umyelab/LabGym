@@ -276,7 +276,7 @@ class Categorizers():
 			print('All prepared training examples stored in: '+str(new_path))
 
 
-	def build_data(self,path_to_animations,dim_tconv=0,dim_conv=64,channel=1,time_step=15,aug_methods=[],background_free=True,black_background=True,behavior_mode=0):
+	def build_data(self,path_to_animations,dim_tconv=0,dim_conv=64,channel=1,time_step=15,aug_methods=[],background_free=True,black_background=True,behavior_mode=0,out_path=None):
 
 		# path_to_animations: the folder that stores all the prepared training examples
 		# dim_tconv: the input dimension of Animation Analyzer
@@ -287,6 +287,7 @@ class Categorizers():
 		# background_free: whether the background is included in animations
 		# black_background: whether to set background black
 		# behavior_mode:  0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
+		# out_path: if not None, will output all the augmented data to this path
 
 		animations=deque()
 		pattern_images=deque()
