@@ -1156,7 +1156,29 @@ class Categorizers():
 
 			else:
 
-				pass
+				(train_files,test_files,_,_)=train_test_split(path_files,labels,test_size=0.2,stratify=labels)
+
+				print('Perform augmentation for the behavior examples and export them to: '+str(out_folder))
+				self.log.append('Perform augmentation for the behavior examples and export them to: '+str(out_folder))
+				print('This might take hours or days, depending on the capacity of your computer.')
+				print(datetime.datetime.now())
+				self.log.append(str(datetime.datetime.now()))
+
+				print('Start to augment training examples...')
+				self.log.append('Start to augment training examples...')
+				train_folder=os.path.join(out_folder,'train')
+				os.makedirs(train_folder,exist_ok=True)
+				_,_,_=self.build_data(train_files,dim_tconv=dim_tconv,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode,out_path=train_folder)
+				print('Start to augment validation examples...')
+				self.log.append('Start to augment validation examples...')
+				validation_folder=os.path.join(out_folder,'validation')
+				os.makedirs(validation_folder,exist_ok=True)
+				if augvalid:
+					_,_,_=self.build_data(test_files,dim_tconv=dim_tconv,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode,out_path=validation_folder)
+				else:
+					_,_,_=self.build_data(test_files,dim_tconv=dim_tconv,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free,black_background=black_background,behavior_mode=behavior_mode,out_path=validation_folder)
+
+				self.train_animation_analyzer_onfly(out_folder,model_path,out_path=out_path,dim=dim,channel=channel,time_step=time_step,level=level,include_bodyparts=include_bodyparts,std=std,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode,social_distance=social_distance)
 
 
 	def train_animation_analyzer(self,data_path,model_path,out_path=None,dim=64,channel=1,time_step=15,level=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,black_background=True,behavior_mode=0,social_distance=0,out_folder=None):
@@ -1347,15 +1369,15 @@ class Categorizers():
 				self.log.append('Start to augment training examples...')
 				train_folder=os.path.join(out_folder,'train')
 				os.makedirs(train_folder,exist_ok=True)
-				_,_,_=self.build_data(train_files,dim_tconv=dim_tconv,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode,out_path=train_folder)
+				_,_,_=self.build_data(train_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode,out_path=train_folder)
 				print('Start to augment validation examples...')
 				self.log.append('Start to augment validation examples...')
 				validation_folder=os.path.join(out_folder,'validation')
 				os.makedirs(validation_folder,exist_ok=True)
 				if augvalid:
-					_,_,_=self.build_data(test_files,dim_tconv=dim_tconv,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode,out_path=validation_folder)
+					_,_,_=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode,out_path=validation_folder)
 				else:
-					_,_,_=self.build_data(test_files,dim_tconv=dim_tconv,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free,black_background=black_background,behavior_mode=behavior_mode,out_path=validation_folder)
+					_,_,_=self.build_data(test_files,dim_tconv=dim,dim_conv=dim,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free,black_background=black_background,behavior_mode=behavior_mode,out_path=validation_folder)
 
 				self.train_animation_analyzer_onfly(out_folder,model_path,out_path=out_path,dim=dim,channel=channel,time_step=time_step,level=level,include_bodyparts=include_bodyparts,std=std,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode,social_distance=social_distance)
 
