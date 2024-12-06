@@ -504,23 +504,20 @@ class Categorizers():
 								blob=blob_black
 
 						if out_path is None:
-
 							if channel==1:
 								blob=cv2.cvtColor(np.uint8(blob),cv2.COLOR_BGR2GRAY)
-
 							blob=cv2.resize(blob,(dim_tconv,dim_tconv),interpolation=cv2.INTER_AREA)
 							blob=img_to_array(blob)
 							animation.append(blob)
-
 						else:
-
 							writer.write(np.uint8(blob))
 
 						n+=1
 
 					if out_path is None:
-
 						animations.append(np.array(animation))
+					else:
+						writer.release()
 
 				pattern_image=cv2.imread(path_to_pattern_image)
 
