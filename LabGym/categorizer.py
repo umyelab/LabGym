@@ -566,26 +566,34 @@ class Categorizers():
 					x:x+pattern_image_scl.shape[1],:]=pattern_image_scl
 					pattern_image=pattern_image_black
 
-				if behavior_mode==3:
-					if channel==1:
-						pattern_image=cv2.cvtColor(np.uint8(pattern_image),cv2.COLOR_BGR2GRAY)
+				if out_path is None:
 
-				pattern_image=cv2.resize(pattern_image,(dim_conv,dim_conv),interpolation=cv2.INTER_AREA)
-				pattern_images.append(img_to_array(pattern_image))
+					if behavior_mode==3:
+						if channel==1:
+							pattern_image=cv2.cvtColor(np.uint8(pattern_image),cv2.COLOR_BGR2GRAY)
 
-				labels.append(label)
+					pattern_image=cv2.resize(pattern_image,(dim_conv,dim_conv),interpolation=cv2.INTER_AREA)
+					pattern_images.append(img_to_array(pattern_image))
 
-				amount+=1
-				if amount%10000==0:
-					print('The augmented example amount: '+str(amount))
-					self.log.append('The augmented example amount: '+str(amount))
-					print(datetime.datetime.now())
-					self.log.append(str(datetime.datetime.now()))
+					labels.append(label)
 
-		if dim_tconv!=0:
-			animations=np.array(animations,dtype='float32')/255.0
-		pattern_images=np.array(pattern_images,dtype='float32')/255.0
-		labels=np.array(labels)
+					amount+=1
+					if amount%10000==0:
+						print('The augmented example amount: '+str(amount))
+						self.log.append('The augmented example amount: '+str(amount))
+						print(datetime.datetime.now())
+						self.log.append(str(datetime.datetime.now()))
+
+				else:
+
+					cv2.imwrite(os.path.join(out_path,name+'_'+m+'_'+label+'.jpg'),np.uint8(pattern_image))
+
+		if out_path is None:
+
+			if dim_tconv!=0:
+				animations=np.array(animations,dtype='float32')/255.0
+			pattern_images=np.array(pattern_images,dtype='float32')/255.0
+			labels=np.array(labels)
 
 		return animations,pattern_images,labels
 
