@@ -303,9 +303,10 @@ class Categorizers():
 
 			remove=[]
 
-			all_methods=['orig','del1','del2','rot1','rot2','rot3','rot4','flph','flpv','brih','bril','shrp','shrn','sclh','sclw','rot1_brih','rot1_bril','rot4_brih','rot4_bril','flph_brih','flph_bril','flpv_brih','flpv_bril',
-			'del2_rot5_brii','del2_rot6_brii','del2_rot5_brid','del2_rot6_brid','del2_flph_brii','del2_flph_brid','del2_flpv_brii','del2_flpv_brid','flph_rot5_brii','flph_rot6_brii','flph_rot5_brid','flph_rot6_brid',
-			'flpv_rot5_brii','flpv_rot6_brii','flpv_rot5_brid','flpv_rot6_brid','flph_shrp_brii','flph_shrn_brii','flph_shrp_brid','flph_shrn_brid','flpv_shrp_brii','flpv_shrn_brii','flpv_shrp_brid','flpv_shrn_brid']
+			all_methods=['orig','rot1','rot2','rot3','rot4','rot5','rot6','shrp','shrn','sclh','sclw','del1','del2']
+			options=['rot7','flph','flpv','brih','bril','shrr','sclr','delr']
+			for r in range(1,len(options)+1):
+				all_methods.extend([''.join(c) for c in itertools.combinations(options,r)])
 
 			for i in all_methods:
 				if 'random rotation' not in aug_methods:
@@ -332,8 +333,6 @@ class Categorizers():
 				if 'random deletion' not in aug_methods:
 					if 'del' in i:
 						remove.append(i)
-				if 'exclude original' in aug_methods:
-					remove.append('orig')
 
 			methods=list(set(all_methods)-set(remove))
 
