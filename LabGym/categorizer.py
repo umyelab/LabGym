@@ -347,17 +347,19 @@ class Categorizers():
 			for m in methods:
 
 				if 'rot1' in m:
-					angle=np.random.uniform(10,50)
+					angle=np.random.uniform(5,45)
 				elif 'rot2' in m:
-					angle=np.random.uniform(50,90)
+					angle=np.random.uniform(45,85)
 				elif 'rot3' in m:
-					angle=np.random.uniform(90,130)
+					angle=90.0
 				elif 'rot4' in m:
-					angle=np.random.uniform(130,170)
+					angle=np.random.uniform(95,135)
 				elif 'rot5' in m:
-					angle=np.random.uniform(30,80)
+					angle=np.random.uniform(135,175)
 				elif 'rot6' in m:
-					angle=np.random.uniform(100,150)
+					angle=180.0
+				elif 'rot7' in m:
+					angle=np.random.uniform(5,175)
 				else:
 					angle=None
 
@@ -369,13 +371,9 @@ class Categorizers():
 					code=None
 
 				if 'brih' in m:
-					beta=np.random.uniform(30,80)
-				elif 'brii' in m:
-					beta=np.random.uniform(10,45)
+					beta=np.random.uniform(10,50)
 				elif 'bril' in m:
-					beta=np.random.uniform(-80,-30)
-				elif 'brid' in m:
-					beta=np.random.uniform(-45,10)
+					beta=np.random.uniform(-50,10)
 				else:
 					beta=None
 
@@ -383,6 +381,8 @@ class Categorizers():
 					shear=np.random.uniform(0.15,0.21)
 				elif 'shrn' in m:
 					shear=np.random.uniform(-0.21,-0.15)
+				elif 'shrr' in m:
+					shear=np.random.uniform(-0.21,0.21)
 				else:
 					shear=None
 
@@ -391,6 +391,9 @@ class Categorizers():
 					scale=np.random.uniform(0.6,0.9)
 				elif 'sclw' in m:
 					width=1
+					scale=np.random.uniform(0.6,0.9)
+				elif 'sclr' in m:
+					width=random.randint(0,1)
 					scale=np.random.uniform(0.6,0.9)
 				else:
 					scale=None
@@ -404,6 +407,8 @@ class Categorizers():
 						to_delete=[random.randint(0,round(time_step/3))]
 				elif 'del2' in m:
 					to_delete=[random.randint(0,round(time_step/2)+1)]
+				elif 'delr' in m:
+					to_delete=[random.randint(0,time_step-1)]
 				else:
 					to_delete=None
 
