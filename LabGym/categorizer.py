@@ -1376,121 +1376,147 @@ class Categorizers():
 			print('Found behavior names: '+str(self.classnames))
 			self.log.append('Found behavior names: '+str(self.classnames))
 
-			if include_bodyparts:
-				inner_code=0
+			if out_path is None:
+
+				if include_bodyparts:
+					inner_code=0
+				else:
+					inner_code=1
+
+				if background_free:
+					background_code=0
+				else:
+					background_code=1
+
+				if black_background:
+					black_code=0
+				else:
+					black_code=1
+
+				parameters={'classnames':list(self.classnames),'dim_tconv':int(dim_tconv),'dim_conv':int(dim_conv),'channel':int(channel),'time_step':int(time_step),'network':2,'level_tconv':int(level_tconv),'level_conv':int(level_conv),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code),'black_background':int(black_code),'behavior_kind':int(behavior_mode),'social_distance':int(social_distance)}
+				pd_parameters=pd.DataFrame.from_dict(parameters)
+				pd_parameters.to_csv(os.path.join(model_path,'model_parameters.txt'),index=False)
+
+				(train_files,test_files,y1,y2)=train_test_split(path_files,labels,test_size=0.2,stratify=labels)
+
+				print('Perform augmentation for the behavior examples...')
+				self.log.append('Perform augmentation for the behavior examples...')
+				print('This might take hours or days, depending on the capacity of your computer.')
+				print(datetime.datetime.now())
+				self.log.append(str(datetime.datetime.now()))
+
+				print('Start to augment training examples...')
+				self.log.append('Start to augment training examples...')
+				train_animations,train_pattern_images,trainY=self.build_data(train_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode)
+				trainY=lb.fit_transform(trainY)
+				print('Start to augment validation examples...')
+				self.log.append('Start to augment validation examples...')
+				if augvalid:
+					test_animations,test_pattern_images,testY=self.build_data(test_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode)
+				else:
+					test_animations,test_pattern_images,testY=self.build_data(test_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free,black_background=black_background,behavior_mode=behavior_mode)
+				testY=lb.fit_transform(testY)
+
+				with tf.device('CPU'):
+					train_animations=tf.convert_to_tensor(train_animations)
+					train_pattern_images=tf.convert_to_tensor(train_pattern_images)
+					trainY=tf.convert_to_tensor(trainY)
+					test_animations_tensor=tf.convert_to_tensor(test_animations)
+					test_pattern_images_tensor=tf.convert_to_tensor(test_pattern_images)
+					testY_tensor=tf.convert_to_tensor(testY)
+
+				print('Training example shape : '+str(train_animations.shape)+', '+str(train_pattern_images.shape))
+				self.log.append('Training example shape : '+str(train_animations.shape)+', '+str(train_pattern_images.shape))
+				print('Training label shape : '+str(trainY.shape))
+				self.log.append('Training label shape : '+str(trainY.shape))
+				print('Validation example shape : '+str(test_animations.shape)+', '+str(test_pattern_images.shape))
+				self.log.append('Validation example shape : '+str(test_animations.shape)+', '+str(test_pattern_images.shape))
+				print('Validation label shape : '+str(testY.shape))
+				self.log.append('Validation label shape : '+str(testY.shape))
+				print(datetime.datetime.now())
+				self.log.append(str(datetime.datetime.now()))
+
+				if dim_tconv<=16:
+					batch_size=32
+				elif dim_tconv<=64:
+					batch_size=16
+				elif dim_tconv<=128:
+					batch_size=8
+				else:
+					batch_size=4
+
+				model=self.combined_network(time_step=time_step,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,classes=len(self.classnames),level_tconv=level_tconv,level_conv=level_conv)
+				if len(self.classnames)==2:
+					model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='binary_crossentropy',metrics=['accuracy'])
+				else:
+					model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='categorical_crossentropy',metrics=['accuracy'])
+
+				cp=ModelCheckpoint(model_path,monitor='val_loss',verbose=1,save_best_only=True,save_weights_only=False,mode='min',save_freq='epoch')
+				es=EarlyStopping(monitor='val_loss',min_delta=0.001,mode='min',verbose=1,patience=6,restore_best_weights=True)
+				rl=ReduceLROnPlateau(monitor='val_loss',min_delta=0.001,factor=0.2,patience=3,verbose=1,mode='min',min_lr=1e-7)
+
+				H=model.fit([train_animations,train_pattern_images],trainY,batch_size=batch_size,validation_data=([test_animations_tensor,test_pattern_images_tensor],testY_tensor),epochs=1000000,callbacks=[cp,es,rl])
+
+				model.save(model_path)
+				print('Trained Categorizer saved in: '+str(model_path))
+				self.log.append('Trained Categorizer saved in: '+str(model_path))
+
+				predictions=model.predict([test_animations,test_pattern_images],batch_size=batch_size)
+
+				if len(self.classnames)==2:
+					predictions=[round(i[0]) for i in predictions]
+					print(classification_report(testY,predictions,target_names=self.classnames))
+					report=classification_report(testY,predictions,target_names=self.classnames,output_dict=True)
+				else:
+					print(classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=self.classnames))
+					report=classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=self.classnames,output_dict=True)
+
+				pd.DataFrame(report).transpose().to_csv(os.path.join(model_path,'training_metrics.csv'),float_format='%.2f')
+				if out_path is not None:
+					pd.DataFrame(report).transpose().to_excel(os.path.join(out_path,'training_metrics.xlsx'),float_format='%.2f')
+
+				plt.style.use('classic')
+				plt.figure()
+				plt.plot(H.history['loss'],label='train_loss')
+				plt.plot(H.history['val_loss'],label='val_loss')
+				plt.plot(H.history['accuracy'],label='train_accuracy')
+				plt.plot(H.history['val_accuracy'],label='val_accuracy')
+				plt.title('Loss and Accuracy')
+				plt.xlabel('Epoch')
+				plt.ylabel('Loss/Accuracy')
+				plt.legend(loc='center right')
+				plt.savefig(os.path.join(model_path,'training_history.png'))
+				if out_path is not None:
+					plt.savefig(os.path.join(out_path,'training_history.png'))
+					print('Training reports saved in: '+str(out_path))
+					if len(self.log)>0:
+						with open(os.path.join(out_path,'Training log.txt'),'w') as training_log:
+							training_log.write('\n'.join(str(i) for i in self.log))
+				plt.close('all')
+
 			else:
-				inner_code=1
 
-			if background_free:
-				background_code=0
-			else:
-				background_code=1
+				(train_files,test_files,_,_)=train_test_split(path_files,labels,test_size=0.2,stratify=labels)
 
-			if black_background:
-				black_code=0
-			else:
-				black_code=1
+				print('Perform augmentation for the behavior examples and export them to: '+str(out_path))
+				self.log.append('Perform augmentation for the behavior examples and export them to: '+str(out_path))
+				print('This might take hours or days, depending on the capacity of your computer.')
+				print(datetime.datetime.now())
+				self.log.append(str(datetime.datetime.now()))
 
-			parameters={'classnames':list(self.classnames),'dim_tconv':int(dim_tconv),'dim_conv':int(dim_conv),'channel':int(channel),'time_step':int(time_step),'network':2,'level_tconv':int(level_tconv),'level_conv':int(level_conv),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code),'black_background':int(black_code),'behavior_kind':int(behavior_mode),'social_distance':int(social_distance)}
-			pd_parameters=pd.DataFrame.from_dict(parameters)
-			pd_parameters.to_csv(os.path.join(model_path,'model_parameters.txt'),index=False)
-
-			(train_files,test_files,y1,y2)=train_test_split(path_files,labels,test_size=0.2,stratify=labels)
-
-			print('Perform augmentation for the behavior examples...')
-			self.log.append('Perform augmentation for the behavior examples...')
-			print('This might take hours or days, depending on the capacity of your computer.')
-			print(datetime.datetime.now())
-			self.log.append(str(datetime.datetime.now()))
-
-			print('Start to augment training examples...')
-			self.log.append('Start to augment training examples...')
-			train_animations,train_pattern_images,trainY=self.build_data(train_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode)
-			trainY=lb.fit_transform(trainY)
-			print('Start to augment validation examples...')
-			self.log.append('Start to augment validation examples...')
-			if augvalid:
-				test_animations,test_pattern_images,testY=self.build_data(test_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode)
-			else:
-				test_animations,test_pattern_images,testY=self.build_data(test_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free,black_background=black_background,behavior_mode=behavior_mode)
-			testY=lb.fit_transform(testY)
-
-			with tf.device('CPU'):
-				train_animations=tf.convert_to_tensor(train_animations)
-				train_pattern_images=tf.convert_to_tensor(train_pattern_images)
-				trainY=tf.convert_to_tensor(trainY)
-				test_animations_tensor=tf.convert_to_tensor(test_animations)
-				test_pattern_images_tensor=tf.convert_to_tensor(test_pattern_images)
-				testY_tensor=tf.convert_to_tensor(testY)
-
-			print('Training example shape : '+str(train_animations.shape)+', '+str(train_pattern_images.shape))
-			self.log.append('Training example shape : '+str(train_animations.shape)+', '+str(train_pattern_images.shape))
-			print('Training label shape : '+str(trainY.shape))
-			self.log.append('Training label shape : '+str(trainY.shape))
-			print('Validation example shape : '+str(test_animations.shape)+', '+str(test_pattern_images.shape))
-			self.log.append('Validation example shape : '+str(test_animations.shape)+', '+str(test_pattern_images.shape))
-			print('Validation label shape : '+str(testY.shape))
-			self.log.append('Validation label shape : '+str(testY.shape))
-			print(datetime.datetime.now())
-			self.log.append(str(datetime.datetime.now()))
-
-			if dim_tconv<=16:
-				batch_size=32
-			elif dim_tconv<=64:
-				batch_size=16
-			elif dim_tconv<=128:
-				batch_size=8
-			else:
-				batch_size=4
-
-			model=self.combined_network(time_step=time_step,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,classes=len(self.classnames),level_tconv=level_tconv,level_conv=level_conv)
-			if len(self.classnames)==2:
-				model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='binary_crossentropy',metrics=['accuracy'])
-			else:
-				model.compile(optimizer=SGD(learning_rate=1e-4,momentum=0.9),loss='categorical_crossentropy',metrics=['accuracy'])
-
-			cp=ModelCheckpoint(model_path,monitor='val_loss',verbose=1,save_best_only=True,save_weights_only=False,mode='min',save_freq='epoch')
-			es=EarlyStopping(monitor='val_loss',min_delta=0.001,mode='min',verbose=1,patience=6,restore_best_weights=True)
-			rl=ReduceLROnPlateau(monitor='val_loss',min_delta=0.001,factor=0.2,patience=3,verbose=1,mode='min',min_lr=1e-7)
-
-			H=model.fit([train_animations,train_pattern_images],trainY,batch_size=batch_size,validation_data=([test_animations_tensor,test_pattern_images_tensor],testY_tensor),epochs=1000000,callbacks=[cp,es,rl])
-
-			model.save(model_path)
-			print('Trained Categorizer saved in: '+str(model_path))
-			self.log.append('Trained Categorizer saved in: '+str(model_path))
-
-			predictions=model.predict([test_animations,test_pattern_images],batch_size=batch_size)
-
-			if len(self.classnames)==2:
-				predictions=[round(i[0]) for i in predictions]
-				print(classification_report(testY,predictions,target_names=self.classnames))
-				report=classification_report(testY,predictions,target_names=self.classnames,output_dict=True)
-			else:
-				print(classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=self.classnames))
-				report=classification_report(testY.argmax(axis=1),predictions.argmax(axis=1),target_names=self.classnames,output_dict=True)
-
-			pd.DataFrame(report).transpose().to_csv(os.path.join(model_path,'training_metrics.csv'),float_format='%.2f')
-			if out_path is not None:
-				pd.DataFrame(report).transpose().to_excel(os.path.join(out_path,'training_metrics.xlsx'),float_format='%.2f')
-
-			plt.style.use('classic')
-			plt.figure()
-			plt.plot(H.history['loss'],label='train_loss')
-			plt.plot(H.history['val_loss'],label='val_loss')
-			plt.plot(H.history['accuracy'],label='train_accuracy')
-			plt.plot(H.history['val_accuracy'],label='val_accuracy')
-			plt.title('Loss and Accuracy')
-			plt.xlabel('Epoch')
-			plt.ylabel('Loss/Accuracy')
-			plt.legend(loc='center right')
-			plt.savefig(os.path.join(model_path,'training_history.png'))
-			if out_path is not None:
-				plt.savefig(os.path.join(out_path,'training_history.png'))
-				print('Training reports saved in: '+str(out_path))
-				if len(self.log)>0:
-					with open(os.path.join(out_path,'Training log.txt'),'w') as training_log:
-						training_log.write('\n'.join(str(i) for i in self.log))
-			plt.close('all')
+				print('Start to augment training examples...')
+				self.log.append('Start to augment training examples...')
+				train_folder=os.path.join(out_path,'train')
+				os.makedirs(train_folder,exist_ok=True)
+				_,_,_=self.build_data(train_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode,out_path=train_folder)
+				print('Start to augment validation examples...')
+				self.log.append('Start to augment validation examples...')
+				validation_folder=os.path.join(out_path,'validation')
+				os.makedirs(validation_folder,exist_ok=True)
+				if augvalid:
+					_,_,_=self.build_data(test_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode,out_path=validation_folder)
+				else:
+					_,_,_=self.build_data(test_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free,black_background=black_background,behavior_mode=behavior_mode,out_path=validation_folder)
 
 
 	def train_pattern_recognizer_onfly(self,data_path,model_path,out_path=None,dim=32,channel=3,time_step=15,level=2,include_bodyparts=True,std=0,background_free=True,black_background=True,behavior_mode=0,social_distance=0):
