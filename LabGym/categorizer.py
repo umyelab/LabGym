@@ -410,6 +410,11 @@ class Categorizers():
 				if dim_tconv!=0:
 
 					capture=cv2.VideoCapture(i)
+					if out_path is not None:
+						fps=round(capture.get(cv2.CAP_PROP_FPS))
+						w=int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+						h=int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+						writer=cv2.VideoWriter(os.path.join(out_path,name+'_'+m+'_'+label+'.avi'),cv2.VideoWriter_fourcc(*'MJPG'),int(fps),(w,h),True)
 					animation=deque()
 					frames=deque(maxlen=time_step)
 					original_frame=None
@@ -422,6 +427,8 @@ class Categorizers():
 						if frame is None:
 							break
 						frames.append(frame)
+
+					capture.release()
 
 					frames_length=len(frames)
 					if frames_length<time_step:
@@ -496,18 +503,24 @@ class Categorizers():
 								blob_black[y:y+blob_scl.shape[0],x:x+blob_scl.shape[1]]=blob_scl
 								blob=blob_black
 
-						if channel==1:
-							blob=cv2.cvtColor(np.uint8(blob),cv2.COLOR_BGR2GRAY)
+						if out_path is None:
 
-						blob=cv2.resize(blob,(dim_tconv,dim_tconv),interpolation=cv2.INTER_AREA)
-						blob=img_to_array(blob)
-						animation.append(blob)
+							if channel==1:
+								blob=cv2.cvtColor(np.uint8(blob),cv2.COLOR_BGR2GRAY)
+
+							blob=cv2.resize(blob,(dim_tconv,dim_tconv),interpolation=cv2.INTER_AREA)
+							blob=img_to_array(blob)
+							animation.append(blob)
+
+						else:
+
+							writer.write(np.uint8(blob))
 
 						n+=1
 
-					capture.release()
+					if out_path is None:
 
-					animations.append(np.array(animation))
+						animations.append(np.array(animation))
 
 				pattern_image=cv2.imread(path_to_pattern_image)
 
