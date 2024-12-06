@@ -979,7 +979,7 @@ class Categorizers():
 		return model
 
 
-	def train_pattern_recognizer(self,data_path,model_path,out_path=None,dim=64,channel=3,time_step=15,level=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,black_background=True,behavior_mode=0,social_distance=0,out_path=None):
+	def train_pattern_recognizer(self,data_path,model_path,out_path=None,dim=64,channel=3,time_step=15,level=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,black_background=True,behavior_mode=0,social_distance=0,out_folder=None):
 
 		# data_path: the folder that stores all the prepared training examples
 		# model_path: the path to the trained Pattern Recognizer
@@ -996,7 +996,7 @@ class Categorizers():
 		# black_background: whether to set background
 		# behavior_mode:  0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
 		# social_distance: a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
-		# out_path: if not None, will output all the augmented data to this path
+		# out_folder: if not None, will output all the augmented data to this folder
 
 		filters=8
 
@@ -1153,7 +1153,7 @@ class Categorizers():
 			plt.close('all')
 
 
-	def train_animation_analyzer(self,data_path,model_path,out_path=None,dim=64,channel=1,time_step=15,level=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,black_background=True,behavior_mode=0,social_distance=0,out_path=None):
+	def train_animation_analyzer(self,data_path,model_path,out_path=None,dim=64,channel=1,time_step=15,level=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,black_background=True,behavior_mode=0,social_distance=0,out_folder=None):
 
 		# data_path: the folder that stores all the prepared training examples
 		# model_path: the path to the trained Animation Analyzer
@@ -1170,7 +1170,7 @@ class Categorizers():
 		# black_background: whether to set background
 		# behavior_mode:  0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
 		# social_distance: a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
-		# out_path: if not None, will output all the augmented data to this path
+		# out_folder: if not None, will output all the augmented data to this folder
 
 		filters=8
 
@@ -1517,6 +1517,11 @@ class Categorizers():
 					_,_,_=self.build_data(test_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=aug_methods,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode,out_path=validation_folder)
 				else:
 					_,_,_=self.build_data(test_files,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,aug_methods=[],background_free=background_free,black_background=black_background,behavior_mode=behavior_mode,out_path=validation_folder)
+
+				print('Start to train Categorizer using the examples from: '+str(out_folder))
+				self.log.append('Start to train Categorizer using the examples from: '+str(out_folder))
+				print(datetime.datetime.now())
+				self.log.append(str(datetime.datetime.now()))
 
 				self.train_combnet_onfly(out_folder,model_path,out_path=out_path,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel,time_step=time_step,level_tconv=level_tconv,level_conv=level_conv,include_bodyparts=include_bodyparts,std=std,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode,social_distance=social_distance)
 
