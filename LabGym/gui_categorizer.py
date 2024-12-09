@@ -1065,6 +1065,7 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 		self.background_free=True # whether to include background in animations
 		self.black_background=True # whether to set background black
 		self.social_distance=0 # a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
+		self.training_onfly=False # whether to train a Categorizer using behavior examples that are already augmented previously
 
 		self.display_window()
 
