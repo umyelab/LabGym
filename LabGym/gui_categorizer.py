@@ -1153,9 +1153,9 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 		boxsizer.Add(0,5,0)
 
 		module_report=wx.BoxSizer(wx.HORIZONTAL)
-		button_report=wx.Button(panel,label='Select a folder to\nexport training reports',size=(300,40))
+		button_report=wx.Button(panel,label='Select a folder to export\nthe augmented training examples',size=(300,40))
 		button_report.Bind(wx.EVT_BUTTON,self.select_reportpath)
-		wx.Button.SetToolTip(button_report,'This is the folder to store the reports of training history and metrics. It is optional.')
+		wx.Button.SetToolTip(button_report,'This is optional but recommended if the computer memory is small. If you select a folder, All the augmented training examples, as well as training reports, will be exported. Otherwise, the augmented examples will be stored in memory, which can make the training faster, but requires a lot of memory.')
 		self.text_report=wx.StaticText(panel,label='None.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_report.Add(button_report,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_report.Add(self.text_report,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
