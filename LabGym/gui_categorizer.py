@@ -1433,27 +1433,14 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 
 		else:
 
-
 			dialog=wx.MessageDialog(self,'Export the augmented training examples? If yes, the Categorizer\nwill be trained on the exported, augmented examples to\navoid memory overload, but the training will be slower.','Export training examples?',wx.YES_NO|wx.ICON_QUESTION)
-
 			if dialog.ShowModal()==wx.ID_YES:
 				dialog2=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
 				if dialog2.ShowModal()==wx.ID_OK:
-					self.out_path=dialog2.GetPath()
-					self.text_report.SetLabel('Training reports will be in: '+self.out_path+'.')
+					self.out_folder=dialog2.GetPath()
 				dialog2.Destroy()
 			else:
-				self.out_path=None
-			dialog.Destroy()
-
-			if dialog.ShowModal()==wx.ID_YES:
-				dialog2=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
-				if dialog2.ShowModal()==wx.ID_OK:
-					self.out_path=dialog2.GetPath()
-					self.text_report.SetLabel('Training reports will be in: '+self.out_path+'.')
-				dialog2.Destroy()
-			else:
-				self.out_path=None
+				self.out_folder=None
 			dialog.Destroy()
 
 			dialog=wx.MessageDialog(self,'Use default augmentation methods?\nSelect "Yes" if dont know how to specify.','Use default augmentation?',wx.YES_NO|wx.ICON_QUESTION)
@@ -1484,10 +1471,16 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 			dialog=wx.MessageDialog(self,'Also augment the validation data?\nSelect "No" if dont know what it is.','Augment validation data?',wx.YES_NO|wx.ICON_QUESTION)
 			if dialog.ShowModal()==wx.ID_YES:
 				self.augvalid=True
-				self.text_augmentation.SetLabel('Augment both training and validation examples with: '+selected+'.')
+				if self.out_folder is None:
+					self.text_augmentation.SetLabel('Augment both training and validation examples with: '+selected+'.')
+				else:
+					self.text_augmentation.SetLabel('Augment and export both training and validation examples with: '+selected+'.')
 			else:
 				self.augvalid=False
-				self.text_augmentation.SetLabel('Augment training examples with: '+selected+'.')
+				if self.out_folder is None:
+					self.text_augmentation.SetLabel('Augment training examples with: '+selected+'.')
+				else:
+					self.text_augmentation.SetLabel('Augment and export training examples with: '+selected+'.')
 			dialog.Destroy()
 
 
