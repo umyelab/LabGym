@@ -1065,6 +1065,7 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 		self.background_free=True # whether to include background in animations
 		self.black_background=True # whether to set background black
 		self.social_distance=0 # a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
+		self.out_folder=None # if not None, the folder stores the augmented examples
 		self.training_onfly=False # whether to train a Categorizer using behavior examples that are already augmented previously
 
 		self.display_window()
@@ -1136,7 +1137,7 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 		module_trainingfolder=wx.BoxSizer(wx.HORIZONTAL)
 		button_trainingfolder=wx.Button(panel,label='Select the folder that stores\nall the prepared training examples',size=(300,40))
 		button_trainingfolder.Bind(wx.EVT_BUTTON,self.select_datapath)
-		wx.Button.SetToolTip(button_trainingfolder,'The folder that stores all the prepared behavior examples. If body parts are included, the STD value can be found in the filenames of the generated behavior examples with "_stdXX_" where "XX" is the number you need to enter here.')
+		wx.Button.SetToolTip(button_trainingfolder,'The folder that stores all the prepared behavior examples. If these are previously augmented, this folder should contain a "train" and a "vadilation" subfolder. If body parts are included, the STD value can be found in the filenames of the generated behavior examples with "_stdXX_" where "XX" is the STD value.')
 		self.text_trainingfolder=wx.StaticText(panel,label='None',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_trainingfolder.Add(button_trainingfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_trainingfolder.Add(self.text_trainingfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -1338,6 +1339,15 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 
 	def select_datapath(self,event):
 
+		dialog=wx.MessageDialog(self,'Are the behavior examples already augmented previously?','Examples already augmented?',wx.YES_NO|wx.ICON_QUESTION)
+		if dialog.ShowModal()==wx.ID_YES:
+			self.training_onfly=True
+			self.text_augmentation.SetLabel('No need to do augmentation because the training data is already augmented.')
+		else:
+			self.training_onfly=False
+			self.out_folder=None
+		dialog.Destroy()
+
 		dialog=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
 		if dialog.ShowModal()==wx.ID_OK:
 			self.data_path=dialog.GetPath()			
@@ -1416,6 +1426,28 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 
 
 	def specify_augmentation(self,event):
+
+		dialog=wx.MessageDialog(self,'Are the behavior examples already augmented previously?','Examples already augmented?',wx.YES_NO|wx.ICON_QUESTION)
+
+		if dialog.ShowModal()==wx.ID_YES:
+			dialog2=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
+			if dialog2.ShowModal()==wx.ID_OK:
+				self.out_path=dialog2.GetPath()
+				self.text_report.SetLabel('Training reports will be in: '+self.out_path+'.')
+			dialog2.Destroy()
+		else:
+			self.out_path=None
+		dialog.Destroy()
+
+		if dialog.ShowModal()==wx.ID_YES:
+			dialog2=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
+			if dialog2.ShowModal()==wx.ID_OK:
+				self.out_path=dialog2.GetPath()
+				self.text_report.SetLabel('Training reports will be in: '+self.out_path+'.')
+			dialog2.Destroy()
+		else:
+			self.out_path=None
+		dialog.Destroy()
 
 		dialog=wx.MessageDialog(self,'Use default augmentation methods?\nSelect "Yes" if dont know how to specify.','Use default augmentation?',wx.YES_NO|wx.ICON_QUESTION)
 		if dialog.ShowModal()==wx.ID_YES:
