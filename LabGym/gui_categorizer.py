@@ -1540,7 +1540,7 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 					if self.behavior_mode==2:
 						self.channel=3
 					if self.training_onfly:
-						pass
+						CA.train_combnet_onfly(self.data_path,self.path_to_categorizer,out_path=self.out_path,dim_tconv=self.dim_tconv,dim_conv=self.dim_conv,channel=self.channel,time_step=self.length,level_tconv=self.level_tconv,level_conv=self.level_conv,include_bodyparts=self.include_bodyparts,std=self.std,background_free=self.background_free,black_background=self.black_background,behavior_mode=self.behavior_mode,social_distance=self.social_distance)
 					else:
 						CA.train_combnet(self.data_path,self.path_to_categorizer,out_path=self.out_path,dim_tconv=self.dim_tconv,dim_conv=self.dim_conv,channel=self.channel,time_step=self.length,level_tconv=self.level_tconv,level_conv=self.level_conv,aug_methods=self.aug_methods,augvalid=self.augvalid,include_bodyparts=self.include_bodyparts,std=self.std,background_free=self.background_free,black_background=self.black_background,behavior_mode=self.behavior_mode,social_distance=self.social_distance,out_folder=self.out_folder)
 
