@@ -1147,7 +1147,7 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 		module_augmentation=wx.BoxSizer(wx.HORIZONTAL)
 		button_augmentation=wx.Button(panel,label='Specify the methods to\naugment training examples',size=(300,40))
 		button_augmentation.Bind(wx.EVT_BUTTON,self.specify_augmentation)
-		wx.Button.SetToolTip(button_augmentation,'Randomly change or add noise into the training examples to increase their amount and diversity, which can benefit the training. If the amount of examples less than 1,000 before augmentation, choose "Also augment the validation data". See Extended Guide for details.')
+		wx.Button.SetToolTip(button_augmentation,'Randomly manipulate the training examples to increase their amount and diversity and benefit the training. If the amount of examples less than 1,000 before augmentation, choose "Also augment the validation data". You can also export the augmented examples to save this step in future training. See Extended Guide for details.')
 		self.text_augmentation=wx.StaticText(panel,label='None.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_augmentation.Add(button_augmentation,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_augmentation.Add(self.text_augmentation,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -1427,61 +1427,68 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 
 	def specify_augmentation(self,event):
 
-		dialog=wx.MessageDialog(self,'Are the behavior examples already augmented previously?','Examples already augmented?',wx.YES_NO|wx.ICON_QUESTION)
+		if self.training_onfly is True:
 
-		if dialog.ShowModal()==wx.ID_YES:
-			dialog2=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
-			if dialog2.ShowModal()==wx.ID_OK:
-				self.out_path=dialog2.GetPath()
-				self.text_report.SetLabel('Training reports will be in: '+self.out_path+'.')
-			dialog2.Destroy()
-		else:
-			self.out_path=None
-		dialog.Destroy()
+			wx.MessageBox('You chose to train a Categorizer using the examples that are already augmented. No need to augment them again.','Error',wx.OK|wx.ICON_ERROR)
 
-		if dialog.ShowModal()==wx.ID_YES:
-			dialog2=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
-			if dialog2.ShowModal()==wx.ID_OK:
-				self.out_path=dialog2.GetPath()
-				self.text_report.SetLabel('Training reports will be in: '+self.out_path+'.')
-			dialog2.Destroy()
 		else:
-			self.out_path=None
-		dialog.Destroy()
 
-		dialog=wx.MessageDialog(self,'Use default augmentation methods?\nSelect "Yes" if dont know how to specify.','Use default augmentation?',wx.YES_NO|wx.ICON_QUESTION)
-		if dialog.ShowModal()==wx.ID_YES:
-			selected='default'
-			self.aug_methods=['default']
-		else:
-			aug_methods=['random rotation','horizontal flipping','vertical flipping','random brightening','random dimming','random shearing','random rescaling','random deletion']
-			selected=''
-			dialog1=wx.MultiChoiceDialog(self,message='Data augmentation methods',caption='Augmentation methods',choices=aug_methods)
-			if dialog1.ShowModal()==wx.ID_OK:
-				self.aug_methods=[aug_methods[i] for i in dialog1.GetSelections()]
-				for i in dialog1.GetSelections():
-					if selected=='':
-						selected=selected+aug_methods[i]
-					else:
-						selected=selected+','+aug_methods[i]
+
+			dialog=wx.MessageDialog(self,'Export the augmented training examples? If yes, the Categorizer\nwill be trained on the exported, augmented examples to\navoid memory overload, but the training will be slower.','Export training examples?',wx.YES_NO|wx.ICON_QUESTION)
+
+			if dialog.ShowModal()==wx.ID_YES:
+				dialog2=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
+				if dialog2.ShowModal()==wx.ID_OK:
+					self.out_path=dialog2.GetPath()
+					self.text_report.SetLabel('Training reports will be in: '+self.out_path+'.')
+				dialog2.Destroy()
 			else:
-				self.aug_methods=[]
-			dialog1.Destroy()
-		if len(self.aug_methods)<=0:
-			selected='none'
-		else:
-			if self.aug_methods[0]=='default':
-				self.aug_methods=['random rotation','horizontal flipping','vertical flipping','random brightening','random dimming']	
-		dialog.Destroy()
+				self.out_path=None
+			dialog.Destroy()
 
-		dialog=wx.MessageDialog(self,'Also augment the validation data?\nSelect "No" if dont know what it is.','Augment validation data?',wx.YES_NO|wx.ICON_QUESTION)
-		if dialog.ShowModal()==wx.ID_YES:
-			self.augvalid=True
-			self.text_augmentation.SetLabel('Augment both training and validation examples with: '+selected+'.')
-		else:
-			self.augvalid=False
-			self.text_augmentation.SetLabel('Augment training examples with: '+selected+'.')
-		dialog.Destroy()	
+			if dialog.ShowModal()==wx.ID_YES:
+				dialog2=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
+				if dialog2.ShowModal()==wx.ID_OK:
+					self.out_path=dialog2.GetPath()
+					self.text_report.SetLabel('Training reports will be in: '+self.out_path+'.')
+				dialog2.Destroy()
+			else:
+				self.out_path=None
+			dialog.Destroy()
+
+			dialog=wx.MessageDialog(self,'Use default augmentation methods?\nSelect "Yes" if dont know how to specify.','Use default augmentation?',wx.YES_NO|wx.ICON_QUESTION)
+			if dialog.ShowModal()==wx.ID_YES:
+				selected='default'
+				self.aug_methods=['default']
+			else:
+				aug_methods=['random rotation','horizontal flipping','vertical flipping','random brightening','random dimming','random shearing','random rescaling','random deletion']
+				selected=''
+				dialog1=wx.MultiChoiceDialog(self,message='Data augmentation methods',caption='Augmentation methods',choices=aug_methods)
+				if dialog1.ShowModal()==wx.ID_OK:
+					self.aug_methods=[aug_methods[i] for i in dialog1.GetSelections()]
+					for i in dialog1.GetSelections():
+						if selected=='':
+							selected=selected+aug_methods[i]
+						else:
+							selected=selected+','+aug_methods[i]
+				else:
+					self.aug_methods=[]
+				dialog1.Destroy()
+			if len(self.aug_methods)<=0:
+				selected='none'
+			else:
+				if self.aug_methods[0]=='default':
+					self.aug_methods=['random rotation','horizontal flipping','vertical flipping','random brightening','random dimming']	
+			dialog.Destroy()
+
+			dialog=wx.MessageDialog(self,'Also augment the validation data?\nSelect "No" if dont know what it is.','Augment validation data?',wx.YES_NO|wx.ICON_QUESTION)
+			if dialog.ShowModal()==wx.ID_YES:
+				self.augvalid=True
+				self.text_augmentation.SetLabel('Augment both training and validation examples with: '+selected+'.')
+			else:
+				self.augvalid=False
+				self.text_augmentation.SetLabel('Augment training examples with: '+selected+'.')
+			dialog.Destroy()
 
 
 	def select_reportpath(self,event):
