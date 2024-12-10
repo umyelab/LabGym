@@ -548,16 +548,15 @@ class WindowLv3_DrawMarkers(wx.Frame):
 
 		image=self.image.copy()
 
-		if self.draw_lines:
-			for line in self.lines:
-				self.draw_line(image,line)
-			if self.current_line:
-				self.draw_line(image,self.current_line)
-		else:
-			for circle in self.circles:
-				self.draw_circle(image,circle)
-			if self.current_circle:
-				self.draw_circle(image,self.current_circle)
+		for line in self.lines:
+			self.draw_line(image,line)
+		if self.current_line:
+			self.draw_line(image,self.current_line)
+
+		for circle in self.circles:
+			self.draw_circle(image,circle)
+		if self.current_circle:
+			self.draw_circle(image,self.current_circle)
 
 		height,width=image.shape[:2]
 		image_rgb=cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
