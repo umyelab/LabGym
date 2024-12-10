@@ -543,27 +543,26 @@ class WindowLv3_DrawMarkers(wx.Frame):
 
 	def on_paint(self,event):
 
+		dc=wx.PaintDC(self.image_panel)
+		dc.Clear()
+
+		image=self.image.copy()
+
 		if self.draw_lines:
-
-			pass
-
+			for line in self.lines:
+				self.draw_line(image,line)
+			if self.current_line:
+				self.draw_line(image,self.current_line)
 		else:
-
-			dc=wx.PaintDC(self.image_panel)
-			dc.Clear()
-
-			image=self.image.copy()
-
 			for circle in self.circles:
 				self.draw_circle(image,circle)
-
 			if self.current_circle:
 				self.draw_circle(image,self.current_circle)
 
-			height,width=image.shape[:2]
-			image_rgb=cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
-			bitmap=wx.Bitmap.FromBuffer(width,height,image_rgb)
-			dc.DrawBitmap(bitmap,0,0,False)
+		height,width=image.shape[:2]
+		image_rgb=cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
+		bitmap=wx.Bitmap.FromBuffer(width,height,image_rgb)
+		dc.DrawBitmap(bitmap,0,0,False)
 
 
 	def on_left_down(self,event):
@@ -623,7 +622,6 @@ class WindowLv3_DrawMarkers(wx.Frame):
 		overlay=image.copy()
 		cv2.line(overlay,start,end,color,self.thickness)
 		alpha=1.0
-
 		cv2.addWeighted(overlay,alpha,image,1-alpha,0,image)
 
 
@@ -638,14 +636,16 @@ class WindowLv3_DrawMarkers(wx.Frame):
 		overlay=image.copy()
 		cv2.circle(overlay,center,radius,color,self.thickness)
 		alpha=1.0
-
 		cv2.addWeighted(overlay,alpha,image,1-alpha,0,image)
 
 
 	def on_undo(self,event):
 
 		if self.draw_lines:
-			pass
+
+			if self.lines:
+				self.lines.pop()
+				self.panel.Refresh()
 
 		else:
 
@@ -677,7 +677,7 @@ class WindowLv3_DrawMarkers(wx.Frame):
 
 	def draw_markers(self,event):
 
-		if len(self.circles)==0:
+		if len(self.circles)==0 or len(self.lines)==0:
 
 			wx.MessageBox('No Markers.','Error',wx.OK|wx.ICON_ERROR)
 
@@ -715,18 +715,20 @@ class WindowLv3_DrawMarkers(wx.Frame):
 
 					if self.draw_lines:
 
-						pass
+						for line in self.lines:
+							start=line['start']
+							end=line['end']
+							color=line['color']
+							cv2.line(frame,center,end,color,thickness)
 
 					else:
 
 						for circle in self.circles:
-
 							start=circle['start']
 							end=circle['end']
 							color=circle['color']
 							radius=int(((end[0]-start[0])**2+(end[1]-start[1])**2)**0.5)
 							center=start
-
 							cv2.circle(frame,center,radius,color,thickness)
 
 					writer.write(np.uint8(frame))
