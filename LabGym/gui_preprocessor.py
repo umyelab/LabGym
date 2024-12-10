@@ -614,11 +614,10 @@ class WindowLv3_DrawMarkers(wx.Frame):
 
 		dialog=wx.MessageDialog(self,'Draw lines? If not, will draw circles','Draw lines?',wx.YES_NO|wx.ICON_QUESTION)
 		if dialog.ShowModal()==wx.ID_YES:
-			self.framewidth=None
+			self.draw_lines=True
 		else:
-			self.framewidth=None
-			self.text_inputvideos.SetLabel('Selected '+str(len(self.path_to_videos))+' video(s) in: '+path+' (original framesize).')
-		dialog1.Destroy()
+			self.draw_lines=False
+		dialog.Destroy()
 
 
 	def on_select_color(self,event):
