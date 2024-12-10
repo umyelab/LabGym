@@ -716,7 +716,7 @@ class WindowLv3_DrawMarkers(wx.Frame):
 						start=line['start']
 						end=line['end']
 						color=line['color']
-						cv2.line(frame,center,end,color,thickness)
+						cv2.line(frame,start,end,color,thickness)
 
 					for circle in self.circles:
 						start=circle['start']
