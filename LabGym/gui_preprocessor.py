@@ -579,13 +579,16 @@ class WindowLv3_DrawMarkers(wx.Frame):
 	def on_left_up(self,event):
 
 		if self.draw_lines:
+
 			if self.current_line:
 				x,y=event.GetPosition()
 				self.current_line['end']=(x,y)
 				self.lines.append(self.current_line)
 				self.current_line=None
 				self.panel.Refresh()
+
 		else:
+
 			if self.current_circle:
 				x,y=event.GetPosition()
 				self.current_circle['end']=(x,y)
@@ -597,7 +600,11 @@ class WindowLv3_DrawMarkers(wx.Frame):
 	def on_motion(self,event):
 
 		if self.draw_lines:
-			pass
+
+			if event.Dragging() and event.LeftIsDown() and self.current_line:
+				x,y=event.GetPosition()
+				self.current_line['end']=(x,y)
+				self.panel.Refresh()
 
 		else:
 
@@ -605,6 +612,19 @@ class WindowLv3_DrawMarkers(wx.Frame):
 				x,y=event.GetPosition()
 				self.current_circle['end']=(x,y)
 				self.panel.Refresh()
+
+
+	def draw_line(self,image,line):
+
+		start=line['start']
+		end=line['end']
+		color=line['color']
+
+		overlay=image.copy()
+		cv2.line(overlay,start,end,color,self.thickness)
+		alpha=1.0
+
+		cv2.addWeighted(overlay,alpha,image,1-alpha,0,image)
 
 
 	def draw_circle(self,image,circle):
