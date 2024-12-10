@@ -492,6 +492,10 @@ class WindowLv3_DrawMarkers(wx.Frame):
 		else:
 			self.image=frame
 
+		self.draw_lines=False
+		self.start_point=None
+		self.end_point=None
+
 		self.circles=[]
 		self.current_circle=None
 		self.current_color=(255,0,0)
@@ -508,6 +512,9 @@ class WindowLv3_DrawMarkers(wx.Frame):
 		self.image_panel.Bind(wx.EVT_MOTION,self.on_motion)
 
 		button_sizer=wx.BoxSizer(wx.HORIZONTAL)
+
+		shape_button=wx.Button(self.panel,label='Select Shape')
+		shape_button.Bind(wx.EVT_BUTTON,self.on_select_shape)
 
 		color_button=wx.Button(self.panel,label='Select Color')
 		color_button.Bind(wx.EVT_BUTTON,self.on_select_color)
@@ -534,21 +541,27 @@ class WindowLv3_DrawMarkers(wx.Frame):
 
 	def on_paint(self,event):
 
-		dc=wx.PaintDC(self.image_panel)
-		dc.Clear()
+		if self.draw_lines:
 
-		image=self.image.copy()
+			pass
 
-		for circle in self.circles:
-			self.draw_circle(image,circle)
+		else:
 
-		if self.current_circle:
-			self.draw_circle(image,self.current_circle)
+			dc=wx.PaintDC(self.image_panel)
+			dc.Clear()
 
-		height,width=image.shape[:2]
-		image_rgb=cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
-		bitmap=wx.Bitmap.FromBuffer(width,height,image_rgb)
-		dc.DrawBitmap(bitmap,0,0,False)
+			image=self.image.copy()
+
+			for circle in self.circles:
+				self.draw_circle(image,circle)
+
+			if self.current_circle:
+				self.draw_circle(image,self.current_circle)
+
+			height,width=image.shape[:2]
+			image_rgb=cv2.cvtColor(image,cv2.COLOR_BGR2RGB)
+			bitmap=wx.Bitmap.FromBuffer(width,height,image_rgb)
+			dc.DrawBitmap(bitmap,0,0,False)
 
 
 	def on_left_down(self,event):
@@ -595,6 +608,17 @@ class WindowLv3_DrawMarkers(wx.Frame):
 		if self.circles:
 			self.circles.pop()
 			self.panel.Refresh()
+
+
+	def on_select_shape(self,event):
+
+		dialog=wx.MessageDialog(self,'Draw lines? If not, will draw circles','Draw lines?',wx.YES_NO|wx.ICON_QUESTION)
+		if dialog.ShowModal()==wx.ID_YES:
+			self.framewidth=None
+		else:
+			self.framewidth=None
+			self.text_inputvideos.SetLabel('Selected '+str(len(self.path_to_videos))+' video(s) in: '+path+' (original framesize).')
+		dialog1.Destroy()
 
 
 	def on_select_color(self,event):
