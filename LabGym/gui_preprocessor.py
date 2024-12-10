@@ -495,9 +495,12 @@ class WindowLv3_DrawMarkers(wx.Frame):
 		self.draw_lines=False
 		self.start_point=None
 		self.end_point=None
+		self.lines=[]
+		self.current_line=None
 
 		self.circles=[]
 		self.current_circle=None
+
 		self.current_color=(255,0,0)
 		self.thickness=max(1,round((self.image.shape[0]+self.image.shape[1])/320))
 
@@ -567,25 +570,40 @@ class WindowLv3_DrawMarkers(wx.Frame):
 	def on_left_down(self,event):
 
 		x,y=event.GetPosition()
-		self.current_circle={'start':(x,y),'end':(x,y),'color':self.current_color}
+
+		if self.draw_lines:
+			pass
+
+		else:
+			self.current_circle={'start':(x,y),'end':(x,y),'color':self.current_color}
 
 
 	def on_left_up(self,event):
 
-		if self.current_circle:
-			x,y=event.GetPosition()
-			self.current_circle['end']=(x,y)
-			self.circles.append(self.current_circle)
-			self.current_circle=None
-			self.panel.Refresh()
+		if self.draw_lines:
+			pass
+
+		else:
+
+			if self.current_circle:
+				x,y=event.GetPosition()
+				self.current_circle['end']=(x,y)
+				self.circles.append(self.current_circle)
+				self.current_circle=None
+				self.panel.Refresh()
 
 
 	def on_motion(self,event):
 
-		if event.Dragging() and event.LeftIsDown() and self.current_circle:
-			x,y=event.GetPosition()
-			self.current_circle['end']=(x,y)
-			self.panel.Refresh()
+		if self.draw_lines:
+			pass
+
+		else:
+
+			if event.Dragging() and event.LeftIsDown() and self.current_circle:
+				x,y=event.GetPosition()
+				self.current_circle['end']=(x,y)
+				self.panel.Refresh()
 
 
 	def draw_circle(self,image,circle):
@@ -605,9 +623,14 @@ class WindowLv3_DrawMarkers(wx.Frame):
 
 	def on_undo(self,event):
 
-		if self.circles:
-			self.circles.pop()
-			self.panel.Refresh()
+		if self.draw_lines:
+			pass
+
+		else:
+
+			if self.circles:
+				self.circles.pop()
+				self.panel.Refresh()
 
 
 	def on_select_shape(self,event):
@@ -669,15 +692,21 @@ class WindowLv3_DrawMarkers(wx.Frame):
 					if self.framewidth is not None:
 						frame=cv2.resize(frame,(w,h),interpolation=cv2.INTER_AREA)
 
-					for circle in self.circles:
+					if self.draw_lines:
 
-						start=circle['start']
-						end=circle['end']
-						color=circle['color']
-						radius=int(((end[0]-start[0])**2+(end[1]-start[1])**2)**0.5)
-						center=start
+						pass
 
-						cv2.circle(frame,center,radius,color,thickness)
+					else:
+
+						for circle in self.circles:
+
+							start=circle['start']
+							end=circle['end']
+							color=circle['color']
+							radius=int(((end[0]-start[0])**2+(end[1]-start[1])**2)**0.5)
+							center=start
+
+							cv2.circle(frame,center,radius,color,thickness)
 
 					writer.write(np.uint8(frame))
 
