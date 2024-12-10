@@ -493,11 +493,9 @@ class WindowLv3_DrawMarkers(wx.Frame):
 			self.image=frame
 
 		self.draw_lines=False
-		self.start_point=None
-		self.end_point=None
+
 		self.lines=[]
 		self.current_line=None
-
 		self.circles=[]
 		self.current_circle=None
 
@@ -528,6 +526,7 @@ class WindowLv3_DrawMarkers(wx.Frame):
 		draw_button=wx.Button(self.panel,label='Draw Markers')
 		draw_button.Bind(wx.EVT_BUTTON,self.draw_markers)
 
+		button_sizer.Add(shape_button,0,wx.ALIGN_CENTER|wx.ALL,5)
 		button_sizer.Add(color_button,0,wx.ALIGN_CENTER|wx.ALL,5)
 		button_sizer.Add(undo_button,0,wx.ALIGN_CENTER|wx.ALL,5)
 		button_sizer.Add(draw_button,0,wx.ALIGN_CENTER|wx.ALL,5)
@@ -572,8 +571,7 @@ class WindowLv3_DrawMarkers(wx.Frame):
 		x,y=event.GetPosition()
 
 		if self.draw_lines:
-			pass
-
+			self.current_line={'start':(x,y),'end':(x,y),'color':self.current_color}
 		else:
 			self.current_circle={'start':(x,y),'end':(x,y),'color':self.current_color}
 
@@ -581,10 +579,13 @@ class WindowLv3_DrawMarkers(wx.Frame):
 	def on_left_up(self,event):
 
 		if self.draw_lines:
-			pass
-
+			if self.current_line:
+				x,y=event.GetPosition()
+				self.current_line['end']=(x,y)
+				self.lines.append(self.current_line)
+				self.current_line=None
+				self.panel.Refresh()
 		else:
-
 			if self.current_circle:
 				x,y=event.GetPosition()
 				self.current_circle['end']=(x,y)
