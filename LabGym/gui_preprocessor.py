@@ -713,23 +713,19 @@ class WindowLv3_DrawMarkers(wx.Frame):
 					if self.framewidth is not None:
 						frame=cv2.resize(frame,(w,h),interpolation=cv2.INTER_AREA)
 
-					if self.draw_lines:
+					for line in self.lines:
+						start=line['start']
+						end=line['end']
+						color=line['color']
+						cv2.line(frame,center,end,color,thickness)
 
-						for line in self.lines:
-							start=line['start']
-							end=line['end']
-							color=line['color']
-							cv2.line(frame,center,end,color,thickness)
-
-					else:
-
-						for circle in self.circles:
-							start=circle['start']
-							end=circle['end']
-							color=circle['color']
-							radius=int(((end[0]-start[0])**2+(end[1]-start[1])**2)**0.5)
-							center=start
-							cv2.circle(frame,center,radius,color,thickness)
+					for circle in self.circles:
+						start=circle['start']
+						end=circle['end']
+						color=circle['color']
+						radius=int(((end[0]-start[0])**2+(end[1]-start[1])**2)**0.5)
+						center=start
+						cv2.circle(frame,center,radius,color,thickness)
 
 					writer.write(np.uint8(frame))
 
