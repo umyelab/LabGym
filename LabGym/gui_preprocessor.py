@@ -676,7 +676,7 @@ class WindowLv3_DrawMarkers(wx.Frame):
 
 	def draw_markers(self,event):
 
-		if len(self.circles)==0 or len(self.lines)==0:
+		if len(self.circles)==0 and len(self.lines)==0:
 
 			wx.MessageBox('No Markers.','Error',wx.OK|wx.ICON_ERROR)
 
