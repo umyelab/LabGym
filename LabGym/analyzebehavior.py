@@ -221,14 +221,13 @@ class AnalyzeAnimal():
 		self.log.append('Preparation completed!')
 
 
-	def track_animal(self,frame_count_analyze,contours,centers,heights,inners=None,blobs=None):
+	def track_animal(self,frame_count_analyze,contours,centers,heights,inners=None):
 
 		# frame_count_analyze: the analyzed frame count
 		# contours: the contours of detected animals
 		# centers: the centers of detected animals
 		# heights: the heights of detected animals
 		# inners: the inner contours of detected animals when body parts are included in pattern images
-		# blobs: the blobs of detected animals
 
 		unused_existing_indices=list(self.animal_existingcenters)
 		existing_centers=list(self.animal_existingcenters.values())
@@ -252,11 +251,6 @@ class AnalyzeAnimal():
 					self.animal_centers[index_in_existing][frame_count_analyze]=center
 					self.animal_existingcenters[index_in_existing]=center
 					self.animal_heights[index_in_existing][frame_count_analyze]=heights[index_in_new]
-					if self.animation_analyzer:
-						blob=blobs[index_in_new]
-						blob=img_to_array(cv2.resize(blob,(self.dim_tconv,self.dim_tconv),interpolation=cv2.INTER_AREA))
-						self.animal_blobs[index_in_existing].append(blob)
-						self.animations[index_in_existing][frame_count_analyze]=np.array(self.animal_blobs[index_in_existing])
 					if self.include_bodyparts:
 						self.animal_inners[index_in_existing].append(inners[index_in_new])
 						pattern_image=generate_patternimage(self.background,self.animal_contours[index_in_existing][max(0,(frame_count_analyze-self.length+1)):frame_count_analyze+1],inners=self.animal_inners[index_in_existing],std=self.std)
@@ -271,8 +265,6 @@ class AnalyzeAnimal():
 					self.to_deregister[i]+=1		
 				else:
 					self.animal_existingcenters[i]=(-10000,-10000)
-				if self.animation_analyzer:
-					self.animal_blobs[i].append(np.zeros((self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8'))
 				if self.include_bodyparts:
 					self.animal_inners[i].append(None)
 
@@ -341,14 +333,12 @@ class AnalyzeAnimal():
 					self.skipped_frames.append(frame_count_analyze)
 
 					for i in self.animal_centers:
-						if self.animation_analyzer:
-							self.animal_blobs[i].append(np.zeros((self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8'))
 						if self.include_bodyparts:
 							self.animal_inners[i].append(None)
 
 				else:
 
-					self.track_animal(frame_count_analyze,contours,centers,heights,inners=inners,blobs=blobs)
+					self.track_animal(frame_count_analyze,contours,centers,heights,inners=inners)
 
 					if self.animation_analyzer:
 						if background_free is False:
@@ -1234,7 +1224,7 @@ class AnalyzeAnimal():
 
 				if len(contours)>0:
 
-					self.track_animal(frame_count_analyze,contours,centers,heights,inners=inners,blobs=None)
+					self.track_animal(frame_count_analyze,contours,centers,heights,inners=inners)
 
 					if frame_count_analyze>=self.length and frame_count_analyze%skip_redundant==0:
 
