@@ -1533,7 +1533,7 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 					else:
 						self.channel=3
 					if self.training_onfly:
-						CA.train_pattern_recognizer_onfly(self.data_path,model_path,self.out_path,dim=self.dim_conv,channel=self.channel,time_step=self.length,level=self.level_conv,include_bodyparts=self.include_bodyparts,std=self.std,background_free=self.background_free,black_background=self.black_background,behavior_mode=self.behavior_mode,social_distance=self.social_distance)
+						CA.train_pattern_recognizer_onfly(self.data_path,self.path_to_categorizer,out_path=self.out_path,dim=self.dim_conv,channel=self.channel,time_step=self.length,level=self.level_conv,include_bodyparts=self.include_bodyparts,std=self.std,background_free=self.background_free,black_background=self.black_background,behavior_mode=self.behavior_mode,social_distance=self.social_distance)
 					else:
 						CA.train_pattern_recognizer(self.data_path,self.path_to_categorizer,out_path=self.out_path,dim=self.dim_conv,channel=self.channel,time_step=self.length,level=self.level_conv,aug_methods=self.aug_methods,augvalid=self.augvalid,include_bodyparts=self.include_bodyparts,std=self.std,background_free=self.background_free,black_background=self.black_background,behavior_mode=self.behavior_mode,social_distance=self.social_distance,out_folder=self.out_folder)
 				else:
