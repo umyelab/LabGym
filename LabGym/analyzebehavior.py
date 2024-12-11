@@ -290,9 +290,8 @@ class AnalyzeAnimal():
 			background_high=np.uint8(255-background_high)
 
 		frame_count=frame_count_analyze=0
-		if background_free is False:
-			temp_frames=deque(maxlen=self.length)
-			animation=deque([np.zeros((self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8')],maxlen=self.length)*self.length
+		temp_frames=deque(maxlen=self.length)
+		animation=deque([np.zeros((self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8')],maxlen=self.length)*self.length
 
 		start_t=round((self.t-self.length/self.fps),2)
 		if start_t<0:
@@ -323,8 +322,7 @@ class AnalyzeAnimal():
 				if self.framewidth is not None:
 					frame=cv2.resize(frame,(self.framewidth,self.frameheight),interpolation=cv2.INTER_AREA)
 
-				if background_free is False:
-					temp_frames.append(frame)
+				temp_frames.append(frame)
 
 				(contours,centers,heights,inners,blobs)=contour_frame(frame,self.animal_number,background,background_low,background_high,self.delta,self.animal_area,animal_vs_bg=self.animal_vs_bg,include_bodyparts=self.include_bodyparts,animation_analyzer=self.animation_analyzer,channel=self.channel,kernel=self.kernel,black_background=black_background)
 
@@ -341,16 +339,16 @@ class AnalyzeAnimal():
 					self.track_animal(frame_count_analyze,contours,centers,heights,inners=inners)
 
 					if self.animation_analyzer:
-						if background_free is False:
-							for i in self.animal_centers:
-								for n,f in enumerate(temp_frames):
-									if self.animal_contours[i][max(0,(frame_count_analyze-self.length+1)):frame_count_analyze+1][n] is None:
-										blob=np.zeros((self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8')
-									else:
-										blob=extract_blob_background(f,self.animal_contours[i][max(0,(frame_count_analyze-self.length+1)):frame_count_analyze+1],contour=None,channel=self.channel,background_free=False,black_background=black_background)
-										blob=cv2.resize(blob,(self.dim_tconv,self.dim_tconv),interpolation=cv2.INTER_AREA)
-									animation.append(img_to_array(blob))
-								self.animations[i][frame_count_analyze]=np.array(animation)
+						for i in self.animal_centers:
+							for n,f in enumerate(temp_frames):
+								contour=self.animal_contours[i][max(0,(frame_count_analyze-self.length+1)):frame_count_analyze+1][n]
+								if contour is None:
+									blob=np.zeros((self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8')
+								else:
+									blob=extract_blob_background(f,self.animal_contours[i][max(0,(frame_count_analyze-self.length+1)):frame_count_analyze+1],contour=contour,channel=self.channel,background_free=background_free,black_background=black_background)
+									blob=cv2.resize(blob,(self.dim_tconv,self.dim_tconv),interpolation=cv2.INTER_AREA)
+								animation.append(img_to_array(blob))
+							self.animations[i][frame_count_analyze]=np.array(animation)
 
 				frame_count_analyze+=1
 
