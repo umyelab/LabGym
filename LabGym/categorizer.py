@@ -54,10 +54,10 @@ class DatasetFromPath_AA(Sequence):
 	Load batches of training examples (including animations) from path
 	'''
 
-	def __init__(self,path_to_examples,batch_size=32,dim_tconv=16,dim_conv=32,channel=1):
+	def __init__(self,path_to_examples,length=15,batch_size=32,dim_tconv=16,dim_conv=32,channel=1):
 
 		self.path_to_examples=path_to_examples
-		self.length=None
+		self.length=length
 		self.batch_size=batch_size
 		self.dim_tconv=dim_tconv
 		self.dim_conv=dim_conv
@@ -137,7 +137,6 @@ class DatasetFromPath(Sequence):
 	def __init__(self,path_to_examples,batch_size=32,dim_conv=32):
 
 		self.path_to_examples=path_to_examples
-		self.length=None
 		self.batch_size=batch_size
 		self.dim_conv=dim_conv
 		self.pattern_image_paths,self.classmapping=self.load_info()
@@ -1592,8 +1591,14 @@ class Categorizers():
 			else:
 				batch_size=8
 
-			train_data=DatasetFromPath_AA(train_folder,batch_size=batch_size,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel)
-			validation_data=DatasetFromPath_AA(validation_folder,batch_size=batch_size,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel)
+			if behavior_mode==3:
+				channel=channel
+			else:
+				channel=3
+
+			train_data=DatasetFromPath(train_folder,batch_size=batch_size,dim_conv=dim_conv,channel=channel)
+			validation_data=DatasetFromPath(validation_folder,batch_size=batch_size,dim_conv=dim_conv,channel=channel)
+
 
 			if include_bodyparts:
 				inner_code=0
@@ -1705,8 +1710,8 @@ class Categorizers():
 			else:
 				batch_size=4
 
-			train_data=DatasetFromPath_AA(train_folder,batch_size=batch_size,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel)
-			validation_data=DatasetFromPath_AA(validation_folder,batch_size=batch_size,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel)
+			train_data=DatasetFromPath_AA(train_folder,length=time_step,batch_size=batch_size,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel)
+			validation_data=DatasetFromPath_AA(validation_folder,length=time_step,batch_size=batch_size,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel)
 
 			if include_bodyparts:
 				inner_code=0
@@ -1810,8 +1815,8 @@ class Categorizers():
 			else:
 				batch_size=4
 
-			train_data=DatasetFromPath_AA(train_folder,batch_size=batch_size,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel)
-			validation_data=DatasetFromPath_AA(validation_folder,batch_size=batch_size,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel)
+			train_data=DatasetFromPath_AA(train_folder,length=time_step,batch_size=batch_size,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel)
+			validation_data=DatasetFromPath_AA(validation_folder,length=time_step,batch_size=batch_size,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel)
 
 			if include_bodyparts:
 				inner_code=0
