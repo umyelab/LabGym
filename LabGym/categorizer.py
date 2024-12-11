@@ -107,7 +107,7 @@ class DatasetFromPath_AA(Sequence):
 				retval,frame=capture.read()
 				if frame is None:
 					break
-				if channel==1:
+				if self.channel==1:
 					frame=cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
 				frame=cv2.resize(frame,(self.dim_tconv,self.dim_tconv),interpolation=cv2.INTER_AREA)
 				animation.append(img_to_array(frame))
@@ -134,11 +134,12 @@ class DatasetFromPath(Sequence):
 	Load batches of training examples (not including animations) from path
 	'''
 
-	def __init__(self,path_to_examples,batch_size=32,dim_conv=32):
+	def __init__(self,path_to_examples,batch_size=32,dim_conv=32,channel=3):
 
 		self.path_to_examples=path_to_examples
 		self.batch_size=batch_size
 		self.dim_conv=dim_conv
+		self.channel=channel
 		self.pattern_image_paths,self.classmapping=self.load_info()
 
 
@@ -178,6 +179,8 @@ class DatasetFromPath(Sequence):
 		for path_to_pattern_image in batch:
 
 			pattern_image=cv2.imread(path_to_pattern_image)
+			if self.channel==1:
+				pattern_image=cv2.cvtColor(pattern_image,cv2.COLOR_BGR2GRAY)
 			pattern_image=cv2.resize(pattern_image,(self.dim_conv,self.dim_conv),interpolation=cv2.INTER_AREA)
 			pattern_images.append(img_to_array(pattern_image))
 			pattern_images=np.array(pattern_images)
