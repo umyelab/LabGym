@@ -495,50 +495,6 @@ def crop_frame(frame,contours):
 	return (y_bt,y_tp,x_lf,x_rt)
 
 
-def extract_blob(frame,contour,channel=1,black_background=True):
-
-	'''
-	This function is used to keep the pixels for the area
-	inside a contour while make other pixels==0, and crop
-	the frame to fit the contour.
-
-	channel: 1--gray scale blob
-			 3--RGB scale blob
-	black_background: whether to set background black
-	'''
-
-	mask=np.zeros_like(frame)
-
-	cv2.drawContours(mask,[contour],0,(255,255,255),-1)
-	mask=cv2.morphologyEx(mask,cv2.MORPH_CLOSE,np.ones((5,5),np.uint8))
-
-	x,y,w,h=cv2.boundingRect(contour)
-	difference=int(abs(w-h)/2)+1
-
-	if w>h:
-		y_bt=max(y-difference-1,0)
-		y_tp=min(y+h+difference+1,frame.shape[0])
-		x_lf=max(x-1,0)
-		x_rt=min(x+w+1,frame.shape[1])
-	else:
-		y_bt=max(y-1,0)
-		y_tp=min(y+h+1,frame.shape[0])
-		x_lf=max(x-difference-1,0)
-		x_rt=min(x+w+difference+1,frame.shape[1])
-
-	masked_frame=frame*(mask/255.0)
-	if black_background is False:
-		masked_frame[mask==0]=255
-	blob=masked_frame[y_bt:y_tp,x_lf:x_rt]
-	blob=np.uint8(exposure.rescale_intensity(blob,out_range=(0,255)))
-
-	if channel==1:
-		blob=cv2.cvtColor(blob,cv2.COLOR_BGR2GRAY)
-		blob=img_to_array(blob)
-
-	return blob
-
-
 def extract_blob_background(frame,contours,contour=None,channel=1,background_free=False,black_background=True):
 
 	'''
