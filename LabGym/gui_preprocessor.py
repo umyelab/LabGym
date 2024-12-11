@@ -50,10 +50,10 @@ class WindowLv2_ProcessVideos(wx.Frame):
 		self.bottom=0 # frame cropping coordinates bottom
 		self.fps_new=None # the target fps to downsize
 
-		self.dispaly_window()
+		self.display_window()
 
 
-	def dispaly_window(self):
+	def display_window(self):
 
 		panel=wx.Panel(self)
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
@@ -379,10 +379,10 @@ class WindowLv2_DrawMarkers(wx.Frame):
 		self.framewidth=None # if not None, will resize the video frame keeping the original w:h ratio
 		self.result_path=None # the folder for storing videos with markers
 
-		self.dispaly_window()
+		self.display_window()
 
 
-	def dispaly_window(self):
+	def display_window(self):
 
 		panel=wx.Panel(self)
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
@@ -492,8 +492,13 @@ class WindowLv3_DrawMarkers(wx.Frame):
 		else:
 			self.image=frame
 
+		self.draw_lines=False
+
+		self.lines=[]
+		self.current_line=None
 		self.circles=[]
 		self.current_circle=None
+
 		self.current_color=(255,0,0)
 		self.thickness=max(1,round((self.image.shape[0]+self.image.shape[1])/320))
 
@@ -509,6 +514,9 @@ class WindowLv3_DrawMarkers(wx.Frame):
 
 		button_sizer=wx.BoxSizer(wx.HORIZONTAL)
 
+		shape_button=wx.Button(self.panel,label='Select Shape')
+		shape_button.Bind(wx.EVT_BUTTON,self.on_select_shape)
+
 		color_button=wx.Button(self.panel,label='Select Color')
 		color_button.Bind(wx.EVT_BUTTON,self.on_select_color)
 
@@ -518,6 +526,7 @@ class WindowLv3_DrawMarkers(wx.Frame):
 		draw_button=wx.Button(self.panel,label='Draw Markers')
 		draw_button.Bind(wx.EVT_BUTTON,self.draw_markers)
 
+		button_sizer.Add(shape_button,0,wx.ALIGN_CENTER|wx.ALL,5)
 		button_sizer.Add(color_button,0,wx.ALIGN_CENTER|wx.ALL,5)
 		button_sizer.Add(undo_button,0,wx.ALIGN_CENTER|wx.ALL,5)
 		button_sizer.Add(draw_button,0,wx.ALIGN_CENTER|wx.ALL,5)
@@ -539,9 +548,13 @@ class WindowLv3_DrawMarkers(wx.Frame):
 
 		image=self.image.copy()
 
+		for line in self.lines:
+			self.draw_line(image,line)
+		if self.current_line:
+			self.draw_line(image,self.current_line)
+
 		for circle in self.circles:
 			self.draw_circle(image,circle)
-
 		if self.current_circle:
 			self.draw_circle(image,self.current_circle)
 
@@ -554,25 +567,61 @@ class WindowLv3_DrawMarkers(wx.Frame):
 	def on_left_down(self,event):
 
 		x,y=event.GetPosition()
-		self.current_circle={'start':(x,y),'end':(x,y),'color':self.current_color}
+
+		if self.draw_lines:
+			self.current_line={'start':(x,y),'end':(x,y),'color':self.current_color}
+		else:
+			self.current_circle={'start':(x,y),'end':(x,y),'color':self.current_color}
 
 
 	def on_left_up(self,event):
 
-		if self.current_circle:
-			x,y=event.GetPosition()
-			self.current_circle['end']=(x,y)
-			self.circles.append(self.current_circle)
-			self.current_circle=None
-			self.panel.Refresh()
+		if self.draw_lines:
+
+			if self.current_line:
+				x,y=event.GetPosition()
+				self.current_line['end']=(x,y)
+				self.lines.append(self.current_line)
+				self.current_line=None
+				self.panel.Refresh()
+
+		else:
+
+			if self.current_circle:
+				x,y=event.GetPosition()
+				self.current_circle['end']=(x,y)
+				self.circles.append(self.current_circle)
+				self.current_circle=None
+				self.panel.Refresh()
 
 
 	def on_motion(self,event):
 
-		if event.Dragging() and event.LeftIsDown() and self.current_circle:
-			x,y=event.GetPosition()
-			self.current_circle['end']=(x,y)
-			self.panel.Refresh()
+		if self.draw_lines:
+
+			if event.Dragging() and event.LeftIsDown() and self.current_line:
+				x,y=event.GetPosition()
+				self.current_line['end']=(x,y)
+				self.panel.Refresh()
+
+		else:
+
+			if event.Dragging() and event.LeftIsDown() and self.current_circle:
+				x,y=event.GetPosition()
+				self.current_circle['end']=(x,y)
+				self.panel.Refresh()
+
+
+	def draw_line(self,image,line):
+
+		start=line['start']
+		end=line['end']
+		color=line['color']
+
+		overlay=image.copy()
+		cv2.line(overlay,start,end,color,self.thickness)
+		alpha=1.0
+		cv2.addWeighted(overlay,alpha,image,1-alpha,0,image)
 
 
 	def draw_circle(self,image,circle):
@@ -586,15 +635,32 @@ class WindowLv3_DrawMarkers(wx.Frame):
 		overlay=image.copy()
 		cv2.circle(overlay,center,radius,color,self.thickness)
 		alpha=1.0
-
 		cv2.addWeighted(overlay,alpha,image,1-alpha,0,image)
 
 
 	def on_undo(self,event):
 
-		if self.circles:
-			self.circles.pop()
-			self.panel.Refresh()
+		if self.draw_lines:
+
+			if self.lines:
+				self.lines.pop()
+				self.panel.Refresh()
+
+		else:
+
+			if self.circles:
+				self.circles.pop()
+				self.panel.Refresh()
+
+
+	def on_select_shape(self,event):
+
+		dialog=wx.MessageDialog(self,'Draw lines? If not, will draw circles','Draw lines?',wx.YES_NO|wx.ICON_QUESTION)
+		if dialog.ShowModal()==wx.ID_YES:
+			self.draw_lines=True
+		else:
+			self.draw_lines=False
+		dialog.Destroy()
 
 
 	def on_select_color(self,event):
@@ -610,7 +676,7 @@ class WindowLv3_DrawMarkers(wx.Frame):
 
 	def draw_markers(self,event):
 
-		if len(self.circles)==0:
+		if len(self.circles)==0 and len(self.lines)==0:
 
 			wx.MessageBox('No Markers.','Error',wx.OK|wx.ICON_ERROR)
 
@@ -646,14 +712,18 @@ class WindowLv3_DrawMarkers(wx.Frame):
 					if self.framewidth is not None:
 						frame=cv2.resize(frame,(w,h),interpolation=cv2.INTER_AREA)
 
-					for circle in self.circles:
+					for line in self.lines:
+						start=line['start']
+						end=line['end']
+						color=line['color']
+						cv2.line(frame,start,end,color,thickness)
 
+					for circle in self.circles:
 						start=circle['start']
 						end=circle['end']
 						color=circle['color']
 						radius=int(((end[0]-start[0])**2+(end[1]-start[1])**2)**0.5)
 						center=start
-
 						cv2.circle(frame,center,radius,color,thickness)
 
 					writer.write(np.uint8(frame))

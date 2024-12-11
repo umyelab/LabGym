@@ -41,10 +41,10 @@ class InitialWindow(wx.Frame):
 	def __init__(self,title):
 
 		super(InitialWindow,self).__init__(parent=None,title=title,size=(750,440))
-		self.dispaly_window()
+		self.display_window()
 
 
-	def dispaly_window(self):
+	def display_window(self):
 
 		panel=wx.Panel(self)
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
@@ -112,10 +112,10 @@ class WindowLv1_ProcessModule(wx.Frame):
 	def __init__(self,title):
 
 		super(WindowLv1_ProcessModule,self).__init__(parent=None,title=title,size=(500,230))
-		self.dispaly_window()
+		self.display_window()
 
 
-	def dispaly_window(self):
+	def display_window(self):
 
 		panel=wx.Panel(self)
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
@@ -158,10 +158,10 @@ class WindowLv1_TrainingModule(wx.Frame):
 	def __init__(self,title):
 
 		super(WindowLv1_TrainingModule,self).__init__(parent=None,title=title,size=(500,560))
-		self.dispaly_window()
+		self.display_window()
 
 
-	def dispaly_window(self):
+	def display_window(self):
 
 		panel=wx.Panel(self)
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
@@ -264,10 +264,10 @@ class WindowLv1_AnalysisModule(wx.Frame):
 	def __init__(self,title):
 
 		super(WindowLv1_AnalysisModule,self).__init__(parent=None,title=title,size=(500,350))
-		self.dispaly_window()
+		self.display_window()
 
 
-	def dispaly_window(self):
+	def display_window(self):
 
 		panel=wx.Panel(self)
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
