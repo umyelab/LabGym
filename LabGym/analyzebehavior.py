@@ -324,7 +324,7 @@ class AnalyzeAnimal():
 
 				temp_frames.append(frame)
 
-				(contours,centers,heights,inners,blobs)=contour_frame(frame,self.animal_number,background,background_low,background_high,self.delta,self.animal_area,animal_vs_bg=self.animal_vs_bg,include_bodyparts=self.include_bodyparts,animation_analyzer=self.animation_analyzer,channel=self.channel,kernel=self.kernel,black_background=black_background)
+				(contours,centers,heights,inners)=contour_frame(frame,self.animal_number,background,background_low,background_high,self.delta,self.animal_area,animal_vs_bg=self.animal_vs_bg,include_bodyparts=self.include_bodyparts,animation_analyzer=self.animation_analyzer,channel=self.channel,kernel=self.kernel,black_background=black_background)
 
 				if len(contours)==0:
 
@@ -428,7 +428,7 @@ class AnalyzeAnimal():
 
 				temp_frames.append(frame)
 
-				(contours,centers,heights,inners,blobs)=contour_frame(frame,self.animal_number,background,background_low,background_high,self.delta,self.animal_area,animal_vs_bg=self.animal_vs_bg,include_bodyparts=self.include_bodyparts,animation_analyzer=False,channel=self.channel,kernel=self.kernel,black_background=black_background)
+				(contours,centers,heights,inners)=contour_frame(frame,self.animal_number,background,background_low,background_high,self.delta,self.animal_area,animal_vs_bg=self.animal_vs_bg,include_bodyparts=self.include_bodyparts,animation_analyzer=False,channel=self.channel,kernel=self.kernel,black_background=black_background)
 
 				if len(contours)==0:
 
@@ -1218,7 +1218,7 @@ class AnalyzeAnimal():
 
 				temp_frames.append(frame)
 
-				(contours,centers,heights,inners,blobs)=contour_frame(frame,self.animal_number,background,background_low,background_high,self.delta,self.animal_area,animal_vs_bg=self.animal_vs_bg,include_bodyparts=self.include_bodyparts,animation_analyzer=False,kernel=self.kernel,black_background=black_background)
+				(contours,centers,heights,inners)=contour_frame(frame,self.animal_number,background,background_low,background_high,self.delta,self.animal_area,animal_vs_bg=self.animal_vs_bg,include_bodyparts=self.include_bodyparts,animation_analyzer=False,kernel=self.kernel,black_background=black_background)
 
 				if len(contours)>0:
 
@@ -1317,7 +1317,7 @@ class AnalyzeAnimal():
 
 				temp_frames.append(frame)
 
-				(contours,centers,heights,inners,blobs)=contour_frame(frame,self.animal_number,background,background_low,background_high,self.delta,self.animal_area,animal_vs_bg=self.animal_vs_bg,include_bodyparts=self.include_bodyparts,animation_analyzer=False,kernel=self.kernel,black_background=black_background)
+				(contours,centers,heights,inners)=contour_frame(frame,self.animal_number,background,background_low,background_high,self.delta,self.animal_area,animal_vs_bg=self.animal_vs_bg,include_bodyparts=self.include_bodyparts,animation_analyzer=False,kernel=self.kernel,black_background=black_background)
 
 				if len(contours)==0:
 
