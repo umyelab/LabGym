@@ -448,74 +448,56 @@ class Categorizers():
 
 						if to_delete is not None and n in to_delete:
 
-							blob=np.zeros_like(original_frame)
+							if black_background is False:
+								frame=np.uint8(np.zeros_like(original_frame)+255)
+							else:
+								frame=np.zeros_like(original_frame)
 
 						else:
 
-							frame_contrast=np.uint8(exposure.rescale_intensity(frame,out_range=(0,255)))
-
-							if background_free:
-								if black_background:
-									frame_gray=cv2.cvtColor(frame_contrast,cv2.COLOR_BGR2GRAY)
-								else:
-									frame_gray=np.uint8(255-cv2.cvtColor(frame_contrast,cv2.COLOR_BGR2GRAY))
-								thred=cv2.threshold(frame_gray,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]
-								cnts,_=cv2.findContours(thred,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
-								if len(cnts)==0:
-									blob=np.zeros_like(frame)
-								else:
-									if behavior_mode==0:
-										contour=sorted(cnts,key=cv2.contourArea,reverse=True)[0]
-										blob=extract_blob(frame,contour,channel=3,black_background=black_background)
-									else:
-										(y_bt,y_tp,x_lf,x_rt)=crop_frame(frame,cnts)
-										blob=frame_contrast[y_bt:y_tp,x_lf:x_rt]
-							else:
-								blob=frame_contrast
-
 							if code is not None:
-								blob=cv2.flip(blob,code)
+								frame=cv2.flip(frame,code)
 
 							if beta is not None:
-								blob=blob.astype('float')
+								frame=frame.astype('float')
 								if background_free:
 									if black_background:
-										blob[blob>30]+=beta
+										frame[frame>30]+=beta
 									else:
-										blob[blob<225]+=beta
+										frame[frame<225]+=beta
 								else:
-									blob+=beta
-								blob=np.uint8(np.clip(blob,0,255))
+									frame+=beta
+								frame=np.uint8(np.clip(frame,0,255))
 
 							if angle is not None:
-								blob=ndimage.rotate(blob,angle,reshape=False,prefilter=False)
+								frame=ndimage.rotate(frame,angle,reshape=False,prefilter=False)
 
 							if shear is not None:
 								tf=AffineTransform(shear=shear)
-								blob=transform.warp(blob,tf,order=1,preserve_range=True,mode='constant')
+								frame=transform.warp(frame,tf,order=1,preserve_range=True,mode='constant')
 
 							if scale is not None:
-								blob_black=np.zeros_like(blob)
+								frame_black=np.zeros_like(frame)
 								if black_background is False:
-									blob_black=np.uint8(blob_black+255)
+									frame_black=np.uint8(frame_black+255)
 								if width==0:
-									blob_scl=cv2.resize(blob,(blob.shape[1],int(blob.shape[0]*scale)),interpolation=cv2.INTER_AREA)
+									frame_scl=cv2.resize(frame,(frame.shape[1],int(frame.shape[0]*scale)),interpolation=cv2.INTER_AREA)
 								else:
-									blob_scl=cv2.resize(blob,(int(blob.shape[1]*scale),blob.shape[0]),interpolation=cv2.INTER_AREA)
-								blob_scl=img_to_array(blob_scl)
-								x=(blob_black.shape[1]-blob_scl.shape[1])//2
-								y=(blob_black.shape[0]-blob_scl.shape[0])//2
-								blob_black[y:y+blob_scl.shape[0],x:x+blob_scl.shape[1]]=blob_scl
-								blob=blob_black
+									frame_scl=cv2.resize(frame,(int(frame.shape[1]*scale),frame.shape[0]),interpolation=cv2.INTER_AREA)
+								frame_scl=img_to_array(frame_scl)
+								x=(frame_black.shape[1]-frame_scl.shape[1])//2
+								y=(frame_black.shape[0]-frame_scl.shape[0])//2
+								frame_black[y:y+frame_scl.shape[0],x:x+frame_scl.shape[1]]=frame_scl
+								frame=frame_black
 
 						if out_path is None:
 							if channel==1:
-								blob=cv2.cvtColor(np.uint8(blob),cv2.COLOR_BGR2GRAY)
-							blob=cv2.resize(blob,(dim_tconv,dim_tconv),interpolation=cv2.INTER_AREA)
-							blob=img_to_array(blob)
-							animation.append(blob)
+								frame=cv2.cvtColor(np.uint8(frame),cv2.COLOR_BGR2GRAY)
+							frame=cv2.resize(frame,(dim_tconv,dim_tconv),interpolation=cv2.INTER_AREA)
+							frame=img_to_array(frame)
+							animation.append(frame)
 						else:
-							writer.write(np.uint8(blob))
+							writer.write(np.uint8(frame))
 
 						n+=1
 
@@ -531,24 +513,13 @@ class Categorizers():
 
 				if behavior_mode==3:
 					if beta is not None:
+						pattern_image=pattern_image.astype('float')
 						if background_free:
-							pattern_image_gray=cv2.cvtColor(pattern_image,cv2.COLOR_BGR2GRAY)
-							if black_background is False:
-								pattern_image_gray=np.uint8(255-pattern_image_gray)
-							thred=cv2.threshold(pattern_image_gray,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]
-							cnts,_=cv2.findContours(thred,cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
-							if len(cnts)==0:
-								pattern_image=np.zeros_like(pattern_image)
-							else:
-								contour=sorted(cnts,key=cv2.contourArea,reverse=True)[0]
-								pattern_image=extract_blob(pattern_image,contour,channel=3,black_background=black_background)
-							pattern_image=pattern_image.astype('float')
 							if black_background:
 								pattern_image[pattern_image>30]+=beta
 							else:
 								pattern_image[pattern_image<225]+=beta
 						else:
-							pattern_image=pattern_image.astype('float')
 							pattern_image+=beta
 						pattern_image=np.uint8(np.clip(pattern_image,0,255))
 
