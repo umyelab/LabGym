@@ -1601,8 +1601,8 @@ class Categorizers():
 			else:
 				channel=3
 
-			train_data=DatasetFromPath(train_folder,batch_size=batch_size,dim_conv=dim_conv,channel=channel)
-			validation_data=DatasetFromPath(validation_folder,batch_size=batch_size,dim_conv=dim_conv,channel=channel)
+			train_data=DatasetFromPath(train_folder,batch_size=batch_size,dim_conv=dim,channel=channel)
+			validation_data=DatasetFromPath(validation_folder,batch_size=batch_size,dim_conv=dim,channel=channel)
 
 
 			if include_bodyparts:
