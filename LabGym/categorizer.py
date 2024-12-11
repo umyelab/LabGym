@@ -112,17 +112,18 @@ class DatasetFromPath_AA(Sequence):
 				frame=cv2.resize(frame,(self.dim_tconv,self.dim_tconv),interpolation=cv2.INTER_AREA)
 				animation.append(img_to_array(frame))
 			animations.append(np.array(animation))
-			animations=np.array(animations)
-			animations=animations.astype('float32')/255.0
 
 			pattern_image=cv2.imread(path_to_pattern_image)
 			pattern_image=cv2.resize(pattern_image,(self.dim_conv,self.dim_conv),interpolation=cv2.INTER_AREA)
 			pattern_images.append(img_to_array(pattern_image))
-			pattern_images=np.array(pattern_images)
-			pattern_images=pattern_images.astype('float32')/255.0
 
 			labels.append(np.array(self.classmapping[path_to_pattern_image.split('.jpg')[0].split('_')[-1]]))
-			labels=np.array(labels)
+
+		animations=np.array(animations)
+		animations=animations.astype('float32')/255.0
+		pattern_images=np.array(pattern_images)
+		pattern_images=pattern_images.astype('float32')/255.0
+		labels=np.array(labels)
 
 		return [animations,pattern_images],labels
 
@@ -183,11 +184,12 @@ class DatasetFromPath(Sequence):
 				pattern_image=cv2.cvtColor(pattern_image,cv2.COLOR_BGR2GRAY)
 			pattern_image=cv2.resize(pattern_image,(self.dim_conv,self.dim_conv),interpolation=cv2.INTER_AREA)
 			pattern_images.append(img_to_array(pattern_image))
-			pattern_images=np.array(pattern_images)
-			pattern_images=pattern_images.astype('float32')/255.0
 
 			labels.append(np.array(self.classmapping[path_to_pattern_image.split('.jpg')[0].split('_')[-1]]))
-			labels=np.array(labels)
+
+		pattern_images=np.array(pattern_images)
+		pattern_images=pattern_images.astype('float32')/255.0
+		labels=np.array(labels)
 
 		return pattern_images,labels
 
