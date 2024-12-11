@@ -285,8 +285,6 @@ class AnalyzeAnimalDetector():
 					self.to_deregister[animal_name][i]+=1
 				else:
 					self.animal_existingcenters[animal_name][i]=(-10000,-10000)
-				if self.animation_analyzer:
-					self.animal_blobs[animal_name][i].append(np.zeros((self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8'))
 				if self.include_bodyparts:
 					self.animal_inners[animal_name][i].append(None)
 
@@ -400,8 +398,6 @@ class AnalyzeAnimalDetector():
 
 				for animal_name in self.animal_kinds:
 					for i in self.animal_centers[animal_name]:
-						if self.animation_analyzer:
-							self.animal_blobs[animal_name][i].append(np.zeros((self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8'))
 						if self.include_bodyparts:
 							self.animal_inners[animal_name][i].append(None)
 
@@ -431,8 +427,6 @@ class AnalyzeAnimalDetector():
 					if len(animal_masks)==0:
 
 						for i in self.animal_centers[animal_name]:
-							if self.animation_analyzer:
-								self.animal_blobs[animal_name][i].append(np.zeros((self.dim_tconv,self.dim_tconv,self.channel),dtype='uint8'))
 							if self.include_bodyparts:
 								self.animal_inners[animal_name][i].append(None)
 
