@@ -669,7 +669,6 @@ def contour_frame(frame,animal_number,background,background_low,background_high,
 	centers=[]
 	heights=[]
 	inners=[]
-	blobs=[]
 
 	if animal_number>1:
 		for i in cnts:
@@ -691,10 +690,8 @@ def contour_frame(frame,animal_number,background,background_low,background_high,
 				masked_frame=frame_dt*(mask/255)
 				gray=cv2.cvtColor(np.uint8(masked_frame),cv2.COLOR_BGR2GRAY)
 				inners.append(get_inner(gray,i))
-			if animation_analyzer:
-				blobs.append(extract_blob(frame,i,channel=channel,black_background=black_background))
 
-	return (contours,centers,heights,inners,blobs)
+	return (contours,centers,heights,inners)
 
 
 def generate_patternimage(frame,outlines,inners=None,std=0):
