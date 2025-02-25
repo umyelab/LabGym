@@ -439,7 +439,8 @@ class AnalyzeAnimalDetector():
 							mask=cv2.morphologyEx(mask,cv2.MORPH_CLOSE,np.ones((self.kernel,self.kernel),np.uint8))
 							goodmasks.append(mask)
 							cnts,_=cv2.findContours((mask*255).astype(np.uint8),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
-							goodcontours.append(sorted(cnts,key=cv2.contourArea,reverse=True)[0])
+							if len(cnts)>0:
+								goodcontours.append(sorted(cnts,key=cv2.contourArea,reverse=True)[0])
 						areas=[cv2.contourArea(ct) for ct in goodcontours]
 						sorted_area_indices=np.argsort(np.array(areas))[-animal_number:]
 						areas_sorted=sorted(areas)[-animal_number:]
@@ -552,7 +553,8 @@ class AnalyzeAnimalDetector():
 							mask=cv2.morphologyEx(mask,cv2.MORPH_CLOSE,np.ones((self.kernel,self.kernel),np.uint8))
 							goodmasks.append(mask)
 							cnts,_=cv2.findContours((mask*255).astype(np.uint8),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
-							goodcontours.append(sorted(cnts,key=cv2.contourArea,reverse=True)[0])
+							if len(cnts)>0:
+								goodcontours.append(sorted(cnts,key=cv2.contourArea,reverse=True)[0])
 						areas=[cv2.contourArea(ct) for ct in goodcontours]
 						sorted_area_indices=np.argsort(np.array(areas))[-animal_number:]
 						self.animal_present[animal_name]=len(sorted_area_indices)
@@ -836,8 +838,9 @@ class AnalyzeAnimalDetector():
 									for mask in animal_masks:
 										mask=cv2.morphologyEx(mask,cv2.MORPH_CLOSE,np.ones((self.kernel,self.kernel),np.uint8))
 										cnts,_=cv2.findContours((mask*255).astype(np.uint8),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
-										goodcontours.append(sorted(cnts,key=cv2.contourArea,reverse=True)[0])
-										goodmasks.append(mask)
+										if len(cnts)>0:
+											goodcontours.append(sorted(cnts,key=cv2.contourArea,reverse=True)[0])
+											goodmasks.append(mask)
 									areas=[cv2.contourArea(ct) for ct in goodcontours]
 									sorted_area_indices=np.argsort(np.array(areas))[-animal_number:]
 									for x in sorted_area_indices:
@@ -1812,8 +1815,9 @@ class AnalyzeAnimalDetector():
 							for mask in animal_masks:
 								mask=cv2.morphologyEx(mask,cv2.MORPH_CLOSE,np.ones((self.kernel,self.kernel),np.uint8))
 								cnts,_=cv2.findContours((mask*255).astype(np.uint8),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
-								goodcontours.append(sorted(cnts,key=cv2.contourArea,reverse=True)[0])
-								goodmasks.append(mask)
+								if len(cnts)>0:
+									goodcontours.append(sorted(cnts,key=cv2.contourArea,reverse=True)[0])
+									goodmasks.append(mask)
 							areas=[cv2.contourArea(ct) for ct in goodcontours]
 							sorted_area_indices=np.argsort(np.array(areas))[-animal_number:]
 							for x in sorted_area_indices:
@@ -1981,7 +1985,8 @@ class AnalyzeAnimalDetector():
 								mask=cv2.morphologyEx(mask,cv2.MORPH_CLOSE,np.ones((self.kernel,self.kernel),np.uint8))
 								goodmasks.append(mask)
 								cnts,_=cv2.findContours((mask*255).astype(np.uint8),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
-								goodcontours.append(sorted(cnts,key=cv2.contourArea,reverse=True)[0])
+								if len(cnts)>0:
+									goodcontours.append(sorted(cnts,key=cv2.contourArea,reverse=True)[0])
 							areas=[cv2.contourArea(ct) for ct in goodcontours]
 							sorted_area_indices=np.argsort(np.array(areas))[-animal_number:]
 							self.animal_present[animal_name]=len(sorted_area_indices)
