@@ -630,9 +630,11 @@ def contour_frame(frame,animal_number,background,background_low,background_high,
 		for i in cnts:
 			if contour_area*0.2<cv2.contourArea(i)<contour_area*1.5:
 				contours.append(i)
-		contours=sorted(contours,key=cv2.contourArea)[-animal_number:]
+		if len(contours)>0:
+			contours=sorted(contours,key=cv2.contourArea)[-animal_number:]
 	else:
-		contours=[sorted(cnts,key=cv2.contourArea,reverse=True)[0]]
+		if len(cnts)>0:
+			contours=[sorted(cnts,key=cv2.contourArea,reverse=True)[0]]
 
 	if len(contours)>0:
 		for i in contours:
