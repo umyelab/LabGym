@@ -747,26 +747,24 @@ def generate_patternimage_all(frame,y_bt,y_tp,x_lf,x_rt,outlines_list,inners_lis
 	else:
 		inners_length=len(inners_list[0])
 
-	if inners_length>0:
+	if inners_list is not None:
 		background_inners=np.zeros_like(frame)
 		background_outers=np.zeros_like(frame)
+		backgrounds_std=[]
 
 	background_outlines=np.zeros_like(frame)
-
-	if std>0:
-		backgrounds_std=[]
 
 	length=len(outlines_list)
 	p_size=int(max(abs(y_bt-y_tp),abs(x_lf-x_rt))/150+1)
 
 	for n,outlines in enumerate(outlines_list):
 
-		if std>0:
+		if inners_list is not None:
 			background_std=np.zeros_like(frame)
 			if inners_length>0:
 				for inners in inners_list[n]:
 					cv2.drawContours(background_std,inners,-1,(255,255,255),-1)
-				backgrounds_std.append(background_std)
+			backgrounds_std.append(background_std)
 
 		if n<length/4:
 			d=n*int((255*4/length))
@@ -793,24 +791,21 @@ def generate_patternimage_all(frame,y_bt,y_tp,x_lf,x_rt,outlines_list,inners_lis
 				for inners in inners_list[n]:
 					cv2.drawContours(background_inners,inners,-1,(255-d,0,255),p_size)
 
-		if inners_length>0:
+		if inners_list is not None:
 			cv2.drawContours(background_outers,outlines,-1,(255,255,255),int(2*p_size))
 
 	outlines_image=background_outlines[y_bt:y_tp,x_lf:x_rt]
 
-	if inners_length>0:
+	if inners_list is not None:
 		inners_image=background_inners[y_bt:y_tp,x_lf:x_rt]
 		outers_image=background_outers[y_bt:y_tp,x_lf:x_rt]
 		inners_image=cv2.subtract(inners_image,outers_image)
-
-	if std>0:
 		backgrounds_std=np.array(backgrounds_std,dtype='float32')
 		std_images=backgrounds_std[:,y_bt:y_tp,x_lf:x_rt]
 		std_image=std_images.std(0)
-
 		inners_image[std_image<std]=0
 
-	if inners_length>0:
+	if inners_list is not None:
 		pattern_image=cv2.add(inners_image,outlines_image)
 	else:
 		pattern_image=outlines_image
