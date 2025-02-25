@@ -405,7 +405,7 @@ class AnalyzeAnimalDetector():
 
 				mask_area=np.sum(np.array(masks),axis=(1,2))
 				exclusion_mask=np.zeros(len(masks),dtype=bool)
-				exclusion_mask[np.where((np.sum(np.logical_and(masks[:,None],masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
+				exclusion_mask[np.where((np.sum(np.logical_and(np.array(masks)[:,None],masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
 				masks=[m for m,exclude in zip(masks,exclusion_mask) if not exclude]
 				classes=[c for c,exclude in zip(classes,exclusion_mask) if not exclude]
 				classes=[self.animal_mapping[str(x)] for x in classes]
@@ -513,7 +513,7 @@ class AnalyzeAnimalDetector():
 
 				mask_area=np.sum(np.array(masks),axis=(1,2))
 				exclusion_mask=np.zeros(len(masks),dtype=bool)
-				exclusion_mask[np.where((np.sum(np.logical_and(masks[:,None],masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
+				exclusion_mask[np.where((np.sum(np.logical_and(np.array(masks)[:,None],masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
 				masks=[m for m,exclude in zip(masks,exclusion_mask) if not exclude]
 				classes=[c for c,exclude in zip(classes,exclusion_mask) if not exclude]
 				classes=[self.animal_mapping[str(x)] for x in classes]
@@ -814,7 +814,7 @@ class AnalyzeAnimalDetector():
 
 							mask_area=np.sum(np.array(masks),axis=(1,2))
 							exclusion_mask=np.zeros(len(masks),dtype=bool)
-							exclusion_mask[np.where((np.sum(np.logical_and(masks[:,None],masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
+							exclusion_mask[np.where((np.sum(np.logical_and(np.array(masks)[:,None],masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
 							masks=[m for m,exclude in zip(masks,exclusion_mask) if not exclude]
 							classes=[c for c,exclude in zip(classes,exclusion_mask) if not exclude]
 							classes=[self.animal_mapping[str(x)] for x in classes]
@@ -1790,7 +1790,7 @@ class AnalyzeAnimalDetector():
 
 					mask_area=np.sum(np.array(masks),axis=(1,2))
 					exclusion_mask=np.zeros(len(masks),dtype=bool)
-					exclusion_mask[np.where((np.sum(np.logical_and(masks[:,None],masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
+					exclusion_mask[np.where((np.sum(np.logical_and(np.array(masks)[:,None],masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
 					masks=[m for m,exclude in zip(masks,exclusion_mask) if not exclude]
 					classes=[c for c,exclude in zip(classes,exclusion_mask) if not exclude]
 					classes=[self.animal_mapping[str(x)] for x in classes]
@@ -1942,7 +1942,7 @@ class AnalyzeAnimalDetector():
 
 					mask_area=np.sum(np.array(masks),axis=(1,2))
 					exclusion_mask=np.zeros(len(masks),dtype=bool)
-					exclusion_mask[np.where((np.sum(np.logical_and(masks[:,None],masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
+					exclusion_mask[np.where((np.sum(np.logical_and(np.array(masks)[:,None],masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
 					masks=[m for m,exclude in zip(masks,exclusion_mask) if not exclude]
 					classes=[c for c,exclude in zip(classes,exclusion_mask) if not exclude]
 					classes=[self.animal_mapping[str(x)] for x in classes]
@@ -2272,7 +2272,7 @@ class AnalyzeAnimalDetector():
 
 				mask_area=np.sum(np.array(masks),axis=(1,2))
 				exclusion_mask=np.zeros(len(masks),dtype=bool)
-				exclusion_mask[np.where((np.sum(np.logical_and(masks[:,None],masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
+				exclusion_mask[np.where((np.sum(np.logical_and(np.array(masks)[:,None],masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
 				masks=[m for m,exclude in zip(masks,exclusion_mask) if not exclude]
 				classes=[c for c,exclude in zip(classes,exclusion_mask) if not exclude]
 				classes=[self.animal_mapping[str(x)] for x in classes]
