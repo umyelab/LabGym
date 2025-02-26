@@ -269,6 +269,12 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 					uncertain=0
 					self.uncertain=0
 				dialog1.Destroy()
+				if self.path_to_categorizer is not None:
+					parameters=pd.read_csv(os.path.join(self.path_to_categorizer,'model_parameters.txt'))
+					if 'behavior_kind' in parameters:
+						self.behavior_mode=int(parameters['behavior_kind'][0])
+					else:
+						self.behavior_mode=0
 				if self.behavior_mode<3:
 					dialog1=wx.MessageDialog(self,"Set a minimum length (in frames) for a behavior episode\nto output 'NA' if the duration of a identified behavior\nis shorter than the minimun length?",'Minimum length?',wx.YES_NO|wx.ICON_QUESTION)
 					if dialog1.ShowModal()==wx.ID_YES:
@@ -309,6 +315,12 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 					uncertain=0
 					self.uncertain=0
 				dialog1.Destroy()
+				if self.path_to_categorizer is not None:
+					parameters=pd.read_csv(os.path.join(self.path_to_categorizer,'model_parameters.txt'))
+					if 'behavior_kind' in parameters:
+						self.behavior_mode=int(parameters['behavior_kind'][0])
+					else:
+						self.behavior_mode=0
 				if self.behavior_mode<3:
 					dialog1=wx.MessageDialog(self,"Set a minimum length (in frames) for a behavior episode\nto output 'NA' if the duration of a identified behavior\nis shorter than the minimun length?",'Minimum length?',wx.YES_NO|wx.ICON_QUESTION)
 					if dialog1.ShowModal()==wx.ID_YES:
