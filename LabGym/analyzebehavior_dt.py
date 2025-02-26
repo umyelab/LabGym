@@ -390,6 +390,7 @@ class AnalyzeAnimalDetector():
 			instances=outputs[batch_count]['instances'].to('cpu')
 			masks=instances.pred_masks.numpy().astype(np.uint8)
 			classes=instances.pred_classes.numpy()
+			classes=[self.animal_mapping[str(x)] for x in classes]
 			scores=instances.scores.numpy()
 
 			if len(masks)==0:
@@ -403,14 +404,6 @@ class AnalyzeAnimalDetector():
 
 			else:
 
-				mask_area=np.sum(np.array(masks),axis=(1,2))
-				exclusion_mask=np.zeros(len(masks),dtype=bool)
-				exclusion_mask[np.where((np.sum(np.logical_and(np.array(masks)[:,None],masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
-				masks=[m for m,exclude in zip(masks,exclusion_mask) if not exclude]
-				classes=[c for c,exclude in zip(classes,exclusion_mask) if not exclude]
-				classes=[self.animal_mapping[str(x)] for x in classes]
-				scores=[s for s,exclude in zip(scores,exclusion_mask) if not exclude]
-
 				for animal_name in self.animal_kinds:
 
 					contours=[]
@@ -423,6 +416,11 @@ class AnalyzeAnimalDetector():
 					animal_number=int(self.animal_number[animal_name])
 					animal_masks=[masks[a] for a,name in enumerate(classes) if name==animal_name]
 					animal_scores=[scores[a] for a,name in enumerate(classes) if name==animal_name]
+					mask_area=np.sum(np.array(animal_masks),axis=(1,2))
+					exclusion_mask=np.zeros(len(animal_masks),dtype=bool)
+					exclusion_mask[np.where((np.sum(np.logical_and(np.array(animal_masks)[:,None],animal_masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
+					animal_masks=[m for m,exclude in zip(animal_masks,exclusion_mask) if not exclude]
+					animal_scores=[s for s,exclude in zip(animal_scores,exclusion_mask) if not exclude]
 
 					if len(animal_masks)==0:
 
@@ -494,6 +492,7 @@ class AnalyzeAnimalDetector():
 			instances=outputs[batch_count]['instances'].to('cpu')
 			masks=instances.pred_masks.numpy().astype(np.uint8)
 			classes=instances.pred_classes.numpy()
+			classes=[self.animal_mapping[str(x)] for x in classes]
 			scores=instances.scores.numpy()
 
 			if len(masks)==0:
@@ -512,13 +511,7 @@ class AnalyzeAnimalDetector():
 
 			else:
 
-				mask_area=np.sum(np.array(masks),axis=(1,2))
-				exclusion_mask=np.zeros(len(masks),dtype=bool)
-				exclusion_mask[np.where((np.sum(np.logical_and(np.array(masks)[:,None],masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
-				masks=[m for m,exclude in zip(masks,exclusion_mask) if not exclude]
-				classes=[c for c,exclude in zip(classes,exclusion_mask) if not exclude]
-				classes=[self.animal_mapping[str(x)] for x in classes]
-				scores=[s for s,exclude in zip(scores,exclusion_mask) if not exclude]
+
 
 				all_centers=[]
 				all_masks=[]
@@ -535,6 +528,11 @@ class AnalyzeAnimalDetector():
 					animal_number=int(self.animal_number[animal_name])
 					animal_masks=[masks[a] for a,name in enumerate(classes) if name==animal_name]
 					animal_scores=[scores[a] for a,name in enumerate(classes) if name==animal_name]
+					mask_area=np.sum(np.array(animal_masks),axis=(1,2))
+					exclusion_mask=np.zeros(len(animal_masks),dtype=bool)
+					exclusion_mask[np.where((np.sum(np.logical_and(np.array(animal_masks)[:,None],animal_masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
+					animal_masks=[m for m,exclude in zip(animal_masks,exclusion_mask) if not exclude]
+					animal_scores=[s for s,exclude in zip(animal_scores,exclusion_mask) if not exclude]
 
 					if len(animal_masks)==0:
 						self.animal_present[animal_name]=0
@@ -799,6 +797,7 @@ class AnalyzeAnimalDetector():
 						instances=outputs[batch_count]['instances'].to('cpu')
 						masks=instances.pred_masks.numpy().astype(np.uint8)
 						classes=instances.pred_classes.numpy()
+						classes=[self.animal_mapping[str(x)] for x in classes]
 						scores=instances.scores.numpy()
 
 						if len(masks)==0:
@@ -814,14 +813,6 @@ class AnalyzeAnimalDetector():
 							if self.register_counts[name][0] is None:
 								self.register_counts[name][0]=frame_count_analyze+1-batch_size+batch_count
 
-							mask_area=np.sum(np.array(masks),axis=(1,2))
-							exclusion_mask=np.zeros(len(masks),dtype=bool)
-							exclusion_mask[np.where((np.sum(np.logical_and(np.array(masks)[:,None],masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
-							masks=[m for m,exclude in zip(masks,exclusion_mask) if not exclude]
-							classes=[c for c,exclude in zip(classes,exclusion_mask) if not exclude]
-							classes=[self.animal_mapping[str(x)] for x in classes]
-							scores=[s for s,exclude in zip(scores,exclusion_mask) if not exclude]
-
 							contours=[]
 							inners=[]
 
@@ -831,6 +822,11 @@ class AnalyzeAnimalDetector():
 								animal_number=int(self.animal_number[animal_name])
 								animal_masks=[masks[a] for a,n in enumerate(classes) if n==animal_name]
 								animal_scores=[scores[a] for a,n in enumerate(classes) if n==animal_name]
+								mask_area=np.sum(np.array(animal_masks),axis=(1,2))
+								exclusion_mask=np.zeros(len(animal_masks),dtype=bool)
+								exclusion_mask[np.where((np.sum(np.logical_and(np.array(animal_masks)[:,None],animal_masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
+								animal_masks=[m for m,exclude in zip(animal_masks,exclusion_mask) if not exclude]
+								animal_scores=[s for s,exclude in zip(animal_scores,exclusion_mask) if not exclude]
 								if len(animal_masks)>0:
 									if len(animal_scores)>animal_number*2:
 										sorted_scores_indices=np.argsort(animal_scores)[-int(animal_number*2):]
@@ -1784,6 +1780,7 @@ class AnalyzeAnimalDetector():
 				instances=output[0]['instances'].to('cpu')
 				masks=instances.pred_masks.numpy().astype(np.uint8)
 				classes=instances.pred_classes.numpy()
+				classes=[self.animal_mapping[str(x)] for x in classes]
 				scores=instances.scores.numpy()
 
 				if len(masks)==0:
@@ -1794,14 +1791,6 @@ class AnalyzeAnimalDetector():
 
 				else:
 
-					mask_area=np.sum(np.array(masks),axis=(1,2))
-					exclusion_mask=np.zeros(len(masks),dtype=bool)
-					exclusion_mask[np.where((np.sum(np.logical_and(np.array(masks)[:,None],masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
-					masks=[m for m,exclude in zip(masks,exclusion_mask) if not exclude]
-					classes=[c for c,exclude in zip(classes,exclusion_mask) if not exclude]
-					classes=[self.animal_mapping[str(x)] for x in classes]
-					scores=[s for s,exclude in zip(scores,exclusion_mask) if not exclude]
-
 					contours=[]
 					inners=[]
 
@@ -1811,6 +1800,11 @@ class AnalyzeAnimalDetector():
 						animal_number=int(self.animal_number[animal_name])
 						animal_masks=[masks[a] for a,name in enumerate(classes) if name==animal_name]
 						animal_scores=[scores[a] for a,name in enumerate(classes) if name==animal_name]
+						mask_area=np.sum(np.array(animal_masks),axis=(1,2))
+						exclusion_mask=np.zeros(len(animal_masks),dtype=bool)
+						exclusion_mask[np.where((np.sum(np.logical_and(np.array(animal_masks)[:,None],animal_masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
+						animal_masks=[m for m,exclude in zip(animal_masks,exclusion_mask) if not exclude]
+						animal_scores=[s for s,exclude in zip(animal_scores,exclusion_mask) if not exclude]
 						if len(animal_masks)>0:
 							if len(animal_scores)>animal_number*2:
 								sorted_scores_indices=np.argsort(animal_scores)[-int(animal_number*2):]
@@ -1930,6 +1924,7 @@ class AnalyzeAnimalDetector():
 				instances=output[0]['instances'].to('cpu')
 				masks=instances.pred_masks.numpy().astype(np.uint8)
 				classes=instances.pred_classes.numpy()
+				classes=[self.animal_mapping[str(x)] for x in classes]
 				scores=instances.scores.numpy()
 
 				if len(masks)==0:
@@ -1947,14 +1942,6 @@ class AnalyzeAnimalDetector():
 
 				else:
 
-					mask_area=np.sum(np.array(masks),axis=(1,2))
-					exclusion_mask=np.zeros(len(masks),dtype=bool)
-					exclusion_mask[np.where((np.sum(np.logical_and(np.array(masks)[:,None],masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
-					masks=[m for m,exclude in zip(masks,exclusion_mask) if not exclude]
-					classes=[c for c,exclude in zip(classes,exclusion_mask) if not exclude]
-					classes=[self.animal_mapping[str(x)] for x in classes]
-					scores=[s for s,exclude in zip(scores,exclusion_mask) if not exclude]
-
 					all_centers=[]
 					all_masks=[]
 					all_contours=[]
@@ -1969,6 +1956,11 @@ class AnalyzeAnimalDetector():
 						animal_number=int(self.animal_number[animal_name])
 						animal_masks=[masks[a] for a,name in enumerate(classes) if name==animal_name]
 						animal_scores=[scores[a] for a,name in enumerate(classes) if name==animal_name]
+						mask_area=np.sum(np.array(animal_masks),axis=(1,2))
+						exclusion_mask=np.zeros(len(animal_masks),dtype=bool)
+						exclusion_mask[np.where((np.sum(np.logical_and(np.array(animal_masks)[:,None],animal_masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
+						animal_masks=[m for m,exclude in zip(animal_masks,exclusion_mask) if not exclude]
+						animal_scores=[s for s,exclude in zip(animal_scores,exclusion_mask) if not exclude]
 						
 						if len(animal_masks)==0:
 							self.animal_present[animal_name]=0
@@ -2274,6 +2266,7 @@ class AnalyzeAnimalDetector():
 			instances=output[0]['instances'].to('cpu')
 			masks=instances.pred_masks.numpy().astype(np.uint8)
 			classes=instances.pred_classes.numpy()
+			classes=[self.animal_mapping[str(x)] for x in classes]
 			scores=instances.scores.numpy()
 
 			if len(masks)>0:
@@ -2283,7 +2276,6 @@ class AnalyzeAnimalDetector():
 				exclusion_mask[np.where((np.sum(np.logical_and(np.array(masks)[:,None],masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
 				masks=[m for m,exclude in zip(masks,exclusion_mask) if not exclude]
 				classes=[c for c,exclude in zip(classes,exclusion_mask) if not exclude]
-				classes=[self.animal_mapping[str(x)] for x in classes]
 				scores=[s for s,exclude in zip(scores,exclusion_mask) if not exclude]
 
 				contours=[]
