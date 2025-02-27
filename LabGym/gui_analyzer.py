@@ -574,11 +574,10 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 						else:
 							self.animal_kinds=animal_names
 						dialog2.Destroy()
-
 					else:
 						self.animal_kinds=animal_names
 					if self.behavior_mode==1:
-						self.animal_to_include=self.animal_kinds[0]
+						self.animal_to_include=[self.animal_kinds[0]]
 					else:
 						self.animal_to_include=self.animal_kinds
 					if self.behavior_mode>=3:
@@ -718,7 +717,9 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 		else:
 
 			if len(self.animal_kinds)>1:
-				if self.behavior_mode!=1:
+				if self.behavior_mode==1:
+					self.animal_to_include=[self.animal_kinds[0]]
+				else:
 					dialog=wx.MultiChoiceDialog(self,message='Specify which animals/objects to annotate',caption='Animal/Object to annotate',choices=self.animal_kinds)
 					if dialog.ShowModal()==wx.ID_OK:
 						self.animal_to_include=[self.animal_kinds[i] for i in dialog.GetSelections()]
