@@ -1822,30 +1822,31 @@ class AnalyzeAnimalDetector():
 						animal_number=int(self.animal_number[animal_name])
 						animal_masks=[masks[a] for a,name in enumerate(classes) if name==animal_name]
 						animal_scores=[scores[a] for a,name in enumerate(classes) if name==animal_name]
-						mask_area=np.sum(np.array(animal_masks),axis=(1,2))
-						exclusion_mask=np.zeros(len(animal_masks),dtype=bool)
-						exclusion_mask[np.where((np.sum(np.logical_and(np.array(animal_masks)[:,None],animal_masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
-						animal_masks=[m for m,exclude in zip(animal_masks,exclusion_mask) if not exclude]
-						animal_scores=[s for s,exclude in zip(animal_scores,exclusion_mask) if not exclude]
 						if len(animal_masks)>0:
-							if len(animal_scores)>animal_number*2:
-								sorted_scores_indices=np.argsort(animal_scores)[-int(animal_number*2):]
-								animal_masks=[animal_masks[x] for x in sorted_scores_indices]
-							for mask in animal_masks:
-								mask=cv2.morphologyEx(mask,cv2.MORPH_CLOSE,np.ones((self.kernel,self.kernel),np.uint8))
-								cnts,_=cv2.findContours((mask*255).astype(np.uint8),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
-								if len(cnts)>0:
-									goodcontours.append(sorted(cnts,key=cv2.contourArea,reverse=True)[0])
-									goodmasks.append(mask)
-							areas=[cv2.contourArea(ct) for ct in goodcontours]
-							sorted_area_indices=np.argsort(np.array(areas))[-animal_number:]
-							for x in sorted_area_indices:
-								cnt=goodcontours[x]
-								mask=goodmasks[x]
-								contours.append(cnt)
-								if self.include_bodyparts:
-									masked_frame=cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)*mask
-									inners.append(get_inner(masked_frame,cnt))
+							mask_area=np.sum(np.array(animal_masks),axis=(1,2))
+							exclusion_mask=np.zeros(len(animal_masks),dtype=bool)
+							exclusion_mask[np.where((np.sum(np.logical_and(np.array(animal_masks)[:,None],animal_masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
+							animal_masks=[m for m,exclude in zip(animal_masks,exclusion_mask) if not exclude]
+							animal_scores=[s for s,exclude in zip(animal_scores,exclusion_mask) if not exclude]
+							if len(animal_masks)>0:
+								if len(animal_scores)>animal_number*2:
+									sorted_scores_indices=np.argsort(animal_scores)[-int(animal_number*2):]
+									animal_masks=[animal_masks[x] for x in sorted_scores_indices]
+								for mask in animal_masks:
+									mask=cv2.morphologyEx(mask,cv2.MORPH_CLOSE,np.ones((self.kernel,self.kernel),np.uint8))
+									cnts,_=cv2.findContours((mask*255).astype(np.uint8),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
+									if len(cnts)>0:
+										goodcontours.append(sorted(cnts,key=cv2.contourArea,reverse=True)[0])
+										goodmasks.append(mask)
+								areas=[cv2.contourArea(ct) for ct in goodcontours]
+								sorted_area_indices=np.argsort(np.array(areas))[-animal_number:]
+								for x in sorted_area_indices:
+									cnt=goodcontours[x]
+									mask=goodmasks[x]
+									contours.append(cnt)
+									if self.include_bodyparts:
+										masked_frame=cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)*mask
+										inners.append(get_inner(masked_frame,cnt))
 
 					temp_contours.append(contours)
 					temp_inners.append(inners)
@@ -1978,13 +1979,9 @@ class AnalyzeAnimalDetector():
 						animal_number=int(self.animal_number[animal_name])
 						animal_masks=[masks[a] for a,name in enumerate(classes) if name==animal_name]
 						animal_scores=[scores[a] for a,name in enumerate(classes) if name==animal_name]
-						mask_area=np.sum(np.array(animal_masks),axis=(1,2))
-						exclusion_mask=np.zeros(len(animal_masks),dtype=bool)
-						exclusion_mask[np.where((np.sum(np.logical_and(np.array(animal_masks)[:,None],animal_masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
-						animal_masks=[m for m,exclude in zip(animal_masks,exclusion_mask) if not exclude]
-						animal_scores=[s for s,exclude in zip(animal_scores,exclusion_mask) if not exclude]
-						
+
 						if len(animal_masks)==0:
+
 							self.animal_present[animal_name]=0
 							for i in self.animal_centers[animal_name]:
 								self.animal_contours[animal_name][i].append(None)
@@ -1994,35 +1991,54 @@ class AnalyzeAnimalDetector():
 								if self.include_bodyparts:
 									self.animal_inners[animal_name][i].append(None)
 									self.animal_other_inners[animal_name][i].append([None])
+
 						else:
-							if len(animal_scores)>animal_number*2:
-								sorted_scores_indices=np.argsort(animal_scores)[-int(animal_number*2):]
-								animal_masks=[animal_masks[x] for x in sorted_scores_indices]
-							for mask in animal_masks:
-								mask=cv2.morphologyEx(mask,cv2.MORPH_CLOSE,np.ones((self.kernel,self.kernel),np.uint8))
-								goodmasks.append(mask)
-								cnts,_=cv2.findContours((mask*255).astype(np.uint8),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
-								if len(cnts)>0:
-									goodcontours.append(sorted(cnts,key=cv2.contourArea,reverse=True)[0])
-							areas=[cv2.contourArea(ct) for ct in goodcontours]
-							sorted_area_indices=np.argsort(np.array(areas))[-animal_number:]
-							self.animal_present[animal_name]=len(sorted_area_indices)
-							areas_sorted=sorted(areas)[-animal_number:]
-							area=sum(areas_sorted)/len(areas_sorted)
-							if self.animal_area[animal_name] is None:
-								self.animal_area[animal_name]=area
+
+							mask_area=np.sum(np.array(animal_masks),axis=(1,2))
+							exclusion_mask=np.zeros(len(animal_masks),dtype=bool)
+							exclusion_mask[np.where((np.sum(np.logical_and(np.array(animal_masks)[:,None],animal_masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
+							animal_masks=[m for m,exclude in zip(animal_masks,exclusion_mask) if not exclude]
+							animal_scores=[s for s,exclude in zip(animal_scores,exclusion_mask) if not exclude]
+							
+							if len(animal_masks)==0:
+								self.animal_present[animal_name]=0
+								for i in self.animal_centers[animal_name]:
+									self.animal_contours[animal_name][i].append(None)
+									self.animal_other_contours[animal_name][i].append([None])
+									self.animal_centers[animal_name][i].append(None)
+									self.animal_blobs[animal_name][i].append(None)
+									if self.include_bodyparts:
+										self.animal_inners[animal_name][i].append(None)
+										self.animal_other_inners[animal_name][i].append([None])
 							else:
-								self.animal_area[animal_name]=(self.animal_area[animal_name]+area)/2
-							average_area.append(self.animal_area[animal_name])
-							for x in sorted_area_indices:
-								mask=goodmasks[x]
-								all_masks.append(mask)
-								cnt=goodcontours[x]
-								all_contours.append(cnt)
-								all_centers.append((int(cv2.moments(cnt)['m10']/cv2.moments(cnt)['m00']),int(cv2.moments(cnt)['m01']/cv2.moments(cnt)['m00'])))
-								if self.include_bodyparts:
-									masked_frame=cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)*mask
-									all_inners.append(get_inner(masked_frame,cnt))
+								if len(animal_scores)>animal_number*2:
+									sorted_scores_indices=np.argsort(animal_scores)[-int(animal_number*2):]
+									animal_masks=[animal_masks[x] for x in sorted_scores_indices]
+								for mask in animal_masks:
+									mask=cv2.morphologyEx(mask,cv2.MORPH_CLOSE,np.ones((self.kernel,self.kernel),np.uint8))
+									goodmasks.append(mask)
+									cnts,_=cv2.findContours((mask*255).astype(np.uint8),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_NONE)
+									if len(cnts)>0:
+										goodcontours.append(sorted(cnts,key=cv2.contourArea,reverse=True)[0])
+								areas=[cv2.contourArea(ct) for ct in goodcontours]
+								sorted_area_indices=np.argsort(np.array(areas))[-animal_number:]
+								self.animal_present[animal_name]=len(sorted_area_indices)
+								areas_sorted=sorted(areas)[-animal_number:]
+								area=sum(areas_sorted)/len(areas_sorted)
+								if self.animal_area[animal_name] is None:
+									self.animal_area[animal_name]=area
+								else:
+									self.animal_area[animal_name]=(self.animal_area[animal_name]+area)/2
+								average_area.append(self.animal_area[animal_name])
+								for x in sorted_area_indices:
+									mask=goodmasks[x]
+									all_masks.append(mask)
+									cnt=goodcontours[x]
+									all_contours.append(cnt)
+									all_centers.append((int(cv2.moments(cnt)['m10']/cv2.moments(cnt)['m00']),int(cv2.moments(cnt)['m01']/cv2.moments(cnt)['m00'])))
+									if self.include_bodyparts:
+										masked_frame=cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)*mask
+										all_inners.append(get_inner(masked_frame,cnt))
 
 					if len(all_centers)>1:
 
