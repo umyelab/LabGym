@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.8.1
+### What's Changed
+* Prevented interruption of the analysis when Detector fails.
+* Now LabGym can analyze interactive behaviors that an object/animal is inside an specific area (the Detector can detect both the object/animal and the area even if the object/animal is inside that area).
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.8.0...v2.8.1>
+
 ## v2.8.0
 ### What's Changed
 * Further optimized Categorizer training to improve its accuracy and generalizibility.
