@@ -1365,7 +1365,7 @@ class Categorizers():
 	def train_combnet(self,data_path,model_path,out_path=None,dim_tconv=32,dim_conv=64,channel=1,time_step=15,level_tconv=1,level_conv=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,black_background=True,behavior_mode=0,social_distance=0,out_folder=None):
 
 		# data_path: the folder that stores all the prepared training examples
-		# model_path: the path to the trained Animation Analyzer
+		# model_path: the path to the trained Categorizer
 		# out_path: if not None, will store the training reports in this folder
 		# dim_tconv: the input dimension of Animation Analyzer
 		# dim_conv: the input dimension of Pattern Recognizer
@@ -1378,7 +1378,7 @@ class Categorizers():
 		# include_bodyparts: whether to include body parts in the pattern images
 		# std: a value between 0 and 255, higher value, less body parts will be included in the pattern images
 		# background_free: whether to include background in animations
-		# black_background: whether to set background
+		# black_background: whether to set background black
 		# behavior_mode:  0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
 		# social_distance: a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
 		# out_folder: if not None, will output all the augmented data to this folder
@@ -1568,7 +1568,7 @@ class Categorizers():
 		# include_bodyparts: whether to include body parts in the pattern images
 		# std: a value between 0 and 255, higher value, less body parts will be included in the pattern images
 		# background_free: whether to include background in animations
-		# black_background: whether to set background
+		# black_background: whether to set background black
 		# behavior_mode:  0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
 		# social_distance: a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
 

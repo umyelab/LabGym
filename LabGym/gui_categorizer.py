@@ -985,9 +985,9 @@ class WindowLv3_SortExamplesCSV(wx.Frame):
 		boxsizer.Add(0,5,0)
 
 		module_outputfolder=wx.BoxSizer(wx.HORIZONTAL)
-		button_outputfolder=wx.Button(panel,label='Select a folder to store\nthe videos with markers',size=(300,40))
+		button_outputfolder=wx.Button(panel,label='Select a folder to store\nthe sorted behavior examples',size=(300,40))
 		button_outputfolder.Bind(wx.EVT_BUTTON,self.select_outpath)
-		wx.Button.SetToolTip(button_outputfolder,'Videos with markers will be stored in the selected folder.')
+		wx.Button.SetToolTip(button_outputfolder,'The sorted behavior examples will be in the selected folder.')
 		self.text_outputfolder=wx.StaticText(panel,label='None.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_outputfolder.Add(button_outputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_outputfolder.Add(self.text_outputfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
