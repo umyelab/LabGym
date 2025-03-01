@@ -77,6 +77,8 @@ class DatasetFromPath_AA(Sequence):
 				if classname not in classnames:
 					classnames.append(classname)
 
+		np.random.shuffle(pattern_image_paths)
+
 		classnames.sort()
 		labels=np.array(classnames)
 		lb=LabelBinarizer()
@@ -155,6 +157,8 @@ class DatasetFromPath(Sequence):
 				classname=pattern_image.split('.jpg')[0].split('_')[-1]
 				if classname not in classnames:
 					classnames.append(classname)
+
+		np.random.shuffle(pattern_image_paths)
 
 		classnames.sort()
 		labels=np.array(classnames)
