@@ -462,6 +462,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 				self.animal_number=None
 				self.animal_to_include=[]
 				self.ID_colors=[(255,255,255)]
+				self.text_detection=wx.StaticText(panel,label='Default: Background subtraction-based method.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 				self.text_animalnumber=wx.StaticText(panel,label='Default: 1.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 
 				contrasts=['Animal brighter than background','Animal darker than background','Hard to tell']
@@ -603,7 +604,12 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 
 				if self.path_to_detector is None:
 					self.use_detector=False
+					self.animal_kinds=[]
 					self.animal_number=None
+					self.animal_to_include=[]
+					self.ID_colors=[(255,255,255)]
+					self.text_detection=wx.StaticText(panel,label='Default: Background subtraction-based method.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
+					self.text_animalnumber=wx.StaticText(panel,label='Default: 1.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 				else:
 					self.use_detector=True
 					if self.behavior_mode<3:
