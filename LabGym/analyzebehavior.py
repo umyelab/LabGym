@@ -632,8 +632,9 @@ class AnalyzeAnimal():
 		self.log.append('Behavioral categorization completed!')
 
 
-	def annotate_video(self,behavior_to_include,show_legend=True,interact_all=False):
+	def annotate_video(self,ID_colors,behavior_to_include,show_legend=True,interact_all=False):
 
+		# ID_colors: the colors for animal / objects identities
 		# behavior_to_include: behaviors that are included in the annotation
 		# show_legend: whether to show the legend of behavior names in video frames
 		# interact_all: whether is the interactive basic mode
@@ -645,6 +646,7 @@ class AnalyzeAnimal():
 
 		text_scl=max(0.5,round((self.background.shape[0]+self.background.shape[1])/1080,1))
 		text_tk=max(1,round((self.background.shape[0]+self.background.shape[1])/540))
+		animal_color=ID_colors[0]
 
 		if self.categorize_behavior:
 			colors={}
@@ -729,8 +731,8 @@ class AnalyzeAnimal():
 									cv2.circle(self.background,(cx,cy),int(text_tk),(abs(int(color_diff*(total_animal_number-current_animal_number)-255)),int(color_diff*current_animal_number/2),int(color_diff*(total_animal_number-current_animal_number)/2)),-1)
 
 								if interact_all is False:
-									cv2.putText(frame,str(i),(cx-10,cy-10),cv2.FONT_HERSHEY_SIMPLEX,text_scl,(255,255,255),text_tk)
-									cv2.circle(frame,(cx,cy),int(text_tk*3),(255,0,0),-1)
+									cv2.putText(frame,str(i),(cx-10,cy-10),cv2.FONT_HERSHEY_SIMPLEX,text_scl,animal_color,text_tk)
+									cv2.circle(frame,(cx,cy),int(text_tk*3),animal_color,-1)
 
 								if self.categorize_behavior:
 									if self.event_probability[i][frame_count_analyze][0]=='NA':
@@ -756,7 +758,7 @@ class AnalyzeAnimal():
 												cv2.drawContours(frame,[self.animal_contours[i][frame_count_analyze]],0,(255,255,255),1)
 											cv2.putText(frame,'NA',(cx+10,cy-10),cv2.FONT_HERSHEY_SIMPLEX,text_scl,(255,255,255),text_tk)
 								else:
-									cv2.drawContours(frame,[self.animal_contours[i][frame_count_analyze]],0,(255,255,255),1)
+									cv2.drawContours(frame,[self.animal_contours[i][frame_count_analyze]],0,animal_color,1)
 
 						current_animal_number+=1
 
