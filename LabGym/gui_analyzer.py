@@ -452,11 +452,17 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 		dialog=wx.SingleChoiceDialog(self,message='How to detect the animals?',caption='Detection methods',choices=methods)
 
 		if dialog.ShowModal()==wx.ID_OK:
+
 			method=dialog.GetStringSelection()
 
 			if method=='Subtract background (fast but requires static background & stable illumination)':
 
 				self.use_detector=False
+				self.animal_kinds=[]
+				self.animal_number=None
+				self.animal_to_include=[]
+				self.ID_colors=[(255,255,255)]
+				self.text_animalnumber=wx.StaticText(panel,label='Default: 1.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 
 				contrasts=['Animal brighter than background','Animal darker than background','Hard to tell']
 				dialog1=wx.SingleChoiceDialog(self,message='Select the scenario that fits your videos best',caption='Which fits best?',choices=contrasts)
@@ -540,9 +546,9 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 
 			else:
 
-				self.use_detector=True
 				self.animal_number={}
 				self.detector_path=os.path.join(the_absolute_current_path,'detectors')
+				self.text_animalnumber=wx.StaticText(panel,label='Default: 1.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 
 				detectors=[i for i in os.listdir(self.detector_path) if os.path.isdir(os.path.join(self.detector_path,i))]
 				if '__pycache__' in detectors:
@@ -595,14 +601,19 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 						self.text_detection.SetLabel('Detector: '+detector+'; '+'The animals/objects: '+str(self.animal_kinds)+'.')
 				dialog1.Destroy()
 
-				if self.behavior_mode<3:
-					if torch.cuda.is_available():
-						dialog1=wx.NumberEntryDialog(self,'Enter the batch size for faster processing','GPU is available in this device for Detectors.\nYou may use batch processing for faster speed.','Batch size',1,1,100)
-						if dialog1.ShowModal()==wx.ID_OK:
-							self.detector_batch=int(dialog1.GetValue())
-						else:
-							self.detector_batch=1
-						dialog1.Destroy()
+				if self.path_to_detector is None:
+					self.use_detector=False
+					self.animal_number=None
+				else:
+					self.use_detector=True
+					if self.behavior_mode<3:
+						if torch.cuda.is_available():
+							dialog1=wx.NumberEntryDialog(self,'Enter the batch size for faster processing','GPU is available in this device for Detectors.\nYou may use batch processing for faster speed.','Batch size',1,1,100)
+							if dialog1.ShowModal()==wx.ID_OK:
+								self.detector_batch=int(dialog1.GetValue())
+							else:
+								self.detector_batch=1
+							dialog1.Destroy()
 
 		dialog.Destroy()
 
