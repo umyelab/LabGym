@@ -726,7 +726,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 				complete_colors=list(mpl.colors.cnames.values())
 				colors=[]
 				for c in complete_colors:
-					colors.append(c)
+					colors.append(['#ffffff',c])
 				self.ID_colors=[]
 				if len(self.animal_to_include)>1:
 					n=0
@@ -740,7 +740,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 						dialog1.Destroy()
 						n+=1
 				else:
-					dialog1=ColorPicker(self,'Color for the animal',['animal',colors[0]])
+					dialog1=ColorPicker(self,'Color for the animal/object',['animal/object',colors[0]])
 					if dialog1.ShowModal()==wx.ID_OK:
 						(r,b,g,_)=dialog1.color_picker.GetColour()
 						self.ID_colors.append((b,g,r))
@@ -985,7 +985,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 							interact_all=True
 						if self.path_to_categorizer is not None:
 							AA.categorize_behaviors(self.path_to_categorizer,uncertain=self.uncertain,min_length=self.min_length)
-						AA.annotate_video(self.behavior_to_include,show_legend=self.show_legend,interact_all=interact_all)
+						AA.annotate_video(self.ID_colors,self.behavior_to_include,show_legend=self.show_legend,interact_all=interact_all)
 						AA.export_results(normalize_distance=self.normalize_distance,parameter_to_analyze=self.parameter_to_analyze)
 
 						if self.path_to_categorizer is not None:
@@ -1011,7 +1011,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 							AAD.categorize_behaviors(self.path_to_categorizer,uncertain=self.uncertain,min_length=self.min_length)
 						if self.correct_ID:
 							AAD.correct_identity(self.specific_behaviors)
-						AAD.annotate_video(self.animal_to_include,self.behavior_to_include,show_legend=self.show_legend)
+						AAD.annotate_video(self.animal_to_include,self.ID_colors,self.behavior_to_include,show_legend=self.show_legend)
 						AAD.export_results(normalize_distance=self.normalize_distance,parameter_to_analyze=self.parameter_to_analyze)
 
 						if self.path_to_categorizer is not None:
