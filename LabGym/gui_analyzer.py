@@ -108,6 +108,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 		self.stable_illumination=True # whether the illumination in videos is stable
 		self.animation_analyzer=True # whether to include Animation Analyzer in the Categorizers
 		self.animal_to_include=[] # the animals / obejcts that will be annotated in the annotated videos / behavior plots
+		self.ID_colors=[(255,255,255)] # the colors for animals / obejcts identities that will be annotated in the annotated videos
 		self.behavior_to_include=['all'] # behaviors that will be annotated in the annotated videos / behavior plots
 		self.parameter_to_analyze=[] # quantitative measures that will be included in the quantification
 		self.include_bodyparts=False # whether to include body parts in the pattern images
@@ -707,15 +708,6 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 					self.text_animalnumber.SetLabel('Decode from the filenames: the "n" immediately after the letter "n" in _"nn"_.')
 			dialog.Destroy()
 
-
-	def select_behaviors(self,event):
-
-		if self.path_to_categorizer is None:
-
-			wx.MessageBox('No Categorizer selected! The behavior names are listed in the Categorizer.','Error',wx.OK|wx.ICON_ERROR)
-
-		else:
-
 			if len(self.animal_kinds)>1:
 				if self.behavior_mode==1:
 					self.animal_to_include=[self.animal_kinds[0]]
@@ -728,6 +720,50 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 					dialog.Destroy()
 			else:
 				self.animal_to_include=self.animal_kinds
+
+			dialog=wx.MessageDialog(self,'Specify the colors (default is white) for animal/object identities?','Specify colors for IDs?',wx.YES_NO|wx.ICON_QUESTION)
+			if dialog.ShowModal()==wx.ID_YES:
+				complete_colors=list(mpl.colors.cnames.values())
+				colors=[]
+				for c in complete_colors:
+					colors.append(c)
+				self.ID_colors=[]
+				if len(self.animal_to_include)>1:
+					n=0
+					while n<len(self.animal_to_include):
+						dialog1=ColorPicker(self,'Color for '+self.animal_to_include[n],[self.animal_to_include[n],colors[n]])
+						if dialog1.ShowModal()==wx.ID_OK:
+							(r,b,g,_)=dialog1.color_picker.GetColour()
+							self.ID_colors.append((b,g,r))
+						else:
+							self.ID_colors.append((255,255,255))
+						dialog1.Destroy()
+						n+=1
+				else:
+					dialog1=ColorPicker(self,'Color for the animal',['animal',colors[0]])
+					if dialog1.ShowModal()==wx.ID_OK:
+						(r,b,g,_)=dialog1.color_picker.GetColour()
+						self.ID_colors.append((b,g,r))
+					else:
+						self.ID_colors.append((255,255,255))
+					dialog1.Destroy()
+			else:
+				if len(self.animal_to_include)>1:
+					self.ID_colors=[]
+					for animal_name in self.animal_to_include:
+						self.ID_colors.append((255,255,255))
+				else:
+					self.ID_colors=[(255,255,255)]
+			dialog.Destroy()
+
+
+	def select_behaviors(self,event):
+
+		if self.path_to_categorizer is None:
+
+			wx.MessageBox('No Categorizer selected! The behavior names are listed in the Categorizer.','Error',wx.OK|wx.ICON_ERROR)
+
+		else:
 
 			dialog=wx.MultiChoiceDialog(self,message='Select behaviors',caption='Behaviors to annotate',choices=list(self.behaviornames_and_colors.keys()))
 			if dialog.ShowModal()==wx.ID_OK:
