@@ -468,7 +468,11 @@ class Categorizers():
 						else:
 
 							if code is not None:
-								frame=cv2.flip(frame,code)
+								if code==2:
+									frame=cv2.flip(frame,0)
+									frame=cv2.flip(frame,1)
+								else:
+									frame=cv2.flip(frame,code)
 
 							if beta is not None:
 								frame=frame.astype('float')
