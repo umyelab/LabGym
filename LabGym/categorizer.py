@@ -371,14 +371,18 @@ class Categorizers():
 				else:
 					angle=None
 
-				if 'flph' in m:
+				if 'flphflpv' in m:
+					code=2
+				elif 'flph' in m:
 					code=1
 				elif 'flpv' in m:
 					code=0
 				else:
 					code=None
 
-				if 'brih' in m:
+				if 'brihbril' in m:
+					beta=np.random.uniform(-50,50)
+				elif 'brih' in m:
 					beta=np.random.uniform(10,50)
 				elif 'bril' in m:
 					beta=np.random.uniform(-50,10)
@@ -517,7 +521,11 @@ class Categorizers():
 				pattern_image=cv2.imread(path_to_pattern_image)
 
 				if code is not None:
-					pattern_image=cv2.flip(pattern_image,code)
+					if code==2:
+						pattern_image=cv2.flip(pattern_image,0)
+						pattern_image=cv2.flip(pattern_image,1)
+					else:
+						pattern_image=cv2.flip(pattern_image,code)
 
 				if behavior_mode==3:
 					if beta is not None:
