@@ -372,7 +372,7 @@ class Categorizers():
 					angle=None
 
 				if 'flphflpv' in m:
-					code=2
+					code=-1
 				elif 'flph' in m:
 					code=1
 				elif 'flpv' in m:
@@ -468,11 +468,7 @@ class Categorizers():
 						else:
 
 							if code is not None:
-								if code==2:
-									frame=cv2.flip(frame,0)
-									frame=cv2.flip(frame,1)
-								else:
-									frame=cv2.flip(frame,code)
+								frame=cv2.flip(frame,code)
 
 							if beta is not None:
 								frame=frame.astype('float')
@@ -525,11 +521,7 @@ class Categorizers():
 				pattern_image=cv2.imread(path_to_pattern_image)
 
 				if code is not None:
-					if code==2:
-						pattern_image=cv2.flip(pattern_image,0)
-						pattern_image=cv2.flip(pattern_image,1)
-					else:
-						pattern_image=cv2.flip(pattern_image,code)
+					pattern_image=cv2.flip(pattern_image,code)
 
 				if behavior_mode==3:
 					if beta is not None:
