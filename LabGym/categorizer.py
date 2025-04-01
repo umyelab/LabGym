@@ -385,7 +385,7 @@ class Categorizers():
 				elif 'brih' in m:
 					beta=np.random.uniform(10,50)
 				elif 'bril' in m:
-					beta=np.random.uniform(-50,10)
+					beta=np.random.uniform(-50,-10)
 				else:
 					beta=None
 
