@@ -16,6 +16,20 @@ USA
 Email: bingye@umich.edu
 '''
 
+# standard library imports
+import logging.config
+import os
+
+# related third party imports
+import yaml
+
+# Log the load of this module (by the module loader, on first import).
+# Create the log record manually, because logging isn't configured yet.
+records = [logging.LogRecord(
+    level=logging.DEBUG, msg='loading %s', args=(__file__),
+    lineno=28, exc_info=None, name=__name__, pathname=__file__,
+    )]
+
 
 
 
@@ -23,3 +37,32 @@ __version__='2.8.1'
 
 
 
+# Configure logging per logging.yaml
+configfile = os.path.join(os.path.dirname(__file__), 'logging.yaml')
+try:
+    with open(configfile) as f:
+        config = yaml.safe_load(f)
+
+    # print(f'config: {config!r}')
+    records.append(logging.LogRecord(
+        level=logging.DEBUG,
+        msg='%s: %r', args=('config', config),
+        lineno=47, exc_info=None, name=__name__, pathname=__file__,
+        ))
+
+    logging.config.dictConfig(config)
+except:
+    records.append(logging.LogRecord(
+        level=logging.WARNING,
+        msg='trouble configuring logging from configfile (%s)',
+        args=(configfile),
+        lineno=55, exc_info=None, name=__name__, pathname=__file__,
+        ))
+
+    logging.basicConfig(level=logging.DEBUG)
+
+# Now that logging is configured, handle the manually created log records.
+logger = logging.getLogger(__name__)
+for record in records:
+    if record.levelno >= logger.getEffectiveLevel():
+        logger.handle(record)

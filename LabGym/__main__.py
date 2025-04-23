@@ -16,6 +16,14 @@ USA
 Email: bingye@umich.edu
 '''
 
+# Log the load of this module (by the module loader, on first import).
+# Intentionally positioning these statements before other imports, against the
+# guidance of PEP-8, to log the load before other imports log messages.
+import logging
+logger = logging.getLogger(__name__)
+logger.debug('loading %s', __file__)
+logger.debug('%s: %r', '__name__', __name__)
+
 
 
 
@@ -31,8 +39,10 @@ def main():
 	try:
 
 		current_version=version.parse(__version__)
+		logger.debug('%s: %r', 'current_version', current_version)
 		pypi_json=requests.get('https://pypi.org/pypi/LabGym/json').json()
 		latest_version=version.parse(pypi_json['info']['version'])
+		logger.debug('%s: %r', 'latest_version', latest_version)
 
 		if latest_version>current_version:
 
@@ -49,6 +59,8 @@ def main():
 
 		pass
 
+
+	# raise Exception('intentional abend')
 
 	gui_main.main_window()
 
