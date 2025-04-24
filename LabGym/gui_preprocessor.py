@@ -349,11 +349,13 @@ class WindowLv2_ProcessVideos(wx.Frame):
 
 		if self.path_to_videos is None or self.result_path is None:
 
-			wx.MessageBox('No input video(s) / output folder.','Error',wx.OK|wx.ICON_ERROR)
+			msg = 'No input video(s) / output folder.'
+			logger.error(msg)
+			wx.MessageBox(msg,'Error',wx.OK|wx.ICON_ERROR)
 
 		else:
 
-			print('Start to preprocess video(s)...')
+			logger.info('Start to preprocess video(s)...')
 
 			for i in self.path_to_videos:
 
@@ -365,11 +367,24 @@ class WindowLv2_ProcessVideos(wx.Frame):
 					for x,startt in enumerate(starttime_windows):
 						self.time_windows.append([startt,endtime_windows[x]])
 
-				preprocess_video(i,self.result_path,self.framewidth,trim_video=self.trim_video,time_windows=self.time_windows,
-					enhance_contrast=self.enhance_contrast,contrast=self.contrast,
-					crop_frame=self.crop_frame,left=self.left,right=self.right,top=self.top,bottom=self.bottom,fps_new=self.fps_new)
+				logger.debug('calling preprocess_video(%r, ...)', i)
+				preprocess_video(
+					i,
+					self.result_path,
+					self.framewidth,
+					trim_video=self.trim_video,
+					time_windows=self.time_windows,
+					enhance_contrast=self.enhance_contrast,
+					contrast=self.contrast,
+					crop_frame=self.crop_frame,
+					left=self.left,
+					right=self.right,
+					top=self.top,
+					bottom=self.bottom,
+					fps_new=self.fps_new,
+					)
 
-			print('Preprocessing completed!')
+			logger.info('Preprocessing completed!')
 
 
 
