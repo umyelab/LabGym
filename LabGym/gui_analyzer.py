@@ -462,8 +462,8 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 				self.animal_number=None
 				self.animal_to_include=[]
 				self.ID_colors=[(255,255,255)]
-				self.text_detection=wx.StaticText(panel,label='Default: Background subtraction-based method.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
-				self.text_animalnumber=wx.StaticText(panel,label='Default: 1.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
+				self.text_detection.SetLabel('Default: Background subtraction-based method.')
+				self.text_animalnumber.SetLabel('Default: 1.')
 
 				contrasts=['Animal brighter than background','Animal darker than background','Hard to tell']
 				dialog1=wx.SingleChoiceDialog(self,message='Select the scenario that fits your videos best',caption='Which fits best?',choices=contrasts)
@@ -549,7 +549,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 
 				self.animal_number={}
 				self.detector_path=os.path.join(the_absolute_current_path,'detectors')
-				self.text_animalnumber=wx.StaticText(panel,label='Default: 1.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
+				self.text_animalnumber.SetLabel('Default: 1.')
 
 				detectors=[i for i in os.listdir(self.detector_path) if os.path.isdir(os.path.join(self.detector_path,i))]
 				if '__pycache__' in detectors:
