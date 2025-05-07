@@ -11,11 +11,12 @@ version: 1
 #   message     The logged message, computed as msg % args.`
 #   module      Module (name portion of filename).
 #   name        Name of the logger used to log the call.
+#   thread      Thread ID.
 
 formatters:
     myformat:
         datefmt: "%Y-%m-%d %H:%M:%S"
-        format: "%(asctime)s\t%(levelname)s\t[%(name)s:%(module)s:%(lineno)d]\t%(message)s"
+        format: "%(asctime)s\t%(levelname)s\t[%(thread)d:%(name)s:%(module)s:%(lineno)d]\t%(message)s"
 
 handlers:
     console:

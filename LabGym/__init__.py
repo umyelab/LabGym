@@ -17,52 +17,38 @@ Email: bingye@umich.edu
 '''
 
 # standard library imports
-import logging.config
-import os
-
-# related third party imports
-import yaml
+import logging
 
 # Log the load of this module (by the module loader, on first import).
 # Create the log record manually, because logging isn't configured yet.
-records = [logging.LogRecord(
+logrecords = [logging.LogRecord(
     level=logging.DEBUG, msg='loading %s', args=(__file__),
-    lineno=28, exc_info=None, name=__name__, pathname=__file__,
+    lineno=24, exc_info=None, name=__name__, pathname=__file__,
     )]
 
+# local application/library specific imports
+import LabGym.mylogging as mylogging
 
 
-
-__version__='2.8.1'
-
-
-
-# Configure logging per logging.yaml
-configfile = os.path.join(os.path.dirname(__file__), 'logging.yaml')
+# Configure logging, and append any new log records to logrecords.
 try:
-    with open(configfile) as f:
-        config = yaml.safe_load(f)
-
-    # print(f'config: {config!r}')
-    records.append(logging.LogRecord(
-        level=logging.DEBUG,
-        msg='%s: %r', args=('config', config),
-        lineno=47, exc_info=None, name=__name__, pathname=__file__,
-        ))
-
-    logging.config.dictConfig(config)
+    mylogging.config(logrecords, myname=__name__)
 except:
-    records.append(logging.LogRecord(
+    logrecords.append(logging.LogRecord(
         level=logging.WARNING,
-        msg='trouble configuring logging from configfile (%s)',
-        args=(configfile),
-        lineno=55, exc_info=None, name=__name__, pathname=__file__,
+        msg='trouble configuring logging', args=None,
+        lineno=42, exc_info=None, name=__name__, pathname=__file__,
         ))
 
     logging.basicConfig(level=logging.DEBUG)
 
 # Now that logging is configured, handle the manually created log records.
-logger = logging.getLogger(__name__)
-for record in records:
-    if record.levelno >= logger.getEffectiveLevel():
-        logger.handle(record)
+handle = logging.getLogger().handle  # the root logger's handle method
+for logrecord in logrecords:
+    # get the effectivelevel of the logger to which the record was attributed
+    effectivelevel = logging.getLogger(logrecord.name).getEffectiveLevel()
+    if logrecord.levelno >= effectivelevel:
+        handle(logrecord)
+
+
+__version__='2.8.1'
