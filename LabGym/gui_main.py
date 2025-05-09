@@ -173,7 +173,7 @@ class WindowLv1_TrainingModule(wx.Frame):
 		boxsizer.Add(button_generateimages,0,wx.ALIGN_CENTER,10)
 		boxsizer.Add(0,5,0)
 
-		link_annotate=wx.lib.agw.hyperlink.HyperLinkCtrl(panel,0,'\nAnnotate images with Roboflow\n',URL='https://roboflow.com')
+		link_annotate=wx.lib.agw.hyperlink.HyperLinkCtrl(panel,0,'\nAnnotate images with EZannot\n',URL='https://github.com/yujiahu415/EZannot')
 		boxsizer.Add(link_annotate,0,wx.ALIGN_CENTER,10)
 		boxsizer.Add(0,5,0)
 
