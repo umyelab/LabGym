@@ -16,22 +16,37 @@ USA
 Email: bingye@umich.edu
 '''
 
+# Configure the logging system.
 # Log the load of this module (by the module loader, on first import).
-# Intentionally positioning these statements before other imports, against the
-# guidance of PEP-8, to log the load before other imports log messages.
+#
+# These statements are intentionally positioned before this module's
+# other imports (against the guidance of PEP 8), to log the load of this
+# module before other import statements are executed and produce their
+# own log messages.
+import inspect
 import logging
+logrecords = [logging.LogRecord(lineno=inspect.stack()[0].lineno,
+    level=logging.DEBUG, exc_info=None, name=__name__, pathname=__file__,
+    msg='%s', args=(f'loading {__file__}',),
+    )]
+
+import LabGym.mylogging as mylogging
+mylogging.config(logrecords)
+mylogging.handle(logrecords)
+
 logger = logging.getLogger(__name__)
-logger.debug('loading %s', __file__)
 logger.debug('%s: %r', '__name__', __name__)
 
 
-
-
-import requests
+# Standard library imports.
 from pathlib import Path
-from packaging import version
-from LabGym import __version__,gui_main
 
+# Related third party imports.
+import requests
+from packaging import version
+
+# Local application/library specific imports.
+from LabGym import __version__, gui_main
 
 
 def main():
@@ -59,8 +74,6 @@ def main():
 
 		pass
 
-
-	# raise Exception('intentional abend')
 
 	gui_main.main_window()
 

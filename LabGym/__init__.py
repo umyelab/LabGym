@@ -16,39 +16,5 @@ USA
 Email: bingye@umich.edu
 '''
 
-# standard library imports
-import logging
-
-# Log the load of this module (by the module loader, on first import).
-# Create the log record manually, because logging isn't configured yet.
-logrecords = [logging.LogRecord(
-    level=logging.DEBUG, msg='loading %s', args=(__file__),
-    lineno=24, exc_info=None, name=__name__, pathname=__file__,
-    )]
-
-# local application/library specific imports
-import LabGym.mylogging as mylogging
-
-
-# Configure logging, and append any new log records to logrecords.
-try:
-    mylogging.config(logrecords, myname=__name__)
-except:
-    logrecords.append(logging.LogRecord(
-        level=logging.WARNING,
-        msg='trouble configuring logging', args=None,
-        lineno=42, exc_info=None, name=__name__, pathname=__file__,
-        ))
-
-    logging.basicConfig(level=logging.DEBUG)
-
-# Now that logging is configured, handle the manually created log records.
-handle = logging.getLogger().handle  # the root logger's handle method
-for logrecord in logrecords:
-    # get the effectivelevel of the logger to which the record was attributed
-    effectivelevel = logging.getLogger(logrecord.name).getEffectiveLevel()
-    if logrecord.levelno >= effectivelevel:
-        handle(logrecord)
-
 
 __version__='2.8.1'
