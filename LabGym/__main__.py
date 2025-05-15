@@ -35,13 +35,14 @@ mylogging.config(logrecords)
 mylogging.handle(logrecords)
 
 logger = logging.getLogger(__name__)
-logger.debug('%s: %r', '__name__', __name__)
+logger.debug('%s: %r', '(__name__, __package__)', (__name__, __package__))
 
 
 # Standard library imports.
 from pathlib import Path
 
 # Related third party imports.
+import certifi  # Python package for providing Mozilla's CA Bundle.
 import requests
 from packaging import version
 
@@ -50,7 +51,23 @@ from LabGym import __version__, gui_main
 
 
 def main():
+	"""Perform pre-op greetings, then display the main window."""
 
+	handshake()
+	gui_main.main_window()
+
+
+def handshake():
+	"""Perform some initial pre-op greetings with outside resources.
+
+	1.  Try to consult pypi re current version, and compare with version.
+	2.  Send https to ..., to expose cacert issue, and fail early if present.
+
+	Generally, it's better to expose any inevitable problems sooner
+	rather than later.
+	"""
+
+	# 1.  Try to consult pypi re current version, and compare with version.
 	try:
 
 		current_version=version.parse(__version__)
@@ -70,12 +87,13 @@ def main():
 			print(f'Consider upgrading LabGym by using the command "{upgrade_command}".')
 			print('For the details of new changes, check https://github.com/umyelab/LabGym.\n')
 
-	except:
+	except Exception as e:
+		logger.warning('Exception: %r', e)
+		logger.warning('Trouble confirming sw version is current.')
 
-		pass
 
-
-	gui_main.main_window()
+	# 2.  Send https to ..., to expose cacert issue, and fail early if present.
+	logger.debug('%s: %r', 'certifi.where()', certifi.where())
 
 
 
