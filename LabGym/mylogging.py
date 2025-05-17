@@ -2,7 +2,7 @@
 
 Functions
     config -- Configure logging based on configfile, or fall back to
-        basicConfig().
+        logging.basicConfig().
     handle -- Use the root logger's handle method to handle each logrecord.
 
 Example 1
@@ -309,8 +309,12 @@ def config(*args):
         If an exception is raised, then call logging.basicConfig(level=
         logging.DEBUG) to configure logging.
 
-    (2) After configuring per (1), honor command-line args that
-        override the root logger level (-v, --verbose, --logginglevel DEBUG).
+    (2) Redirect all warnings issued by the warnings module to the 
+        logging system.
+
+    (3) After configuring the logging system per configdict, honor 
+        command-line args that override the root logger level (-v, 
+        --verbose, --logginglevel DEBUG).
 
     While performing this work, append any new log records to
     logrecords (for later handling).
@@ -341,7 +345,10 @@ def config(*args):
 
             logging.basicConfig(level=logging.DEBUG)
 
-        # (2) Honor command-line args that override the root logger level.
+        # (2) Redirect all warnings ... to the logging system.
+        logging.captureWarnings(True)
+
+        # (3) Honor command-line args that override the root logger level.
         try:
             levelname = get_logginglevel_from_sysargv()
             if levelname is not None:
