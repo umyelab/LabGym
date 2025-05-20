@@ -38,36 +38,41 @@ logger = logging.getLogger(__name__)
 logger.debug('%s: %r', '(__name__, __package__)', (__name__, __package__))
 
 
-# Standard library imports.
+# standard library imports
+import os
 from pathlib import Path
+import sys
 
-# Related third party imports.
+# related third party imports
 import certifi  # Python package for providing Mozilla's CA Bundle.
 import requests
 from packaging import version
 
-# Local application/library specific imports.
+# local application/library specific imports
 from LabGym import __version__, gui_main
 
 
 def main():
-	"""Perform pre-op greetings, then display the main window."""
+	"""Perform pre-op probes, then display the main window."""
 
 	handshake()
 	gui_main.main_window()
 
 
 def handshake():
-	"""Perform some initial pre-op greetings with outside resources.
+	"""Perform some pre-op probes and checks with outside resources.
 
-	1.  Try to consult pypi re current version, and compare with version.
-	2.  Send https to ..., to expose cacert issue, and fail early if present.
+	1.  Try to compare this LabGym version with pypi's LabGym
+	    version, and warn if this LabGym is stale.
+	2.  Send http get to https://dl.fbaipublic.com to expose a
+	    potential cacert trouble, and fail early if trouble presents.
 
 	Generally, it's better to expose any inevitable problems sooner
 	rather than later.
 	"""
 
-	# 1.  Try to consult pypi re current version, and compare with version.
+	# 1.  Try to compare this LabGym version with pypi's LabGym
+	#     version, and warn if this LabGym is stale.
 	try:
 
 		current_version=version.parse(__version__)
@@ -89,12 +94,46 @@ def handshake():
 
 	except Exception as e:
 		logger.warning('Exception: %r', e)
-		logger.warning('Trouble confirming sw version is current.')
+		logger.warning('Trouble confirming sw version is up to date.')
 
 
-	# 2.  Send https to ..., to expose cacert issue, and fail early if present.
-	logger.debug('%s: %r', 'certifi.where()', certifi.where())
+	# 2.  Send http get to https://dl.fbaipublic.com to expose a
+	#     potential cacert trouble, and fail early if trouble presents.
 
+	# On 2025-05-19 Google AI says,
+	# Detectron2 relies on dl.fbaipublicfiles.com for distributing 
+	# pre-built binaries and model weights. 
+	# f you're using the pre-built versions of Detectron2 or 
+	# downloading pre-trained models, your system will likely be 
+	# downloading files from dl.fbaipublicfiles.com. 
+
+	url = 'https://dl.fbaipublicfiles.com/detectron2'
+
+	# With good cacerts.pem & cert chain, requests.get(url) responds with
+	#     <Response [403]>
+	#
+	# With a deficient cacerts.pem, or defective cert chain, 
+	# requests.get(url) raises an exception, like
+	#     requests.exceptions.SSLError: HTTPSConnectionPool(host='dl.fbaipublicfiles.com', port=443): Max retries exceeded with url: /detectron2 (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1007)')))
+
+	try:
+		# requests.get(url) returns <Response [403]>
+		response = requests.get(url)
+	except requests.exceptions.SSLError as e:
+		# logger.error(e) 
+		logger.error(f'{e.__module__}.{e.__class__.__name__}: {e}')
+		logger.error('Trouble in SSL cert chain...')
+
+		logger.debug('%s: %r', 'os.environ.get("REQUESTS_CA_BUNDLE")',
+			os.environ.get("REQUESTS_CA_BUNDLE"))
+		logger.debug('%s: %r', 'os.environ.get("CURL_CA_BUNDLE")',
+			os.environ.get("CURL_CA_BUNDLE"))
+		logger.debug('%s: %r', 'requests.certs.where()',
+			requests.certs.where())
+		logger.debug('%s: %r', 'certifi.where()', 
+			certifi.where())
+
+		sys.exit(1)
 
 
 if __name__=='__main__':
