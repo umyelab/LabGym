@@ -1209,7 +1209,7 @@ class AnalyzeAnimalDetector():
 					if show_legend:
 						n=1
 						for i in colors:
-							cv2.putText(frame,i,(10,intvl*n),cv2.FONT_HERSHEY_SIMPLEX,scl,colors[i],text_tk)
+							cv2.putText(frame,str(i),(10,intvl*n),cv2.FONT_HERSHEY_SIMPLEX,scl,colors[i],text_tk)
 							n+=1
 
 				current_animal_number=0
@@ -1243,7 +1243,7 @@ class AnalyzeAnimalDetector():
 
 									if self.categorize_behavior:
 										if self.behavior_mode!=1:
-											cv2.putText(frame,animal_name+' '+str(i),(cx-10,cy-25),cv2.FONT_HERSHEY_SIMPLEX,text_scl,animal_color,text_tk)	
+											cv2.putText(frame,str(animal_name)+' '+str(i),(cx-10,cy-25),cv2.FONT_HERSHEY_SIMPLEX,text_scl,animal_color,text_tk)	
 										if self.event_probability[animal_name][i][frame_count_analyze][0]=='NA':
 											if self.behavior_mode==1:
 												cv2.drawContours(frame,self.animal_contours[animal_name][i][frame_count_analyze],-1,(255,255,255),1)
@@ -1259,7 +1259,7 @@ class AnalyzeAnimalDetector():
 													cv2.drawContours(frame,self.animal_contours[animal_name][i][frame_count_analyze],-1,color,1)
 												else:
 													cv2.drawContours(frame,[self.animal_contours[animal_name][i][frame_count_analyze]],0,color,1)
-												cv2.putText(frame,name+' '+probability,(cx-10,cy-10),cv2.FONT_HERSHEY_SIMPLEX,text_scl,color,text_tk)
+												cv2.putText(frame,str(name)+' '+probability,(cx-10,cy-10),cv2.FONT_HERSHEY_SIMPLEX,text_scl,color,text_tk)
 											else:
 												if self.behavior_mode==1:
 													cv2.drawContours(frame,self.animal_contours[animal_name][i][frame_count_analyze],-1,(255,255,255),1)
@@ -1267,7 +1267,7 @@ class AnalyzeAnimalDetector():
 													cv2.drawContours(frame,[self.animal_contours[animal_name][i][frame_count_analyze]],0,(255,255,255),1)
 												cv2.putText(frame,'NA',(cx-10,cy-10),cv2.FONT_HERSHEY_SIMPLEX,text_scl,(255,255,255),text_tk)
 									else:
-										cv2.putText(frame,animal_name+' '+str(i),(cx-10,cy-10),cv2.FONT_HERSHEY_SIMPLEX,text_scl,animal_color,text_tk)
+										cv2.putText(frame,str(animal_name)+' '+str(i),(cx-10,cy-10),cv2.FONT_HERSHEY_SIMPLEX,text_scl,animal_color,text_tk)
 										cv2.drawContours(frame,[self.animal_contours[animal_name][i][frame_count_analyze]],0,animal_color,1)
 
 							current_animal_number+=1
