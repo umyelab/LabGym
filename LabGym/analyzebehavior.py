@@ -707,7 +707,7 @@ class AnalyzeAnimal():
 					if show_legend:
 						n=1
 						for i in colors:
-							cv2.putText(frame,i,(10,intvl*n),cv2.FONT_HERSHEY_SIMPLEX,scl,colors[i],text_tk)
+							cv2.putText(frame,str(i),(10,intvl*n),cv2.FONT_HERSHEY_SIMPLEX,scl,colors[i],text_tk)
 							n+=1
 
 				current_animal_number=0
@@ -750,7 +750,7 @@ class AnalyzeAnimal():
 												cv2.drawContours(frame,self.animal_contours[i][frame_count_analyze],-1,color,1)
 											else:
 												cv2.drawContours(frame,[self.animal_contours[i][frame_count_analyze]],0,color,1)
-											cv2.putText(frame,name+' '+probability,(cx+10,cy-10),cv2.FONT_HERSHEY_SIMPLEX,text_scl,color,text_tk)
+											cv2.putText(frame,str(name)+' '+probability,(cx+10,cy-10),cv2.FONT_HERSHEY_SIMPLEX,text_scl,color,text_tk)
 										else:
 											if interact_all:
 												cv2.drawContours(frame,self.animal_contours[i][frame_count_analyze],-1,(255,255,255),1)
