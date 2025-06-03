@@ -1050,8 +1050,12 @@ def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_w
 		h_resize=int(framewidth*height/width)
 
 	if crop_frame:
-		w=int(right-left)
-		h=int(bottom-top)
+		if framewidth is not None:
+			w=int(min(right,w_resize)-left)
+			h=int(min(bottom,h_resize)-top)
+		else:
+			w=int(min(right,width)-left)
+			h=int(min(bottom,height)-top)
 	else:
 		if framewidth is not None:
 			w=w_resize
@@ -1098,7 +1102,7 @@ def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_w
 			frame=cv2.resize(frame,(w_resize,h_resize),interpolation=cv2.INTER_AREA)
 
 		if crop_frame:
-			frame=frame[top:bottom,left:right,:]
+			frame=frame[top:min(bottom,h),left:min(right,w),:]
 
 		if enhance_contrast:
 			frame=frame*contrast
@@ -1108,7 +1112,7 @@ def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_w
 
 		if trim_video:
 			t=frame_count/fps
-			if t>time_windows[-1][-1]:
+			if t>float(time_windows[-1][-1]):
 				break
 			for i in time_windows:
 				if float(i[0])<=t<=float(i[1]):
