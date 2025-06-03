@@ -1108,6 +1108,8 @@ def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_w
 
 		if trim_video:
 			t=frame_count/fps
+			if t>time_windows[-1][-1]:
+				break
 			for i in time_windows:
 				if float(i[0])<=t<=float(i[1]):
 					writer.write(frame)
