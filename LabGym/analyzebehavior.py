@@ -804,7 +804,7 @@ class AnalyzeAnimal():
 					if 'count' in parameter_to_analyze:
 						self.all_behavior_parameters[behavior_name]['count'][i]=0
 					if 'duration' in parameter_to_analyze:
-						self.all_behavior_parameters[behavior_name]['duration'][i]=0.0
+						self.all_behavior_parameters[behavior_name]['duration'][i]=0
 					if '4 locomotion parameters' in parameter_to_analyze:
 						self.all_behavior_parameters[behavior_name]['distance'][i]=0.0
 					if 'latency' in parameter_to_analyze:
@@ -841,7 +841,7 @@ class AnalyzeAnimal():
 									self.all_behavior_parameters[behavior_name]['count'][i]+=1
 									
 							if 'duration' in parameter_to_analyze:
-								self.all_behavior_parameters[behavior_name]['duration'][i]+=round(1/self.fps,2)
+								self.all_behavior_parameters[behavior_name]['duration'][i]+=1
 
 							if 'latency' in parameter_to_analyze:
 								if self.all_behavior_parameters[behavior_name]['latency'][i]=='NA':
@@ -1072,8 +1072,8 @@ class AnalyzeAnimal():
 				
 					if 'duration' in parameter_to_analyze:
 						for behavior_name in self.all_behavior_parameters:
-							if self.all_behavior_parameters[behavior_name]['duration'][i]!=0.0:
-								self.all_behavior_parameters[behavior_name]['duration'][i]+=round(self.length/self.fps,2)
+							if self.all_behavior_parameters[behavior_name]['duration'][i]!=0:
+								self.all_behavior_parameters[behavior_name]['duration'][i]=round(self.all_behavior_parameters[behavior_name]['duration'][i]/self.fps,2)
 							else:
 								self.all_behavior_parameters[behavior_name]['duration'][i]='NA'
 
