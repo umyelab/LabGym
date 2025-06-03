@@ -1391,7 +1391,7 @@ def sort_examples_from_csv(path_to_examples,out_path):
 			row_in_annotation=annotation.loc[frame_index]
 			for behavior_name,score in row_in_annotation.items():
 				if str(behavior_name)!='Unnamed: 0':
-					if score==1:
+					if score==1 and os.path.exists(path_to_animation) and os.path.exists(path_to_pattern_image):
 						shutil.move(path_to_animation,os.path.join(out_path,str(behavior_name),basename))
 						shutil.move(path_to_pattern_image,os.path.join(out_path,str(behavior_name),os.path.splitext(basename)[0]+'.jpg'))
 

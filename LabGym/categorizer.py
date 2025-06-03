@@ -77,6 +77,8 @@ class DatasetFromPath_AA(Sequence):
 				if classname not in classnames:
 					classnames.append(classname)
 
+		np.random.shuffle(pattern_image_paths)
+
 		classnames.sort()
 		labels=np.array(classnames)
 		lb=LabelBinarizer()
@@ -155,6 +157,8 @@ class DatasetFromPath(Sequence):
 				classname=pattern_image.split('.jpg')[0].split('_')[-1]
 				if classname not in classnames:
 					classnames.append(classname)
+
+		np.random.shuffle(pattern_image_paths)
 
 		classnames.sort()
 		labels=np.array(classnames)
@@ -367,17 +371,21 @@ class Categorizers():
 				else:
 					angle=None
 
-				if 'flph' in m:
+				if 'flphflpv' in m:
+					code=-1
+				elif 'flph' in m:
 					code=1
 				elif 'flpv' in m:
 					code=0
 				else:
 					code=None
 
-				if 'brih' in m:
+				if 'brihbril' in m:
+					beta=np.random.uniform(-50,50)
+				elif 'brih' in m:
 					beta=np.random.uniform(10,50)
 				elif 'bril' in m:
-					beta=np.random.uniform(-50,10)
+					beta=np.random.uniform(-50,-10)
 				else:
 					beta=None
 
