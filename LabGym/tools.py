@@ -1102,7 +1102,10 @@ def preprocess_video(path_to_video,out_folder,framewidth,trim_video=False,time_w
 			frame=cv2.resize(frame,(w_resize,h_resize),interpolation=cv2.INTER_AREA)
 
 		if crop_frame:
-			frame=frame[top:min(bottom,h),left:min(right,w),:]
+			if framewidth is not None:
+				frame=frame[top:min(bottom,h_resize),left:min(right,w_resize),:]
+			else:
+				frame=frame[top:min(bottom,height),left:min(right,width),:]
 
 		if enhance_contrast:
 			frame=frame*contrast
