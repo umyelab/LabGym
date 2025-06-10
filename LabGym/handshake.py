@@ -49,17 +49,24 @@ from LabGym import __version__
 def handshake() -> None:
 	"""Perform some pre-op probes and checks with outside resources.
 
-	1.  Try to compare this LabGym version with pypi's LabGym
-	    version, and warn if this LabGym is stale.
-	2.  Send http get to https://dl.fbaipublic.com to expose a
-	    potential cacert trouble, and fail early if trouble presents.
-
 	Generally, it's better to expose any inevitable problems sooner
 	rather than later.
 	"""
 
-	# 1.  Try to compare this LabGym version with pypi's LabGym
-	#     version, and warn if this LabGym is stale.
+	# Warn if the installed sw is stale.
+	probe_pypi_check_freshness()
+
+	# Check for cacert trouble which might be a fouled installation.
+	probe_url_to_verify_cacert()
+
+
+def probe_pypi_check_freshness() -> None:
+	"""Probe pypi for sw version, and warn if the installed sw is stale.
+
+	Probe pypi for the LabGym sw version, and compare with the 
+	installed sw version, and warn if the installed sw is stale.
+	"""
+
 	try:
 
 		current_version=version.parse(__version__)
@@ -86,6 +93,8 @@ def handshake() -> None:
 		logger.warning('Trouble confirming sw version is up to date.')
 
 
+def probe_url_to_verify_cacert() -> None:
+	# Check for cacert trouble which might be a fouled installation.
 	# 2.  Send http get to https://dl.fbaipublic.com to expose a
 	#     potential cacert trouble, and fail early if trouble presents.
 
@@ -108,6 +117,10 @@ def handshake() -> None:
 	try:
 		# requests.get(url) returns <Response [403]>
 		response = requests.get(url, timeout=8)
+		logger.debug('%s: %r', 'certifi.where()',
+			certifi.where())
+		logger.debug('%s: %r', 'os.environ.get("REQUESTS_CA_BUNDLE")',
+			os.environ.get("REQUESTS_CA_BUNDLE"))
 	except requests.exceptions.SSLError as e:
 		# logger.error(e)
 
