@@ -14,10 +14,11 @@ Example
 # import logging
 import os
 import sys
+import textwrap
 from typing import List
 
-
-# class LabGymError(Exception): pass
+# local application/library specific imports
+import LabGym
 
 
 class Values:
@@ -35,7 +36,10 @@ class Values:
 def parse_args() -> Values:
     """Parse command-line args and return a Values object packed with results.
 
-    If the help option is encountered, print the help message and exit 0.
+    If the help option is encountered, print the help message and
+    exit 0.
+    If the version option is encountered, print the version message and
+    exit 0.
 
     If a usage error is recognized, then print the error message and the
     help message to stderr, and exit 1.
@@ -48,14 +52,15 @@ def parse_args() -> Values:
         If an option is specified more than once, then the rightmost
         specification overrides those to its left.
 
-    *   An arg going through the pattern matching... if it doesn't begin
-        with '-', it is considered the first positional command-line arg
-        and ends the option processing.  The list of positional args
-        remaining after option processing is stored in valobj.args.
+    *   As an arg is going through the pattern matching... if it doesn't
+        begin with '-', it is considered the first positional command-
+        line arg and ends the option processing.  The list of positional
+        args remaining after option processing is stored in valobj.args.
 
     *   A '--' arg is recognized as separating options from positional
-        command-line args.  It's used if the first positional command-
-        line arg starts with '-', to prevent processing it as an option.
+        command-line args.  It's necessary if the first positional
+        command-line arg starts with '-', to prevent processing it as an
+        option.
     """
 
     valobj = Values()
@@ -66,25 +71,37 @@ def parse_args() -> Values:
     basename = os.path.basename(args[0])  # basename used for help msg
     args = args[1:]  # shift 1
 
-    helpmsg = f"""
-Usage: {basename} [options]
+    helpmsg = textwrap.dedent(f"""\
+        Usage: {basename} [options]
 
-Options:
-  --loggingconfig FILE  Use the toml- or yaml- file FILE to configure
-                        the logging system.
-  --logginglevel LEVEL  Set the root logger's level to logging.LEVEL,
-                        where LEVEL is a level recognized by the logging
-                        system, like ERROR, WARNING, INFO, or DEBUG.
-  --debug               Equivalent to --logginglevel DEBUG.
-  -v, --verbose         Equivalent to --logginglevel DEBUG.
-  -h, --help            Show this help message and exit.
-        """.strip()
+        Options:
+          --loggingconfig FILE  Use the toml- or yaml- file FILE to configure
+                                the logging system.
+          --logginglevel LEVEL  Set the root logger's level to logging.LEVEL,
+                                where LEVEL is a level recognized by the
+                                logging system, like ERROR, WARNING, INFO,
+                                or DEBUG.
+          --debug               Equivalent to --logginglevel DEBUG.
+          -v, --verbose         Equivalent to --logginglevel DEBUG.
+          --version             Show the LabGym version and exit.
+          -h, --help            Show this help message and exit.
+        """)
 
     while len(args) > 0:
         arg = args[0]
 
         # For arg value match expressions below, prefer value-in-list
         # instead of value-in-tuple.
+        #
+        # Why?  A value-in-tuple expression works fine.  But if an
+        # intended 1-tuple of strings is erroneously constructed without
+        # the trailing comma, it is syntactically legitimate but is a
+        # naked string instead of a 1-tuple and matches not only the
+        # full string, but also substrings.
+        # The expression
+        #     arg in ('--foo')
+        # is True for '--foo', but also for the substrings like
+        # '--', '--f', '-f', and 'foo', which is bad.
 
         # custom options
         if arg in ['--loggingconfig']:
@@ -103,8 +120,13 @@ Options:
 
         # standard options
         elif arg in ['-h', '--help']:
-            # print help msg and exit
+            # Print help msg to stdout and exit 0.
             print(helpmsg)
+            sys.exit()
+
+        elif arg in ['--version']:
+            # Print version msg to stdout and exit 0.
+            print(f'LabGym.__version__: {LabGym.__version__}')
             sys.exit()
 
         elif arg == '--':
@@ -115,7 +137,7 @@ Options:
         elif arg.startswith('-'):
             # unrecognized option.  Print msgs to stderr and exit 1.
             sys.exit(
-                f'{basename}: bad usage -- unrecognized option {arg}'
+                f'{basename}: bad usage -- unrecognized option {arg!r}'
                 f'\n{helpmsg}')
 
         else:
@@ -134,8 +156,3 @@ Options:
             f'\n{helpmsg}')
 
     return valobj
-
-
-# def error(msg: str) -> None:
-#     print(f'ERROR: {msg}', file=sys.stderr)
-#     sys.exit(1)

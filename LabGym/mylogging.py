@@ -93,6 +93,7 @@ import yaml
 
 # local application/library specific imports
 import LabGym.myargparse as myargparse
+# from LabGym import myargparse  # pylint suggests this instead
 
 
 # _mywarning -- Return a WARNING LogRecord for a string or exception.
@@ -189,7 +190,8 @@ def get_configdict(configfile: str) -> Dict:
         with open(configfile, 'rb') as f:
             configdict = tomllib.load(f)
     elif configfile.endswith('.yaml'):
-        with open(configfile, 'r') as f:
+        # with open(configfile, 'r') as f:
+        with open(configfile, 'r', encoding='utf-8') as f:
             configdict = yaml.safe_load(f)
     else:
         raise Exception('bad extension -- configfile: {configfile!r}')
