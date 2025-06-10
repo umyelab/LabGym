@@ -11,7 +11,6 @@ Example
 """
 
 # standard library imports
-# import logging
 import os
 import sys
 import textwrap

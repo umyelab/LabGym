@@ -1,3 +1,4 @@
+# pylint: disable=line-too-long
 """Provide functions for configuring the logging system.
 
 Functions
@@ -74,13 +75,13 @@ For Example 3,
     WARNING:LabGym.mylogging:Trouble configuring logging.  Calling logging.basicConfig(level=logging.DEBUG)
     DEBUG:LabGym.__main__:__name__: 'LabGym.__main__'
 """  # noqa: E501
+# pylint: enable=line-too-long
 
-# standard library imports
+# Standard library imports.
 import inspect
 import logging.config
 import os
 # import pprint
-# import sys
 try:
     # tomllib is included in the Python Standard Library since version 3.11
     import tomllib  # type: ignore
@@ -88,12 +89,11 @@ except ModuleNotFoundError:
     import tomli as tomllib
 from typing import Dict, List
 
-# related third party imports
+# Related third party imports.
 import yaml
 
-# local application/library specific imports
-import LabGym.myargparse as myargparse
-# from LabGym import myargparse  # pylint suggests this instead
+# Local application/library specific imports.
+from LabGym import myargparse
 
 
 # _mywarning -- Return a WARNING LogRecord for a string or exception.
