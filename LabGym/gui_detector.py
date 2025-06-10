@@ -16,6 +16,13 @@ USA
 Email: bingye@umich.edu
 '''
 
+# Log the load of this module (by the module loader, on first import).
+# Intentionally positioning these statements before other imports, against the
+# guidance of PEP-8, to log the load before other imports log messages.
+import logging
+logger =  logging.getLogger(__name__)
+logger.debug('loading %s', __file__)
+
 
 
 from .tools import extract_frames
