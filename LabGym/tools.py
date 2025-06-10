@@ -1068,8 +1068,12 @@ def preprocess_video(
 		h_resize=int(framewidth*height/width)
 
 	if crop_frame:
-		w=int(right-left)
-		h=int(bottom-top)
+		if framewidth is not None:
+			w=int(min(right,w_resize)-left)
+			h=int(min(bottom,h_resize)-top)
+		else:
+			w=int(min(right,width)-left)
+			h=int(min(bottom,height)-top)
 	else:
 		if framewidth is not None:
 			w=w_resize
@@ -1115,7 +1119,10 @@ def preprocess_video(
 			frame=cv2.resize(frame,(w_resize,h_resize),interpolation=cv2.INTER_AREA)
 
 		if crop_frame:
-			frame=frame[top:bottom,left:right,:]
+			if framewidth is not None:
+				frame=frame[top:min(bottom,h_resize),left:min(right,w_resize),:]
+			else:
+				frame=frame[top:min(bottom,height),left:min(right,width),:]
 
 		if enhance_contrast:
 			frame=frame*contrast
@@ -1125,6 +1132,8 @@ def preprocess_video(
 
 		if trim_video:
 			t=frame_count/fps
+			if t>float(time_windows[-1][-1]):
+				break
 			for i in time_windows:
 				if float(i[0])<=t<=float(i[1]):
 					writer.write(frame)
@@ -1391,7 +1400,7 @@ def sort_examples_from_csv(path_to_examples,out_path):
 			row_in_annotation=annotation.loc[frame_index]
 			for behavior_name,score in row_in_annotation.items():
 				if str(behavior_name)!='Unnamed: 0':
-					if score==1:
+					if score==1 and os.path.exists(path_to_animation) and os.path.exists(path_to_pattern_image):
 						shutil.move(path_to_animation,os.path.join(out_path,str(behavior_name),basename))
 						shutil.move(path_to_pattern_image,os.path.join(out_path,str(behavior_name),os.path.splitext(basename)[0]+'.jpg'))
 

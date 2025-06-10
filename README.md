@@ -66,7 +66,9 @@ A tutorial video for a high-level understanding of what LabGym can do and how it
 
 [![Watch the video](https://img.youtube.com/vi/YoYhHMPbf_o/hqdefault.jpg)](https://youtu.be/YoYhHMPbf_o)
 
-Cite LabGym: [LabGym 1.x](https://www.cell.com/cell-reports-methods/fulltext/S2667-2375(23)00026-7) & [LabGym 2.x](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1)
+Cite LabGym:
+1. Yujia Hu, Carrie R Ferrario, Alexander D Maitland, Rita B Ionides, Anjesh Ghimire, Brendon Watson, Kenichi Iwasaki, Hope White, Yitao Xi, Jie Zhou, Bing Ye. ***LabGym*: Quantification of user-defined animal behaviors using learning-based holistic assessment.** Cell Reports Methods. 2023 Feb 24;3(3):100415. doi: 10.1016/j.crmeth.2023.100415. [Link](https://www.cell.com/cell-reports-methods/fulltext/S2667-2375(23)00026-7)
+2. Kelly Goss, Lezio S. Bueno-Junior, Katherine Stangis, Théo Ardoin, Hanna Carmon, Jie Zhou, Rohan Satapathy, Isabelle Baker, Carolyn E. Jones-Tinsley, Miranda M. Lim, Brendon O. Watson, Cédric Sueur, Carrie R. Ferrario, Geoffrey G. Murphy, Bing Ye, Yujia Hu. **Quantifying social roles in multi-animal videos using subject-aware deep-learning.** bioRxiv. 2024 Jul 10:2024.07.07.602350. doi: 10.1101/2024.07.07.602350. [Link](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1)
 
 <p>&nbsp;</p>
 
@@ -121,7 +123,7 @@ To determine the optimal time window for background extraction, consider the ani
 This method incorporates [Detectron2](https://github.com/facebookresearch/detectron2), offering more versatility but at a slower processing speed compared to the **‘Subtract Background’** method. It excels in differentiating individual animals or objects, even during collisions, which is particularly beneficial for the **'Interactive advanced'** mode. To enhance processing speed, use a GPU or reduce the frame size during analysis. To train a **Detector** in **‘Training Module’**: 
 
    1. Click the **‘Generate Image Examples’** button to extract image frames from videos.
-   2. Use free online annotation tools like [Roboflow](https://roboflow.com) to annotate the outlines of animals or objects in these images. For annotation type, choose 'Instance Segmentation', and export the annotations in 'COCO instance segmentation' format, which generates a ‘*.json’ file. Importantly, when you generate a version of dataset, do NOT perform any preprocessing steps such as ‘auto orient’ and ‘resize (stretch)’. Instead, perform some augmentation based on which manipulations may occur in real scenarios.
+   2. Annotate the outlines of animals or objects in these images. We recommend using [EZannot](https://github.com/yujiahu415/EZannot). It's tailored to LabGym's **Detectors**. It's free and 100% private and implements AI assistance that annotates the entire outline of an object with just one mouse click. It also performs image augmentation that expands an annotated image dataset to 135 folds of its original size. Alternatively, you may use online annotation tools like [Roboflow](https://roboflow.com), which makes your data public in its free version. If you use Roboflow, for annotation type, choose 'Instance Segmentation', and export the annotations in 'COCO instance segmentation' format, which generates a ‘*.json’ file. Importantly, when you generate a version of dataset, do NOT perform any preprocessing steps such as ‘auto orient’ and ‘resize (stretch)’. Instead, perform some augmentation based on which manipulations may occur in real scenarios. Note that the free augmentation methods in Roboflow is 3X, which is way less than those in [EZannot](https://github.com/yujiahu415/EZannot) (135X). More augmentations will result in better generalizability of the trained **Detectors** and require less images to annotate.
    3. Use the **‘Train Detectors’** button to input these annotated images and commence training your **Detectors**.
 
 <p>&nbsp;</p>

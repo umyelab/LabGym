@@ -1120,9 +1120,10 @@ class AnalyzeAnimalDetector():
 		self.log.append('Identity correction completed!')
 
 
-	def annotate_video(self,animal_to_include,behavior_to_include,show_legend=True):
+	def annotate_video(self,animal_to_include,ID_colors,behavior_to_include,show_legend=True):
 
 		# animal_to_include: animals / objects that are included in the annotation
+		# ID_colors: the colors for animal / objects identities
 		# behavior_to_include: behaviors that are included in the annotation
 		# show_legend: whether to show the legend of behavior names in video frames
 
@@ -1136,6 +1137,13 @@ class AnalyzeAnimalDetector():
 		background=np.zeros_like(self.background)
 		if self.framewidth is not None:
 			background=cv2.resize(background,(self.framewidth,self.frameheight),interpolation=cv2.INTER_AREA)
+
+		if self.behavior_mode==1:
+			animal_colors={self.animal_kinds[0]:ID_colors[0]}
+		else:
+			animal_colors={}
+			for n,animal_name in enumerate(animal_to_include):
+				animal_colors[animal_name]=ID_colors[min(n,len(ID_colors)-1)]
 
 		if self.categorize_behavior:
 			colors={}
@@ -1201,7 +1209,7 @@ class AnalyzeAnimalDetector():
 					if show_legend:
 						n=1
 						for i in colors:
-							cv2.putText(frame,i,(10,intvl*n),cv2.FONT_HERSHEY_SIMPLEX,scl,colors[i],text_tk)
+							cv2.putText(frame,str(i),(10,intvl*n),cv2.FONT_HERSHEY_SIMPLEX,scl,colors[i],text_tk)
 							n+=1
 
 				current_animal_number=0
@@ -1209,6 +1217,8 @@ class AnalyzeAnimalDetector():
 				if frame_count_analyze not in self.skipped_frames:
 
 					for animal_name in animal_to_include:
+
+						animal_color=animal_colors[animal_name]
 
 						for i in self.animal_contours[animal_name]:
 
@@ -1229,11 +1239,11 @@ class AnalyzeAnimalDetector():
 										cv2.circle(background,(cx,cy),int(text_tk),(abs(int(color_diff*(total_animal_number-current_animal_number)-255)),int(color_diff*current_animal_number/2),int(color_diff*(total_animal_number-current_animal_number)/2)),-1)
 
 									if self.behavior_mode!=1:
-										cv2.circle(frame,(cx,cy),int(text_tk*3),(255,0,0),-1)
+										cv2.circle(frame,(cx,cy),int(text_tk*3),animal_color,-1)
 
 									if self.categorize_behavior:
 										if self.behavior_mode!=1:
-											cv2.putText(frame,animal_name+' '+str(i),(cx-10,cy-25),cv2.FONT_HERSHEY_SIMPLEX,text_scl,(255,255,255),text_tk)	
+											cv2.putText(frame,str(animal_name)+' '+str(i),(cx-10,cy-25),cv2.FONT_HERSHEY_SIMPLEX,text_scl,animal_color,text_tk)	
 										if self.event_probability[animal_name][i][frame_count_analyze][0]=='NA':
 											if self.behavior_mode==1:
 												cv2.drawContours(frame,self.animal_contours[animal_name][i][frame_count_analyze],-1,(255,255,255),1)
@@ -1249,7 +1259,7 @@ class AnalyzeAnimalDetector():
 													cv2.drawContours(frame,self.animal_contours[animal_name][i][frame_count_analyze],-1,color,1)
 												else:
 													cv2.drawContours(frame,[self.animal_contours[animal_name][i][frame_count_analyze]],0,color,1)
-												cv2.putText(frame,name+' '+probability,(cx-10,cy-10),cv2.FONT_HERSHEY_SIMPLEX,text_scl,color,text_tk)
+												cv2.putText(frame,str(name)+' '+probability,(cx-10,cy-10),cv2.FONT_HERSHEY_SIMPLEX,text_scl,color,text_tk)
 											else:
 												if self.behavior_mode==1:
 													cv2.drawContours(frame,self.animal_contours[animal_name][i][frame_count_analyze],-1,(255,255,255),1)
@@ -1257,8 +1267,8 @@ class AnalyzeAnimalDetector():
 													cv2.drawContours(frame,[self.animal_contours[animal_name][i][frame_count_analyze]],0,(255,255,255),1)
 												cv2.putText(frame,'NA',(cx-10,cy-10),cv2.FONT_HERSHEY_SIMPLEX,text_scl,(255,255,255),text_tk)
 									else:
-										cv2.putText(frame,animal_name+' '+str(i),(cx-10,cy-10),cv2.FONT_HERSHEY_SIMPLEX,text_scl,(255,255,255),text_tk)
-										cv2.drawContours(frame,[self.animal_contours[animal_name][i][frame_count_analyze]],0,(255,255,255),1)
+										cv2.putText(frame,str(animal_name)+' '+str(i),(cx-10,cy-10),cv2.FONT_HERSHEY_SIMPLEX,text_scl,animal_color,text_tk)
+										cv2.drawContours(frame,[self.animal_contours[animal_name][i][frame_count_analyze]],0,animal_color,1)
 
 							current_animal_number+=1
 
@@ -1302,7 +1312,7 @@ class AnalyzeAnimalDetector():
 						if 'count' in parameter_to_analyze:
 							self.all_behavior_parameters[animal_name][behavior_name]['count'][i]=0
 						if 'duration' in parameter_to_analyze:
-							self.all_behavior_parameters[animal_name][behavior_name]['duration'][i]=0.0
+							self.all_behavior_parameters[animal_name][behavior_name]['duration'][i]=0
 						if '4 locomotion parameters' in parameter_to_analyze:
 							self.all_behavior_parameters[animal_name][behavior_name]['distance'][i]=0.0
 						if 'latency' in parameter_to_analyze:
@@ -1339,7 +1349,7 @@ class AnalyzeAnimalDetector():
 										self.all_behavior_parameters[animal_name][behavior_name]['count'][i]+=1
 										
 								if 'duration' in parameter_to_analyze:
-									self.all_behavior_parameters[animal_name][behavior_name]['duration'][i]+=round(1/self.fps,2)
+									self.all_behavior_parameters[animal_name][behavior_name]['duration'][i]+=1
 
 								if 'latency' in parameter_to_analyze:
 									if self.all_behavior_parameters[animal_name][behavior_name]['latency'][i]=='NA':
@@ -1569,8 +1579,8 @@ class AnalyzeAnimalDetector():
 					
 						if 'duration' in parameter_to_analyze:
 							for behavior_name in self.all_behavior_parameters[animal_name]:
-								if self.all_behavior_parameters[animal_name][behavior_name]['duration'][i]!=0.0:
-									self.all_behavior_parameters[animal_name][behavior_name]['duration'][i]+=round(self.length/self.fps,2)
+								if self.all_behavior_parameters[animal_name][behavior_name]['duration'][i]!=0:
+									self.all_behavior_parameters[animal_name][behavior_name]['duration'][i]=round(self.all_behavior_parameters[animal_name][behavior_name]['duration'][i]/self.fps,2)
 								else:
 									self.all_behavior_parameters[animal_name][behavior_name]['duration'][i]='NA'
 

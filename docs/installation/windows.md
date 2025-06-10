@@ -64,13 +64,6 @@ enter. All terminal commands going forward should be entered in this terminal.
    You will need to register an Nvidia Developer account, which you can do for
    free. You can choose cuDNN v8.9.7 that supports CUDA toolkit v11.8. Choose 'Local Installer for Windows (Zip)', download and extract it. And then copy the three folders 'bin', 'lib', and 'include' into where the CUDA toolkit is installed (typcially, 'C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\'), and replace all the three folders with the same names. After that, you may need to add the 'C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8' to path via environmental variables.
 
-   ```{important}
-   If you're using Windows 11, when installing cuDNN, select "Tarball" then 
-   "11" under CUDA Version. Then, follow
-   [these instructions](https://docs.nvidia.com/deeplearning/cudnn/installation/windows.html#installing-on-windows)
-   to install cuDNN from the `.tar.gz` file.
-   ```
-
 5. Upgrade `pip`, `wheel`, `setuptools`.
    
    ```pwsh-session
