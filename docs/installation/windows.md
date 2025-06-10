@@ -67,7 +67,7 @@ enter. All terminal commands going forward should be entered in this terminal.
 5. Upgrade `pip`, `wheel`, `setuptools`.
    
    ```pwsh-session
-   > py -3.10 -m pip install --upgrade pip wheel 
+   > py -3.10 -m pip install --upgrade pip wheel setuptools
    ```
 
 6. Install LabGym via `pip`.

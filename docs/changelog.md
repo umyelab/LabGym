@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.9.0
+### What's Changed
+* Introduced a new annotation tool: [EZannot](https://github.com/yujiahu415/EZannot), to replace Roboflow since Roboflow started to charge for private data.
+* Further optimized Categorizer training to improve its generalizibility.
+* Fixed bugs.
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.8.1...v2.9.0>
+
 ## v2.8.1
 ### What's Changed
 * Prevented interruption of the analysis when Detector fails.
