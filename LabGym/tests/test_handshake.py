@@ -51,7 +51,7 @@ def test_version_eq_pypi(monkeypatch, capsys):
         version.Version('2.8.16'),  # version at pypi.org
         ]
     # monkeypatch the version.parse method to return return_values.pop(0)
-    monkeypatch.setattr('handshake.version.parse', lambda self: return_values.pop(0))
+    monkeypatch.setattr('LabGym.handshake.version.parse', lambda self: return_values.pop(0))
 
     # Act
     handshake.probe_pypi_check_freshness()
@@ -67,7 +67,7 @@ def test_version_lt_pypi(monkeypatch, capsys):
         version.Version('2.8.16'),  # version at pypi.org
         ]
     # monkeypatch the version.parse method to return return_values.pop(0)
-    monkeypatch.setattr('handshake.version.parse', lambda self: return_values.pop(0))
+    monkeypatch.setattr('LabGym.handshake.version.parse', lambda self: return_values.pop(0))
 
     # Act
     handshake.probe_pypi_check_freshness()
@@ -83,7 +83,7 @@ def test_version_gt_pypi(monkeypatch, capsys):
         version.Version('2.0.16'),  # version at pypi.org
         ]
     # monkeypatch the version.parse method to return return_values.pop(0)
-    monkeypatch.setattr('handshake.version.parse', lambda self: return_values.pop(0))
+    monkeypatch.setattr('LabGym.handshake.version.parse', lambda self: return_values.pop(0))
 
     # Act
     handshake.probe_pypi_check_freshness()

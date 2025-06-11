@@ -133,8 +133,8 @@ def probe_url_to_verify_cacert() -> None:
 			os.environ.get("REQUESTS_CA_BUNDLE"))
 		logger.debug('%s: %r', 'os.environ.get("CURL_CA_BUNDLE")',
 			os.environ.get("CURL_CA_BUNDLE"))
-		logger.debug('%s: %r', 'requests.certs.where()',
-			requests.certs.where())
+		# logger.debug('%s: %r', 'requests.certs.where()',
+		# 	requests.certs.where())
 		logger.debug('%s: %r', 'certifi.where()',
 			certifi.where())
 
