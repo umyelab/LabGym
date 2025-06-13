@@ -24,6 +24,8 @@ class Values:
     """A Values object is packed with values as object attributes."""
 
     def __init__(self) -> None:
+        self.anonymous: bool = False
+        self.configdir: str | None = None
         self.loggingconfig: str | None = None
         self.logginglevelname: str | None = None
         # self.logginglevel: int | None = None
@@ -74,6 +76,8 @@ def parse_args() -> Values:
         Usage: {basename} [options]
 
         Options:
+          --configdir DIR       Find LabGym config files in the config dir.
+                                (default '~/.labgym')
           --loggingconfig FILE  Use the toml- or yaml- file FILE to configure
                                 the logging system.
           --logginglevel LEVEL  Set the root logger's level to logging.LEVEL,
@@ -83,6 +87,7 @@ def parse_args() -> Values:
           --debug               Equivalent to --logginglevel DEBUG.
           -v, --verbose         Equivalent to --logginglevel DEBUG.
           --version             Show the LabGym version and exit.
+          --anonymous           Operate LabGym without registering and sending stats.
           -h, --help            Show this help message and exit.
         """)
 
@@ -103,7 +108,15 @@ def parse_args() -> Values:
         # '--', '--f', '-f', and 'foo', which is bad.
 
         # custom options
-        if arg in ['--loggingconfig']:
+        if arg in ['--anonymous']:
+            valobj.anonymous = True
+            args = args[1:]  # shift 1
+
+        elif arg in ['--configdir']:
+            valobj.configdir = args[1]
+            args = args[2:]  # shift 2
+
+        elif arg in ['--loggingconfig']:
             valobj.loggingconfig = args[1]
             args = args[2:]  # shift 2
 
