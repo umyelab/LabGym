@@ -14,6 +14,48 @@ Strengths
     Why?  Because for this sw, the logging is considered not essential,
     so logging config trouble is intentionally not fatal.
 
+Notes
+  * The Python logging system allows the output of lower-level (like
+    INFO) messages, despite the root logger set to higher-level (like
+    WARNING).
+
+    If the user supplies command line args which set logginglevelname to
+    WARNING (like '--logginglevel WARNING'), the root logger level is
+    set to logging.WARNING.
+    The user might expect that setting root logger level to WARNING
+    would suppress all INFO-level log messages from the console output,
+    but it doesn't.
+
+    When logging via a child logger, it is the child logger's effective
+    level (not the root logger's level) which determines whether a log
+    record is created.  As that log record is propagated up to other
+    loggers in the hierarchy, it's passed to the handlers of those
+    superior loggers (if any exist), and so the log record is passed to
+    the handlers on the root logger.
+    If a root logger handler doesn't reject log record, then that
+    handler will emit the log record.
+
+    For example, if
+        root logger level is set to WARNING
+        child logger 'urllib3.connectionpool' level is set to INFO
+    then
+        an INFO-level logrecord created by the child logger
+        'urllib3.connectionpool' will be handled/emitted by the root
+        logger's handler(s)
+    unless propagation is disabled, or the root logger handler is given
+    a handler-level-value or a handler-filter-function which rejects the
+    log record.
+
+    See
+        "Logging Flow"
+        https://docs.python.org/3/howto/logging.html#logging-flow
+
+References
+    https://docs.python.org/3/library/logging.html
+    https://docs.python.org/3/howto/logging.html#logging-basic-tutorial
+    https://docs.python.org/3/howto/logging.html#logging-advanced-tutorial
+    https://docs.python.org/3/howto/logging-cookbook.html#logging-cookbook
+
 Example 1
     # Configure the logging system.
     import LabGym.mylogging as mylogging
