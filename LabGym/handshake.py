@@ -46,12 +46,35 @@ from packaging import version  # Core utilities for Python packages
 from LabGym import __version__
 
 
-def handshake() -> None:
-	"""Perform some pre-op probes and checks with outside resources.
+# central logger, for reporting usage to central receiver
+central_logger = logging.getLogger('Central Logger')
 
-	Generally, it's better to expose any inevitable problems sooner
-	rather than later.
+
+def handshake() -> None:
+	"""Perform some pre-op checks and probes of outside resources.
+
+	It's generally preferable to expose any inevitable problems
+        sooner rather than later.
+	Some checks can be suppressed by command line options.
 	"""
+
+	opts = myargparse.parse_args()
+
+	# Configure the central logger per anonymous setting.
+	configure_central_logger(opts.anonymous)
+
+	if opts.anonymous:
+		logger.warning('Operating anonymously.')
+		user = 'Nobody'
+	else:
+		# Register user if not yet registered.
+		register(opts.configdir)
+		user = 'Somebody'
+
+	# Report the sw start to a central receiver.
+	context = {'user': user}
+	central_logger.info('%s %r Started (context: %r)', 
+		__package__, __version__, context)
 
 	# Warn if the installed sw is stale.
 	probe_pypi_check_freshness()
@@ -60,6 +83,36 @@ def handshake() -> None:
 	probe_url_to_verify_cacert()
 
 
+def configure_central_logger(anonymous: bool) -> None:
+	"""Set level, and add handler that reports to central receiver."""
+
+	if anonymous:
+		central_logger.disabled = True
+
+	central_logger.setLevel(logging.INFO)
+
+	# Add handler that reports to central receiver.
+	# ToDo -- replace this simple handler that outputs to console  
+        # with a handler that report to central receiver.
+	h = logging.StreamHandler()
+
+	f = logging.Formatter(
+		fmt='%(asctime)s\t%(levelname)s\t[%(name)s]\t%(message)s',
+		datefmt='%Y-%m-%d %H:%M:%S%z',
+		)
+	h.setFormatter(f)
+
+	central_logger.addHandler(h)
+
+
+def register(configdir: str) -> None:
+	"""Register user if not yet registered.
+
+	"""
+
+	# TODO - implement
+
+	return
 def probe_pypi_check_freshness() -> None:
 	"""Probe pypi for sw version, and warn if the installed sw is stale.
 
@@ -72,8 +125,8 @@ def probe_pypi_check_freshness() -> None:
 		current_version=version.parse(__version__)
 		logger.debug('%s: %r', 'current_version', current_version)
 		pypi_json = requests.get(
-                    'https://pypi.org/pypi/LabGym/json', timeout=8
-                    ).json()
+			'https://pypi.org/pypi/LabGym/json', timeout=8
+			).json()
 		latest_version=version.parse(pypi_json['info']['version'])
 		logger.debug('%s: %r', 'latest_version', latest_version)
 
