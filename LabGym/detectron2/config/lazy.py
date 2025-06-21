@@ -16,8 +16,8 @@ import cloudpickle
 import yaml
 from omegaconf import DictConfig, ListConfig, OmegaConf, SCMode
 
-from detectron2.utils.file_io import PathManager
-from detectron2.utils.registry import _convert_target_to_string
+from LabGym.detectron2.utils.file_io import PathManager
+from LabGym.detectron2.utils.registry import _convert_target_to_string
 
 __all__ = ["LazyCall", "LazyConfig"]
 
