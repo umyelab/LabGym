@@ -16,6 +16,13 @@ USA
 Email: bingye@umich.edu
 '''
 
+# Log the load of this module (by the module loader, on first import).
+# Intentionally positioning these statements before other imports, against the
+# guidance of PEP-8, to log the load before other imports log messages.
+import logging
+logger =  logging.getLogger(__name__)
+logger.debug('loading %s', __file__)
+
 
 
 
@@ -24,7 +31,11 @@ import wx.lib.agw.hyperlink as hl
 import json
 from urllib import request
 from pathlib import Path
+
+logger.debug('importing %s ...', '.gui_categorizer')
 from .gui_categorizer import WindowLv2_GenerateExamples,WindowLv2_TrainCategorizers,WindowLv2_SortBehaviors,WindowLv2_TestCategorizers
+logger.debug('importing %s done', '.gui_categorizer')
+
 from .gui_detector import WindowLv2_GenerateImages,WindowLv2_TrainDetectors,WindowLv2_TestDetectors
 from .gui_preprocessor import WindowLv2_ProcessVideos,WindowLv2_DrawMarkers
 from .gui_analyzer import WindowLv2_AnalyzeBehaviors,WindowLv2_MineResults,WindowLv2_PlotBehaviors,WindowLv2_CalculateDistances
@@ -329,7 +340,7 @@ def main_window():
 	the_absolute_current_path=str(Path(__file__).resolve().parent)
 	app=wx.App()
 	InitialWindow(f'LabGym v{__version__}')
-	print('The user interface initialized!')
+	logger.info('The user interface initialized!')
 	app.MainLoop()
 
 

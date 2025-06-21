@@ -1,0 +1,43 @@
+# See "Configuration dictionary schema",
+# https://docs.python.org/3/library/logging.config.html#logging-config-dictschema
+# version - schema version.  The only valid value at present is 1.
+version: 1
+
+# See "LogRecord attributes",
+# https://docs.python.org/3/library/logging.html#logrecord-attributes
+#   asctime     Human-readable time when the LogRecord was created.
+#   levelname   Text logging level for the message.
+#   lineno      Source line number where the logging call was issued.
+#   message     The logged message, computed as msg % args.`
+#   module      Module (name portion of filename).
+#   name        Name of the logger used to log the call.
+#   thread      Thread ID.
+
+formatters:
+    myformat:
+        datefmt: "%Y-%m-%d %H:%M:%S"
+        format: "%(asctime)s\t%(levelname)s\t[%(thread)d:%(name)s:%(module)s:%(lineno)d]\t%(message)s"
+    mycompactformat:
+        datefmt: "%H:%M:%S"
+        format: "%(asctime)s\t%(levelname)s\t%(message)s"
+
+handlers:
+    console:
+        class: logging.StreamHandler
+        formatter: myformat
+
+# config for the root logger
+root:
+    handlers: [console]
+    level: INFO
+
+# config for some of the other loggers (under the root logger)
+loggers:
+    h5py:
+        level: INFO
+    matplotlib.font_manager:
+        level: INFO
+    urllib3.connectionpool:
+        level: INFO
+
+disable_existing_loggers: false

@@ -16,6 +16,13 @@ USA
 Email: bingye@umich.edu
 '''
 
+# Log the load of this module (by the module loader, on first import).
+# Intentionally positioning these statements before other imports, against the
+# guidance of PEP-8, to log the load before other imports log messages.
+import logging
+logger =  logging.getLogger(__name__)
+logger.debug('loading %s', __file__)
+
 
 
 
@@ -26,8 +33,15 @@ from pathlib import Path
 import json
 import cv2
 import numpy as np
+
+logger.debug('importing %s ...', '.analyzebehavior')
 from .analyzebehavior import AnalyzeAnimal
+logger.debug('importing %s done', '.analyzebehavior')
+
+logger.debug('importing %s ...', '.analyzebehavior_dt')
 from .analyzebehavior_dt import AnalyzeAnimalDetector
+logger.debug('importing %s done', '.analyzebehavior_dt')
+
 from .categorizer import Categorizers
 from .tools import sort_examples_from_csv
 
