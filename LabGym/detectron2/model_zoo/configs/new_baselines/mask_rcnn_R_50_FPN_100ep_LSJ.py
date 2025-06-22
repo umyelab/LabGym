@@ -1,7 +1,7 @@
-import detectron2.data.transforms as T
-from detectron2.config.lazy import LazyCall as L
-from detectron2.layers.batch_norm import NaiveSyncBatchNorm
-from detectron2.solver import WarmupParamScheduler
+import LabGym.detectron2.data.transforms as T
+from LabGym.detectron2.config.lazy import LazyCall as L
+from LabGym.detectron2.layers.batch_norm import NaiveSyncBatchNorm
+from LabGym.detectron2.solver import WarmupParamScheduler
 from fvcore.common.param_scheduler import MultiStepParamScheduler
 
 from ..common.data.coco import dataloader
