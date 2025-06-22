@@ -1,4 +1,4 @@
-from detectron2.data.detection_utils import create_keypoint_hflip_indices
+from LabGym.detectron2.data.detection_utils import create_keypoint_hflip_indices
 
 from .coco import dataloader
 
