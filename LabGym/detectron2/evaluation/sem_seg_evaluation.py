@@ -10,9 +10,9 @@ import pycocotools.mask as mask_util
 import torch
 from PIL import Image
 
-from detectron2.data import DatasetCatalog, MetadataCatalog
-from detectron2.utils.comm import all_gather, is_main_process, synchronize
-from detectron2.utils.file_io import PathManager
+from LabGym.detectron2.data import DatasetCatalog, MetadataCatalog
+from LabGym.detectron2.utils.comm import all_gather, is_main_process, synchronize
+from LabGym.detectron2.utils.file_io import PathManager
 
 from .evaluator import DatasetEvaluator
 
