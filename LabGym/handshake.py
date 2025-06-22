@@ -32,7 +32,6 @@ import sys
 # other imports (against the guidance of PEP 8), to log the load of this
 # module before other import statements are executed and potentially
 # produce their own log messages.
-
 logger = logging.getLogger(__name__)
 logger.debug('%s: %r', '(__name__, __package__)', (__name__, __package__))
 
@@ -47,8 +46,10 @@ from LabGym import __version__
 
 
 def handshake() -> None:
-	"""Perform some pre-op probes and checks with outside resources.
+	"""Perform some pre-op probing and sanity checks.
 
+	Perform some pre-op probing and sanity checks regarding
+        configuration, availability of outside resources, etc.
 	Generally, it's better to expose any inevitable problems sooner
 	rather than later.
 	"""
@@ -63,8 +64,8 @@ def handshake() -> None:
 def probe_pypi_check_freshness() -> None:
 	"""Probe pypi for sw version, and warn if the installed sw is stale.
 
-	Probe pypi for the LabGym sw version, and compare with the 
-	installed sw version, and warn if the installed sw is stale.
+	Probe pypi for the LabGym sw version, and compare with the installed
+	sw version, and warn if the installed sw is stale.
 	"""
 
 	try:
@@ -94,16 +95,18 @@ def probe_pypi_check_freshness() -> None:
 
 
 def probe_url_to_verify_cacert() -> None:
-	# Check for cacert trouble which might be a fouled installation.
-	# 2.  Send http get to https://dl.fbaipublic.com to expose a
-	#     potential cacert trouble, and fail early if trouble presents.
+	"""Check for cacert trouble which might be a fouled installation.
 
-	# On 2025-05-19 Google AI says,
-	# Detectron2 relies on dl.fbaipublicfiles.com for distributing
-	# pre-built binaries and model weights.
-	# f you're using the pre-built versions of Detectron2 or
-	# downloading pre-trained models, your system will likely be
-	# downloading files from dl.fbaipublicfiles.com.
+	Send an HTTP GET to https://dl.fbaipublic.com.  If it fails due to
+        cacert trouble, then warn.  (Or should this be fatal?)
+
+	On 2025-05-19 Google AI says,
+	  Detectron2 relies on dl.fbaipublicfiles.com for distributing
+	  pre-built binaries and model weights.
+	  If you're using the pre-built versions of Detectron2 or 
+	  downloading pre-trained models, your system will likely be
+	  downloading files from dl.fbaipublicfiles.com.
+	"""
 
 	url = 'https://dl.fbaipublicfiles.com/detectron2'
 
@@ -117,25 +120,20 @@ def probe_url_to_verify_cacert() -> None:
 	try:
 		# requests.get(url) returns <Response [403]>
 		response = requests.get(url, timeout=8)
-		logger.debug('%s: %r', 'certifi.where()',
-			certifi.where())
-		logger.debug('%s: %r', 'os.environ.get("REQUESTS_CA_BUNDLE")',
-			os.environ.get("REQUESTS_CA_BUNDLE"))
 	except requests.exceptions.SSLError as e:
-		# logger.error(e)
+		logger.debug('%s: %r', 'certifi.where()', certifi.where())
+		logger.debug('%s: %r', "os.environ.get('REQUESTS_CA_BUNDLE')",
+			os.environ.get('REQUESTS_CA_BUNDLE'))
 
+		# logger.debug('%s: %r', "os.environ.get('CURL_CA_BUNDLE')",
+		# 	os.environ.get('CURL_CA_BUNDLE'))
+		# logger.debug('%s: %r', 'requests.certs.where()',
+		# 	requests.certs.where())
+
+		# logger.error(e)
 		# logger.error(f'{e.__module__}.{e.__class__.__name__}: {e}')
 		logger.error('%s.%s: %s', e.__module__, e.__class__.__name__, e)
 
-		logger.error('Trouble in SSL cert chain...')
+		logger.error('(non-fatal) Trouble in SSL cert chain...')
 
-		logger.debug('%s: %r', 'os.environ.get("REQUESTS_CA_BUNDLE")',
-			os.environ.get("REQUESTS_CA_BUNDLE"))
-		logger.debug('%s: %r', 'os.environ.get("CURL_CA_BUNDLE")',
-			os.environ.get("CURL_CA_BUNDLE"))
-		# logger.debug('%s: %r', 'requests.certs.where()',
-		# 	requests.certs.where())
-		logger.debug('%s: %r', 'certifi.where()',
-			certifi.where())
-
-		sys.exit(1)
+		# sys.exit(1)
