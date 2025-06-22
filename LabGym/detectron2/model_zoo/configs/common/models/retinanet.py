@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 
-from detectron2.config import LazyCall as L
-from detectron2.layers import ShapeSpec
-from detectron2.modeling.meta_arch import RetinaNet
-from detectron2.modeling.anchor_generator import DefaultAnchorGenerator
-from detectron2.modeling.backbone.fpn import LastLevelP6P7
-from detectron2.modeling.backbone import BasicStem, FPN, ResNet
-from detectron2.modeling.box_regression import Box2BoxTransform
-from detectron2.modeling.matcher import Matcher
-from detectron2.modeling.meta_arch.retinanet import RetinaNetHead
+from LabGym.detectron2.config import LazyCall as L
+from LabGym.detectron2.layers import ShapeSpec
+from LabGym.detectron2.modeling.meta_arch import RetinaNet
+from LabGym.detectron2.modeling.anchor_generator import DefaultAnchorGenerator
+from LabGym.detectron2.modeling.backbone.fpn import LastLevelP6P7
+from LabGym.detectron2.modeling.backbone import BasicStem, FPN, ResNet
+from LabGym.detectron2.modeling.box_regression import Box2BoxTransform
+from LabGym.detectron2.modeling.matcher import Matcher
+from LabGym.detectron2.modeling.meta_arch.retinanet import RetinaNetHead
 
 from ..data.constants import constants
 
