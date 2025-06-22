@@ -6,8 +6,8 @@ from ..common.optim import SGD as optimizer
 from ..common.train import train
 from ..common.data.constants import constants
 
-from detectron2.modeling.mmdet_wrapper import MMDetDetector
-from detectron2.config import LazyCall as L
+from LabGym.detectron2.modeling.mmdet_wrapper import MMDetDetector
+from LabGym.detectron2.config import LazyCall as L
 
 model = L(MMDetDetector)(
     detector=dict(
