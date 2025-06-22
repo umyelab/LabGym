@@ -5,12 +5,12 @@ from typing import Dict
 import torch
 import torch.nn.functional as F
 
-from detectron2.layers import ShapeSpec, cat
-from detectron2.layers.roi_align_rotated import ROIAlignRotated
-from detectron2.modeling import poolers
-from detectron2.modeling.proposal_generator import rpn
-from detectron2.modeling.roi_heads.mask_head import mask_rcnn_inference
-from detectron2.structures import Boxes, ImageList, Instances, Keypoints, RotatedBoxes
+from LabGym.detectron2.layers import ShapeSpec, cat
+from LabGym.detectron2.layers.roi_align_rotated import ROIAlignRotated
+from LabGym.detectron2.modeling import poolers
+from LabGym.detectron2.modeling.proposal_generator import rpn
+from LabGym.detectron2.modeling.roi_heads.mask_head import mask_rcnn_inference
+from LabGym.detectron2.structures import Boxes, ImageList, Instances, Keypoints, RotatedBoxes
 
 from .shared import alias, to_device
 
