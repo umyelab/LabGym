@@ -1,7 +1,7 @@
-from detectron2.config import LazyCall as L
-from detectron2.layers import ShapeSpec
-from detectron2.modeling import PanopticFPN
-from detectron2.modeling.meta_arch.semantic_seg import SemSegFPNHead
+from LabGym.detectron2.config import LazyCall as L
+from LabGym.detectron2.layers import ShapeSpec
+from LabGym.detectron2.modeling import PanopticFPN
+from LabGym.detectron2.modeling.meta_arch.semantic_seg import SemSegFPNHead
 
 from .mask_rcnn_fpn import model
 
