@@ -1,5 +1,5 @@
-from detectron2.config import LazyCall as L
-from detectron2.evaluation import (
+from LabGym.detectron2.config import LazyCall as L
+from LabGym.detectron2.evaluation import (
     COCOEvaluator,
     COCOPanopticEvaluator,
     DatasetEvaluators,
