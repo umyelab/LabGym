@@ -1,7 +1,7 @@
-from detectron2.config import LazyCall as L
-from detectron2.layers import ShapeSpec
-from detectron2.modeling.poolers import ROIPooler
-from detectron2.modeling.roi_heads import KRCNNConvDeconvUpsampleHead
+from LabGym.detectron2.config import LazyCall as L
+from LabGym.detectron2.layers import ShapeSpec
+from LabGym.detectron2.modeling.poolers import ROIPooler
+from LabGym.detectron2.modeling.roi_heads import KRCNNConvDeconvUpsampleHead
 
 from .mask_rcnn_fpn import model
 

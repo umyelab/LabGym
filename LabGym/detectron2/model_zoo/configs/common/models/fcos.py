@@ -1,4 +1,4 @@
-from detectron2.modeling.meta_arch.fcos import FCOS, FCOSHead
+from LabGym.detectron2.modeling.meta_arch.fcos import FCOS, FCOSHead
 
 from .retinanet import model
 
