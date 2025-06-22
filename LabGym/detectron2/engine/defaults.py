@@ -21,28 +21,28 @@ from fvcore.nn.precise_bn import get_bn_modules
 from omegaconf import OmegaConf
 from torch.nn.parallel import DistributedDataParallel
 
-import detectron2.data.transforms as T
-from detectron2.checkpoint import DetectionCheckpointer
-from detectron2.config import CfgNode, LazyConfig
-from detectron2.data import (
+import LabGym.detectron2.data.transforms as T
+from LabGym.detectron2.checkpoint import DetectionCheckpointer
+from LabGym.detectron2.config import CfgNode, LazyConfig
+from LabGym.detectron2.data import (
     MetadataCatalog,
     build_detection_test_loader,
     build_detection_train_loader,
 )
-from detectron2.evaluation import (
+from LabGym.detectron2.evaluation import (
     DatasetEvaluator,
     inference_on_dataset,
     print_csv_format,
     verify_results,
 )
-from detectron2.modeling import build_model
-from detectron2.solver import build_lr_scheduler, build_optimizer
-from detectron2.utils import comm
-from detectron2.utils.collect_env import collect_env_info
-from detectron2.utils.env import seed_all_rng
-from detectron2.utils.events import CommonMetricPrinter, JSONWriter, TensorboardXWriter
-from detectron2.utils.file_io import PathManager
-from detectron2.utils.logger import setup_logger
+from LabGym.detectron2.modeling import build_model
+from LabGym.detectron2.solver import build_lr_scheduler, build_optimizer
+from LabGym.detectron2.utils import comm
+from LabGym.detectron2.utils.collect_env import collect_env_info
+from LabGym.detectron2.utils.env import seed_all_rng
+from LabGym.detectron2.utils.events import CommonMetricPrinter, JSONWriter, TensorboardXWriter
+from LabGym.detectron2.utils.file_io import PathManager
+from LabGym.detectron2.utils.logger import setup_logger
 
 from . import hooks
 from .train_loop import AMPTrainer, SimpleTrainer, TrainerBase
@@ -369,7 +369,7 @@ class DefaultTrainer(TrainerBase):
             cfg (CfgNode):
         """
         super().__init__()
-        logger = logging.getLogger("detectron2")
+        logger = logging.getLogger("LabGym.detectron2")
         if not logger.isEnabledFor(logging.INFO):  # setup_logger is not called for d2
             setup_logger()
         cfg = DefaultTrainer.auto_scale_workers(cfg, comm.get_world_size())
