@@ -51,7 +51,7 @@ from LabGym import __version__, gui_main, handshake
 
 
 def main() -> None:
-	"""Perform pre-op probes, then display the main window."""
+	"""Perform some pre-op probing, then display the main window."""
 
 	handshake.handshake()
 	gui_main.main_window()
