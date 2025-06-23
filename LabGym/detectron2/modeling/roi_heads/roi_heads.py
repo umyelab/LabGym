@@ -6,11 +6,11 @@ from typing import Dict, List, Optional, Tuple
 import torch
 from torch import nn
 
-from detectron2.config import configurable
-from detectron2.layers import ShapeSpec, nonzero_tuple
-from detectron2.structures import Boxes, ImageList, Instances, pairwise_iou
-from detectron2.utils.events import get_event_storage
-from detectron2.utils.registry import Registry
+from LabGym.detectron2.config import configurable
+from LabGym.detectron2.layers import ShapeSpec, nonzero_tuple
+from LabGym.detectron2.structures import Boxes, ImageList, Instances, pairwise_iou
+from LabGym.detectron2.utils.events import get_event_storage
+from LabGym.detectron2.utils.registry import Registry
 
 from ..backbone.resnet import BottleneckBlock, ResNet
 from ..matcher import Matcher
