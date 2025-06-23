@@ -7,10 +7,10 @@ from fvcore.nn import sigmoid_focal_loss_jit
 from torch import Tensor, nn
 from torch.nn import functional as F
 
-from detectron2.config import configurable
-from detectron2.layers import CycleBatchNormList, ShapeSpec, batched_nms, cat, get_norm
-from detectron2.structures import Boxes, ImageList, Instances, pairwise_iou
-from detectron2.utils.events import get_event_storage
+from LabGym.detectron2.config import configurable
+from LabGym.detectron2.layers import CycleBatchNormList, ShapeSpec, batched_nms, cat, get_norm
+from LabGym.detectron2.structures import Boxes, ImageList, Instances, pairwise_iou
+from LabGym.detectron2.utils.events import get_event_storage
 
 from ..anchor_generator import build_anchor_generator
 from ..backbone import Backbone, build_backbone
