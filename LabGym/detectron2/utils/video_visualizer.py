@@ -3,8 +3,8 @@ import numpy as np
 from typing import List
 import pycocotools.mask as mask_util
 
-from detectron2.structures import Instances
-from detectron2.utils.visualizer import (
+from LabGym.detectron2.structures import Instances
+from LabGym.detectron2.utils.visualizer import (
     ColorMode,
     Visualizer,
     _create_text_labels,
