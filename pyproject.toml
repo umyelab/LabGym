@@ -7,7 +7,8 @@ name='LabGym'
 description='Quantify user-defined behaviors.'
 authors=[
     {name='Yujia Hu',email='yujiahu415@gmail.com'},
-    {name='Rohan Satapathy',email='rohansat@umich.edu'},
+    {name='Rohan Satapathy',email='john.ruckstuhl@gmail.com'},
+    {name='John Ruckstuhl',email='rohansat@umich.edu'},
     {name='M. Victor Struman',email='strmark@umich.edu'},
     {name='Kelly Goss',email='khgoss@umich.edu'},
     {name='Isabelle Baker',email='ibaker@umich.edu'},
@@ -34,6 +35,23 @@ dependencies=[
     'torchaudio',
     'PyYAML',
     'tomli',
+    'Pillow>=7.1',
+    'matplotlib',
+    'pycocotools>=2.0.2',
+    'termcolor>=1.1',
+    'yacs>=0.1.8',
+    'tabulate',
+    'cloudpickle',
+    'tqdm>4.29.0',
+    'tensorboard',
+    'fvcore>=0.1.5,<0.1.6',
+    'iopath>=0.1.7,<0.1.10',
+    "dataclasses; python_version<'3.7'",
+    'omegaconf>=2.1,<2.4',
+    'hydra-core>=1.1',
+    'black',
+    'ninja',
+    'six'
 ]
 requires-python='>=3.9,<3.11'
 readme='README.md'
