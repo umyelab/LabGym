@@ -4,12 +4,12 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
-from detectron2.config import configurable
-from detectron2.layers import Conv2d, ShapeSpec, cat
-from detectron2.structures import Boxes, ImageList, Instances, pairwise_iou
-from detectron2.utils.events import get_event_storage
-from detectron2.utils.memory import retry_if_cuda_oom
-from detectron2.utils.registry import Registry
+from LabGym.detectron2.config import configurable
+from LabGym.detectron2.layers import Conv2d, ShapeSpec, cat
+from LabGym.detectron2.structures import Boxes, ImageList, Instances, pairwise_iou
+from LabGym.detectron2.utils.events import get_event_storage
+from LabGym.detectron2.utils.memory import retry_if_cuda_oom
+from LabGym.detectron2.utils.registry import Registry
 
 from ..anchor_generator import build_anchor_generator
 from ..box_regression import Box2BoxTransform, _dense_box_regression_loss
