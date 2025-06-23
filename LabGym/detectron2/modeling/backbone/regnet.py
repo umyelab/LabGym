@@ -10,7 +10,7 @@ model loading.
 import numpy as np
 from torch import nn
 
-from detectron2.layers import CNNBlockBase, ShapeSpec, get_norm
+from LabGym.detectron2.layers import CNNBlockBase, ShapeSpec, get_norm
 
 from .backbone import Backbone
 
