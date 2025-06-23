@@ -4,8 +4,8 @@
 import numpy as np
 from typing import List
 
-from detectron2.config import CfgNode as CfgNode_
-from detectron2.config import configurable
+from LabGym.detectron2.config import CfgNode as CfgNode_
+from LabGym.detectron2.config import configurable
 
 from .base_tracker import TRACKER_HEADS_REGISTRY
 from .vanilla_hungarian_bbox_iou_tracker import VanillaHungarianBBoxIOUTracker
@@ -76,7 +76,7 @@ class IOUWeightedHungarianBBoxIOUTracker(VanillaHungarianBBoxIOUTracker):
         min_instance_period = cfg.TRACKER_HEADS.get("MIN_INSTANCE_PERIOD", 1)
         track_iou_threshold = cfg.TRACKER_HEADS.get("TRACK_IOU_THRESHOLD", 0.5)
         return {
-            "_target_": "detectron2.tracking.iou_weighted_hungarian_bbox_iou_tracker.IOUWeightedHungarianBBoxIOUTracker",  # noqa
+            "_target_": "LabGym.detectron2.tracking.iou_weighted_hungarian_bbox_iou_tracker.IOUWeightedHungarianBBoxIOUTracker",  # noqa
             "video_height": video_height,
             "video_width": video_width,
             "max_num_instances": max_num_instances,
