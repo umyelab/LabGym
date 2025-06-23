@@ -12,13 +12,13 @@ from packaging import version
 from torch._C import ListType
 from torch.onnx import register_custom_op_symbolic
 
-from detectron2 import model_zoo
-from detectron2.config import CfgNode, LazyConfig, instantiate
-from detectron2.data import DatasetCatalog
-from detectron2.data.detection_utils import read_image
-from detectron2.modeling import build_model
-from detectron2.structures import Boxes, Instances, ROIMasks
-from detectron2.utils.file_io import PathManager
+from LabGym.detectron2 import model_zoo
+from LabGym.detectron2.config import CfgNode, LazyConfig, instantiate
+from LabGym.detectron2.data import DatasetCatalog
+from LabGym.detectron2.data.detection_utils import read_image
+from LabGym.detectron2.modeling import build_model
+from LabGym.detectron2.structures import Boxes, Instances, ROIMasks
+from LabGym.detectron2.utils.file_io import PathManager
 
 
 """
