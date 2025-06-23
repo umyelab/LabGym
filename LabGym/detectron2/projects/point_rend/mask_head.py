@@ -8,11 +8,11 @@ import torch
 from torch import Tensor, nn
 from torch.nn import functional as F
 
-from detectron2.config import configurable
-from detectron2.layers import Conv2d, ShapeSpec, cat, interpolate
-from detectron2.modeling import ROI_MASK_HEAD_REGISTRY
-from detectron2.modeling.roi_heads.mask_head import mask_rcnn_inference, mask_rcnn_loss
-from detectron2.structures import Boxes
+from LabGym.detectron2.config import configurable
+from LabGym.detectron2.layers import Conv2d, ShapeSpec, cat, interpolate
+from LabGym.detectron2.modeling import ROI_MASK_HEAD_REGISTRY
+from LabGym.detectron2.modeling.roi_heads.mask_head import mask_rcnn_inference, mask_rcnn_loss
+from LabGym.detectron2.structures import Boxes
 
 from .point_features import (
     generate_regular_grid_point_coords,
