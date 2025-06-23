@@ -2,7 +2,7 @@
 import numpy as np
 from typing import List
 
-from detectron2.structures import Instances
+from LabGym.detectron2.structures import Instances
 
 
 def create_prediction_pairs(
