@@ -11,7 +11,7 @@ from typing import Optional
 import torch
 from fvcore.common.history_buffer import HistoryBuffer
 
-from detectron2.utils.file_io import PathManager
+from LabGym.detectron2.utils.file_io import PathManager
 
 __all__ = [
     "get_event_storage",
@@ -209,7 +209,7 @@ class CommonMetricPrinter(EventWriter):
                 Used to compute ETA. If not given, ETA will not be printed.
             window_size (int): the losses will be median-smoothed by this window size
         """
-        self.logger = logging.getLogger("detectron2.utils.events")
+        self.logger = logging.getLogger("LabGym.detectron2.utils.events")
         self._max_iter = max_iter
         self._window_size = window_size
         self._last_write = None  # (step, time) of last call to write(). Used to compute ETA
