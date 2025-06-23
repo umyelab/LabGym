@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) Facebook, Inc. and its affiliates.
 
-from detectron2.config import CfgNode as CN
+from LabGym.detectron2.config import CfgNode as CN
 
 
 def add_pointrend_config(cfg):
