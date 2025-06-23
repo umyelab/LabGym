@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) Facebook, Inc. and its affiliates.
 
-from detectron2.config import CfgNode as CN
-from detectron2.projects.deeplab import add_deeplab_config
+from LabGym.detectron2.config import CfgNode as CN
+from LabGym.detectron2.projects.deeplab import add_deeplab_config
 
 
 def add_panoptic_deeplab_config(cfg):
