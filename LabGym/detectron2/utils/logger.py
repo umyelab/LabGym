@@ -10,7 +10,7 @@ import torch
 from tabulate import tabulate
 from termcolor import colored
 
-from detectron2.utils.file_io import PathManager
+from LabGym.detectron2.utils.file_io import PathManager
 
 __all__ = ["setup_logger", "log_first_n", "log_every_n", "log_every_n_seconds"]
 
@@ -45,7 +45,7 @@ def setup_logger(
     distributed_rank=0,
     *,
     color=True,
-    name="detectron2",
+    name="LabGym.detectron2",
     abbrev_name=None,
     enable_propagation: bool = False,
     configure_stdout: bool = True
@@ -152,7 +152,7 @@ def _find_caller():
         if os.path.join("utils", "logger.") not in code.co_filename:
             mod_name = frame.f_globals["__name__"]
             if mod_name == "__main__":
-                mod_name = "detectron2"
+                mod_name = "LabGym.detectron2"
             return mod_name, (code.co_filename, frame.f_lineno, code.co_name)
         frame = frame.f_back
 
@@ -258,4 +258,4 @@ def _log_api_usage(identifier: str):
     Internal function used to log the usage of different detectron2 components
     inside facebook's infra.
     """
-    torch._C._log_api_usage_once("detectron2." + identifier)
+    torch._C._log_api_usage_once("LabGym.detectron2." + identifier)
