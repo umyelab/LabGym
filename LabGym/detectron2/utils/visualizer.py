@@ -13,9 +13,9 @@ import torch
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 from PIL import Image
 
-from detectron2.data import MetadataCatalog
-from detectron2.structures import BitMasks, Boxes, BoxMode, Keypoints, PolygonMasks, RotatedBoxes
-from detectron2.utils.file_io import PathManager
+from LabGym.detectron2.data import MetadataCatalog
+from LabGym.detectron2.structures import BitMasks, Boxes, BoxMode, Keypoints, PolygonMasks, RotatedBoxes
+from LabGym.detectron2.utils.file_io import PathManager
 
 from .colormap import random_color
 
