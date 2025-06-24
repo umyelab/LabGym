@@ -26,6 +26,10 @@ class Values:
     def __init__(self) -> None:
         self.anonymous: bool = False
         self.configdir: str | None = None
+
+        # dict of features explicitly enabled or disabled
+        self.enabled: dict[str, bool] = {}
+
         self.loggingconfig: str | None = None
         self.logginglevelname: str | None = None
         # self.logginglevel: int | None = None
@@ -80,7 +84,9 @@ def parse_args() -> Values:
                                 sending stats.
           --configdir DIR       Find LabGym config files in the config dir.
                                 (default '~/.labgym')
+          --enable FEATURE      Enable FEATURE.
           --debug               Equivalent to --logginglevel DEBUG.
+          --disable FEATURE     Disable FEATURE.
           --loggingconfig FILE  Use the toml- or yaml- file FILE to configure
                                 the logging system.
           --logginglevel LEVEL  Set the root logger's level to logging.LEVEL,
@@ -115,6 +121,14 @@ def parse_args() -> Values:
 
         elif arg in ['--configdir']:
             valobj.configdir = args[1]
+            args = args[2:]  # shift 2
+
+        elif arg in ['--enable']:
+            valobj.enabled[args[1]] = True
+            args = args[2:]  # shift 2
+
+        elif arg in ['--disable']:
+            valobj.enabled[args[1]] = False
             args = args[2:]  # shift 2
 
         elif arg in ['--loggingconfig']:
