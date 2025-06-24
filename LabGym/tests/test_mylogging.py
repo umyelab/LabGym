@@ -26,39 +26,39 @@ class ValuesSubclass(Values):
 # mylogging.config() with opts dict like {'loggingconfigfile': ...}
 
 # 1. bad logginglevelname produces a pair of warning messages.
-def test_config_1(mocker):
-    # mock so that call to the genuine myargparse.parse_args mocked, to
-    # return a Values object with attr logginglevelname = 'ALFA'
-    #
-    # mock_result = mocker.Mock()
-    # mock_result.loggingconfig = None
-    # mock_result.logginglevelname = None
-
-    # valobj = Values()
-    # # valobj.logginglevelname = 'ALFA'
-    # valobj.__dict__.update({'logginglevelname': 'ALFA'})
+def test_config_1(monkeypatch):
+    # Arrange
     valobj = ValuesSubclass({'logginglevelname': 'ALFA'})
-    print(f'D: valobj.__dict__, {valobj.__dict__!r}')
+    # print(f'DEBUG: valobj.__dict__, {valobj.__dict__!r}')
+    monkeypatch.setattr(
+        'LabGym.mylogging.myargparse.parse_args', 
+        lambda: valobj)
 
-    mocker.patch('LabGym.mylogging.myargparse.parse_args', return_value=valobj)
+    # Act
     logrecords = []
     mylogging.config(logrecords)
-
     mylogging.handle(logrecords)
+
+    # Assert
     # WARNING	mylogging	module 'logging' has no attribute 'ALFA'
     # WARNING	mylogging	Trouble overriding root logger level.
 
 
 # 2. bad configfile name produces a pair of warning messages.
-def test_config_2(mocker):
+def test_config_2(monkeypatch):
+    # Arrange
     valobj = ValuesSubclass({'loggingconfig': '/bravo/charlie.yaml'})
-    print(f'D: valobj.__dict__, {valobj.__dict__!r}')
+    # print(f'DEBUG: valobj.__dict__, {valobj.__dict__!r}')
+    monkeypatch.setattr(
+        'LabGym.mylogging.myargparse.parse_args', 
+        lambda: valobj)
 
-    mocker.patch('LabGym.mylogging.myargparse.parse_args', return_value=valobj)
+    # Act
     logrecords = []
     mylogging.config(logrecords)
-
     mylogging.handle(logrecords)
+
+    # Assert
     # WARNING	mylogging	[Errno 2] No such file or directory: '/bravo/charlie.yaml'
     # WARNING	mylogging	Trouble configuring logging...  Calling logging.basicConfig(level=logging.DEBUG)
 

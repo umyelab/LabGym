@@ -75,6 +75,8 @@ For Example 3,
     DEBUG:LabGym.__main__:__name__: 'LabGym.__main__'
 """  # noqa: E501
 
+from __future__ import annotations  # 3.9 needs this for some type annotations
+
 # standard library imports
 import inspect
 import logging.config
