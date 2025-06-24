@@ -31,7 +31,7 @@ class Values:
         # self.logginglevel: int | None = None
 
         self.cmd: str | None = None
-        self.args: List[str] = []
+        self.args: List[str] = []  # list of remaining args after processiong opts
 
 
 def parse_args() -> Values:
@@ -76,18 +76,19 @@ def parse_args() -> Values:
         Usage: {basename} [options]
 
         Options:
+          --anonymous           Operate LabGym without registering and without
+                                sending stats.
           --configdir DIR       Find LabGym config files in the config dir.
                                 (default '~/.labgym')
+          --debug               Equivalent to --logginglevel DEBUG.
           --loggingconfig FILE  Use the toml- or yaml- file FILE to configure
                                 the logging system.
           --logginglevel LEVEL  Set the root logger's level to logging.LEVEL,
                                 where LEVEL is a level recognized by the
                                 logging system, like ERROR, WARNING, INFO,
                                 or DEBUG.
-          --debug               Equivalent to --logginglevel DEBUG.
           -v, --verbose         Equivalent to --logginglevel DEBUG.
           --version             Show the LabGym version and exit.
-          --anonymous           Operate LabGym without registering and sending stats.
           -h, --help            Show this help message and exit.
         """)
 
@@ -100,7 +101,7 @@ def parse_args() -> Values:
         # Why?  A value-in-tuple expression works fine.  But if an
         # intended 1-tuple of strings is erroneously constructed without
         # the trailing comma, it is syntactically legitimate but is a
-        # naked string instead of a 1-tuple and matches not only the
+        # naked string instead of a 1-tuple, and matches not only the
         # full string, but also substrings.
         # The expression
         #     arg in ('--foo')

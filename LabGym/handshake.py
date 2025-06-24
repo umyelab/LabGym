@@ -40,10 +40,10 @@ logger.debug('%s: %r', '(__name__, __package__)', (__name__, __package__))
 # Related third party imports.
 import certifi  # Python package for providing Mozilla's CA Bundle.
 import requests  # Python HTTP for Humans.
-from packaging import version  # Core utilities for Python packages
+import packaging  # Core utilities for Python packages
 
 # Local application/library specific imports.
-from LabGym import __version__
+from LabGym import __version__ as version
 
 
 # central logger, for reporting usage to central receiver
@@ -53,17 +53,19 @@ central_logger = logging.getLogger('Central Logger')
 def handshake() -> None:
 	"""Perform some pre-op checks and probes of outside resources.
 
-	It's generally preferable to expose any inevitable problems
-        sooner rather than later.
+	It's generally preferable to expose any inevitable problems sooner
+	rather than later.
 	Some checks can be suppressed by command line options.
 	"""
 
 	opts = myargparse.parse_args()
+	# opts.anonymous is a bool
+	# opts.configdir is either a string or None.
 
-	# Configure the central logger per anonymous setting.
-	configure_central_logger(opts.anonymous)
 
 	if opts.anonymous:
+	# Configure the central logger.
+	configure_central_logger()
 		logger.warning('Operating anonymously.')
 		user = 'Nobody'
 	else:
@@ -83,51 +85,42 @@ def handshake() -> None:
 	probe_url_to_verify_cacert()
 
 
-def configure_central_logger(anonymous: bool) -> None:
-	"""Set level, and add handler that reports to central receiver."""
-
-	if anonymous:
-		central_logger.disabled = True
+def configure_central_logger() -> None:
+	"""Set level, and add handler that reports to the central receiver."""
 
 	central_logger.setLevel(logging.INFO)
 
-	# Add handler that reports to central receiver.
-	# ToDo -- replace this simple handler that outputs to console  
-        # with a handler that report to central receiver.
-	h = logging.StreamHandler()
+	# Add handler that reports to the central receiver.
 
+	# TODO: replace these simple handlers that output to console and
+        #     logfile with a handler that reports to the central receiver.
+
+	h1 = logging.StreamHandler()
 	f = logging.Formatter(
 		fmt='%(asctime)s\t%(levelname)s\t[%(name)s]\t%(message)s',
 		datefmt='%Y-%m-%d %H:%M:%S%z',
 		)
-	h.setFormatter(f)
+	h1.setFormatter(f)
 
-	central_logger.addHandler(h)
+	central_logger.addHandler(h1)
 
 
-def register(configdir: str) -> None:
-	"""Register user if not yet registered.
 
-	"""
-
-	# TODO - implement
-
-	return
 def probe_pypi_check_freshness() -> None:
 	"""Probe pypi for sw version, and warn if the installed sw is stale.
 
-	Probe pypi for the LabGym sw version, and compare with the 
-	installed sw version, and warn if the installed sw is stale.
+	Probe pypi for the LabGym sw version, and compare with the installed
+	sw version, and warn if the installed sw is stale.
 	"""
 
 	try:
 
-		current_version=version.parse(__version__)
+		current_version=packaging.version.parse(__version__)
 		logger.debug('%s: %r', 'current_version', current_version)
 		pypi_json = requests.get(
 			'https://pypi.org/pypi/LabGym/json', timeout=8
 			).json()
-		latest_version=version.parse(pypi_json['info']['version'])
+		latest_version=packaging.version.parse(pypi_json['info']['version'])
 		logger.debug('%s: %r', 'latest_version', latest_version)
 
 		if latest_version>current_version:
@@ -147,16 +140,18 @@ def probe_pypi_check_freshness() -> None:
 
 
 def probe_url_to_verify_cacert() -> None:
-	# Check for cacert trouble which might be a fouled installation.
-	# 2.  Send http get to https://dl.fbaipublic.com to expose a
-	#     potential cacert trouble, and fail early if trouble presents.
+	"""Check for cacert trouble which might be a fouled installation.
 
-	# On 2025-05-19 Google AI says,
-	# Detectron2 relies on dl.fbaipublicfiles.com for distributing
-	# pre-built binaries and model weights.
-	# f you're using the pre-built versions of Detectron2 or
-	# downloading pre-trained models, your system will likely be
-	# downloading files from dl.fbaipublicfiles.com.
+	Send http get to https://dl.fbaipublic.com to expose potential
+	cacert trouble, and fail early if trouble presents.
+
+	On 2025-05-19 Google AI says,
+	  Detectron2 relies on dl.fbaipublicfiles.com for distributing pre-
+	  built binaries and model weights.
+	  If you're using the pre-built versions of Detectron2 or
+	  downloading pre-trained models, your system will likely be
+	  downloading files from dl.fbaipublicfiles.com.
+	"""
 
 	url = 'https://dl.fbaipublicfiles.com/detectron2'
 

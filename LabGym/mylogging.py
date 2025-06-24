@@ -128,7 +128,7 @@ try:
     # tomllib is included in the Python Standard Library since version 3.11
     import tomllib  # type: ignore
 except ModuleNotFoundError:
-    import tomli as tomllib
+    import tomli as tomllib  # A lil' TOML parser
 from typing import Dict, List
 
 # Related third party imports.
