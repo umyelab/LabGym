@@ -20,6 +20,8 @@ Email: bingye@umich.edu
 
 # Standard library imports.
 # import inspect
+import getpass
+import json
 import logging
 import os
 from pathlib import Path
@@ -44,9 +46,10 @@ import packaging  # Core utilities for Python packages
 
 # Local application/library specific imports.
 from LabGym import __version__ as version
+from LabGym import myargparse, registration
 
 
-# central logger, for reporting usage to central receiver
+# central logger, for reporting usage to the central receiver
 central_logger = logging.getLogger('Central Logger')
 
 
@@ -62,21 +65,39 @@ def handshake() -> None:
 	# opts.anonymous is a bool
 	# opts.configdir is either a string or None.
 
-
-	if opts.anonymous:
 	# Configure the central logger.
 	configure_central_logger()
+	if opts.anonymous == True:
+		# Disable the central logger, and warn.
+		central_logger.disabled = True
 		logger.warning('Operating anonymously.')
-		user = 'Nobody'
-	else:
-		# Register user if not yet registered.
-		register(opts.configdir)
-		user = 'Somebody'
 
-	# Report the sw start to a central receiver.
-	context = {'user': user}
-	central_logger.info('%s %r Started (context: %r)', 
-		__package__, __version__, context)
+	# Honor enable/disable of feature 'centrallogging'.
+	if opts.enabled.get('centrallogging', True) == False:
+		# Disable the central logger, and warn.
+		central_logger.disabled = True
+		logger.warning('Central Logging explicitly disabled.')
+
+	# initialize userinfo
+	userinfo = {'username': getpass.getuser()}
+
+	if opts.anonymous == False:
+                # Get validatation of registration.  (Register if unregistered).
+		result = registration.validate(opts.configdir)
+		userinfo.update(result)
+		
+	# Report the sw start via the central logger to the central receiver.
+	# If central_logger is disabled (due to '--anonymous' option, or due
+	# to feature 'centrallogging' disabled), then no log record will be
+	# prepared.
+	context = {}
+	# context = ['schema version': 1]
+	context['userinfo'] = userinfo
+	context['version'] = version
+	central_logger.info('%s Started (context: %r)',
+		__package__, json.dumps(context))
+
+	raise Exception('Intential abend')
 
 	# Warn if the installed sw is stale.
 	probe_pypi_check_freshness()
@@ -104,6 +125,12 @@ def configure_central_logger() -> None:
 
 	central_logger.addHandler(h1)
 
+        # if config dir exists so that logfile can be written...
+	h2 = logging.FileHandler(
+            os.path.join(os.path.expanduser('~'), '.mydev.centrallogger.log'), 
+            mode='a')
+	h2.setFormatter(f)
+	central_logger.addHandler(h2)
 
 
 def probe_pypi_check_freshness() -> None:
