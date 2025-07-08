@@ -48,10 +48,11 @@ class WindowLv2_ProcessVideos(wx.Frame):
 		self.result_path=None # the folder for storing preprocessed videos
 		self.trim_video=False # whether to trim videos into shorter clips, different clips from the same video can be merged
 		self.time_windows=[] # the time windows (short clips) for trimming the videos
+		self.enhance_brightness=False # whether to enhance the brightness in videos
 		self.enhance_contrast=False # whether to enhance the contrast in videos
 		self.decode_t=False # whether to decode the time windows for trimming the videos from '_stt' and '_edt_' in video file names
-		self.contrast=1.0 # contrast enhancement factor
 		self.brightness=1.0 # brightness enhancement factor
+		self.contrast=1.0 # contrast enhancement factor
 		self.crop_frame=False # whether to crop the frames of videos
 		self.left=0 # frame cropping coordinates left
 		self.right=0 # frame cropping coordinates right
@@ -109,10 +110,10 @@ class WindowLv2_ProcessVideos(wx.Frame):
 		boxsizer.Add(0,5,0)
 
 		module_enhancecontrast=wx.BoxSizer(wx.HORIZONTAL)
-		button_enhancecontrast=wx.Button(panel,label='Specify whether to enhance\nthe contrast in videos',size=(300,40))
+		button_enhancecontrast=wx.Button(panel,label='Specify whether to enhance the\nbrightness and contrast in videos',size=(300,40))
 		button_enhancecontrast.Bind(wx.EVT_BUTTON,self.enhance_contrasts)
-		wx.Button.SetToolTip(button_enhancecontrast,'Enhancing video contrast will increase the detection accuracy especially when the detection method is background subtraction based. Enter a contrast value to see whether it is good to apply or re-enter it.')
-		self.text_enhancecontrast=wx.StaticText(panel,label='Default: not to enhance contrast.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
+		wx.Button.SetToolTip(button_enhancecontrast,'Enhancing video brightness and contrast will increase the detection accuracy especially when the detection method is background subtraction based. Enter a value to see whether it is good to apply or re-enter it.')
+		self.text_enhancecontrast=wx.StaticText(panel,label='Default: not to enhance brightness or contrast.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_enhancecontrast.Add(button_enhancecontrast,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_enhancecontrast.Add(self.text_enhancecontrast,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		boxsizer.Add(module_enhancecontrast,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -306,7 +307,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
 				cv2.destroyAllWindows()
 				cv2.namedWindow('The first frame in coordinates',cv2.WINDOW_NORMAL)
 				cv2.imshow('The first frame in coordinates',frame)
-				dialog=wx.TextEntryDialog(self,'Enter the fold changes for contrast enhancement','A number between 1.0~5.0')
+				dialog=wx.TextEntryDialog(self,'Enter the birghtenss fold changes (a number between 0.0~10.0)','1.0 returns original image')
 				if dialog.ShowModal()==wx.ID_OK:
 					contrast=dialog.GetValue()
 					try:
