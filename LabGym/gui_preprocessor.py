@@ -350,6 +350,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
 				except:
 					self.enhance_brightness=False
 					self.enhance_contrast=False
+					stop=True
 					wx.MessageBox('Please enter float numbers between 0.0~10.0.','Error',wx.OK|wx.ICON_ERROR)
 
 			cv2.destroyAllWindows()
