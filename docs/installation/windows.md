@@ -9,8 +9,7 @@ To install LabGym on Windows, you will need to access the terminal. To do this, 
    To test your Python installation, run the following command. If the version number prints out successfully, your Python installation is working.
 
    ```pwsh-session
-   > py -3.10 --version
-   Python 3.10.10
+   py -3.10 --version
    ```
 
 2. If you're using an NVIDIA GPU, install CUDA Toolkit 11.8 and cuDNN.
@@ -22,13 +21,10 @@ To install LabGym on Windows, you will need to access the terminal. To do this, 
    To verify your installation of CUDA, use the following command.
 
    ```pwsh-session
-   > set CUDA_HOME=%CUDA_HOME_V11_8%
-   > nvcc --version
-   nvcc: NVIDIA (R) Cuda compiler driver
-   Copyright (c) 2005-2022 NVIDIA Corporation
-   Built on Wed_Sep_21_10:41:10_Pacific_Daylight_Time_2022
-   Cuda compilation tools, release 11.8, V11.8.89
-   Build cuda_11.8.r11.8/compiler.31833905_0
+   set CUDA_HOME=%CUDA_HOME_V11_8%
+   ```
+   ```pwsh-session
+   nvcc --version
    ```
 
    Finally, install [cuDNN](https://developer.nvidia.com/rdp/cudnn-archive). You will need to register an Nvidia Developer account, which you can do for free. You can choose cuDNN v8.9.7 that supports CUDA toolkit v11.8. Choose 'Local Installer for Windows (Zip)', download and extract it. And then copy the three folders 'bin', 'lib', and 'include' into where the CUDA toolkit is installed (typcially, 'C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\'), and replace all the three folders with the same names. After that, you may need to add the 'C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8' to path via environmental variables.
@@ -36,19 +32,19 @@ To install LabGym on Windows, you will need to access the terminal. To do this, 
 3. Upgrade `pip`, `wheel`, `setuptools`.
    
    ```pwsh-session
-   > py -3.10 -m pip install --upgrade pip wheel setuptools
+   py -3.10 -m pip install --upgrade pip wheel setuptools
    ```
 
 4. Install LabGym via `pip`.
    
    ```pwsh-session
-   > py -3.10 -m pip install LabGym
+   py -3.10 -m pip install LabGym
    ```
 
 5. If you're using an NVIDIA GPU, install PyTorch v2.0.1 with CUDA v11.8 support.
    
    ```pwsh-session
-   > py -3.10 -m pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
+   py -3.10 -m pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
    ```
 
 &nbsp;
@@ -56,7 +52,7 @@ To install LabGym on Windows, you will need to access the terminal. To do this, 
 Launch LabGym:
 
    ```pwsh-session
-   > LabGym
+   LabGym
    ```
    
    The GUI will take a few minutes to start up during the first launch. If the LabGym GUI shows up, you have successfully installed LabGym!
@@ -64,9 +60,12 @@ Launch LabGym:
    If this doesn't work, which typically is because the python3/script is not in your environment path. You can google 'add python3 script to path in environmental variable in windows' to add it to path, or simply use the following commands to initiate LabGym:
 
    ```pwsh-session
-   > py -3.10
-
-   >>> from LabGym import __main__
-   >>> __main__.main()
+   py -3.10
+   ```
+   ```pwsh-session
+   from LabGym import __main__
+   ```
+   ```pwsh-session
+   __main__.main()
    ```
 
