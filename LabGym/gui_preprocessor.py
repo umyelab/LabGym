@@ -305,7 +305,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
 				cv2.namedWindow('The first frame in coordinates',cv2.WINDOW_NORMAL)
 				cv2.imshow('The first frame in coordinates',frame)
 
-				dialog=wx.TextEntryDialog(self,'Enter the birghtenss fold changes (a number between 0.0~10.0)','1.0 returns original image')
+				dialog=wx.TextEntryDialog(self,'Enter the birghtenss fold changes (a number between 0.0~10.0)','Entering 1.0 returns the original image')
 				if dialog.ShowModal()==wx.ID_OK:
 					brightness=dialog.GetValue()
 				else:
@@ -313,7 +313,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
 					self.enhance_brightness=False
 					stop=True
 				dialog.Destroy()
-				dialog=wx.TextEntryDialog(self,'Enter the contrast fold changes (a number between 0.0~10.0)','1.0 returns original image')
+				dialog=wx.TextEntryDialog(self,'Enter the contrast fold changes (a number between 0.0~10.0)','Entering 1.0 returns the original image')
 				if dialog.ShowModal()==wx.ID_OK:
 					contrast=dialog.GetValue()
 				else:
