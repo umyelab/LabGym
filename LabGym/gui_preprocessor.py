@@ -355,7 +355,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
 
 			cv2.destroyAllWindows()
 
-			self.text_enhancevideos.SetLabel('Brightness / contrast enhanced by: '+str(self.contrast)+' / '+str(self.contrast)+'.')
+			self.text_enhancevideos.SetLabel('Brightness / contrast enhanced by: '+str(self.brightness)+' / '+str(self.contrast)+'.')
 
 
 	def downsize_fps(self,event):
