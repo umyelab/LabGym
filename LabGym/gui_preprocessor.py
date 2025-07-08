@@ -30,6 +30,7 @@ import wx
 import os
 import cv2
 import numpy as np
+from PIL import Image,ImageEnhance
 
 
 
@@ -50,6 +51,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
 		self.enhance_contrast=False # whether to enhance the contrast in videos
 		self.decode_t=False # whether to decode the time windows for trimming the videos from '_stt' and '_edt_' in video file names
 		self.contrast=1.0 # contrast enhancement factor
+		self.brightness=1.0 # brightness enhancement factor
 		self.crop_frame=False # whether to crop the frames of videos
 		self.left=0 # frame cropping coordinates left
 		self.right=0 # frame cropping coordinates right
@@ -293,6 +295,11 @@ class WindowLv2_ProcessVideos(wx.Frame):
 
 			if self.framewidth is not None:
 				frame=cv2.resize(frame,(self.framewidth,int(frame.shape[0]*self.framewidth/frame.shape[1])),interpolation=cv2.INTER_AREA)
+
+			frame=cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
+			frame=Image.fromarray(frame)
+			
+			text_enhancecontrast=''
 
 			stop=False
 			while stop is False:
