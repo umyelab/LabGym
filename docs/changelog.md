@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.9.1
+### What's Changed
+* Integrated the logger system.
+* Incorporated Detectron2 into LabGym codebase so that the installation process is significantly simplified.
+* Added both brightness and contrast enhancement function in Preprocessing Module.
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.9.0...v2.9.1>
+
 ## v2.9.0
 ### What's Changed
 * Introduced a new annotation tool: [EZannot](https://github.com/yujiahu415/EZannot), to replace Roboflow since Roboflow started to charge for private data.

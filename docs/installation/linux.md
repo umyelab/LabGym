@@ -1,17 +1,12 @@
 # Linux/WSL
 
-Depending on which distribution of Linux you use, the process of installing
-packages will look slightly different. Select the appropriate distribution
-below and follow along from there. These instructions also work for the
-Windows Subsystem for Linux (WSL).
+Depending on which distribution of Linux you use, the process of installing packages will look slightly different. Select the appropriate distribution below and follow along from there. These instructions also work for the Windows Subsystem for Linux (WSL).
 
 ```{note}
-If you're using Arch Linux or one of its derivatives, we assume you have the 
-`yay` package manager installed to install dependencies from the AUR.
+If you're using Arch Linux or one of its derivatives, we assume you have the `yay` package manager installed to install dependencies from the AUR.
 ```
 
-1. Update your system's package manager, then install `gcc`, `git`, and 
-   Python 3.10.
+1. Update your system's package manager, then install `gcc`, `git`, and Python 3.10.
 
    ````{tab} Ubuntu/Debian/WSL
    ```console
@@ -30,14 +25,9 @@ If you're using Arch Linux or one of its derivatives, we assume you have the
 
 2. If you're using an NVIDIA GPU, install CUDA Toolkit 11.8 and cuDNN.
 
-   First, install and/or update your GPU drivers at
-   [this link](https://www.nvidia.com/Download/index.aspx). Select your GPU
-   model and click "Search", then click "Download". After installing the
-   drivers, reboot your system to ensure they take effect.
+   First, install and/or update your GPU drivers at [this link](https://www.nvidia.com/Download/index.aspx). Select your GPU model and click "Search", then click "Download". After installing the drivers, reboot your system to ensure they take effect.
 
-   Then, install [CUDA Toolkit 11.8](https://developer.nvidia.com/cuda-11-8-0-download-archive?target_os=Linux&target_arch=x86_64).
-   Select your version of Linux, then follow the instructions to install CUDA
-   for your operating system.
+   Then, install [CUDA Toolkit 11.8](https://developer.nvidia.com/cuda-11-8-0-download-archive?target_os=Linux&target_arch=x86_64). Select your version of Linux, then follow the instructions to install CUDA for your operating system.
 
    To verify your installation of CUDA, use the following command.
 
@@ -50,25 +40,7 @@ If you're using Arch Linux or one of its derivatives, we assume you have the
    Build cuda_11.8.r11.8/compiler.31833905_0
    ```
 
-   ```{note}
-   If you run into issues installing CUDA, check out these resources:
-    - [CUDA Installation Documentation](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#package-manager-installation)
-      (these instructions are for the latest version of CUDA, so make sure to 
-      refer to the previous link for instructions specific to CUDA 11.8)
-    - [Detailed instructions for Ubuntu](https://gist.github.com/MihailCosmin/affa6b1b71b43787e9228c25fe15aeba)
-      (ignore the PyTorch installation instructions at the bottom, as LabGym
-      requires specific versions of PyTorch specified below)
-    - [Detailed instructions for WSL](https://rachitsingh.com/notes/wsl-cuda/)
-      (ignore the TensorRT and Python packages instructions at the bottom)
-   ```
-
-   Finally, install cuDNN by following [these instructions](https://docs.nvidia.com/deeplearning/cudnn/installation/linux.html#installing-on-linux). 
-   Scroll down until you see instructions for your operating system, then
-   follow them. You will need to register an Nvidia Developer account, which 
-   you can do for free.
-
-   As of February 2024, the latest version is cuDNN 9.0.0, which is compatible
-   with CUDA 11.8.
+   Finally, install [cuDNN](https://developer.nvidia.com/rdp/cudnn-archive). You will need to register an Nvidia Developer account, which you can do for free. You can choose cuDNN v8.9.7 that supports CUDA toolkit v11.8. Choose 'Local Installer for Windows (Zip)', download and extract it. And then copy the three folders 'bin', 'lib', and 'include' into where the CUDA toolkit is installed (typcially, 'C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\'), and replace all the three folders with the same names. After that, you may need to add the 'C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8' to path via environmental variables.
 
 3. Upgrade `pip`, `wheel`, `setuptools`.
 
@@ -93,25 +65,13 @@ If you're using Arch Linux or one of its derivatives, we assume you have the
    $ python3 -m pip install LabGym
    ```
 
-6. If you want to use LabGym Detector function:
+6. If you're using an NVIDIA GPU, Install Pytorch v2.0.1 with CUDA 11.8.
    
-   6.1. Install [Detectron2][].
+   ```console
+   $ python3 -m pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
+   ```
    
-      ```console
-      $ python3 -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
-      ```
-   
-   6.2. Install Pytorch v2.0.1 with CUDA 11.8.
-   
-      ```console
-      $ python3 -m pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
-      ```
-   
-      If you are using LabGym without a GPU, use the following command instead.
-   
-      ```console
-      $ python3 -m pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cpu
-      ```
+&nbsp;
 
 Launch LabGym:
 
@@ -119,8 +79,7 @@ Launch LabGym:
    $ LabGym
    ```
 
-   The GUI will take a few minutes to start up during the first launch. If the 
-   LabGym GUI shows up, you have successfully installed LabGym!
+   The GUI will take a few minutes to start up during the first launch. If the LabGym GUI shows up, you have successfully installed LabGym!
 
    If this doesn't work, which typically is because the python3/script is not in your environment path. You can google 'add python3 script to path linux' to add it to path, or simply use the following commands to initiate LabGym:
 
@@ -130,67 +89,3 @@ Launch LabGym:
    >>> from LabGym import __main__
    >>> __main__.main()
    ```
-
-&nbsp;
-
-If you use `pipx`, from step #5:
-
-&nbsp;
-   
-
-5. Install `pipx` by following 
-   [these instructions](https://pipx.pypa.io/stable/installation/). 
-   
-   To test your installation of `pipx`, close and reopen your terminal window,
-   then type the following command:
-
-   ```console
-   $ pipx --version
-   1.4.3
-   ```
-   If the version number prints successfully, then your installation is working
-   properly. Otherwise, try running the `pipx ensurepath` command again.
-
-6. Install LabGym via `pipx`.
-   
-   ```console
-   $ pipx install --python python3.10 LabGym
-   ```
-   
-   ```{note}
-   If you're on WSL and you run into issues with the installation of wxPython,
-   use [this resource](https://www.pixelstech.net/article/1599647177-Problem-and-Solution-for-Installing-wxPython-on-Ubuntu-20-04)
-   to install the necessary dependencies for wxPython. Then, rerun the above
-   command to install LabGym.
-   ```
-
-7. If you want to use LabGym Detector function:
-   
-   7.1. Install [Detectron2][] in the LabGym's virtual environment.
-      
-      ```console
-      $ pipx runpip LabGym install 'git+https://github.com/facebookresearch/detectron2.git'
-      ```
-   
-   7.2. Install PyTorch v2.0.1 with CUDA v11.8.
-   
-      ```console
-      $ pipx inject --index-url https://download.pytorch.org/whl/cu118 LabGym torch==2.0.1 torchvision==0.15.2
-      ```
-   
-      If you are using LabGym without a GPU, use the following command instead.
-   
-      ```console
-      $ pipx inject --index-url https://download.pytorch.org/whl/cpu LabGym torch==2.0.1 torchvision==0.15.2
-      ```
-
-Launch LabGym:
-
-   ```console
-   $ LabGym
-   ```
-   
-   The GUI will take a few minutes to start up during the first launch. If the 
-   LabGym GUI shows up, you have successfully installed LabGym!
-
-[Detectron2]: https://github.com/facebookresearch/detectron2
