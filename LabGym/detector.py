@@ -23,20 +23,16 @@ import os
 import cv2
 import json
 import torch
-try:
-	from detectron2 import model_zoo
-	from detectron2.checkpoint import DetectionCheckpointer
-	from detectron2.config import get_cfg
-	from detectron2.data import MetadataCatalog,DatasetCatalog,build_detection_test_loader
-	from detectron2.data.datasets import register_coco_instances
-	from detectron2.engine import DefaultTrainer,DefaultPredictor
-	from detectron2.utils.visualizer import Visualizer
-	from detectron2.evaluation import COCOEvaluator,inference_on_dataset
-	from detectron2.modeling import build_model
-except:
-	print('You need to install Detectron2 to use the Detector module in LabGym.')
-	print('See installation instructions on LabGym GitHub page or here:')
-	print('https://labgym.readthedocs.io/en/latest/installation/index.html')
+from .detectron2 import model_zoo
+from .detectron2.checkpoint import DetectionCheckpointer
+from .detectron2.config import get_cfg
+from .detectron2.data import MetadataCatalog,DatasetCatalog,build_detection_test_loader
+from .detectron2.data.datasets import register_coco_instances
+from .detectron2.engine import DefaultTrainer,DefaultPredictor
+from .detectron2.utils.visualizer import Visualizer
+from .detectron2.evaluation import COCOEvaluator,inference_on_dataset
+from .detectron2.modeling import build_model
+
 
 
 
