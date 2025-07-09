@@ -30,6 +30,7 @@ import wx
 import os
 import cv2
 import numpy as np
+from PIL import Image,ImageEnhance
 
 
 
@@ -47,8 +48,10 @@ class WindowLv2_ProcessVideos(wx.Frame):
 		self.result_path=None # the folder for storing preprocessed videos
 		self.trim_video=False # whether to trim videos into shorter clips, different clips from the same video can be merged
 		self.time_windows=[] # the time windows (short clips) for trimming the videos
+		self.enhance_brightness=False # whether to enhance the brightness in videos
 		self.enhance_contrast=False # whether to enhance the contrast in videos
 		self.decode_t=False # whether to decode the time windows for trimming the videos from '_stt' and '_edt_' in video file names
+		self.brightness=1.0 # brightness enhancement factor
 		self.contrast=1.0 # contrast enhancement factor
 		self.crop_frame=False # whether to crop the frames of videos
 		self.left=0 # frame cropping coordinates left
@@ -106,14 +109,14 @@ class WindowLv2_ProcessVideos(wx.Frame):
 		boxsizer.Add(module_cropframe,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		boxsizer.Add(0,5,0)
 
-		module_enhancecontrast=wx.BoxSizer(wx.HORIZONTAL)
-		button_enhancecontrast=wx.Button(panel,label='Specify whether to enhance\nthe contrast in videos',size=(300,40))
-		button_enhancecontrast.Bind(wx.EVT_BUTTON,self.enhance_contrasts)
-		wx.Button.SetToolTip(button_enhancecontrast,'Enhancing video contrast will increase the detection accuracy especially when the detection method is background subtraction based. Enter a contrast value to see whether it is good to apply or re-enter it.')
-		self.text_enhancecontrast=wx.StaticText(panel,label='Default: not to enhance contrast.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
-		module_enhancecontrast.Add(button_enhancecontrast,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
-		module_enhancecontrast.Add(self.text_enhancecontrast,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
-		boxsizer.Add(module_enhancecontrast,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		module_enhancevideos=wx.BoxSizer(wx.HORIZONTAL)
+		button_enhancevideos=wx.Button(panel,label='Specify whether to enhance the\nbrightness and contrast in videos',size=(300,40))
+		button_enhancevideos.Bind(wx.EVT_BUTTON,self.enhance_videos)
+		wx.Button.SetToolTip(button_enhancevideos,'Enhancing video brightness and contrast will increase the detection accuracy especially when the detection method is background subtraction based. Enter a value to see whether it is good to apply or re-enter it.')
+		self.text_enhancevideos=wx.StaticText(panel,label='Default: not to enhance brightness or contrast.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
+		module_enhancevideos.Add(button_enhancevideos,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		module_enhancevideos.Add(self.text_enhancevideos,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(module_enhancevideos,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		boxsizer.Add(0,5,0)
 
 		module_reducefps=wx.BoxSizer(wx.HORIZONTAL)
@@ -277,7 +280,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
 			cv2.destroyAllWindows()
 			
 
-	def enhance_contrasts(self,event):
+	def enhance_videos(self,event):
 
 		if self.path_to_videos is None:
 
@@ -295,40 +298,64 @@ class WindowLv2_ProcessVideos(wx.Frame):
 				frame=cv2.resize(frame,(self.framewidth,int(frame.shape[0]*self.framewidth/frame.shape[1])),interpolation=cv2.INTER_AREA)
 
 			stop=False
+
 			while stop is False:
+
 				cv2.destroyAllWindows()
 				cv2.namedWindow('The first frame in coordinates',cv2.WINDOW_NORMAL)
 				cv2.imshow('The first frame in coordinates',frame)
-				dialog=wx.TextEntryDialog(self,'Enter the fold changes for contrast enhancement','A number between 1.0~5.0')
+
+				dialog=wx.TextEntryDialog(self,'Enter the birghtenss fold changes (a number between 0.0~10.0)','Entering 1.0 returns the original image')
+				if dialog.ShowModal()==wx.ID_OK:
+					brightness=dialog.GetValue()
+				else:
+					brightness=1.0
+					self.enhance_brightness=False
+					stop=True
+				dialog.Destroy()
+				dialog=wx.TextEntryDialog(self,'Enter the contrast fold changes (a number between 0.0~10.0)','Entering 1.0 returns the original image')
 				if dialog.ShowModal()==wx.ID_OK:
 					contrast=dialog.GetValue()
-					try:
-						self.contrast=float(contrast)
-						show_frame=frame*self.contrast
-						show_frame[show_frame>255]=255
-						show_frame=np.uint8(show_frame)
-						cv2.destroyAllWindows()
-						cv2.namedWindow('The first frame in coordinates',cv2.WINDOW_NORMAL)
-						cv2.imshow('The first frame in coordinates',show_frame)
-						dialog1=wx.MessageDialog(self,'Apply the current contrast value?','Apply value?',wx.YES_NO|wx.ICON_QUESTION)
-						if dialog1.ShowModal()==wx.ID_YES:
-							stop=True
-							self.enhance_contrast=True
-							self.text_enhancecontrast.SetLabel('The contrast enhancement fold change is: '+str(self.contrast)+'.')
-						else:
-							self.enhance_contrast=False
-							self.text_enhancecontrast.SetLabel('Not to enhance contrast.')
-						dialog1.Destroy()
-					except:
-						self.enhance_contrast=False
-						wx.MessageBox('Please enter a float number between 1.0~5.0.','Error',wx.OK|wx.ICON_ERROR)
-						self.text_enhancecontrast.SetLabel('Not to enhance contrast.')
 				else:
+					contrast=1.0
 					self.enhance_contrast=False
 					stop=True
-					self.text_enhancecontrast.SetLabel('Not to enhance contrast.')
 				dialog.Destroy()
+
+				try:
+					self.brightness=float(brightness)
+					self.contrast=float(contrast)
+					show_frame=frame*self.brightness
+					show_frame[show_frame>255]=255
+					show_frame=np.uint8(show_frame)
+					show_frame=cv2.cvtColor(show_frame,cv2.COLOR_BGR2RGB)
+					show_frame=Image.fromarray(show_frame)
+					show_frame=ImageEnhance.Contrast(show_frame).enhance(self.contrast)
+					show_frame=cv2.cvtColor(np.array(show_frame),cv2.COLOR_RGB2BGR)
+					cv2.destroyAllWindows()
+					cv2.namedWindow('The first frame in coordinates',cv2.WINDOW_NORMAL)
+					cv2.imshow('The first frame in coordinates',show_frame)
+					dialog1=wx.MessageDialog(self,'Apply the current values?','Apply values?',wx.YES_NO|wx.ICON_QUESTION)
+					if dialog1.ShowModal()==wx.ID_YES:
+						stop=True
+						if self.brightness<1.0 or self.brightness>1.0:
+							self.enhance_brightness=True
+						if self.contrast<1.0 or self.contrast>1.0:
+							self.enhance_contrast=True
+					else:
+						self.enhance_brightness=False
+						self.enhance_contrast=False
+						stop=False
+					dialog1.Destroy()
+				except:
+					self.enhance_brightness=False
+					self.enhance_contrast=False
+					stop=True
+					wx.MessageBox('Please enter float numbers between 0.0~10.0.','Error',wx.OK|wx.ICON_ERROR)
+
 			cv2.destroyAllWindows()
+
+			self.text_enhancevideos.SetLabel('Brightness / contrast enhanced by: '+str(self.brightness)+' / '+str(self.contrast)+'.')
 
 
 	def downsize_fps(self,event):
@@ -374,7 +401,9 @@ class WindowLv2_ProcessVideos(wx.Frame):
 					self.framewidth,
 					trim_video=self.trim_video,
 					time_windows=self.time_windows,
+					enhance_brightness=self.enhance_brightness,
 					enhance_contrast=self.enhance_contrast,
+					brightness=self.brightness,
 					contrast=self.contrast,
 					crop_frame=self.crop_frame,
 					left=self.left,
