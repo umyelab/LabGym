@@ -2,21 +2,41 @@
 
 Example
     import logging
+    import central_logging
     import myargparse
 
     vals = myargparse.parse_args()
+
+    # If command-line arg '--verbose' is found,
+    # (and not subsequently overridden by other command-line args)
+    # then, logging.getLogger().setLevel(logging.DEBUG)
     if vals.logginglevelname is not None:
-        # set root logger level to vals.logginglevelname
+        # set root logger level according to vals.logginglevelname
         logging.getLogger().setLevel(getattr(logging, vals.logginglevelname))
+
+    central_logger = central_logging.get_central_logger()
+
+    # If command-line args '--enable', 'central_logger' are found, 
+    # (and not subsequently overridden by other command-line args)
+    # then central_logger.enabled = True
+    mydefault = False
+    if vals.enabled.get('central_logger', mydefault) == True:
+        central_logger.enabled = True
+    else:
+        central_logger.enabled = False
+
+    # or, more succinct equivalent (one line instead of if/else)
+    mydefault = False
+    central_logger.enabled = vals.enabled.get('central_logger', mydefault)
 """
 
-# standard library imports
+# Standard library imports.
 import os
 import sys
 import textwrap
 from typing import List
 
-# local application/library specific imports
+# Local application/library specific imports.
 import LabGym
 
 
@@ -35,7 +55,7 @@ class Values:
         # self.logginglevel: int | None = None
 
         self.cmd: str | None = None
-        self.args: List[str] = []  # list of remaining args after processiong opts
+        self.args: List[str] = []  # list of remaining args
 
 
 def parse_args() -> Values:
@@ -59,13 +79,14 @@ def parse_args() -> Values:
 
     *   As an arg is going through the pattern matching... if it doesn't
         begin with '-', it is considered the first positional command-
-        line arg and ends the option processing.  The list of positional
-        args remaining after option processing is stored in valobj.args.
+        line arg, and ends the option processing.  The list of 
+        positional args remaining after option processing is stored in 
+        valobj.args.
 
     *   A '--' arg is recognized as separating options from positional
-        command-line args.  It's necessary if the first positional
-        command-line arg starts with '-', to prevent processing it as an
-        option.
+        command-line args.  The '--' arg is necessary if the first
+        positional command-line arg starts with '-', to prevent 
+        processing it as an option.
     """
 
     valobj = Values()

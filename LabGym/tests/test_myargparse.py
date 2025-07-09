@@ -6,7 +6,7 @@ import pytest
 
 from LabGym import myargparse
 import LabGym  # get __version__ from __init__.py
-from exitstatus import exitstatus
+from .exitstatus import exitstatus
 
 
 # basicConfig here isn't effective, because pytest has already configured logging?
@@ -155,3 +155,88 @@ def test_parse_args_version(monkeypatch, capsys):
     assert (capsys.readouterr().out
          == f'LabGym.__version__: {LabGym.__version__}\n')
     assert exitstatus(e.value) == 0
+
+
+def test_anonymous_1(monkeypatch):
+    # Arrange
+    monkeypatch.setattr(sys, 'argv', ['dummy'])
+    # Act
+    vals = myargparse.parse_args()
+    # Assert
+    assert vals.anonymous == False
+
+
+def test_anonymous_2(monkeypatch):
+    # Arrange
+    monkeypatch.setattr(sys, 'argv', ['dummy', '--anonymous'])
+    # Act
+    vals = myargparse.parse_args()
+    # Assert
+    assert vals.anonymous == True
+
+
+def test_enable_1(monkeypatch):
+    # Arrange
+    monkeypatch.setattr(sys, 'argv',
+        ['dummy']
+        )
+
+    # Act
+    vals = myargparse.parse_args()
+
+    # Assert
+    assert vals.enabled.get('myfeature') is None
+
+
+def test_enable_2(monkeypatch):
+    # Arrange
+    monkeypatch.setattr(sys, 'argv',
+        ['dummy', '--enable', 'myfeature']
+        )
+
+    # Act
+    vals = myargparse.parse_args()
+
+    # Assert
+    assert vals.enabled.get('myfeature') == True
+
+
+def test_enable_3(monkeypatch):
+    # Arrange
+    monkeypatch.setattr(sys, 'argv',
+        ['dummy', '--disable', 'myfeature']
+        )
+
+    # Act
+    vals = myargparse.parse_args()
+
+    # Assert
+    assert vals.enabled.get('myfeature') == False
+
+
+def test_enable_4(monkeypatch):
+    # Arrange
+    monkeypatch.setattr(sys, 'argv',
+        ['dummy', '--enable', 'myfeature', '--disable', 'myfeature']
+        )
+
+    # Act
+    vals = myargparse.parse_args()
+
+    # Assert
+    assert vals.enabled.get('myfeature') == False
+
+
+def test_enable_5(monkeypatch):
+    # Arrange
+    monkeypatch.setattr(sys, 'argv',
+        ['dummy', '--disable', 'myfeature', '--enable', 'myfeature']
+        )
+
+    # Act
+    vals = myargparse.parse_args()
+
+    # Assert
+    assert vals.enabled.get('myfeature') == True
+
+
