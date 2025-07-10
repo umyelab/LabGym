@@ -7,11 +7,6 @@ from packaging import version
 
 import pytest
 
-# is the dot really necessary after fixing the pth?
-# from .exitstatus import exitstatus
-# from tests.exitstatus import exitstatus
-# from .exitstatus import exitstatus
-# import exitstatus.exitstatus as exitstatus
 from .exitstatus import exitstatus
 
 from LabGym import probes
