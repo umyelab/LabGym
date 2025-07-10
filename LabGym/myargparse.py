@@ -14,20 +14,19 @@ Example
         # set root logger level according to vals.logginglevelname
         logging.getLogger().setLevel(getattr(logging, vals.logginglevelname))
 
-    central_logger = central_logging.get_central_logger()
-
     # If command-line args '--enable', 'central_logger' are found, 
     # (and not subsequently overridden by other command-line args)
-    # then central_logger.enabled = True
-    mydefault = False
-    if vals.enabled.get('central_logger', mydefault) == True:
-        central_logger.enabled = True
-    else:
-        central_logger.enabled = False
+    # then vals.enabled['central_logger'] == True.
+    # The governing logger attribute is 'disabled', so save the inverse
+    # of the 'enabled' value to the 'disabled' attribute.
 
-    # or, more succinct equivalent (one line instead of if/else)
-    mydefault = False
-    central_logger.enabled = vals.enabled.get('central_logger', mydefault)
+    central_logger = central_logging.get_central_logger()
+
+    # default for the central logger's disabled attribute
+    disabled_default = True  # True for opt-in, False for opt-out
+
+    _enabled = vals.enabled.get('central_logger', not disabled_default)
+    central_logger.disabled = not _enabled
 """
 
 # Standard library imports.

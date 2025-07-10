@@ -21,6 +21,7 @@ Email: bingye@umich.edu
 # Standard library imports.
 import inspect
 import logging
+from pathlib import Path
 
 
 # Configure the logging system.
@@ -30,31 +31,57 @@ import logging
 # other imports (against the guidance of PEP 8), to log the load of this
 # module before other import statements are executed and potentially
 # produce their own log messages.
-from LabGym import mylogging
-
 logrecords = [logging.LogRecord(lineno=inspect.stack()[0].lineno,
     level=logging.DEBUG, exc_info=None, name=__name__, pathname=__file__,
     msg='%s', args=(f'loading {__file__}',),
     )]
+
+from LabGym import mylogging
 mylogging.config(logrecords)
 mylogging.handle(logrecords)
 
 logger = logging.getLogger(__name__)
-logger.debug('%s: %r', '(__name__, __package__)', (__name__, __package__))
+logger.debug('%s: %r', '(__name__, __package__', (__name__, __package__))
 
 
 # Related third party imports.
-# (none)
+import requests
+from packaging import version
 
 # Local application/library specific imports.
-from LabGym import __version__, gui_main, handshake
+from LabGym import __version__, gui_main, probes
 
 
-def main() -> None:
+def main():
 	"""Perform pre-op probes, then display the main window."""
 
-	handshake.handshake()
+	try:
+
+		current_version=version.parse(__version__)
+		logger.debug('%s: %r', 'current_version', current_version)
+		pypi_json=requests.get('https://pypi.org/pypi/LabGym/json').json()
+		latest_version=version.parse(pypi_json['info']['version'])
+		logger.debug('%s: %r', 'latest_version', latest_version)
+
+		if latest_version>current_version:
+
+			if 'pipx' in str(Path(__file__)):
+				upgrade_command='pipx upgrade LabGym'
+			else:
+				upgrade_command='python3 -m pip install --upgrade LabGym'
+
+			print(f'You are using LabGym {current_version}, but version {latest_version} is available.')
+			print(f'Consider upgrading LabGym by using the command "{upgrade_command}".')
+			print('For the details of new changes, check https://github.com/umyelab/LabGym.\n')
+
+	except:
+
+		pass
+
+	probes.probes()
+
 	gui_main.main_window()
+
 
 
 if __name__=='__main__':
