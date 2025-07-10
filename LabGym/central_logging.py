@@ -1,3 +1,10 @@
+"""Provide ...
+
+Functions
+    get_central_logger -- Return logger 'Central Logger', configured to
+        send log records to an HTTP server.
+"""
+
 import logging
 import logging.handlers
 

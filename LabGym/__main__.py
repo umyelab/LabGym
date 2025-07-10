@@ -78,6 +78,7 @@ def main():
 
 		pass
 
+	# Perform some pre-op sanity checks and probes of outside resources.
 	probes.probes()
 
 	gui_main.main_window()

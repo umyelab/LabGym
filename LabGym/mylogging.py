@@ -119,7 +119,8 @@ For Example 3,
 """  # noqa: E501
 # pylint: enable=line-too-long
 
-from __future__ import annotations  # 3.9 needs this for some type annotations
+# Allow use of newer syntax Python 3.10 type hints in Python 3.9.
+from __future__ import annotations
 
 # Standard library imports.
 import inspect
@@ -290,6 +291,8 @@ def config(logrecords: List[logging.LogRecord] = []) -> None:
 
     (1) Configure logging based on configfile, or fall back to
         calling logging.basicConfig(level=logging.DEBUG).
+        Set logging.raiseExceptions to False.  (Why?  Because We want to 
+        ignore handler-emit exceptions.)
 
     (2) Redirect all warnings issued by the warnings module to the
         logging system.
@@ -324,6 +327,10 @@ def config(logrecords: List[logging.LogRecord] = []) -> None:
                 'Trouble configuring logging...  '
                 'Calling logging.basicConfig(level=logging.DEBUG)'))
             logging.basicConfig(level=logging.DEBUG)
+
+        # Set logging.raiseExceptions to False.  (Why?  Because We want to 
+        # ignore handler-emit exceptions.)
+        logging.raiseExceptions = False
 
         # (2) Redirect all warnings ... to the logging system.
         logging.captureWarnings(True)

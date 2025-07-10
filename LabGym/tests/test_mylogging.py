@@ -16,7 +16,7 @@ logging.getLogger().setLevel(logging.DEBUG)
 class ValuesSubclass(Values):
     def __init__(self, datadict={}):
         super().__init__()
-        self.__dict__.update(datadict) 
+        self.__dict__.update(datadict)
     def __eq__(self, other):
         logging.debug('entered custom __eq__ method')
         return self.__dict__ == other.__dict__
@@ -31,7 +31,7 @@ def test_config_1(monkeypatch):
     valobj = ValuesSubclass({'logginglevelname': 'ALFA'})
     # print(f'DEBUG: valobj.__dict__, {valobj.__dict__!r}')
     monkeypatch.setattr(
-        'LabGym.mylogging.myargparse.parse_args', 
+        'LabGym.mylogging.myargparse.parse_args',
         lambda: valobj)
 
     # Act
@@ -50,7 +50,7 @@ def test_config_2(monkeypatch):
     valobj = ValuesSubclass({'loggingconfig': '/bravo/charlie.yaml'})
     # print(f'DEBUG: valobj.__dict__, {valobj.__dict__!r}')
     monkeypatch.setattr(
-        'LabGym.mylogging.myargparse.parse_args', 
+        'LabGym.mylogging.myargparse.parse_args',
         lambda: valobj)
 
     # Act
@@ -64,5 +64,7 @@ def test_config_2(monkeypatch):
 
 
 # 3. bad configfile content produces a pair of warning messages.
-# def test_config_3(mocker):
-#     pass
+# def test_config_3(monkeypatch):
+    # Arrange
+    # Act
+    # Assert
