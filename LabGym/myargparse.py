@@ -68,6 +68,12 @@ def parse_args() -> Values:
     If a usage error is recognized, then print the error message and the
     help message to stderr, and exit 1.
 
+    The --enable FEATURE and --disable FEATURE provide a risk-mitigated
+    approach to the introduction of new features or behaviors.  Start 
+    with the feature defaulting to disabled, and support user opt-in.  
+    After confidence is developed, change the default to enabled, and 
+    support user opt-out.
+
     Notes
     *   This function operates on a copy of sys.argv and leaves sys.argv
         unchanged.
