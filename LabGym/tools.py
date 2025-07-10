@@ -16,31 +16,34 @@ USA
 Email: bingye@umich.edu
 '''
 
-
-
-
+# Log the load of this module (by the module loader, on first import).
+# Intentionally positioning these statements before other imports, against the
+# guidance of PEP-8, to log the load before other imports log messages.
 import logging
+logger =  logging.getLogger(__name__)
+logger.debug('loading %s', __file__)
+
+
 import os
 import gc
 import cv2
 import numpy as np
 import datetime
 from skimage import exposure
+logger.debug('importing tensorflow.keras.preprocessing.image (starting...)')
 from tensorflow.keras.preprocessing.image import img_to_array
+logger.debug('importing tensorflow.keras.preprocessing.image (done)')
 from collections import deque
 import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap,Normalize
 from matplotlib.colorbar import ColorbarBase
+from PIL import Image,ImageEnhance
 import pandas as pd
 import seaborn as sb
 import functools
 import operator
 import math
 import shutil
-
-
-logger = logging.getLogger(__name__)
-
 
 
 def extract_background(frames,stable_illumination=True,animal_vs_bg=0):
@@ -1038,9 +1041,11 @@ def preprocess_video(
 	framewidth,
 	trim_video=False,
 	time_windows=[[0,10]],
-	enhance_contrast=True,
+	enhance_brightness=False,
+	enhance_contrast=False,
+	brightness=1.0,
 	contrast=1.0,
-	crop_frame=True,
+	crop_frame=False,
 	left=0,
 	right=0,
 	top=0,
@@ -1124,11 +1129,16 @@ def preprocess_video(
 			else:
 				frame=frame[top:min(bottom,height),left:min(right,width),:]
 
-		if enhance_contrast:
-			frame=frame*contrast
+		if enhance_brightness:
+			frame=frame*brightness
 			frame[frame>255]=255
+			frame=np.uint8(frame)
 
-		frame=np.uint8(frame)
+		if enhance_contrast:
+			frame=cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
+			frame=Image.fromarray(frame)
+			frame=ImageEnhance.Contrast(frame).enhance(contrast)
+			frame=cv2.cvtColor(np.array(frame),cv2.COLOR_RGB2BGR)
 
 		if trim_video:
 			t=frame_count/fps

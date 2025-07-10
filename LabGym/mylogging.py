@@ -77,6 +77,8 @@ For Example 3,
 """  # noqa: E501
 # pylint: enable=line-too-long
 
+from __future__ import annotations  # 3.9 needs this for some type annotations
+
 # Standard library imports.
 import inspect
 import logging.config
