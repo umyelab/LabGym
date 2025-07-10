@@ -13,7 +13,8 @@ logging.getLogger().setLevel(logging.DEBUG)
 from packaging import version
 import pytest
 
-from exitstatus import exitstatus
+# is the . really necessary after fixing the pth?
+from .exitstatus import exitstatus
 
 # Specify sys.argv before importing __main__.  Why?  Because the 
 # loading of my __main__ is sensitive to the contents of sys.argv, which

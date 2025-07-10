@@ -7,7 +7,8 @@ from packaging import version
 
 import pytest
 
-from exitstatus import exitstatus
+# is the dot really necessary after fixing the pth?
+from .exitstatus import exitstatus
 
 from LabGym import handshake
 
