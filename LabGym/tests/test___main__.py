@@ -14,6 +14,10 @@ from packaging import version
 import pytest
 
 # is the . really necessary after fixing the pth?
+# works:  from .exitstatus import exitstatus
+# doesn't work:  from exitstatus import exitstatus
+# from tests.exitstatus import exitstatus
+# import exitstatus.exitstatus as exitstatus
 from .exitstatus import exitstatus
 
 # Specify sys.argv before importing __main__.  Why?  Because the 
@@ -36,8 +40,8 @@ def test_inspect():
         print(f'{rec.levelname} {rec.args[0]}') 
     
 
-def test_handshake():
-    LabGym.__main__.handshake.handshake()
+def test_probes():
+    LabGym.__main__.probes.probes()
 
 def test_main(monkeypatch):
     monkeypatch.setattr('LabGym.__main__.gui_main.main_window', lambda: None)
