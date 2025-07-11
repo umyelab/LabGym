@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.9.2
+### What's Changed
+* Bug fix in Detector module.
+* Deleted unnecessary python extension files.
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.9.1...v2.9.2>
+
 ## v2.9.1
 ### What's Changed
 * Integrated the logger system.
