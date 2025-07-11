@@ -25,7 +25,7 @@ If you're using Arch Linux or one of its derivatives, we assume you have the `ya
    yay -S python310
    ```
 
-2. If you're using an NVIDIA GPU, install CUDA Toolkit 11.8 and cuDNN.
+2. If you're using an NVIDIA GPU, install CUDA Toolkit 11.8 and cuDNN, and install Pytorch v2.0.1 with cu118 support.
 
    First, install and/or update your GPU drivers at [this link](https://www.nvidia.com/Download/index.aspx). Select your GPU model and click "Search", then click "Download". After installing the drivers, reboot your system to ensure they take effect.
 
@@ -37,7 +37,14 @@ If you're using Arch Linux or one of its derivatives, we assume you have the `ya
    nvcc --version
    ```
 
-   Finally, install [cuDNN](https://developer.nvidia.com/rdp/cudnn-archive). You will need to register an NVIDIA Developer account, which you can do for free. You can choose cuDNN v8.9.7 that supports CUDA toolkit v11.8. Choose 'Local Installer for Windows (Zip)', download and extract it. And then copy the three folders 'bin', 'lib', and 'include' into where the CUDA toolkit is installed (typcially, 'C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\'), and replace all the three folders with the same names. After that, you may need to add the 'C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8' to path via environmental variables.
+   Next, install [cuDNN](https://developer.nvidia.com/rdp/cudnn-archive). You will need to register an NVIDIA Developer account, which you can do for free. You can choose cuDNN v8.9.7 that supports CUDA toolkit v11.8. Choose 'Local Installer for Windows (Zip)', download and extract it. And then copy the three folders 'bin', 'lib', and 'include' into where the CUDA toolkit is installed (typcially, 'C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\'), and replace all the three folders with the same names. After that, you may need to add the 'C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8' to path via environmental variables.
+
+   Finally, install Pytorch v2.0.1 with cu118 support.
+
+   ```console
+   python3 -m pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
+   ```
+
 
 3. Upgrade `pip`, `wheel`, `setuptools`.
 
@@ -61,12 +68,6 @@ If you're using Arch Linux or one of its derivatives, we assume you have the `ya
  
    ```console
    python3 -m pip install LabGym
-   ```
-
-6. If you're using an NVIDIA GPU, Install Pytorch v2.0.1 with CUDA 11.8.
-   
-   ```console
-   python3 -m pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
    ```
    
 &nbsp;
