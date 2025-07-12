@@ -32,32 +32,40 @@ import getpass
 import logging
 import sys
 
-# out-of-sequence to determine where it goes sideways!
-logger = logging.getLogger(__name__)
-# logging.basicConfig(level=logging.DEBUG)
-
-
-print(f'Brackets A -- level: {logging.getLogger().level}')
-logger.debug('1/2')
 import wx
-logger.debug('2/2')
-print(f'Brackets A -- level: {logging.getLogger().level}')
 
-print(f'Brackets B -- level: {logging.getLogger().level}')
-logger.debug('1/2')
 import central_logging
-logger.debug('2/2')
-print(f'Brackets B -- level: {logging.getLogger().level}')
 
-print(f'Brackets C -- level: {logging.getLogger().level}')
-logger.debug('1/2')
+
 logger = logging.getLogger(__name__)
-logger.debug('2/2')
-print(f'Brackets C -- level: {logging.getLogger().level}')
 
-print(f'Milepost D -- root logger level: {logging.getLogger().level}')
-print(f'Milepost D -- this logger level: {logger.level}')
-print(f'Milepost D -- this logger effectivelevel: {logger.getEffectiveLevel()}')
+
+# # out-of-sequence to determine where it goes sideways!
+# logger = logging.getLogger(__name__)
+# # logging.basicConfig(level=logging.DEBUG)
+# 
+# 
+# print(f'Brackets A -- level: {logging.getLogger().level}')
+# logger.debug('1/2')
+# import wx
+# logger.debug('2/2')
+# print(f'Brackets A -- level: {logging.getLogger().level}')
+# 
+# print(f'Brackets B -- level: {logging.getLogger().level}')
+# logger.debug('1/2')
+# import central_logging
+# logger.debug('2/2')
+# print(f'Brackets B -- level: {logging.getLogger().level}')
+# 
+# print(f'Brackets C -- level: {logging.getLogger().level}')
+# logger.debug('1/2')
+# logger = logging.getLogger(__name__)
+# logger.debug('2/2')
+# print(f'Brackets C -- level: {logging.getLogger().level}')
+# 
+# print(f'Milepost D -- root logger level: {logging.getLogger().level}')
+# print(f'Milepost D -- this logger level: {logger.level}')
+# print(f'Milepost D -- this logger effectivelevel: {logger.getEffectiveLevel()}')
 
 class RegForm(wx.Frame):
     # def __init__(self, parent, title):
@@ -222,36 +230,38 @@ def is_registered() -> bool:
 
 
 if __name__ == '__main__':
-    logger.error('Milepost alfa (e)')
-    logger.warning('Milepost alfa (w)')
-    logger.info('Milepost alfa (i)')
-    logger.debug('Milepost alfa (d)')
+    # logger.error('Milepost alfa (e)')
+    # logger.warning('Milepost alfa (w)')
+    # logger.info('Milepost alfa (i)')
+    # logger.debug('Milepost alfa (d)')
+    #
+    # # this isn't honored... maybe logging config already performed by an import.
+    # logging.basicConfig(level=logging.DEBUG)
+    # # logging.getLogger().setLevel(logging.DEBUG)
+    # print('Milepost')
+    #
+    # logger.error('Milepost bravo (e)')
+    # logger.warning('Milepost bravo (w)')
+    # # WHY ARE THESE NOT PRODUCING?
+    # logger.info('Milepost bravo (i)')
+    # logger.debug('Milepost bravo (d)')
+    #
+    # print('Milepost Z -- %s: %r\n' % ('dir(logger)', dir(logger)))
+    #
+    # print(f'Milepost E -- root logger level: {logging.getLogger().level}')
+    # print(f'Milepost E -- this logger level: {logger.level}')
+    # print(f'Milepost E -- this logger effectivelevel: {logger.getEffectiveLevel()}')
+    # print(f'Milepost E -- this logger disabled flag: {logger.disabled}')
+    # print(f'Milepost E -- this logger propagate flag: {logger.propagate}')
+    # print(f'Milepost E -- this logger hasHandlers(): {logger.hasHandlers()}')
+    # print(f'Milepost E -- this logger filters: {logger.filters}')
+    #
+    # sys.exit('intentional abend')
 
-    # this isn't honored... maybe logging config already performed by an import.
     logging.basicConfig(level=logging.DEBUG)
-    # logging.getLogger().setLevel(logging.DEBUG)
-    print('Milepost')
-
-    logger.error('Milepost bravo (e)')
-    logger.warning('Milepost bravo (w)')
-    # WHY ARE THESE NOT PRODUCING?
-    logger.info('Milepost bravo (i)')
-    logger.debug('Milepost bravo (d)')
-
-    print('Milepost Z -- %s: %r\n' % ('dir(logger)', dir(logger)))
-
-    print(f'Milepost E -- root logger level: {logging.getLogger().level}')
-    print(f'Milepost E -- this logger level: {logger.level}')
-    print(f'Milepost E -- this logger effectivelevel: {logger.getEffectiveLevel()}')
-    print(f'Milepost E -- this logger disabled flag: {logger.disabled}')
-    print(f'Milepost E -- this logger propagate flag: {logger.propagate}')
-    print(f'Milepost E -- this logger hasHandlers(): {logger.hasHandlers()}')
-    print(f'Milepost E -- this logger filters: {logger.filters}')
-
-    sys.exit('intentional abend')
-
 
     _get_reginfo_from_form()
+
     # app = wx.PySimpleApp()
     # frame = RegForm().Show()
     # app.MainLoop()
