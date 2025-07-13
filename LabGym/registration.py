@@ -1,32 +1,52 @@
-"""Provide functions to obtain and send registration info.
+"""Provide functions to obtain and forward registration info.
 
 "Public" Functions
-    is_registered -- Return True if registration data is stored.
+    is_registered() -> bool
+        Return True if registration data is stored.
 
-    register --
+    register() -> None
         Get reg info from user, store reginfo locally, and send to receiver.
 
-    get_reginfo_from_file --
+    get_reginfo_from_file() -> dict | None
         Load registration info from file, and return reginfo.
 
-"Private" Functions
-These functions are implementation details and should not be relied upon 
-by external code, as they might change without notice in future versions.
-    _get_reginfo_from_form --
-        Display a reg form, get user input, and return reginfo.
-
-    _store_reginfo_to_file -- ...
-
-Classes
-(Should RegFormDialog class be private?  I'm not seeing a public use case.)
-    RegFormDialog(wx.Dialog)  
-
 Example
+    import registration
+
     if not registration.is_registered():
         # Get reg info from user, store reginfo locally.  Also, send 
         # reginfo to central receiver via central_logger (unless
         # central_logger's disabled attribute is True).
         registration.register()
+
+Strengths
+    *   Input text fields are validated as not-empty before acceptance.
+    *   On macOS, displays form on foreground/top, instead of hidden
+        below other windows.
+
+Weaknesses
+    *   This module file is long.  It should be refactored into a 
+        package with smaller module files.
+
+Notes
+    ...
+
+"Private" Functions
+These functions are implementation details and should not be relied upon 
+by external code, as they might change without notice in future versions.
+By convention they are named with a single leading underscore ("_") to 
+indicate to other programmers that they are intended for private or 
+internal use.
+    _get_reginfo_from_form(variant='dialog w/o frame') -> dict | None
+        Display a reg form, get user input, and return reginfo.
+
+    _store_reginfo_to_file(reginfo: dict) -> None
+        ...
+
+Should these classes be considered private?  I'm not seeing a public use case.
+    RegFormDialog(wx.Dialog)
+    NotEmptyValidator(wx.PyValidator)
+    RegFrame(wx.Frame)
 """
 
 # Allow use of newer syntax Python 3.10 type hints in Python 3.9.
@@ -62,10 +82,14 @@ class NotEmptyValidator(wx.PyValidator):
 
     def Validate(self, parent):
         text_control = self.GetWindow()
-        text = text_control.GetValue().strip() # .strip() removes leading/trailing whitespace
 
-        if not text: # Check if the string is empty after stripping whitespace
-            wx.MessageBox("This field cannot be empty.", "Error", wx.OK | wx.ICON_ERROR)
+        # .strip() removes leading/trailing whitespace
+        text = text_control.GetValue().strip() 
+
+        if not text: 
+            # the string is empty after stripping whitespace
+            wx.MessageBox("This field cannot be empty.", 
+                "Error", wx.OK | wx.ICON_ERROR)
             text_control.SetFocus()
             return False
         else:
@@ -89,9 +113,10 @@ class RegFormDialog(wx.Dialog):
         header = textwrap.dedent("""
             Please register to be enrolled in the LabGym User Group.
 
-            The LabGym User Group lets the users and developers engage,
-            leading to improvements in user experience, including better
-            features, better implementation, and better installation.
+            The LabGym User Group promotes engagement between new users,
+            experienced users, and developers, leading to improvements
+            in user experience, including better features, better 
+            implementation, and better installation.
             """).strip()
 
         super().__init__(parent, title=title)
@@ -101,10 +126,6 @@ class RegFormDialog(wx.Dialog):
         self.input_name = wx.TextCtrl(self, validator=my_validator)
         self.input_affiliation = wx.TextCtrl(self, validator=my_validator)
         self.input_email = wx.TextCtrl(self, validator=my_validator)
-
-        # self.input_name = wx.TextCtrl(self, validator=NotEmptyValidator())
-        # self.input_affiliation = wx.TextCtrl(self, validator=NotEmptyValidator())
-        # self.input_email = wx.TextCtrl(self, validator=NotEmptyValidator())
 
         # Create buttons
         self.register_button = wx.Button(self, wx.ID_OK, "Register")
@@ -134,12 +155,10 @@ class RegFormDialog(wx.Dialog):
             0, wx.ALL | wx.EXPAND, 5)
         input_sizer.Add(self.input_name, 
             1, wx.EXPAND)
-
         input_sizer.Add(wx.StaticText(self, label="Affiliation:"), 
             0, wx.ALL | wx.EXPAND, 5)
         input_sizer.Add(self.input_affiliation, 
             1, wx.EXPAND)
-
         input_sizer.Add(wx.StaticText(self, label="Email Address:"), 
             0, wx.ALL | wx.EXPAND, 5)
         input_sizer.Add(self.input_email, 
@@ -155,34 +174,6 @@ class RegFormDialog(wx.Dialog):
             0, wx.ALIGN_CENTER | wx.TOP | wx.BOTTOM, 10)
 
         self.SetSizerAndFit(main_sizer)
-
-        # button binding is not necessary in a dialog?
-        # maybe because we reach in with GetValue after modal returns?
-        # 
-        # self.register_button.Bind(wx.EVT_BUTTON, self.on_register)
-        # self.skip_button.Bind(wx.EVT_BUTTON, self.on_skip)
-
-
-    # def on_register(self, event):
-    #     # validate data entry... or message and return without closing
-    #
-    #     reginfo = {
-    #         'name': self.text_name.GetValue(),
-    #         'affiliation': self.text_affiliation.GetValue(),
-    #         'email': self.text_email.GetValue(),
-    #         }
-    #
-    #     reginfo.update({
-    #         'schema': 'reginfo 2025-07-10',
-    #         'username': getpass.getuser(),
-    #         })
-    #
-    #     # logger.info('%s: %r', 'reginfo', reginfo)
-    #
-    #     self.Close() # Close this window when Register is clicked
-    #
-    # def on_skip(self, event):
-    #     self.Close() # Close this window when Skip is clicked
 
     def GetInputValues(self) -> dict | None:
         result = {
@@ -200,37 +191,22 @@ class RegFormDialog(wx.Dialog):
         On macOS 12.7, with app started from terminal, I'm seeing:
         *   the registration dialog is displayed, but doesn't have focus
             and is under the windows of the active app (terminology?),
-            spotentially completely covered.
+            potentially hidden completely.
         *   a bouncing python rocketship icon in the tray.  The bouncing 
             stops when you mouseover the icon.  Also some other actions
             can stop the bouncing or just pause the bouncing... weird.
 
-        The wx.Dialog object's Raise, SetFocus, and Restore methods did 
-        not resolve this issue.  
-
-        Instead...
-        Calling NSApp().activateIgnoringOtherApps_(True) via AppKit: 
-        This macOS workaround uses the AppKit module to explicitly 
-        activate the application, ignoring other running applications. 
-        This is typically done after your wxPython application has 
-        started and its main window is shown.
+        I wasn't able to resolve this on macOS using the wx.Dialog
+        object's Raise, SetFocus, and Restore methods.
+        Instead, ...
+            "Calling NSApp().activateIgnoringOtherApps_(True) via 
+            AppKit: This macOS workaround uses the AppKit module to 
+            explicitly activate the application, ignoring other running 
+            applications.  This is typically done after your wxPython 
+            application has started and its main window is shown."
         """
 
         if sys.platform == 'darwin':  # macOS
-            # Attempt to bring the window to the top of the Z-order,
-            # making it visible and potentially active.
-            # self.Raise()
-            #
-            # On some platforms, you might also want to ensure focus
-            # self.SetFocus() 
-            #
-            # On some platforms, restoring from minimization might be needed
-            # self.Restore()
-            # 
-            # The Raise, SetFocus, and Restore methods did not resolve the 
-            # issue.
-            #
-            # Instead...
             NSApplication.sharedApplication()
             NSApp().activateIgnoringOtherApps_(True)
 
@@ -254,15 +230,6 @@ class RegFrame(wx.Frame):
 
 def _get_reginfo_from_form(variant='dialog w/o frame') -> dict | None:
     """Display a reg form, get user input, and return reginfo.
-
-
-    ---
-(draft)...
-    Display a reg form, store reginfo locally, and send to receiver.
-
-    Display a LabGym registration form, whose onSubmit method (a) stores 
-    reginfo locally, and (b) sends reginfo via the central_logger to a 
-    central receiver.
 
     Notes
     *   In wxPython, the ShowModal() method displays a dialog window in
@@ -325,19 +292,6 @@ def _get_reginfo_from_form(variant='dialog w/o frame') -> dict | None:
     logger.debug('%s: %r', 'reginfo', reginfo)
     return reginfo
 
-    # can I still access the objects after MainLoop returns?
-    # TODO -- get reginfo from user-entered form data
-    # reginfo = None
-    # 
-    # result = {
-    #     'name': 'James Stewart',
-    #     # 'rank': 'Brigadier General',
-    #     # 'serial number': 'O-433210',
-    #     'affiliation': 'US Army Air Forces, Air Force Reserve',
-    #     'email': '',
-    #     }
-
-
 
 def register() -> None:
     """Get reg info from user, store reginfo locally, and send to receiver.
@@ -347,6 +301,12 @@ def register() -> None:
     2.  Send reginfo to central receiver via central_logger (unless
         central_logger's disabled attribute is True).
 
+(draft)...
+    Display a reg form, store reginfo locally, and send to receiver.
+
+    Display a LabGym registration form, whose onSubmit method (a) stores 
+    reginfo locally, and (b) sends reginfo via the central_logger to a 
+    central receiver.
     ---
 (draft?)
     Notes
@@ -402,6 +362,7 @@ if __name__ == '__main__':
         format='%(asctime)s\t%(levelname)s\t%(module)s:%(lineno)d\t%(message)s'
         )
 
+    # demo 
     variant = 'dialog w/o frame'  # default
     # variant = 'dialog w/ frame'
 
