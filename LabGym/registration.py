@@ -1,5 +1,4 @@
-"""
-...
+"""Provide functions to obtain and send registration info.
 
 "Public" Functions
     is_registered -- Return True if registration data is stored.
@@ -13,7 +12,6 @@
 "Private" Functions
 These functions are implementation details and should not be relied upon 
 by external code, as they might change without notice in future versions.
-
     _get_reginfo_from_form --
         Display a reg form, get user input, and return reginfo.
 
@@ -28,44 +26,27 @@ Example
         registration.register()
 """
 
+# Standard library imports.
 import getpass
 import logging
+import platform
 import sys
+import textwrap
 
-import wx
+# Related third party imports.
+if sys.platform == 'darwin':  # macOS
+    # AppKit is from pyobjc-framework-Cocoa, "Wrappers for the Cocoa
+    # frameworks on macOS"
+    from AppKit import NSApp, NSApplication
+import wx  # Cross platform GUI toolkit for Python, "Phoenix" version
 
+# Local application/library specific imports.
 import central_logging
 
 
 logger = logging.getLogger(__name__)
 
 
-# # out-of-sequence to determine where it goes sideways!
-# logger = logging.getLogger(__name__)
-# # logging.basicConfig(level=logging.DEBUG)
-# 
-# 
-# print(f'Brackets A -- level: {logging.getLogger().level}')
-# logger.debug('1/2')
-# import wx
-# logger.debug('2/2')
-# print(f'Brackets A -- level: {logging.getLogger().level}')
-# 
-# print(f'Brackets B -- level: {logging.getLogger().level}')
-# logger.debug('1/2')
-# import central_logging
-# logger.debug('2/2')
-# print(f'Brackets B -- level: {logging.getLogger().level}')
-# 
-# print(f'Brackets C -- level: {logging.getLogger().level}')
-# logger.debug('1/2')
-# logger = logging.getLogger(__name__)
-# logger.debug('2/2')
-# print(f'Brackets C -- level: {logging.getLogger().level}')
-# 
-# print(f'Milepost D -- root logger level: {logging.getLogger().level}')
-# print(f'Milepost D -- this logger level: {logger.level}')
-# print(f'Milepost D -- this logger effectivelevel: {logger.getEffectiveLevel()}')
 
 class RegForm(wx.Frame):
     # def __init__(self, parent, title):
