@@ -37,7 +37,7 @@ by external code, as they might change without notice in future versions.
 By convention they are named with a single leading underscore ("_") to 
 indicate to other programmers that they are intended for private or 
 internal use.
-    _get_reginfo_from_form(variant='dialog w/o frame') -> dict | None
+    _get_reginfo_from_form() -> dict | None
         Display a reg form, get user input, and return reginfo.
 
     _store_reginfo_to_file(reginfo: dict) -> None
@@ -46,7 +46,6 @@ internal use.
 Should these classes be considered private?  I'm not seeing a public use case.
     RegFormDialog(wx.Dialog)
     NotEmptyValidator(wx.PyValidator)
-    RegFrame(wx.Frame)
 """
 
 # Allow use of newer syntax Python 3.10 type hints in Python 3.9.
@@ -211,24 +210,7 @@ class RegFormDialog(wx.Dialog):
             NSApp().activateIgnoringOtherApps_(True)
 
 
-class RegFrame(wx.Frame):
-    def __init__(self, parent, title):
-        super().__init__(parent, title=title, size=(400, 300))
-        panel = wx.Panel(self)
-        btn = wx.Button(panel, label="Open Dialog")
-        btn.Bind(wx.EVT_BUTTON, self.OnOpenDialog)
-
-    def OnOpenDialog(self, event):
-        # Using 'with' statement for automatic destruction
-        with RegFormDialog(self) as dlg: 
-            if dlg.ShowModal() == wx.ID_OK:
-                reginfo = dlg.GetInputValues()
-                logger.info('%s: %r', 'reginfo', reginfo)
-            else:
-                print("Dialog cancelled")
-
-
-def _get_reginfo_from_form(variant='dialog w/o frame') -> dict | None:
+def _get_reginfo_from_form() -> dict | None:
     """Display a reg form, get user input, and return reginfo.
 
     Notes
@@ -255,28 +237,9 @@ def _get_reginfo_from_form(variant='dialog w/o frame') -> dict | None:
         interact with other application windows while it's open.
     """
 
-    assert variant in ['dialog w/o frame', 'dialog w/ frame']
-
     # Create a wx.App instance.
     app = wx.App()
 
-    if variant == 'dialog w/ frame':
-        # Create and show the main frame. 
-        logger.debug('%s -- %s', 'RegFrame()', 'calling...')
-        frame = RegFrame(None, "Registration Frame")
-        logger.debug('%s -- %s', 'RegFrame()', 'returned')
-        logger.debug('%s -- %s', 'frame.Show()', 'calling...')
-        frame.Show()
-        logger.debug('%s -- %s', 'frame.Show()', 'returned')
-   
-        # Start the main event loop.
-        logger.debug('%s -- %s', 'app.MainLoop()', 'calling...')
-        app.MainLoop()
-        logger.debug('%s -- %s', 'app.MainLoop()', 'returned')
-
-        return reginfo
-
-    assert variant == 'dialog w/o frame'
     with RegFormDialog(None) as dlg: 
         logger.debug('%s -- %s', 'Milestone ShowModal', 'calling...')
         dlg.bring_to_foreground()
@@ -362,9 +325,5 @@ if __name__ == '__main__':
         format='%(asctime)s\t%(levelname)s\t%(module)s:%(lineno)d\t%(message)s'
         )
 
-    # demo 
-    variant = 'dialog w/o frame'  # default
-    # variant = 'dialog w/ frame'
-
-    reginfo = _get_reginfo_from_form(variant=variant)
+    reginfo = _get_reginfo_from_form()
     logger.debug('%s: %r', 'reginfo', reginfo)
