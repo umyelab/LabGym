@@ -22,10 +22,11 @@ Email: bingye@umich.edu
 import inspect
 import logging
 from pathlib import Path
+import sys
 
 
-# Configure the logging system.
 # Log the load of this module (by the module loader, on first import).
+# Configure the logging system.
 #
 # These statements are intentionally positioned before this module's
 # other imports (against the guidance of PEP 8), to log the load of this
@@ -35,14 +36,9 @@ logrecords = [logging.LogRecord(lineno=inspect.stack()[0].lineno,
     level=logging.DEBUG, exc_info=None, name=__name__, pathname=__file__,
     msg='%s', args=(f'loading {__file__}',),
     )]
-
 from LabGym import mylogging
-mylogging.config(logrecords)
-mylogging.handle(logrecords)
-
-logger = logging.getLogger(__name__)
-logger.debug('%s: %r', '(__name__, __package__', (__name__, __package__))
-
+mylogging.configure(logrecords)  # configure the logging system
+mylogging.handle(logrecords)  # handle the list of logrecords created manually
 
 # Related third party imports.
 import requests
@@ -50,6 +46,10 @@ from packaging import version
 
 # Local application/library specific imports.
 from LabGym import __version__, gui_main, probes
+
+
+logger = logging.getLogger(__name__)
+logger.debug('%s: %r', '(__name__, __package__', (__name__, __package__))
 
 
 def main():
