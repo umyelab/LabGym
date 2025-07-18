@@ -41,40 +41,49 @@ internal use.
         Display a reg form, get user input, and return reginfo.
 
     _store_reginfo_to_file(reginfo: dict) -> None
-        ...
+        Store registration info to file in user's LabGym config directory.
 
 Should these classes be considered private?  I'm not seeing a public use case.
     RegFormDialog(wx.Dialog)
-    NotEmptyValidator(wx.PyValidator)
+    NotEmptyValidator(wx.Validator)
 """
 
 # Allow use of newer syntax Python 3.10 type hints in Python 3.9.
 from __future__ import annotations
 
 # Standard library imports.
+from datetime import datetime
 import getpass
 import logging
+from pathlib import Path
 import platform
 import sys
 import textwrap
+import uuid
+from zoneinfo import ZoneInfo
 
 # Related third party imports.
 if sys.platform == 'darwin':  # macOS
-    # AppKit is from pyobjc-framework-Cocoa, "Wrappers for the Cocoa
-    # frameworks on macOS"
+    # AppKit is from package pyobjc-framework-Cocoa, "Wrappers for the 
+    # Cocoa frameworks on macOS".
     from AppKit import NSApp, NSApplication
-import wx  # Cross platform GUI toolkit for Python, "Phoenix" version
+import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
+import yaml  # PyYAML, YAML parser and emitter for Python
 
 # Local application/library specific imports.
-import central_logging
+from LabGym import __version__ as version
+from LabGym import central_logging
+from LabGym import config
 
 
 logger = logging.getLogger(__name__)
 
 
-class NotEmptyValidator(wx.PyValidator):
+# class NotEmptyValidator(wx.PyValidator):
+class NotEmptyValidator(wx.Validator):
     def __init__(self):
-        wx.PyValidator.__init__(self)
+#         wx.PyValidator.__init__(self)
+        wx.Validator.__init__(self)
 
     def Clone(self):
         return NotEmptyValidator()
@@ -256,67 +265,105 @@ def _get_reginfo_from_form() -> dict | None:
     return reginfo
 
 
-def register() -> None:
+def register(central_logger=None) -> None:
     """Get reg info from user, store reginfo locally, and send to receiver.
 
-    Get reg info from user, add info from a survey of context, and 
-    1.  Store reginfo locally.  
-    2.  Send reginfo to central receiver via central_logger (unless
+    1.  Get reg info from user.
+    2.  Add info from a survey of context.
+    3.  Store reginfo locally.  
+    4.  Send reginfo to central receiver via central_logger (unless
         central_logger's disabled attribute is True).
 
-(draft)...
-    Display a reg form, store reginfo locally, and send to receiver.
+    In production use, central_logger is not passed in, central_logger is
+    obtained by calling central_logging.get_central_logger.
 
-    Display a LabGym registration form, whose onSubmit method (a) stores 
-    reginfo locally, and (b) sends reginfo via the central_logger to a 
-    central receiver.
-    ---
-(draft?)
-    Notes
-    *   The registration info is stored in ~/.labgym/registration.yaml
-        (or opts.configdir/registration.yaml?)
-    ---
+    For development and testing, central_logger may be overridden by the 
+    caller, like
+        registration.register(central_logger=logging.getLogger('Local Logger'))
+     
+    (I'm ambivalent on this... central_logger could be made a required arg,
+    and then no need to obtain it independently from inside this function.)
     """
+    if central_logger is None:
+        central_logger = central_logging.get_central_logger()
+
     reginfo = _get_reginfo_from_form()
     logger.debug('%s: %r', 'reginfo', reginfo)
 
     if reginfo is None:
         return
 
-    # update reginfo dict with supplemental info
+    # update reginfo dict with supplemental info from a survey of context
     reginfo.update({
         'schema': 'reginfo 2025-07-10',
         'username': getpass.getuser(),
-        # date
-        # computer os
-        # LabGym version
+
+        'datetime': datetime.now(ZoneInfo('US/Eastern')).strftime(
+            '%Y-%m-%dT%H:%M:%S%z'),
+        'uuid': str(uuid.uuid4()),
+
+        'platform': platform.platform(),
+        'node': platform.node(),
+        'version': version,  # LabGym version
         })
 
-    # 1.  Store reginfo locally.  
-    _store_reginfo_to_file(reginfo)
-
-    # 2.  Send reginfo to central receiver via central_logger (unless
-    #     central_logger's disabled attribute is True).
+    try:
+        _store_reginfo_to_file(reginfo)
+        reginfo.update({'status': 'saved to regfile'})
+    except Exception as e:
+        reginfo.update({'status': 'unable to save to regfile'})
+        
     central_logger.info(reginfo)
 
 
 def _store_reginfo_to_file(reginfo: dict) -> None:
-    # TODO -- Implement.
+    """Store registration info to file in user's LabGym config directory.
+
+    Save/store/stow/write reginfo dict to ~/.labgym/registration.yaml.
+    Or more accurately, <configdir>/registration.yaml.
+
+    Notes to developer
+    *   Consider pros/cons of saving in a more opaque form.  
+        zip-file instead of yaml?  with '.done' extension instead of 
+        '.zip' so it looks like a flag-file instead of a discardable 
+        backup.
+    """
+
+    # Get all of the values needed from config.get_config().
+    configdir: Path = config.get_config()['configdir']
+
+    # ensure configdir exists
+    configdir.mkdir(parents=True, exist_ok=True)
+
+    # write reginfo file
+    regfile = configdir.joinpath('registration.yaml')
+    with open(regfile, 'w') as f:
+        yaml.dump(reginfo, f, default_flow_style=False)
+
     return
     
 
 def get_reginfo_from_file() -> dict | None:
     """Load registration info from file, and return reginfo."""
 
-    # TODO -- Implement.
-    result = None
+    # Get all of the values needed from config.get_config().
+    configdir: Path = config.get_config()['configdir']
+
+    # read reginfo file
+    regfile = configdir.joinpath('registration.yaml')
+
+    try: 
+        with open(regfile, 'r', encoding='utf-8') as f:
+            result = yaml.safe_load(f)
+    except:
+        result = None
 
     return result
 
 
 def is_registered() -> bool:
-    """Return True if registration data is stored."""
-    return not get_reginfo_from_file() == None
+    """Return True if there is a readable regfile."""
+    return not (get_reginfo_from_file() is None)
 
 
 if __name__ == '__main__':
