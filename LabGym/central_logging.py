@@ -5,8 +5,15 @@ Functions
         send log records to an HTTP server.
 """
 
+# Standard library imports.
 import logging
 import logging.handlers
+
+# Related third party imports.
+# None
+
+# Local application/library specific imports.
+from LabGym import config
 
 
 http_handler_config = {
@@ -37,6 +44,7 @@ def reset_central_logger(logger):
     for h in logger.handlers:
         logger.removeHandler(h)
 
+    logger.disabled = False
     logger.propagate = True
 
 
@@ -72,6 +80,10 @@ def get_central_logger(http_handler_config=http_handler_config, reset=False):
         >>> central_logger.info({'name': 'Lyndon Baines Johnson', 'id': 36})
     """
 
+    # Get all of the values needed from config.get_config().
+    _config = config.get_config()
+    central_logger_disabled: bool = not _config['enable']['central_logger']
+
     central_logger = logging.getLogger('Central Logger')
 
     if reset:
@@ -91,7 +103,10 @@ def get_central_logger(http_handler_config=http_handler_config, reset=False):
     # Add the handler to the logger
     central_logger.addHandler(http_handler)
 
+    central_logger.disabled = central_logger_disabled
+
     central_logger.configured = True
+
     return central_logger
 
 

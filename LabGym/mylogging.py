@@ -1,9 +1,21 @@
 # pylint: disable=line-too-long
 """Provide functions for configuring the logging system.
 
+--------
+Notes to self... (move this elsewhere)
+The naming of functions and variables as "config" leads to confusion, because
+the verb configure and noun configuration both get shortened to config.
+Better not to shorten unless clear from context like 
+Function *configure, and variable configuration.
+Modulename is  config.
+configfile
+configdir
+--------
+
+
 Functions
-    config -- Configure logging based on a configfile, or fall back and
-        call logging.basicConfig.
+    configure -- Configure logging based on a logging configfile, or 
+        fall back and call logging.basicConfig.
     handle -- Use the root logger's handle method to handle each of the
         log records that were "manually" created and queued/stacked,
         prior to and during the configuration of the logging system.
@@ -89,7 +101,6 @@ Example 3, handle logrecords created before and during the call to config
     # other imports...
 
     logger = logging.getLogger(__name__)
-    logger.debug('milepost')
 
 The output depends on the configuration of the logging system.
 For Example 3,
@@ -126,6 +137,7 @@ from __future__ import annotations
 import inspect
 import logging.config
 import os
+from pathlib import Path
 # import pprint
 try:
     # tomllib is included in the Python Standard Library since version 3.11
@@ -138,7 +150,12 @@ from typing import Dict, List
 import yaml
 
 # Local application/library specific imports.
-from LabGym import myargparse
+from LabGym import config
+
+
+logger = logging.getLogger(__name__)
+# For production use, this module's logger should be disabled.
+logger.disabled = True
 
 
 # _mywarning -- Return a WARNING LogRecord for a string or exception.
@@ -159,131 +176,154 @@ from LabGym import myargparse
 #         logrecords.append(_mywarning('Trouble...'))
 #
 def _myLogRecord(myobj: str | Exception, level: int) -> logging.LogRecord:
-    """Return a LogRecord for a string or exception."""
+    """Return a LogRecord for a string or exception.
+
+    Also, for development, shadow this logrecord creation by sending
+    myobj to this module's logger.
+    For production use, this module's logger should be disabled.
+    """
     lineno = inspect.stack()[2].lineno  # type: ignore
 
-    return logging.LogRecord(
+    logrecord = logging.LogRecord(
         level=level,
         msg="%s", args=(f'{myobj}',),
         lineno=lineno,
         exc_info=None, name=__name__, pathname=__file__,
         )
 
+    if level >= logger.getEffectiveLevel():
+        logger.handle(logrecord)  # for development only
+
+    return logrecord
+
 
 def _mywarning(myobj: str | Exception) -> logging.LogRecord:
     """Return a WARNING LogRecord for a string or exception."""
-    # print(f'W: {myobj}')
     return _myLogRecord(myobj, level=logging.WARNING)
 
 
 def _mydebug(myobj: str | Exception) -> logging.LogRecord:
     """Return a DEBUG LogRecord for a string or exception."""
-    # print(f'D: {myobj}')
     return _myLogRecord(myobj, level=logging.DEBUG)
 
 
-def get_configfile() -> str:
-    """Return the path to a toml or yaml logging configfile.
+# def get_logging_configfile() -> Path:
+#     """Return the path to a toml or yaml configfile for logging.
+# 
+#     If no configfile exists among the standard paths, then raise an
+#     Exception.
+# 
+#     In decreasing precedence:
+#         1.  in the current dir of the process, that is, in os.getcwd(),
+#             like
+#                 *cwd*/logging.yaml
+#         2.  in a package config dir in the user's home dir, that is, in
+#             $HOME/.__package__, like
+#                 /Users/Andrew/.labgym/logging.yaml
+#         3.  in this module file's dir, that is, dirname(__file__), like
+#                 .../LabGym/logging.yaml
+#     """
+# 
+#     logger.debug('Milepost')
+#     myconfig = config.get_config()
+#     logger.debug('Milepost')
+#     configdir = Path(myconfig.get('configdir'))
+#     logger.debug('Milepost')
+# 
+#     # Prepare a list of configfile path objs to iterate through.
+#     configfiles = []
+# 
+#     if myconfig.get('logging_configfile'):
+#         _ = Path(myconfig.get('logging_configfile'))
+#         if os.path.is_abs(_):
+#             configfile = _
+#         else:
+#             # if configfile is relative, fix it relative to configdir.
+#             configfile = configdir.joinpath(_)
+# 
+#         configfiles.append(configfile)
+# 
+#     configfiles.extend([
+#         configdir.joinpath('logging.toml'),
+#         configdir.joinpath('logging.yaml'),
+# 
+#         Path(os.path.dirname(__file__)).joinpath('logging.yaml'),
+#         ])
+# 
+#     # Step through the list of path objs and return the first that exists.
+#     for configfile in configfiles:
+#         if configfile.is_file():
+#             return configfile
+# 
+#     # No configfile has been found, so raise an exception.
+#     # (? another way to signal this would be to return None ?)
+#     raise Exception('logging configfile not found')
 
-    If no configfile exists among the standard paths, then raise an
-    Exception.
 
-    In decreasing precedence:
-        1.  in the current dir of the process, that is, in os.getcwd(),
-            like
-                *cwd*/logging.yaml
-        2.  in a package config dir in the user's home dir, that is, in
-            $HOME/.__package__, like
-                /Users/Andrew/.labgym/logging.yaml
-        3.  in this module file's dir, that is, dirname(__file__), like
-                .../LabGym/logging.yaml
-    """
-
-    # Prepare a list of configfile paths to iterate through.
-    configfiles = [
-        os.path.join(os.getcwd(), 'logging.toml'),
-        os.path.join(os.getcwd(), 'logging.yaml'),
-        ]
-
-    home = os.environ.get('HOME')
-    if home is not None:
-        configfiles.extend([
-            os.path.join(home, f'.{__package__}', 'logging.toml'),
-            os.path.join(home, f'.{__package__}', 'logging.yaml'),
-            os.path.join(home, f'.{__package__.lower()}', 'logging.toml'),
-            os.path.join(home, f'.{__package__.lower()}', 'logging.yaml'),
-            ])
-
-    configfiles.extend([
-        os.path.join(os.path.dirname(__file__), 'logging.toml'),
-        os.path.join(os.path.dirname(__file__), 'logging.yaml'),
-        ])
-
-    # Step through the list of configfiles and return the first that exists.
-    for configfile in configfiles:
-        if os.path.exists(configfile):
-            return configfile
-
-    # No configfile has been found, so raise an exception.
-    # (? another way to signal this would be to return None ?)
-    raise Exception('logging configfile not found')
-
-
-def get_configdict(configfile: str) -> Dict:
+def get_configdict_from_configfile(configfile: Path) -> Dict:
     """Read the configfile and return the config dictionary."""
-    if configfile.endswith('.toml'):
+    if configfile.name.endswith('.toml'):
         with open(configfile, 'rb') as f:
-            configdict = tomllib.load(f)
-    elif configfile.endswith('.yaml'):
+            result = tomllib.load(f)
+    elif configfile.name.endswith('.yaml'):
         # with open(configfile, 'r') as f:
         with open(configfile, 'r', encoding='utf-8') as f:
-            configdict = yaml.safe_load(f)
+            result = yaml.safe_load(f)
     else:
-        raise Exception('bad extension -- configfile: {configfile!r}')
+        raise Exception('bad extension.  configfile: {configfile!r}')
 
-    return configdict
-
-
-def _config(
-        opts: myargparse.Values,
-        logrecords: List[logging.LogRecord],
-        ) -> None:
-    """Configure the logging system based on a configfile.
-
-    Args
-      opts -- a mylogging.Values object of parsed command-line values.
-      logrecords -- a list of not-yet-handled log records
-
-    If a logging congfigfile was specified by command-line args, then
-    try to configure logging with it.
-
-    Otherwise, a logging configfile was not specified by command-line
-    args, so iterate through a list of standard locations, and try to
-    configure logging with the first found to exist.
-    The list of standard locations ends with mypkg/logging.yaml.
-
-    Append any new log records to logrecords, for later handling.
-    """
-
-    if opts.loggingconfig is not None:
-        configfile = opts.loggingconfig
-    else:
-        configfile = get_configfile()
-
-    logrecords.append(_mydebug(f'configfile: {configfile!r}'))
-
-    # Get the config dictionary from the configfile.
-    configdict = get_configdict(configfile)
-    logrecords.append(_mydebug(
-        'function get_configdict returned a result'))
-    # logrecords.append(_mydebug(
-    #     f'configdict:\n{pprint.pformat(configdict, indent=2)}'))
-
-    # Apply the config dictionary.
-    logging.config.dictConfig(configdict)
+    return result
 
 
-def config(logrecords: List[logging.LogRecord] = []) -> None:
+
+# def _config(
+#         logging_configfilepath: Path,
+#         # opts: myargparse.Values,
+#         logrecords: List[logging.LogRecord],
+#         ) -> None:
+#     """Configure the logging system based on a configfile.
+# 
+#     Args
+#       opts -- a mylogging.Values object of parsed command-line values.
+#       logrecords -- a list of not-yet-handled log records
+# 
+#     If a logging congfigfile was specified by command-line args, then
+#     try to configure logging with it.
+# 
+#     Otherwise, a logging configfile was not specified by command-line
+#     args, so iterate through a list of standard locations, and try to
+#     configure logging with the first found to exist.
+#     The list of standard locations ends with mypkg/logging.yaml.
+# 
+#     Append any new log records to logrecords, for later handling.
+#     """
+# 
+#     if opts.loggingconfig is not None:
+#         configfile = opts.loggingconfig
+#     else:
+#         configfile = get_configfile()
+# 
+#     logrecords.append(_mydebug(f'configfile: {configfile!r}'))
+# 
+#     # Get the config dictionary from the configfile.
+#     configdict = get_configdict(configfile)
+#     logrecords.append(_mydebug(
+#         'function get_configdict returned a result'))
+#     # logrecords.append(_mydebug(
+#     #     f'configdict:\n{pprint.pformat(configdict, indent=2)}'))
+# 
+#     # Apply the config dictionary.
+#     logging.config.dictConfig(configdict)
+# 
+# 
+# def get_dict_from_file(filepath):
+#     if filepath.endswith('.toml'):
+#     elif filepath.endswith('.yaml'):
+#     else:
+#         raise Exception(f'Bad extension. filepath: {filepath}')
+
+
+def configure(logrecords: List[logging.LogRecord] = []) -> None:
     """Configure logging based on configfile, or fall back to basicConfig().
 
     Args
@@ -310,23 +350,80 @@ def config(logrecords: List[logging.LogRecord] = []) -> None:
     try:
         # logrecords is a list of not-yet-handled log records
 
-        # parse command line args
-        opts = myargparse.parse_args()
-        logrecords.append(_mydebug(f'opts.__dict__: {opts.__dict__}'))
+        # Get all of the values needed from config.get_config().
+        _config = config.get_config()
+        logging_configfiles: List[Path] = _config['logging_configfiles']
+        logging_configfile: Path|None = _config.get('logging_configfile')
+        logging_levelname: str|None = _config.get('logging_levelname')
 
-        # (1) Configure logging based on configfile, or fall back to
-        #     calling logging.basicConfig(level=logging.DEBUG).
-        try:
-            _config(opts, logrecords)
-        except Exception as e:
-            # log the exception as a warning
-            # log another message as a warning
-            # call logging.basicConfig
-            logrecords.append(_mywarning(e))
+        # if the config defines a specific logging_configfile, only
+        # attempt to use it.  Otherwise, step through the list of
+        # logging_configfile and try them until success.
+
+        if logging_configfile:
+            logging_configfiles = [logging_configfile]
+
+        for logging_configfile in logging_configfiles:
+            try:
+                configdict = get_configdict_from_configfile(logging_configfile)
+                logging.config.dictConfig(configdict)
+
+                logrecords.append(_mydebug(
+                    f'Applied logging config from {logging_configfile}'))
+
+                break
+            except Exception as e:
+                # this logging_configfile was unsuitable, go to next
+                logrecords.append(_mydebug(
+                    f'Unsuitable logging configfile {logging_configfile}.'
+                    f'  ...  {e}'))
+
+        else:
+            # none of the logging_configfiles was suitable
             logrecords.append(_mywarning(
                 'Trouble configuring logging...  '
                 'Calling logging.basicConfig(level=logging.DEBUG)'))
+
             logging.basicConfig(level=logging.DEBUG)
+                
+
+#         logger.debug('Milepost')
+#         logging_configfile = Path(
+#             config.get_config().get('logging_configfile'))
+#         logger.debug('Milepost')
+# 
+#         if os.path.isabs(logging_configfile):
+#             logging_configfilepath = logging_configfile
+#         else:
+#             configdir = config.get_config.get('configdir')
+#             logging_configfilepath = configdir.joinpath(logging_configfile)
+#         logger.debug('Milepost')
+# 
+#         logrecords.append(_mydebug(
+#             f'logging_configfilepath: {logging_configfilepath}'))
+#         logger.debug('Milepost')
+
+#         # (1) Configure logging based on configfile, or fall back to
+#         #     calling logging.basicConfig(level=logging.DEBUG).
+# 
+#         # A missing logging-configfile produces a warning.
+#         # 
+#         # An existing but unreadable or defective logging-configfile 
+#         # produces a warning.  
+#         # Why not raise an exception?  Because the logging system is 
+#         # non-essential; trouble configuring or using the # logging 
+#         # system should not be fatal.
+#         try:
+#             _config(logging_configfilepath, logrecords)
+#         except Exception as e:
+#             # log the exception as a warning
+#             # log another message as a warning
+#             # call logging.basicConfig
+#             logrecords.append(_mywarning(e))
+#             logrecords.append(_mywarning(
+#                 'Trouble configuring logging...  '
+#                 'Calling logging.basicConfig(level=logging.DEBUG)'))
+#             logging.basicConfig(level=logging.DEBUG)
 
         # Set logging.raiseExceptions to False.  (Why?  Because We want to 
         # ignore handler-emit exceptions.)
@@ -337,23 +434,22 @@ def config(logrecords: List[logging.LogRecord] = []) -> None:
 
         # (3) Honor command-line args that override the root logger level.
         try:
-            levelname = opts.logginglevelname
-            if levelname is not None:
-                logrecords.append(_mydebug(f'levelname: {levelname!r}'))
-                logging.getLogger().setLevel(getattr(logging, levelname))
+            if logging_levelname is not None:
+                logrecords.append(_mydebug(
+                    f'logging_levelname: {logging_levelname!r}'))
+                logging.getLogger().setLevel(getattr(logging, logging_levelname))
 
         except Exception as e:
+            logger.exception(e)
             # log the exception as a warning
-            # log another message as a warning
-            logrecords.append(_mywarning(e))
             logrecords.append(_mywarning(
-                'Trouble overriding root logger level.'))
+                f'Trouble overriding root logger level.  ... {e}'))
 
     except Exception as e:
+        logger.exception(e)
         # log the exception as a warning
-        # log another message as a warning
-        logrecords.append(_mywarning(e))
-        logrecords.append(_mywarning('Trouble configuring logging.'))
+        logrecords.append(_mywarning(
+            f'Trouble configuring logging.  ... {e}'))
 
 
 def handle(logrecords: List[logging.LogRecord]) -> None:
@@ -369,15 +465,21 @@ def handle(logrecords: List[logging.LogRecord]) -> None:
     """
 
     try:
-        rootlogger = logging.getLogger()
-        for rec in logrecords:
-            # the logger to which the logrecord was attributed
-            rec_logger = logging.getLogger(rec.name)
-            if rec.levelno >= rec_logger.getEffectiveLevel():
-                rootlogger.handle(rec)
+        # rootlogger = logging.getLogger()
+        # for rec in logrecords:
+        #     # rec_logger is the name given at LogRecord creation.  For
+        #     # logger-generated LogRecords, this rec_logger is  the name 
+        #     # of the logger.
+        #     rec_logger = logging.getLogger(rec.name)
+        #     if rec.levelno >= rec_logger.getEffectiveLevel():
+        #         rootlogger.handle(rec)
+        
+        for logrecord in logrecords:
+            logger = logging.getLogger(logrecord.name)
+            if logrecord.levelno >= logger.getEffectiveLevel():
+                logger.handle(logrecord)
+            
 
     except Exception as e:
         # log the exception as a warning
-        # log another message as a warning
-        logging.warning(e)
-        logging.warning('Trouble handling logrecords')
+        logger.warning(f'Trouble handling logrecords.  {e}')

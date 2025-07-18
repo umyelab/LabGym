@@ -34,6 +34,7 @@ import packaging  # Core utilities for Python packages
 # Local application/library specific imports.
 from LabGym import __version__ as version
 from LabGym import central_logging, myargparse  # registration
+from LabGym import config
 
 
 def probes() -> None:
@@ -44,19 +45,15 @@ def probes() -> None:
     Some checks can be suppressed by command line options.
     """
 
-    opts = myargparse.parse_args()
-    # opts.anonymous is a bool
-    # opts.configdir is either a string or None.
+    # Get all of the values needed from config.get_config().
+    _config = config.get_config()
+    anonymous: bool = _config['anonymous']
+    registration_enable: bool = _config['enable']['registration']
 
     # central logger, for reporting usage to the central receiver
     central_logger = central_logging.get_central_logger()
 
-    # default for the central logger's disabled attribute
-    disabled_default = True  # True for opt-in, False for opt-out
-
-    _enabled = opts.enabled.get('central_logger', not disabled_default)
-    central_logger.disabled = not _enabled
-
+    assert isinstance(central_logger.disabled, bool)
     if central_logger.disabled == True:
         logger.info('Central Logging is disabled.')
     elif central_logger.disabled == False:
@@ -64,8 +61,9 @@ def probes() -> None:
     else:
         raise Exception('Unexpected!')
 
-    # Report context to central receiver, unless disabled.
-    central_logger.info(get_context())
+    # Report sw start and context to the central receiver.
+    # if central_logger.disabled is True, no logrecord is created/sent.
+    central_logger.info(get_context(anonymous))
 
     # Report registration info to central receiver, unless disabled.
     central_logger.info({
@@ -115,7 +113,7 @@ def probes() -> None:
     # probe_url_to_verify_cacert()
 
 
-def get_context():
+def get_context(anonymous: bool=False) -> dict:
     """Survey and return a dict of context info."""
     result = {
         'schema': 'context 2025-07-10',
@@ -128,10 +126,17 @@ def get_context():
         # LabGym sw
         'version': version,  # LabGym version
 
+        # User info
         'username': getpass.getuser(),
         }
     return result
 
+    # If anonymous-flag is True, then anonymize the context data.
+    if anonymous:
+        result.update({
+            'node': 'anonymous',
+            'username': 'anonymous',
+            })
 
 # def configure_central_logger() -> None:
 #     """Set level, and add handler that reports to the central receiver."""
