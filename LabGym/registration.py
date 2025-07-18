@@ -327,6 +327,9 @@ def _store_reginfo_to_file(reginfo: dict) -> None:
         zip-file instead of yaml?  with '.done' extension instead of 
         '.zip' so it looks like a flag-file instead of a discardable 
         backup.
+    *   Re naming the reciprocal functions, write/read?, store/recall?
+        backup, dump, put, save, store, stow, write
+        get, load, read, recall, restore
     """
 
     # Get all of the values needed from config.get_config().
