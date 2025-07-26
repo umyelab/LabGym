@@ -5,44 +5,11 @@ What about repeated settings within command-line args?
 
 *   In this implementation, rightmost overrides those to the left, 
     except --enable and --disable, which for different featurenames
-    accumulates in the enabled dict
+    accumulates in the enable dict
     For example,
         --enable F1 --enable F2 --disable F1
     accumulates to enable dict {'F1': False, 'F2': True}
     Two -v args does not select more verbosity.
-"""
-
-"""
-------------------------------------------------------------------------
-clipboard
-Example
-    import logging
-    import central_logging
-    import myargparse
-
-    vals = myargparse.parse_args()
-
-    # If command-line arg '--verbose' is found,
-    # (and not subsequently overridden by other command-line args)
-    # then, logging.getLogger().setLevel(logging.DEBUG)
-    if vals.logginglevelname is not None:
-        # set root logger level according to vals.logginglevelname
-        logging.getLogger().setLevel(getattr(logging, vals.logginglevelname))
-
-    # If command-line args '--enable', 'central_logger' are found, 
-    # (and not subsequently overridden by other command-line args)
-    # then vals.enable['central_logger'] == True.
-    # The governing logger attribute is 'disabled', so save the inverse
-    # of the 'enable' value to the 'disabled' attribute.
-
-    central_logger = central_logging.get_central_logger()
-
-    # default for the central logger's disabled attribute
-    disabled_default = True  # True for opt-in, False for opt-out
-
-    _enable = vals.enabled.get('central_logger', not disabled_default)
-    central_logger.disabled = not _enable
-------------------------------------------------------------------------
 """
 
 # Standard library imports.

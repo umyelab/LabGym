@@ -1,4 +1,4 @@
-"""Provide functions to the intended configuration values.
+"""Provide functions to obtain the configuration values.
 
 Configuration evaluation involves (ordered in increasing precedence)
     1.  hardcoded defaults
@@ -20,24 +20,8 @@ Notes
     to other configdir files),
     use command-line args like
         LabGym --configfile ~/alt_config.toml
-    or an environment variable before running LabGym, like
+    or assign an environment variable before running LabGym, like
         export LABGYM_CONFIGFILE=~/alt_config.toml
-"""
-
-"""
-------------------------------------------------------------------------
-clipboard
-Redefinition of models and detectors dirs is not yet implemented.
-Notes
-    MODELS and DETECTORS dirs are easy for the user to override, by 
-    several ways, including but not limited to, and ordered 
-    from easier and stronger and less persistent,
-    to harder (file-editing?), weaker (easier to override), and more persistent.
-
-    1.  command-line key/value pair option like --models ~/tangerine-study/models
-    2.  environment variable LABGYM_MODELS
-    3.  models dir defined in ~/.labgym/config.toml
-------------------------------------------------------------------------
 """
 
 # Standard library imports.
@@ -55,34 +39,11 @@ except ModuleNotFoundError:
     import tomli as tomllib  # A lil' TOML parser
 
 # Related third party imports.
-import yaml
+import yaml  # PyYAML, YAML parser and emitter for Python
 
 # Local application/library specific imports.
 from LabGym import myargparse
 
-# regarding naming... 'enable' vs. 'enabled'.
-# The argument in favor of 'enabled' is that it's a noun, the state that the
-# user has specified.  But that's weak, it's not actually applied yet.  At
-# this point it's not the state.
-# The argument in favor of 'enable' is that it's a verb, it's the action that's
-# been commanded.
-# central_logger_disabled is so named because it follows the ...
-# never mind... not worth it.  use --enable 'central_logger' to
-# produce setting that drives central_logging.get_central_logger.disabled
-#    
-
-# Instead of merging defaults with explicit settings,
-# Why not send them separately, to support different behavior at the point
-# of use?  Or not separately, but rolled in as _defaults.
-#     default_value = config.get_config().get('_defaults').get('mykey')
-#     value = config.get_config().get('mykey')
-#     if value is not None:
-#         
-# for path values, if a path is a relative path, then the using code should
-# expand at time of use?  Or shall we do that here before returning, in an
-# interpolation step?
-# for a list of path values, usage might be, use first found, or use first 
-# found that's not fouled, or use all existing...
 
 defaults = {
     'configdir': Path.home().joinpath('.labgym'),  # ~/.labgym
@@ -111,7 +72,6 @@ logger = logging.getLogger(__name__)
 def get_config_from_argv() -> dict:
     """Get config values from command-line args."""
 
-    # result = myargparse.parse_args().__dict__
     result = myargparse.parse_args()
 
     return result
@@ -169,20 +129,6 @@ def get_config():
     """Return a config dict.
 
     Weaknesses
-    *   Some config values should accumulate, instead of override.
-        If get_config_from_configfile()['enable'] returns
-            {'newfeature1': True}
-        and get_config_from_argv()['enable'] returns
-            {'newfeature2': True}
-        then get_config()['enable'] should return
-            {'newfeature1': True, 'newfeature2': True}
-
-        This is not yet implemented.  It could be implemented by
-        employing something other than the dict update method for
-        aggregation.  Or it could be implemented as a second op (after
-        the existing naive aggregation) to replace certain values with 
-        better ones.
-        
     *   As presently implemented, the config dict is reconstructed each
         time this function is called.  A better approach would be to
         construct it once, with subsequent calls getting the original
@@ -261,6 +207,7 @@ def myupdate(target: dict, addendum: dict) -> None:
         addendum['enable'] = buf
     
     target.update(addendum)
+
 
 def mypathexpand(target: dict) -> None:
     """

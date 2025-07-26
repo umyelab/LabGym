@@ -369,7 +369,7 @@ def is_registered() -> bool:
     return not (get_reginfo_from_file() is None)
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     logging.basicConfig(level=logging.DEBUG,
         datefmt='%H:%M:%S',
         format='%(asctime)s\t%(levelname)s\t%(module)s:%(lineno)d\t%(message)s'
