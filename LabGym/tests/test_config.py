@@ -8,12 +8,8 @@ from LabGym import config
 from .exitstatus import exitstatus
 
 
-# for .../tests/test_dummy.py, 
-#     testdir: .../tests/test_dummy
-#     tmpdir: .../tests/test_dummy/tmp
-testdir = Path(__file__[:-3])  # dir containing unit test support files
+testdir = Path(__file__[:-3])  # dir containing support files for unit tests
 assert testdir.is_dir()
-# tmpdir = testdir.joinpath('tmp')
 
 
 # basicConfig here isn't effective, maybe pytest has already configured logging?

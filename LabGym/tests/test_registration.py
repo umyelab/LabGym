@@ -5,15 +5,14 @@ import re
 import sys
 import time
 
-import pytest
-import wx
+import pytest  # pytest: simple powerful testing with Python
+import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
 
 from LabGym import registration
 
 
-testdir = Path(__file__[:-3])  # dir containing unit test support files
+testdir = Path(__file__[:-3])  # dir containing support files for unit tests
 assert testdir.is_dir()
-tmpdir = testdir.joinpath('tmp')
 
 
 # @pytest.fixture(scope="module")  # invoke once in the test module
@@ -30,6 +29,13 @@ def wx_app():
     # is complete.
     wx.CallAfter(app.ExitMainLoop)
     app.MainLoop()  # Ensure app processes pending events before exit.
+
+
+def test_dummy():
+    # Arrange
+    # Act
+    pass
+    # Assert not necessary.  This unit test passes unless exception was raised.
 
 
 def test_mydialog_skip(wx_app):
@@ -73,11 +79,11 @@ def test_mydialog_register(wx_app):
         dialog.ProcessEvent(click_event)
 
     def enter_name():
-        dialog.input_name.SetValue('John')
+        dialog.input_name.SetValue('Mark Wilson')
     def enter_affiliation():
         dialog.input_affiliation.SetValue('Cupertino')
     def enter_email():
-        dialog.input_email.SetValue('John@gmail.com')
+        dialog.input_email.SetValue('Mark.Wilson@gmail.com')
 
     # CallAfter is a function used to schedule a callable to be executed
     # on the main GUI thread after the current event hander and any
@@ -104,7 +110,7 @@ def test_mydialog_register(wx_app):
     dialog.Destroy()  # request the dialog to self-destruct
 
 
-def test__get_reginfo_from_form(wx_app, monkeypatch):
+def test__get_reginfo_from_form(monkeypatch, wx_app, tmp_path):
 
     # frame = wx.Frame(None)  # parent for the dialog
     # dialog = registration.RegFormDialog(frame)
@@ -118,11 +124,11 @@ def test__get_reginfo_from_form(wx_app, monkeypatch):
         dialog_obj.ProcessEvent(click_event)
 
     def enter_name(dialog_obj):
-        dialog_obj.input_name.SetValue('John')
+        dialog_obj.input_name.SetValue('Paul Baker')
     def enter_affiliation(dialog_obj):
         dialog_obj.input_affiliation.SetValue('Cupertino')
     def enter_email(dialog_obj):
-        dialog_obj.input_email.SetValue('John@gmail.com')
+        dialog_obj.input_email.SetValue('Paul.Baker@gmail.com')
 
     # CallAfter is a function used to schedule a callable to be executed
     # on the main GUI thread after the current event hander and any
@@ -149,7 +155,7 @@ def test__get_reginfo_from_form(wx_app, monkeypatch):
     # this works, but why not run registration itself?
     # reginfo = registration._get_reginfo_from_form()
     _config = {
-        'configdir': testdir,
+        'configdir': tmp_path,
         }
     monkeypatch.setattr(registration.config, 'get_config', lambda: _config)
     logging.debug('%s: %r', '_config', _config)
@@ -169,13 +175,6 @@ def test__get_reginfo_from_form(wx_app, monkeypatch):
     # dialog.Destroy()  # request the dialog to self-destruct
 
 
-def test_dummy():
-    # Arrange
-    # Act
-    pass
-    # Assert not necessary.  This unit test passes unless exception raised.
-
-
 def test_get_reginfo_from_file(monkeypatch):
     # Arrange
     _config = {
@@ -190,10 +189,10 @@ def test_get_reginfo_from_file(monkeypatch):
     assert result.get('schema') == 'reginfo 2025-07-10'
 
 
-def test_is_registered(monkeypatch):
+def test_is_registered(monkeypatch, tmp_path):
     # Arrange
     _config = {
-        'configdir': testdir.joinpath('MISSING DIR'),
+        'configdir': tmp_path,
         }
     monkeypatch.setattr(registration.config, 'get_config', lambda: _config)
     logging.debug('%s: %r', '_config', _config)
