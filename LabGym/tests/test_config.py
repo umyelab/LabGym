@@ -2,10 +2,18 @@ import logging
 from pathlib import Path
 import sys
 
-import pytest
+import pytest  # pytest: simple powerful testing with Python
 
 from LabGym import config
 from .exitstatus import exitstatus
+
+
+# for .../tests/test_dummy.py, 
+#     testdir: .../tests/test_dummy
+#     tmpdir: .../tests/test_dummy/tmp
+testdir = Path(__file__[:-3])  # dir containing unit test support files
+assert testdir.is_dir()
+# tmpdir = testdir.joinpath('tmp')
 
 
 # basicConfig here isn't effective, maybe pytest has already configured logging?
@@ -60,7 +68,7 @@ def test_missing_configfile(monkeypatch):
 # An existing but defective configfile is fatal.
 def test_bad_configfile(monkeypatch):
     # Arrange
-    result = {'configfile': Path(__file__).parent.joinpath('bad.yaml')}
+    result = {'configfile': testdir.parent.joinpath('bad.yaml')}
     monkeypatch.setattr(config.myargparse, 'parse_args', lambda: result)
     # logging.debug('%s: %r', 'result', result)
 
