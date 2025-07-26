@@ -203,7 +203,7 @@ class RegFormDialog(wx.Dialog):
             }
         return result
 
-    def bring_to_foreground(self):
+    def bring_to_foreground(self) -> None:
         """Bring the window to the foreground.
 
         We want the form window displayed to the user.
