@@ -51,7 +51,8 @@ dependencies=[
     'hydra-core>=1.1',
     'black',
     'ninja',
-    'six'
+    'six',
+    'pyobjc-framework-Cocoa',
 ]
 requires-python='>=3.9,<3.11'
 readme='README.md'

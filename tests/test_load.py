@@ -48,6 +48,10 @@ def test_import_LabGym_package():
 
 
 def test_imports_with_sysargv_initialized(monkeypatch):
+    """Test that some module imports don't raise exceptions.
+
+    These module imports must be tested with sys.argv initialized.
+    """
     # Arrange sys.argv.  Otherwise sys.argv contains pytest args, and
     # myargparse raises an exception.
     monkeypatch.setattr(sys, 'argv', ['dummy'])
@@ -63,6 +67,7 @@ def test_imports_with_sysargv_initialized(monkeypatch):
 
 
 def test_remainder():
+    """Test that imports for the remaining modules don't raise exceptions."""
     logging.debug('%s:\n%s', 'Milepost 1, submodules', 
         textwrap.indent(pprint.pformat(submodules), '  '))
 
