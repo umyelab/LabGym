@@ -1,70 +1,84 @@
 import logging
+from pathlib import Path
 import sys
 
 import pytest
 
 from LabGym import mylogging
-from LabGym.myargparse import Values
 
 
 # basicConfig here isn't effective, maybe pytest has already configured logging?
-#   logging.basicConfig(level=logging.DEBUG)
-# so instead, use the root logger's setLevel method
-logging.getLogger().setLevel(logging.DEBUG)
-
-
-class ValuesSubclass(Values):
-    def __init__(self, datadict={}):
-        super().__init__()
-        self.__dict__.update(datadict)
-    def __eq__(self, other):
-        logging.debug('entered custom __eq__ method')
-        return self.__dict__ == other.__dict__
+# instead, use the root logger's setLevel method
+rootlogger = logging.getLogger()
+def rootlogger_reset():
+    rootlogger.setLevel(logging.DEBUG)
+    rootlogger.handlers = []
 
 
 # success cases
-# mylogging.config() with opts dict like {'loggingconfigfile': ...}
-
-# 1. bad logginglevelname produces a pair of warning messages.
-def test_config_1(monkeypatch):
+def test_success(monkeypatch):
     # Arrange
-    valobj = ValuesSubclass({'logginglevelname': 'ALFA'})
-    # print(f'DEBUG: valobj.__dict__, {valobj.__dict__!r}')
-    monkeypatch.setattr(
-        'LabGym.mylogging.myargparse.parse_args',
-        lambda: valobj)
+    rootlogger_reset()
+    assert rootlogger.level == logging.DEBUG
+    _config = {
+        'logging_configfiles': 
+            [Path(mylogging.__file__).parent.joinpath('logging.yaml')],
+        'logging_configfile': None,
+        'logging_levelname': 'INFO',
+        }
+    monkeypatch.setattr(mylogging.config, 'get_config', lambda: _config)
+    logging.debug('%s: %r', '_config', _config)
 
     # Act
     logrecords = []
-    mylogging.config(logrecords)
-    mylogging.handle(logrecords)
+    mylogging.configure(logrecords)
 
     # Assert
-    # WARNING	mylogging	module 'logging' has no attribute 'ALFA'
-    # WARNING	mylogging	Trouble overriding root logger level.
+    assert rootlogger.level == logging.INFO  # per logging.yaml
 
 
-# 2. bad configfile name produces a pair of warning messages.
-def test_config_2(monkeypatch):
+# Bad logging_levelname produces a warning message.
+def test_bad_logging_levelname(monkeypatch):
     # Arrange
-    valobj = ValuesSubclass({'loggingconfig': '/bravo/charlie.yaml'})
-    # print(f'DEBUG: valobj.__dict__, {valobj.__dict__!r}')
-    monkeypatch.setattr(
-        'LabGym.mylogging.myargparse.parse_args',
-        lambda: valobj)
+    rootlogger_reset()
+    assert rootlogger.level == logging.DEBUG
+    _config = {
+        'logging_configfiles': 
+            [Path(mylogging.__file__).parent.joinpath('logging.yaml')],
+        'logging_configfile': None,
+        'logging_levelname': 'WALNUT',  # bad value
+        }
+    monkeypatch.setattr(mylogging.config, 'get_config', lambda: _config)
+    logging.debug('%s: %r', '_config', _config)
 
     # Act
     logrecords = []
-    mylogging.config(logrecords)
-    mylogging.handle(logrecords)
+    mylogging.configure(logrecords)
 
     # Assert
-    # WARNING	mylogging	[Errno 2] No such file or directory: '/bravo/charlie.yaml'
-    # WARNING	mylogging	Trouble configuring logging...  Calling logging.basicConfig(level=logging.DEBUG)
+    # WARNING Trouble overriding root logger level.
+    assert rootlogger.level == logging.INFO  # per logging.yaml
 
 
-# 3. bad configfile content produces a pair of warning messages.
-# def test_config_3(monkeypatch):
+# Bad specific logging_configfile produces a warning message.
+def test_bad_specific_logging_configfile(monkeypatch):
     # Arrange
+    rootlogger_reset()
+    assert rootlogger.level == logging.DEBUG
+    _config = {
+        'logging_configfiles': [],
+        'logging_configfile': Path('/bravo/charlie.yaml'),
+        # 'logging_levelname': None,
+        }
+    monkeypatch.setattr(mylogging.config, 'get_config', lambda: _config)
+    logging.debug('%s: %r', '_config', _config)
+
     # Act
+    logrecords = []
+    mylogging.configure(logrecords)
+
     # Assert
+    # DEBUG:Unsuitable logging configfile /bravo/charlie.yaml.  ([Errno 2] No such file or directory: '/bravo/charlie.yaml')
+    # WARNING:No suitable logging configfile found.
+    # WARNING:Trouble overriding root logger level.
+    assert rootlogger.level == logging.DEBUG

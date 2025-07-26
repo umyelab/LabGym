@@ -26,7 +26,17 @@ logging.getLogger().setLevel(logging.DEBUG)
 #     logging.debug('%s: %r', "os.getenv('PYTHONPATH')", os.getenv('PYTHONPATH'))
 
 
-def test_probes():
+def test_probes(monkeypatch):
+    # Arrange
+    _config = {
+        'anonymous': True, 
+        'enable': {'registration': False, 'central_logger': False},
+        }
+    monkeypatch.setattr(probes.config, 'get_config', lambda: _config)
+    logging.debug('%s: %r', '_config', _config)
+    monkeypatch.setattr(probes.central_logging.config, 'get_config', lambda: _config)
+
+    # Act
     probes.probes()
 
     # Assert
