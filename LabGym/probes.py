@@ -4,6 +4,9 @@ Provide a set of probes to support pre-op sanity checks of the LabGym
 sw and its configuration, and outside resources.
 """
 
+# Allow use of newer syntax Python 3.10 type hints in Python 3.9.
+from __future__ import annotations
+
 # Standard library imports.
 # import inspect
 import getpass
