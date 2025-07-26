@@ -25,7 +25,7 @@ from pathlib import Path
 import sys
 
 
-# Log the load of this module (by the module loader, on first import).
+# Log the loading of this module (by the module loader, on first import).
 # Configure the logging system.
 #
 # These statements are intentionally positioned before this module's
@@ -37,12 +37,13 @@ logrecords = [logging.LogRecord(lineno=inspect.stack()[0].lineno,
     msg='%s', args=(f'loading {__file__}',),
     )]
 from LabGym import mylogging
-mylogging.configure(logrecords)  # configure the logging system
-mylogging.handle(logrecords)  # handle the list of logrecords created manually
+# Configure logging based on configfile, then handle list of logrecords.
+mylogging.configure(logrecords)
+
 
 # Related third party imports.
-import requests
-from packaging import version
+import requests  # Python HTTP for Humans.
+from packaging import version  # Core utilities for Python packages
 
 # Local application/library specific imports.
 from LabGym import __version__, gui_main, probes
@@ -85,7 +86,7 @@ def main():
 
 
 
-if __name__=='__main__':
+if __name__=='__main__':  # pragma: no cover
 
 	main()
 
