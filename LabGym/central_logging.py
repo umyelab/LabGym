@@ -110,7 +110,7 @@ def get_central_logger(http_handler_config=http_handler_config, reset=False):
     return central_logger
 
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     logging.basicConfig(level=logging.INFO)
 
     central_logger = get_central_logger()
