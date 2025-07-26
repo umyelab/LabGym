@@ -14,7 +14,7 @@ Example
     import registration
 
     if not registration.is_registered():
-        # Get reg info from user, store reginfo locally.  Also, send 
+        # Get reg info from user, store reginfo locally.  Also, send
         # reginfo to central receiver via central_logger (unless
         # central_logger's disabled attribute is True).
         registration.register()
@@ -25,17 +25,17 @@ Strengths
         below other windows.
 
 Weaknesses
-    *   This module file is long.  It should be refactored into a 
+    *   This module file is long.  It should be refactored into a
         package with smaller module files.
 
 Notes
     ...
 
 "Private" Functions
-These functions are implementation details and should not be relied upon 
+These functions are implementation details and should not be relied upon
 by external code, as they might change without notice in future versions.
-By convention they are named with a single leading underscore ("_") to 
-indicate to other programmers that they are intended for private or 
+By convention they are named with a single leading underscore ("_") to
+indicate to other programmers that they are intended for private or
 internal use.
     _get_reginfo_from_form() -> dict | None
         Display a reg form, get user input, and return reginfo.
@@ -63,8 +63,10 @@ import uuid
 from zoneinfo import ZoneInfo
 
 # Related third party imports.
+# pylint: disable=wrong-import-position
 if sys.platform == 'darwin':  # macOS
-    # AppKit is from package pyobjc-framework-Cocoa, "Wrappers for the 
+# pylint: enable=wrong-import-position
+    # AppKit is from package pyobjc-framework-Cocoa, "Wrappers for the
     # Cocoa frameworks on macOS".
     from AppKit import NSApp, NSApplication
 import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
@@ -81,40 +83,49 @@ logger = logging.getLogger(__name__)
 
 # class NotEmptyValidator(wx.PyValidator):
 class NotEmptyValidator(wx.Validator):
+    """Validate that a text control contains content.
+
+    (class purpose and functionality, and optionally its attributes and methods)
+    """
     def __init__(self):
 #         wx.PyValidator.__init__(self)
         wx.Validator.__init__(self)
 
-    def Clone(self):
+    def Clone(self):  # pylint: disable=invalid-name
         return NotEmptyValidator()
 
-    def Validate(self, parent):
+    def Validate(self, parent):  # pylint: disable=invalid-name
         text_control = self.GetWindow()
 
         # .strip() removes leading/trailing whitespace
-        text = text_control.GetValue().strip() 
+        text = text_control.GetValue().strip()
 
-        if not text: 
+        if not text:
             # the string is empty after stripping whitespace
-            wx.MessageBox("This field cannot be empty.", 
+            wx.MessageBox("This field cannot be empty.",
                 "Error", wx.OK | wx.ICON_ERROR)
             text_control.SetFocus()
             return False
-        else:
-            return True
 
-    def TransferToWindow(self):
+        # Milepost -- text is not empty
+        return True
+
+    def TransferToWindow(self):  # pylint: disable=invalid-name
         return True # We don't modify the window's value
 
-    def TransferFromWindow(self):
+    def TransferFromWindow(self):  # pylint: disable=invalid-name
         return True # We don't modify the validator's associated value
 
 
 class RegFormDialog(wx.Dialog):
+    """Make a registration form dialog.
+
+    (class purpose and functionality, and optionally its attributes and methods)
+    """
     def __init__(self, parent):
-        # Why label with "User Group Registration" instead of, say, 
-        # "Software Registration"?  Because this label suggests that 
-        # registration is in the user's interest and the user 
+        # Why label with "User Group Registration" instead of, say,
+        # "Software Registration"?  Because this label suggests that
+        # registration is in the user's interest and the user
         # community's interest.
         title = "LabGym User Group Registration"
 
@@ -123,7 +134,7 @@ class RegFormDialog(wx.Dialog):
 
             The LabGym User Group promotes engagement between new users,
             experienced users, and developers, leading to improvements
-            in user experience, including better features, better 
+            in user experience, including better features, better
             implementation, and better installation.
             """).strip()
 
@@ -145,31 +156,31 @@ class RegFormDialog(wx.Dialog):
         button_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
         text = wx.StaticText(self, label=header)
-        main_sizer.Add(text, 
+        main_sizer.Add(text,
             0,  # proportion (int).  0 means the item won't expand
                 # beyond its minimal size.
 
             # # border on all sides, align left, and expand
-            # # wx.ALL | wx.EXPAND | wx.LEFT,  
+            # # wx.ALL | wx.EXPAND | wx.LEFT,
             # border on all sides, and align left
-            wx.ALL | wx.LEFT,  
+            wx.ALL | wx.LEFT,
 
             10,  # width (in pixels) of the border specified by the
                  # border flags
             )
 
         # Add input fields with labels to the input sizer
-        input_sizer.Add(wx.StaticText(self, label="Name:"), 
+        input_sizer.Add(wx.StaticText(self, label="Name:"),
             0, wx.ALL | wx.EXPAND, 5)
-        input_sizer.Add(self.input_name, 
+        input_sizer.Add(self.input_name,
             1, wx.EXPAND)
-        input_sizer.Add(wx.StaticText(self, label="Affiliation:"), 
+        input_sizer.Add(wx.StaticText(self, label="Affiliation:"),
             0, wx.ALL | wx.EXPAND, 5)
-        input_sizer.Add(self.input_affiliation, 
+        input_sizer.Add(self.input_affiliation,
             1, wx.EXPAND)
-        input_sizer.Add(wx.StaticText(self, label="Email Address:"), 
+        input_sizer.Add(wx.StaticText(self, label="Email Address:"),
             0, wx.ALL | wx.EXPAND, 5)
-        input_sizer.Add(self.input_email, 
+        input_sizer.Add(self.input_email,
             1, wx.EXPAND)
 
         # Add buttons to the button sizer
@@ -178,14 +189,15 @@ class RegFormDialog(wx.Dialog):
 
         # Add sizers to main sizer
         main_sizer.Add(input_sizer, 1, wx.EXPAND | wx.ALL, 10)
-        main_sizer.Add(button_sizer, 
+        main_sizer.Add(button_sizer,
             0, wx.ALIGN_CENTER | wx.TOP | wx.BOTTOM, 10)
 
         self.SetSizerAndFit(main_sizer)
 
     def GetInputValues(self) -> dict | None:
+        """Return a dict containing the dialog object's input values."""
         result = {
-            'name': self.input_name.GetValue(), 
+            'name': self.input_name.GetValue(),
             'affiliation': self.input_affiliation.GetValue(),
             'email': self.input_email.GetValue(),
             }
@@ -200,17 +212,17 @@ class RegFormDialog(wx.Dialog):
         *   the registration dialog is displayed, but doesn't have focus
             and is under the windows of the active app (terminology?),
             potentially hidden completely.
-        *   a bouncing python rocketship icon in the tray.  The bouncing 
+        *   a bouncing python rocketship icon in the tray.  The bouncing
             stops when you mouseover the icon.  Also some other actions
             can stop the bouncing or just pause the bouncing... weird.
 
         I wasn't able to resolve this on macOS using the wx.Dialog
         object's Raise, SetFocus, and Restore methods.
         Instead, ...
-            "Calling NSApp().activateIgnoringOtherApps_(True) via 
-            AppKit: This macOS workaround uses the AppKit module to 
-            explicitly activate the application, ignoring other running 
-            applications.  This is typically done after your wxPython 
+            "Calling NSApp().activateIgnoringOtherApps_(True) via
+            AppKit: This macOS workaround uses the AppKit module to
+            explicitly activate the application, ignoring other running
+            applications.  This is typically done after your wxPython
             application has started and its main window is shown."
         """
 
@@ -230,17 +242,17 @@ def _get_reginfo_from_form() -> dict | None:
             focus, preventing the user from interacting with any other
             windows in the application until the dialog is closed.
 
-        o   Requires User Response: The user must explicitly close the 
+        o   Requires User Response: The user must explicitly close the
             modal dialog before returning to the main application workflow.
 
-        o   Returns a Value: The ShowModal() method returns a value 
-            (e.g., wx.ID_OK, wx.ID_CANCEL) indicating how the user 
+        o   Returns a Value: The ShowModal() method returns a value
+            (e.g., wx.ID_OK, wx.ID_CANCEL) indicating how the user
             closed the dialog (e.g., by clicking "OK" or "Cancel").
 
         In simpler terms, using ShowModal() is like presenting a
         mandatory popup that demands the user's attention and a decision
         before they can continue using the application.
-        
+
         This differs from the Show() method, which displays a dialog in
         a modeless fashion. A modeless dialog allows the user to
         interact with other application windows while it's open.
@@ -249,12 +261,13 @@ def _get_reginfo_from_form() -> dict | None:
     # Create a wx.App instance.
     app = wx.App()
 
-    with RegFormDialog(None) as dlg: 
+    with RegFormDialog(None) as dlg:
         logger.debug('%s -- %s', 'Milestone ShowModal', 'calling...')
         dlg.bring_to_foreground()
         if dlg.ShowModal() == wx.ID_OK:
             logger.debug('%s -- %s', 'Milestone ShowModal', 'returned')
             logger.debug('User pressed [Register]')
+            # pylint: disable-next=redefined-outer-name
             reginfo = dlg.GetInputValues()
         else:
             logger.debug('%s -- %s', 'Milestone ShowModal', 'returned')
@@ -270,23 +283,24 @@ def register(central_logger=None) -> None:
 
     1.  Get reg info from user.
     2.  Add info from a survey of context.
-    3.  Store reginfo locally.  
+    3.  Store reginfo locally.
     4.  Send reginfo to central receiver via central_logger (unless
         central_logger's disabled attribute is True).
 
     In production use, central_logger is not passed in, central_logger is
     obtained by calling central_logging.get_central_logger.
 
-    For development and testing, central_logger may be overridden by the 
+    For development and testing, central_logger may be overridden by the
     caller, like
         registration.register(central_logger=logging.getLogger('Local Logger'))
-     
+
     (I'm ambivalent on this... central_logger could be made a required arg,
     and then no need to obtain it independently from inside this function.)
     """
     if central_logger is None:
         central_logger = central_logging.get_central_logger()
 
+    # pylint: disable-next=redefined-outer-name
     reginfo = _get_reginfo_from_form()
     logger.debug('%s: %r', 'reginfo', reginfo)
 
@@ -312,10 +326,11 @@ def register(central_logger=None) -> None:
         reginfo.update({'status': 'saved to regfile'})
     except Exception as e:
         reginfo.update({'status': 'unable to save to regfile'})
-        
+
     central_logger.info(reginfo)
 
 
+# pylint: disable-next=redefined-outer-name
 def _store_reginfo_to_file(reginfo: dict) -> None:
     """Store registration info to file in user's LabGym config directory.
 
@@ -323,9 +338,9 @@ def _store_reginfo_to_file(reginfo: dict) -> None:
     Or more accurately, <configdir>/registration.yaml.
 
     Notes to developer
-    *   Consider pros/cons of saving in a more opaque form.  
-        zip-file instead of yaml?  with '.done' extension instead of 
-        '.zip' so it looks like a flag-file instead of a discardable 
+    *   Consider pros/cons of saving in a more opaque form.
+        zip-file instead of yaml?  with '.done' extension instead of
+        '.zip' so it looks like a flag-file instead of a discardable
         backup.
     *   Re naming the reciprocal functions, write/read?, store/recall?
         backup, dump, put, save, store, stow, write
@@ -340,11 +355,9 @@ def _store_reginfo_to_file(reginfo: dict) -> None:
 
     # write reginfo file
     regfile = configdir.joinpath('registration.yaml')
-    with open(regfile, 'w') as f:
+    with open(regfile, 'w', encoding='utf-8') as f:
         yaml.dump(reginfo, f, default_flow_style=False)
 
-    return
-    
 
 def get_reginfo_from_file() -> dict | None:
     """Load registration info from file, and return reginfo."""
@@ -355,10 +368,10 @@ def get_reginfo_from_file() -> dict | None:
     # read reginfo file
     regfile = configdir.joinpath('registration.yaml')
 
-    try: 
+    try:
         with open(regfile, 'r', encoding='utf-8') as f:
             result = yaml.safe_load(f)
-    except:
+    except Exception:
         result = None
 
     return result
@@ -366,7 +379,7 @@ def get_reginfo_from_file() -> dict | None:
 
 def is_registered() -> bool:
     """Return True if there is a readable regfile."""
-    return not (get_reginfo_from_file() is None)
+    return not get_reginfo_from_file() is None
 
 
 if __name__ == '__main__':  # pragma: no cover

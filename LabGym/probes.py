@@ -1,18 +1,18 @@
 """Provide a set of probes to support pre-op sanity checks.
 
-Provide a set of probes to support pre-op sanity checks of the LabGym 
+Provide a set of probes to support pre-op sanity checks of the LabGym
 sw and its configuration, and outside resources.
 """
 
 # Standard library imports.
 # import inspect
 import getpass
-import json
+# import json
 import logging
-import os
-from pathlib import Path
+# import os
+# from pathlib import Path
 import platform
-import sys
+# import sys
 
 
 # Log the load of this module (by the module loader, on first import).
@@ -21,15 +21,17 @@ import sys
 # other imports (against the guidance of PEP 8), to log the load of this
 # module before other import statements are executed and potentially
 # produce their own log messages.
+# pylint: disable=wrong-import-position
 logger = logging.getLogger(__name__)
 logger.debug('%s', f'loading {__file__}')
 logger.debug('%s: %r', '(__name__, __package__)', (__name__, __package__))
+# pylint: enable=wrong-import-position
 
 
 # Related third party imports.
-import certifi  # Python package for providing Mozilla's CA Bundle.
-import requests  # Python HTTP for Humans.
-import packaging  # Core utilities for Python packages
+# import certifi  # Python package for providing Mozilla's CA Bundle.
+# import requests  # Python HTTP for Humans.
+# import packaging  # Core utilities for Python packages
 
 # Local application/library specific imports.
 from LabGym import __version__ as version
@@ -54,7 +56,7 @@ def probes() -> None:
     central_logger = central_logging.get_central_logger()
 
     assert isinstance(central_logger.disabled, bool)
-    if central_logger.disabled == True:
+    if central_logger.disabled is True:
         logger.info('Central Logging is disabled.')
     else:
         logger.info('Central Logging is enabled.')
@@ -74,7 +76,7 @@ def probes() -> None:
     else:
         # proceed with registration check
         if not registration.is_registered():
-            # Get reg info from user, store reginfo locally.  Also, send 
+            # Get reg info from user, store reginfo locally.  Also, send
             # reginfo to central receiver via central_logger.
             registration.register()
 
@@ -88,7 +90,7 @@ def get_context(anonymous: bool=False) -> dict:
 
     try:
         reginfo_uuid = registration.get_reginfo_from_file()['uuid']
-    except:
+    except Exception:
         reginfo_uuid = None
 
     result = {
