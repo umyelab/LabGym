@@ -16,32 +16,45 @@ USA
 Email: bingye@umich.edu
 '''
 
+# Allow use of newer syntax Python 3.10 type hints in Python 3.9.
+from __future__ import annotations
+
+# Standard library imports.
+import json
+import logging
+import os
+from pathlib import Path
+import shutil
+
+
+# Log the load of this module (by the module loader, on first import).
+#
+# These statements are intentionally positioned before this module's
+# other imports (against the guidance of PEP 8), to log the load of this
+# module before other import statements are executed and potentially
+# produce their own log messages.
+#
 # Log the load of this module (by the module loader, on first import).
 # Intentionally positioning these statements before other imports, against the
 # guidance of PEP-8, to log the load before other imports log messages.
-import logging
-logger =  logging.getLogger(__name__)
-logger.debug('loading %s', __file__)
+# pylint: disable=wrong-import-position
+logger = logging.getLogger(__name__)
+logger.debug('%s', f'loading {__file__}')
+# pylint: enable=wrong-import-position
 
 
-
-
-import wx
-import os
-import shutil
-from pathlib import Path
-import json
+# Related third party imports.
 import cv2
 import numpy as np
+import wx
 
+# Local application/library specific imports.
 logger.debug('importing %s ...', '.analyzebehavior')
 from .analyzebehavior import AnalyzeAnimal
 logger.debug('importing %s done', '.analyzebehavior')
-
 logger.debug('importing %s ...', '.analyzebehavior_dt')
 from .analyzebehavior_dt import AnalyzeAnimalDetector
 logger.debug('importing %s done', '.analyzebehavior_dt')
-
 from .categorizer import Categorizers
 from .tools import sort_examples_from_csv
 
