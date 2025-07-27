@@ -70,7 +70,7 @@ def test_bad_configfile(monkeypatch):
 
     # Act
     with pytest.raises(SystemExit,
-            match='Trouble reading configfile'
+            match='Trouble reading user-specified configfile '
             ) as e:
         _config = config.get_config()
 
