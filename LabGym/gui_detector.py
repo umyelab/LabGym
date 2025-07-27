@@ -51,6 +51,7 @@ import wx
 # Local application/library specific imports.
 from .tools import extract_frames
 from .detector import Detector
+from LabGym import config
 
 
 the_absolute_current_path=str(Path(__file__).resolve().parent)
@@ -250,11 +251,15 @@ class WindowLv2_TrainDetectors(wx.Frame):
 	def __init__(self,title):
 
 		super(WindowLv2_TrainDetectors,self).__init__(parent=None,title=title,size=(1000,300))
+
+		# Get all of the values needed from config.get_config().
+		_config = config.get_config()
+
 		self.path_to_trainingimages=None # the folder that stores all the training images
 		self.path_to_annotation=None # the path to the .json file that stores the annotations in coco format
 		self.inference_size=480 # the Detector inferencing frame size
 		self.iteration_num=200 # the number of training iterations
-		self.detector_path=os.path.join(the_absolute_current_path,'detectors') # the 'LabGym/detectors' folder, which stores all the trained Detectors
+		self.detector_path = _config['detectors']  # the 'LabGym/detectors' folder, which stores all the trained Detectors
 		self.path_to_detector=None # path to the Detector
 
 		self.display_window()
@@ -403,9 +408,13 @@ class WindowLv2_TestDetectors(wx.Frame):
 	def __init__(self,title):
 
 		super(WindowLv2_TestDetectors,self).__init__(parent=None,title=title,size=(1000,300))
+
+		# Get all of the values needed from config.get_config().
+		_config = config.get_config()
+
 		self.path_to_testingimages=None # the folder that stores all the testing images
 		self.path_to_annotation=None # the path to the .json file that stores the annotations in coco format
-		self.detector_path=os.path.join(the_absolute_current_path,'detectors') # the 'LabGym/detectors' folder, which stores all the trained Detectors
+		self.detector_path = _config['detectors']  # the 'LabGym/detectors' folder, which stores all the trained Detectors
 		self.path_to_detector=None # path to the Detector
 		self.output_path=None # the folder that stores the testing images with annotations
 

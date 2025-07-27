@@ -49,7 +49,7 @@ from .analyzebehavior import AnalyzeAnimal
 from .analyzebehavior_dt import AnalyzeAnimalDetector
 from .tools import plot_events, parse_all_events_file, calculate_distances
 from .minedata import data_mining
-
+from LabGym import config
 
 
 the_absolute_current_path=str(Path(__file__).resolve().parent)
@@ -95,6 +95,10 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 	def __init__(self,title):
 
 		super(WindowLv2_AnalyzeBehaviors,self).__init__(parent=None,title=title,size=(1000,530))
+
+		# Get all of the values needed from config.get_config().
+		self._config = config.get_config()
+
 		self.behavior_mode=0 # 0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
 		self.use_detector=False # whether the Detector is used
 		self.detector_path=None # the 'LabGym/detectors' folder, which stores all the trained Detectors
@@ -257,7 +261,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 	def select_categorizer(self,event):
 
 		if self.model_path is None:
-			self.model_path=os.path.join(the_absolute_current_path,'models')
+			self.model_path = self._config['models']
 
 		categorizers=[i for i in os.listdir(self.model_path) if os.path.isdir(os.path.join(self.model_path,i))]
 		if '__pycache__' in categorizers:
@@ -567,7 +571,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 			else:
 
 				self.animal_number={}
-				self.detector_path=os.path.join(the_absolute_current_path,'detectors')
+				self.detector_path = self._config['detectors']
 				self.text_animalnumber.SetLabel('Default: 1.')
 
 				detectors=[i for i in os.listdir(self.detector_path) if os.path.isdir(os.path.join(self.detector_path,i))]
