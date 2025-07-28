@@ -16,6 +16,12 @@ USA
 Email: bingye@umich.edu
 '''
 
+import os
+import sys
+
+
+sys.path.insert(0, os.path.join(__path__[0], 'custom'))
+
 
 
 
