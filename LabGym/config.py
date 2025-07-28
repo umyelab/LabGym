@@ -108,13 +108,13 @@ def get_config_from_configfile(configfile: Path) -> dict:
 
     # An existing but unreadable or defective configfile is fatal.
     try:
-        if configfile.endswith('.ini'):
+        if configfile.name.endswith('.ini'):
             parser = configparser.ConfigParser()
             result = parser.read(configfile)
-        elif configfile.endswith('.toml'):
+        elif configfile.name.endswith('.toml'):
             with open(configfile, 'rb') as f:
                 result = tomllib.load(f)
-        elif configfile.endswith('.yaml'):
+        elif configfile.name.endswith('.yaml'):
             # with open(configfile, 'r') as f:
             with open(configfile, 'r', encoding='utf-8') as f:
                 result = yaml.safe_load(f)
