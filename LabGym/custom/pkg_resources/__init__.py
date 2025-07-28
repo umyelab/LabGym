@@ -81,6 +81,7 @@ def resource_filename(package_or_requirement, resource_name):
     """
 
     pkg = importlib.import_module(package_or_requirement)
+    assert len(pkg.__path__) == 1  # otherwise is not anticipated
     result = os.path.join(pkg.__path__[0], resource_name)
     logging.debug('%s: %r', 'pkg_resource.resource_filename(...) returning ', result)
     return result

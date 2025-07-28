@@ -19,7 +19,8 @@ Email: bingye@umich.edu
 import os
 import sys
 
-
+ 
+assert len(__path__) == 1  # otherwise is not anticipated        
 sys.path.insert(0, os.path.join(__path__[0], 'custom'))
 
 
