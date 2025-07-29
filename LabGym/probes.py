@@ -34,7 +34,7 @@ logger.debug('%s: %r', '(__name__, __package__)', (__name__, __package__))
 # Related third party imports.
 import certifi  # Python package for providing Mozilla's CA Bundle.
 import requests  # Python HTTP for Humans.
-import packaging  # Core utilities for Python packages
+# import packaging  # Core utilities for Python packages
 
 # Local application/library specific imports.
 from LabGym import __version__ as version
@@ -55,7 +55,8 @@ def probes() -> None:
     anonymous: bool = _config['anonymous']
     registration_enable: bool = _config['enable']['registration']
 
-    # Warn if the installed sw is stale.
+    # PLACEHOLDER for moving this existing probe from __main__ to here.
+    # # Warn if the installed sw is stale.
     # probe_pypi_check_freshness()
 
     # Check for cacert trouble which might be a fouled installation.
@@ -94,6 +95,7 @@ def probes() -> None:
     central_logger.info(get_context(anonymous))
 
 
+# PLACEHOLDER for moving this existing probe from __main__ to here.
 # def probe_pypi_check_freshness() -> None:
 #     """Probe pypi for sw version, and warn if the installed sw is stale.
 # 
