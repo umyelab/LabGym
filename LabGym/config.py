@@ -74,6 +74,8 @@ defaults = {
 
 logger = logging.getLogger(__name__)
 
+_cached_config = None
+
 
 def get_config_from_argv() -> dict:
     """Get config values from command-line args."""
@@ -111,13 +113,13 @@ def get_config_from_configfile(configfile: Path) -> dict:
 
     # An existing but unreadable or defective configfile is fatal.
     try:
-        if configfile.endswith('.ini'):
+        if configfile.name.endswith('.ini'):
             parser = configparser.ConfigParser()
             result = parser.read(configfile)
-        elif configfile.endswith('.toml'):
+        elif configfile.name.endswith('.toml'):
             with open(configfile, 'rb') as f:
                 result = tomllib.load(f)
-        elif configfile.endswith('.yaml'):
+        elif configfile.name.endswith('.yaml'):
             # with open(configfile, 'r') as f:
             with open(configfile, 'r', encoding='utf-8') as f:
                 result = yaml.safe_load(f)
@@ -132,15 +134,19 @@ def get_config_from_configfile(configfile: Path) -> dict:
 
 
 def get_config():
-    """Return a config dict.
+    """Return a cached config dict. Construct it if necessary.
+
+    Strengths
+    *   Instead of reconstructing the config dict each time this 
+        function is called, the config dict is determined the first time 
+        this function is run and then the function always returns the 
+        same value without reconstructing it.
+        This implementation uses the common approach of using a module-
+        level variable to store the value after its initial creation.
+        This pattern is often referred to as memoization or lazy 
+        initialization.
 
     Weaknesses
-    *   As presently implemented, the config dict is reconstructed each
-        time this function is called.  A better approach would be to
-        construct it once, with subsequent calls getting the original
-        result returned.  Fortunately, this is a fairly fast function, 
-        so improvement is not urgently needed.
-
     *   Each override could be logged.  
         The cost of implementation including unit test and complexity 
         and maintainability may exceed benefit.
@@ -150,6 +156,14 @@ def get_config():
         The cost of implementation including unit test and complexity 
         and maintainability may exceed benefit.
     """
+
+    global _cached_config
+
+    if _cached_config is not None:
+        return _cached_config
+
+    # Milestone -- This must be the first time running this function.
+    # Construct the config dict, cache it, and return it.
 
     config_from_argv = get_config_from_argv()
 
@@ -197,6 +211,7 @@ def get_config():
 
     # logger.debug('%s: %s', 'provenance', provenance)
     logger.debug('%s:\n%s', 'result', pprint.pformat(result))
+    _cached_config = result
     return result
 
 
