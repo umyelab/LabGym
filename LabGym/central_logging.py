@@ -9,6 +9,7 @@ Functions
 from __future__ import annotations
 
 # Standard library imports.
+import atexit
 import logging
 import logging.handlers
 import queue
@@ -18,6 +19,18 @@ import queue
 
 # Local application/library specific imports.
 from LabGym import config
+
+
+# cleanup should be registered with atexit if queueing is used.
+def cleanup(queue_listener):
+    try:
+        # print('logging.shutdown(): Calling')
+        logging.shutdown()  # ensure all buffered log records are processed.
+        # print('queue_listener.stop(): Calling...')
+        queue_listener.stop()  # shut down the listener thread.
+        # print('queue_listener.stop(): Returned')
+    except Exception as e:
+        print(f'Ignoring Exception: {e}')
 
 
 http_handler_config = {
@@ -131,6 +144,8 @@ def get_central_logger(http_handler_config=http_handler_config, reset=False):
     queue_listener = logging.handlers.QueueListener(logrecord_queue, 
         http_handler)
     queue_listener.start()  # Start the listener thread
+
+    atexit.register(cleanup, queue_listener)
 
     # Milestone -- logrecord handling is configured.
 
