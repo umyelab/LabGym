@@ -161,7 +161,8 @@ class RegFormDialog(wx.Dialog):
         main_sizer = wx.BoxSizer(wx.VERTICAL)
         input_sizer = wx.GridSizer(3, 2, 1, 1)  # rows, cols, vgap, hgap
         # button_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        button_sizer = wx.BoxSizer(wx.VERTICAL)
+        # button_sizer = wx.BoxSizer(wx.VERTICAL)
+        button_sizer = wx.GridSizer(2, 2, 1, 1)  # rows, cols, vgap, hgap
 
         text = wx.StaticText(self, label=header)
         main_sizer.Add(text,
@@ -191,12 +192,20 @@ class RegFormDialog(wx.Dialog):
         input_sizer.Add(self.input_email,
             1, wx.EXPAND)
 
+        # # Add buttons to the button sizer
+        # button_sizer.Add(self.register_button, 0, wx.ALL, 5)
+        # # Add a fixed-height spacer of 10 pixels
+        # button_sizer.Add((0, 10), 0)
+        # button_sizer.Add(self.skip_button, 0, wx.ALL, 5)
+        # # button_sizer.Add(self.my_checkbox, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 10)
+        # button_sizer.Add(self.my_checkbox, 0, wx.LEFT | wx.ALIGN_CENTER_HORIZONTAL, 5)
+
         # Add buttons to the button sizer
-        button_sizer.Add(self.register_button, 0, wx.ALL, 5)
-        # Add a fixed-height spacer of 10 pixels
-        button_sizer.Add((0, 10), 0)
+        button_sizer.Add(self.register_button, 0, wx.ALL|wx.ALIGN_RIGHT, 5)
         button_sizer.Add(self.skip_button, 0, wx.ALL, 5)
-        # button_sizer.Add(self.my_checkbox, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 10)
+        # Add a dummy empty spacer item
+        button_sizer.AddSpacer(0)  # leave this cell blank
+        # # button_sizer.Add(self.my_checkbox, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 10)
         button_sizer.Add(self.my_checkbox, 0, wx.LEFT | wx.ALIGN_CENTER_HORIZONTAL, 5)
 
         # Add sizers to main sizer
