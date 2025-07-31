@@ -148,12 +148,20 @@ class RegFormDialog(wx.Dialog):
 
         # Create buttons
         self.register_button = wx.Button(self, wx.ID_OK, "Register")
-        self.skip_button = wx.Button(self, wx.ID_CANCEL, "Skip")
+        fontsize = self.register_button.GetFont().GetPointSize()
+        logger.debug('%s: %r', 'fontsize + 2', fontsize + 2)
+        font = wx.Font(fontsize + 2, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
+        self.register_button.SetFont(font)
+        self.skip_button = wx.Button(self, wx.ID_CANCEL, "Skip for now")
+
+        # Create the checkbox
+        self.my_checkbox = wx.CheckBox(self, label='Remember my choice, don\'t ask me again')
 
         # Create sizers for layout
         main_sizer = wx.BoxSizer(wx.VERTICAL)
         input_sizer = wx.GridSizer(3, 2, 1, 1)  # rows, cols, vgap, hgap
-        button_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        # button_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        button_sizer = wx.BoxSizer(wx.VERTICAL)
 
         text = wx.StaticText(self, label=header)
         main_sizer.Add(text,
@@ -185,7 +193,11 @@ class RegFormDialog(wx.Dialog):
 
         # Add buttons to the button sizer
         button_sizer.Add(self.register_button, 0, wx.ALL, 5)
+        # Add a fixed-height spacer of 10 pixels
+        button_sizer.Add((0, 10), 0)
         button_sizer.Add(self.skip_button, 0, wx.ALL, 5)
+        # button_sizer.Add(self.my_checkbox, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 10)
+        button_sizer.Add(self.my_checkbox, 0, wx.LEFT | wx.ALIGN_CENTER_HORIZONTAL, 5)
 
         # Add sizers to main sizer
         main_sizer.Add(input_sizer, 1, wx.EXPAND | wx.ALL, 10)
