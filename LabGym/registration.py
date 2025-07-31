@@ -223,13 +223,27 @@ class RegFormDialog(wx.Dialog):
 
         self.SetSizerAndFit(main_sizer)
 
-    def GetInputValues(self) -> dict | None:
-        """Return a dict containing the dialog object's input values."""
-        result = {
-            'name': self.input_name.GetValue(),
-            'affiliation': self.input_affiliation.GetValue(),
-            'email': self.input_email.GetValue(),
-            }
+    def GetInputValues(self, alt=None) -> dict | None:
+        """Return a dict containing the dialog object's input values.
+
+        If alt-behavior specified as 'skip', then return a dict of dummy val.
+        """
+        if alt is None:
+            result = {
+                'name': self.input_name.GetValue(),
+                'affiliation': self.input_affiliation.GetValue(),
+                'email': self.input_email.GetValue(),
+                }
+        elif alt == 'skip':
+            result = {
+                'name': 'skip',
+                'affiliation': 'skip',
+                'email': 'skip',
+                }
+        else:
+            # bad usage...
+            logger.warning('%s: %r', 'Unexpected!  alt', alt)
+            result = {}
         return result
 
     def bring_to_foreground(self) -> None:
@@ -301,7 +315,13 @@ def _get_reginfo_from_form() -> dict | None:
         else:
             logger.debug('%s -- %s', 'Milestone ShowModal', 'returned')
             logger.debug('User pressed [Skip]')
-            reginfo = None
+
+            if dlg.my_checkbox.GetValue():
+                logger.debug('Checked')
+                reginfo = dlg.GetInputValues('skip')
+            else:
+                logger.debug('Unchecked')
+                reginfo = None
 
     logger.debug('%s: %r', 'reginfo', reginfo)
     return reginfo
