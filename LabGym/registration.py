@@ -162,7 +162,12 @@ class RegFormDialog(wx.Dialog):
         input_sizer = wx.GridSizer(3, 2, 1, 1)  # rows, cols, vgap, hgap
         # button_sizer = wx.BoxSizer(wx.HORIZONTAL)
         # button_sizer = wx.BoxSizer(wx.VERTICAL)
-        button_sizer = wx.GridSizer(2, 2, 1, 1)  # rows, cols, vgap, hgap
+        button_sizer = wx.FlexGridSizer(2, 2, 1, 1)  # rows, cols, vgap, hgap
+
+        # # Allow column 1 to be shrinkable (even though proportion is 0 for items)
+        # # This allows it to shrink to the size of its content
+        # fgs.AddGrowableCol(1)
+        button_sizer.AddGrowableCol(0)
 
         text = wx.StaticText(self, label=header)
         main_sizer.Add(text,
