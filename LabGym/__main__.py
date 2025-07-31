@@ -84,6 +84,7 @@ def main():
 
 	gui_main.main_window()
 
+	logger.debug('Milestone -- exiting main')
 
 
 if __name__=='__main__':  # pragma: no cover
