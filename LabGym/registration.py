@@ -159,15 +159,14 @@ class RegFormDialog(wx.Dialog):
 
         # Create sizers for layout
         main_sizer = wx.BoxSizer(wx.VERTICAL)
-        input_sizer = wx.GridSizer(3, 2, 1, 1)  # rows, cols, vgap, hgap
+        input_sizer = wx.FlexGridSizer(6, 2, 1, 1)  # rows, cols, vgap, hgap
         # button_sizer = wx.BoxSizer(wx.HORIZONTAL)
         # button_sizer = wx.BoxSizer(wx.VERTICAL)
-        button_sizer = wx.FlexGridSizer(2, 2, 1, 1)  # rows, cols, vgap, hgap
+        # button_sizer = wx.FlexGridSizer(2, 2, 1, 1)  # rows, cols, vgap, hgap
 
-        # # Allow column 1 to be shrinkable (even though proportion is 0 for items)
-        # # This allows it to shrink to the size of its content
-        # fgs.AddGrowableCol(1)
-        button_sizer.AddGrowableCol(0)
+        # Allow column 0 to be shrinkable (even though proportion is 0 for items)
+        # This allows it to shrink to the size of its content
+        input_sizer.AddGrowableCol(0)
 
         text = wx.StaticText(self, label=header)
         main_sizer.Add(text,
@@ -205,18 +204,22 @@ class RegFormDialog(wx.Dialog):
         # # button_sizer.Add(self.my_checkbox, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 10)
         # button_sizer.Add(self.my_checkbox, 0, wx.LEFT | wx.ALIGN_CENTER_HORIZONTAL, 5)
 
-        # Add buttons to the button sizer
-        button_sizer.Add(self.register_button, 0, wx.ALL|wx.ALIGN_RIGHT, 5)
-        button_sizer.Add(self.skip_button, 0, wx.ALL, 5)
+        # Add a row of dummy empty spacer items
+        input_sizer.Add((0,10), 0)  # add a fixed-height spacer of 10 pixels
+        input_sizer.AddSpacer(0)  # leave this cell blank
+
+        # Add buttons to the sizer
+        input_sizer.Add(self.register_button, 0, wx.ALL|wx.ALIGN_RIGHT, 5)
+        input_sizer.Add(self.skip_button, 0, wx.ALL, 5)
         # Add a dummy empty spacer item
-        button_sizer.AddSpacer(0)  # leave this cell blank
+        input_sizer.AddSpacer(0)  # leave this cell blank
         # # button_sizer.Add(self.my_checkbox, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 10)
-        button_sizer.Add(self.my_checkbox, 0, wx.LEFT | wx.ALIGN_CENTER_HORIZONTAL, 5)
+        input_sizer.Add(self.my_checkbox, 0, wx.LEFT | wx.ALIGN_CENTER_HORIZONTAL, 5)
 
         # Add sizers to main sizer
         main_sizer.Add(input_sizer, 1, wx.EXPAND | wx.ALL, 10)
-        main_sizer.Add(button_sizer,
-            0, wx.ALIGN_CENTER | wx.TOP | wx.BOTTOM, 10)
+        # main_sizer.Add(button_sizer,
+        #     0, wx.ALIGN_CENTER | wx.TOP | wx.BOTTOM, 10)
 
         self.SetSizerAndFit(main_sizer)
 
