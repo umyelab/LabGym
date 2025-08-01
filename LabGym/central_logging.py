@@ -9,14 +9,28 @@ Functions
 from __future__ import annotations
 
 # Standard library imports.
+import atexit
 import logging
 import logging.handlers
+import queue
 
 # Related third party imports.
 # None
 
 # Local application/library specific imports.
 from LabGym import config
+
+
+# cleanup should be registered with atexit if queueing is used.
+def cleanup(queue_listener):
+    try:
+        # print('logging.shutdown(): Calling')
+        logging.shutdown()  # ensure all buffered log records are processed.
+        # print('queue_listener.stop(): Calling...')
+        queue_listener.stop()  # shut down the listener thread.
+        # print('queue_listener.stop(): Returned')
+    except Exception as e:
+        print(f'Ignoring Exception: {e}')
 
 
 http_handler_config = {
@@ -57,11 +71,9 @@ def get_central_logger(http_handler_config=http_handler_config, reset=False):
     Return logger 'Central Logger', configured to send log records to an 
     HTTP server.
     
-    Weakness:  This implementation uses an HTTPHandler, which waits 
-        for the send to complete (or timeout).
-        Consider using QueueHandler/QueueListener and
-        multiprocessing.Queue to let handlers do their work on a 
-        separate thread. 
+    Strength:  This implementation uses asynchronous handling of log 
+        records.  It uses QueueHandler/QueueListener and queue.Queue to
+        let the HTTPHandler do its work on a separate thread.
 
     References 
     [1] search: python logging send to url http post
@@ -103,8 +115,39 @@ def get_central_logger(http_handler_config=http_handler_config, reset=False):
     # specify a Formatter for an HTTPHandler has no effect.
     http_handler = logging.handlers.HTTPHandler(**http_handler_config)
 
-    # Add the handler to the logger
-    central_logger.addHandler(http_handler)
+    # Typically, this is connects the logger to the handler.
+    #     # Add the handler to the logger
+    #     central_logger.addHandler(http_handler)
+    #     # Milestone -- logrecord handling is configured.
+    #
+    # But for this logger, we want non-blocking logging, where log 
+    # records are queued and processed asynchronously.
+    # So configure the logger to handle logrecords by putting them into
+    # a queue and moving on.  Use a QueueListener running in a separate
+    # thread to monitor the queue, retrieve LogRecord objects, and hand
+    # them off to the downstream handler (http_handler).
+
+    # Create a Queue obj.  This queue will store the LogRecord objects.
+    logrecord_queue = queue.Queue(-1)  # -1 for an unbounded queue
+
+    # Create a QueueHandler obj.  Its sole purpose is to place LogRecord 
+    # objects onto the Queue obj (logrecord_queue).
+    queue_handler = logging.handlers.QueueHandler(logrecord_queue)
+
+    # Attach the QueueHandler obj to the intended Logger obj.
+    central_logger.addHandler(queue_handler)
+
+    # Create and Start a QueueListener obj.  This listener runs in a 
+    # separate thread, continuously monitors the logrecord_queue, and 
+    # dispatches the retrieved LogRecord objects to the configured 
+    # downstream handlers (http_handler).
+    queue_listener = logging.handlers.QueueListener(logrecord_queue, 
+        http_handler)
+    queue_listener.start()  # Start the listener thread
+
+    atexit.register(cleanup, queue_listener)
+
+    # Milestone -- logrecord handling is configured.
 
     central_logger.disabled = central_logger_disabled
 
