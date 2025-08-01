@@ -1,4 +1,4 @@
-"""Provide functions to obtain and forward registration info.
+"""Provide functions to obtain, store, and forward registration info.
 
 "Public" Functions
     is_registered() -> bool
@@ -10,10 +10,31 @@
     get_reginfo_from_file() -> dict | None
         Load registration info from file, and return reginfo.
 
-Example
+Example 1
     import registration
 
     if not registration.is_registered():
+        # Get reg info from user, store reginfo locally.  Also, send
+        # reginfo to central receiver via central_logger (unless
+        # central_logger's disabled attribute is True).
+        registration.register()
+
+Example 2
+    import registration
+
+    reginfo = registration.get_reginfo_from_file()
+
+    # if user has skipped registration (with checked "Don't ask again")
+    # but that was selected in some different (earlier?) installation,
+    # then expire or void the "skip-henceforth" behavior.
+    skip_pass_void = (reginfo is not None
+        and reginfo.get('name') == 'skip'
+        and packaging.version.parse(version)
+            != packaging.version.parse(reginfo.get('version'))
+        )
+
+    # if not registration.is_registered():
+    if not registration.is_registered() or skip_pass_void:
         # Get reg info from user, store reginfo locally.  Also, send
         # reginfo to central receiver via central_logger (unless
         # central_logger's disabled attribute is True).
@@ -28,24 +49,19 @@ Weaknesses
     *   This module file is long.  It should be refactored into a
         package with smaller module files.
 
-Notes
-    ...
-
 "Private" Functions
-These functions are implementation details and should not be relied upon
-by external code, as they might change without notice in future versions.
-By convention they are named with a single leading underscore ("_") to
-indicate to other programmers that they are intended for private or
-internal use.
+    These functions are implementation details and should not be relied
+    upon by external code, as they might change without notice in future
+    versions.
+    By convention they are named with a single leading underscore ("_")
+    to indicate to other programmers that they are intended for private
+    or internal use.
+
     _get_reginfo_from_form() -> dict | None
         Display a reg form, get user input, and return reginfo.
 
     _store_reginfo_to_file(reginfo: dict) -> None
         Store registration info to file in user's LabGym config directory.
-
-Should these classes be considered private?  I'm not seeing a public use case.
-    RegFormDialog(wx.Dialog)
-    NotEmptyValidator(wx.Validator)
 """
 
 # Allow use of newer syntax Python 3.10 type hints in Python 3.9.
@@ -88,7 +104,6 @@ class NotEmptyValidator(wx.Validator):
     (class purpose and functionality, and optionally its attributes and methods)
     """
     def __init__(self):
-#         wx.PyValidator.__init__(self)
         wx.Validator.__init__(self)
 
     def Clone(self):  # pylint: disable=invalid-name
@@ -148,25 +163,36 @@ class RegFormDialog(wx.Dialog):
 
         # Create buttons
         self.register_button = wx.Button(self, wx.ID_OK, "Register")
-        self.skip_button = wx.Button(self, wx.ID_CANCEL, "Skip")
+        fontsize = self.register_button.GetFont().GetPointSize()
+        logger.debug('%s: %r', 'fontsize + 2', fontsize + 2)
+        font = wx.Font(fontsize + 2,
+            wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
+        self.register_button.SetFont(font)
+        self.skip_button = wx.Button(self, wx.ID_CANCEL, "Skip for now")
 
-        # Create sizers for layout
+        # Create the checkbox
+        self.my_checkbox = wx.CheckBox(self,
+            label='Remember my choice, don\'t ask me again')
+
+        # Create sizers for layout.
+        # Buttons and checkbox will go in the same FlexGridSizer as the
+        # text input fields.
         main_sizer = wx.BoxSizer(wx.VERTICAL)
-        input_sizer = wx.GridSizer(3, 2, 1, 1)  # rows, cols, vgap, hgap
-        button_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        input_sizer = wx.FlexGridSizer(6, 2, 1, 1)  # rows, cols, vgap, hgap
+
+        # Allow col 0 to be shrinkable (even though proportion is 0 for items)
+        # This allows it to shrink to the size of its content
+        input_sizer.AddGrowableCol(0)
 
         text = wx.StaticText(self, label=header)
         main_sizer.Add(text,
             0,  # proportion (int).  0 means the item won't expand
                 # beyond its minimal size.
 
-            # # border on all sides, align left, and expand
-            # # wx.ALL | wx.EXPAND | wx.LEFT,
             # border on all sides, and align left
             wx.ALL | wx.LEFT,
 
-            10,  # width (in pixels) of the border specified by the
-                 # border flags
+            10,  # width (in pixels) of the borders specified
             )
 
         # Add input fields with labels to the input sizer
@@ -183,24 +209,44 @@ class RegFormDialog(wx.Dialog):
         input_sizer.Add(self.input_email,
             1, wx.EXPAND)
 
-        # Add buttons to the button sizer
-        button_sizer.Add(self.register_button, 0, wx.ALL, 5)
-        button_sizer.Add(self.skip_button, 0, wx.ALL, 5)
+        # Add a row of dummy empty spacer items
+        input_sizer.Add((0,10), 0)  # add a fixed-height spacer of 10 pixels
+        input_sizer.AddSpacer(0)  # leave this cell blank
+
+        # Add buttons to the sizer
+        input_sizer.Add(self.register_button, 0, wx.ALL|wx.ALIGN_RIGHT, 5)
+        input_sizer.Add(self.skip_button, 0, wx.ALL, 5)
+        # Add a dummy empty spacer item
+        input_sizer.AddSpacer(0)  # leave this cell blank
+        input_sizer.Add(self.my_checkbox,
+            0, wx.LEFT | wx.ALIGN_CENTER_HORIZONTAL, 5)
 
         # Add sizers to main sizer
         main_sizer.Add(input_sizer, 1, wx.EXPAND | wx.ALL, 10)
-        main_sizer.Add(button_sizer,
-            0, wx.ALIGN_CENTER | wx.TOP | wx.BOTTOM, 10)
 
         self.SetSizerAndFit(main_sizer)
 
-    def GetInputValues(self) -> dict | None:
-        """Return a dict containing the dialog object's input values."""
-        result = {
-            'name': self.input_name.GetValue(),
-            'affiliation': self.input_affiliation.GetValue(),
-            'email': self.input_email.GetValue(),
-            }
+    def GetInputValues(self, alt=None) -> dict | None:
+        """Return a dict containing the dialog object's input values.
+
+        If alt-behavior specified as 'skip', then return a dict of dummy val.
+        """
+        if alt is None:
+            result = {
+                'name': self.input_name.GetValue(),
+                'affiliation': self.input_affiliation.GetValue(),
+                'email': self.input_email.GetValue(),
+                }
+        elif alt == 'skip':
+            result = {
+                'name': 'skip',
+                'affiliation': 'skip',
+                'email': 'skip',
+                }
+        else:
+            # bad usage...
+            logger.warning('%s: %r', 'Unexpected!  alt', alt)
+            result = {}
         return result
 
     def bring_to_foreground(self) -> None:
@@ -272,7 +318,13 @@ def _get_reginfo_from_form() -> dict | None:
         else:
             logger.debug('%s -- %s', 'Milestone ShowModal', 'returned')
             logger.debug('User pressed [Skip]')
-            reginfo = None
+
+            if dlg.my_checkbox.GetValue():
+                logger.debug('Checked')
+                reginfo = dlg.GetInputValues('skip')
+            else:
+                logger.debug('Unchecked')
+                reginfo = None
 
     logger.debug('%s: %r', 'reginfo', reginfo)
     return reginfo
