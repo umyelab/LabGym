@@ -60,10 +60,10 @@ defaults = {
     # intentionally, no default specified here for logging_configfile
     # intentionally, no default specified here for logging_levelname
 
-    # for now, user must opt-in for central logging and registration
+    # user must opt out for to prevent central logging and registration
     'enable': {
-        'central_logger': False,
-        'registration': False,
+        'central_logger': True,
+        'registration': True,
         },
 
     'anonymous': False,
