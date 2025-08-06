@@ -58,7 +58,7 @@ defaults = {
         Path(__file__).parent.joinpath('logging.yaml'),  # LabGym/logging.yaml
         ],
     # intentionally, no default specified here for logging_configfile
-    # intentionally, no default specified here for logging_levelname
+    # intentionally, no default specified here for logging_level
 
     'enable': {
         'central_logger': True,  # to disable central logger, user must opt out

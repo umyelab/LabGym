@@ -18,8 +18,8 @@ Notes
     INFO) messages, despite the root logger set to higher-level (like
     WARNING).
 
-    If the user supplies command line args which set logginglevelname to
-    WARNING (like '--logginglevel WARNING'), the root logger level is
+    If the user supplies command line args which set logging_level to
+    WARNING (like '--logging_level WARNING'), the root logger level is
     set to logging.WARNING.
     The user might expect that setting root logger level to WARNING
     would suppress all INFO-level log messages from the console output,
@@ -254,7 +254,7 @@ def configure() -> None:
         _config = config.get_config()
         logging_configfiles: List[Path] = _config['logging_configfiles']
         logging_configfile: Path|None = _config.get('logging_configfile')
-        logging_levelname: str|None = _config.get('logging_levelname')
+        logging_level: str|None = _config.get('logging_level')
 
         # Copy the queued logrecords to a list, and switch over to
         # manual logrecord creation until configuring is completed.
@@ -297,10 +297,10 @@ def configure() -> None:
 
     # (2) Honor command-line args that override the root logger level.
     try:
-        if logging_levelname is not None:
+        if logging_level is not None:
             logrecords.append(_mydebug(
-                f'logging_levelname: {logging_levelname}'))
-            logging.getLogger().setLevel(getattr(logging, logging_levelname))
+                f'logging_level: {logging_level}'))
+            rootlogger.setLevel(logging_level)
 
     except Exception as e:
         # log the exception as a warning
