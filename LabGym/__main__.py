@@ -19,10 +19,8 @@ Email: bingye@umich.edu
 # pylint: enable=line-too-long
 
 # Standard library imports.
-import inspect
 import logging
 from pathlib import Path
-import sys
 
 
 # block begin
@@ -52,7 +50,7 @@ from packaging import version  # Core utilities for Python packages
 from LabGym import __version__, gui_main, probes
 
 
-logger.debug('%s: %r', '(__name__, __package__', (__name__, __package__))
+logger.debug('%s: %r', '(__name__, __package__)', (__name__, __package__))
 
 
 def main():
