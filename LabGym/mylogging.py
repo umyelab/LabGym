@@ -262,7 +262,9 @@ def catch_exceptions_and_warn(wrappee):
 @catch_exceptions_and_warn  # Guard from exceptions.
 def configure() -> None:
     """
-    Configure logging based on configfile, then handle list of logrecords.
+    Configure logging based on configfile, then handle collected logrecords.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
     (1) Initialize with logging module's basicConfig(), raiseExceptions,
         and captureWarnings().
@@ -287,7 +289,7 @@ def configure() -> None:
     While executing this function, append any new log records to
     logrecords (for later handling).
 
-    This function guards against propagating/re-raising exceptions.
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
     """
 
     # (1) Initialize ...
@@ -308,7 +310,7 @@ def configure() -> None:
 
     # (2) Configure the logging system based on settings from a configfile.
     try:
-        # logrecords is a list of not-yet-handled log records
+        defer()  # Ensure logrecords are being queued.
 
         # Get all of the values needed from config.get_config().
         _config = config.get_config()
@@ -345,8 +347,12 @@ def configure() -> None:
 
     except Exception as e:
         # log the exception as a warning
+        # initialize the logging system.
         logrecords.append(_mywarning(
             f'Trouble configuring the logging system.  ({e})'))
+        rootlogger.handlers = []
+        logging.basicConfig(level=logging.DEBUG)
+        
 
     # (3) Honor command-line args that override the root logger level.
     try:
@@ -360,19 +366,17 @@ def configure() -> None:
         logrecords.append(_mywarning(
             f'Trouble overriding root logger level.  ({e})'))
 
-    # (4) After configuring, handle each logrecord in the list of
-    #     accumulated logrecords.
-    _handle(logrecords)  # Process the manually created logrecords
+    # Milestone -- The logging system is configured.
+
+    _handle(logrecords)  # handle the collected/deferred logrecords
 
 
 @catch_exceptions_and_warn  # Guard from exceptions.
 def _handle(logrecords: List[logging.LogRecord]) -> None:
-    """For each logrecord, have its named logger handle it.
+    """For each collected/deferred logrecord, have its named logger handle it.
 
-    Arg logrecords is a list of log records that were created manually
-    (instead of by a logger method) without handling, before the logging
-    system was configured.
-    Now, presumably logging has been configured, so for each log record,
+    Now, presumably the python logging system has been configured, so
+    for each log record that was collected (with handling deferred),
     have its named logger handle it based on the current logging
     configuration.
     """
@@ -421,14 +425,36 @@ def defer():
         queue_handler = logging.handlers.QueueHandler(logrecord_queue)
         rootlogger.addHandler(queue_handler)
 
-        # During dev, handle logrecords immediately also (producing
-        # redundant output).
-        dev_handler = logging.StreamHandler()
-        dev_handler.setFormatter(
-            logging.Formatter(f'DEV {logging.BASIC_FORMAT}'))
-        rootlogger.addHandler(dev_handler)
+        # # During dev, handle logrecords immediately also (producing
+        # # redundant output).
+        # dev_handler = logging.StreamHandler()
+        # dev_handler.setFormatter(
+        #     logging.Formatter(f'DEV {logging.BASIC_FORMAT}'))
+        # rootlogger.addHandler(dev_handler)
 
         logger.debug('Added a QueueHandler to root logger.')
 
     logger.debug('%s: %r', 'rootlogger.handlers', rootlogger.handlers)
     logger.debug('%s: %r', 'rootlogger.level', rootlogger.level)
+
+
+def _get_logrecords_from_queue():
+    """Return a list of logrecords that were queued by the rootlogger.
+
+    Weaknesses: 
+    1.  The expected usage is that the rootlogger has exactly one
+        QueueHandler.  This function could be more defensive regarding
+        confirming that expectation.
+    2.  The queue should be deleted and the handler removed from the
+        rootlogger... but this will happen automatically, right?   When
+        the logging system is configured, the handler will be unused and
+        garbage collected along with its queue. (?)
+    """
+
+    rootlogger = logging.getLogger()
+
+    for handler in rootlogger.handlers:
+        if isinstance(handler, logging.handlers.QueueHandler):
+            return list(handler.queue.queue)
+    else:
+        return []
