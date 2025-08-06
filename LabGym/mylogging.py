@@ -126,10 +126,11 @@ from __future__ import annotations
 # Standard library imports.
 import functools
 import inspect
-import logging.config
+import logging.config, logging.handlers
 import os
 from pathlib import Path
 # import pprint
+import queue
 try:
     # tomllib is included in the Python Standard Library since version 3.11
     import tomllib  # type: ignore
@@ -259,7 +260,7 @@ def catch_exceptions_and_warn(wrappee):
 
 
 @catch_exceptions_and_warn  # Guard from exceptions.
-def configure(logrecords: List[logging.LogRecord] = []) -> None:
+def configure() -> None:
     """
     Configure logging based on configfile, then handle list of logrecords.
 
@@ -295,6 +296,8 @@ def configure(logrecords: List[logging.LogRecord] = []) -> None:
     # Remove pre-existing handlers from root logger, then basicConfig().
     logging.getLogger().handlers = []
     logging.basicConfig(level=logging.DEBUG)
+    defer()
+
 
     # Set logging.raiseExceptions to False.
     # (Why?  Because we want to ignore handler emit exceptions.)
@@ -378,3 +381,54 @@ def _handle(logrecords: List[logging.LogRecord]) -> None:
         logger = logging.getLogger(logrecord.name)
         if logrecord.levelno >= logger.getEffectiveLevel():
             logger.handle(logrecord)
+
+
+@catch_exceptions_and_warn  # Guard from exceptions.
+def defer():
+    """Ensure logrecords are being queued.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    Collect logrecords in a queue for handling after configuration.
+
+    Collect logrecords in a queue for handling after the logging system
+    has been been configured.
+
+    The intention is, for the time being,
+    collect logrecords in a queue without filtering,
+    and defer handling, with the intention of handling them after the
+    logging system is configured.
+
+    If handlers is an empty list, or contains only a nullhandler, then
+        add a queuehandler
+    elif handlers contains a queuehandler (and optionally others, like
+    else
+         unexpected
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    """
+
+    rootlogger = logging.getLogger()
+
+    # Check if any of rootlogger's handlers is a QueueHandler.
+    contains_queuehandler = any(
+        isinstance(handler, logging.handlers.QueueHandler)
+        for handler in rootlogger.handlers
+        )
+
+    if not contains_queuehandler:
+        rootlogger.setLevel(logging.NOTSET)
+
+        logrecord_queue = queue.Queue(-1)  # -1 for an unbounded queue
+        queue_handler = logging.handlers.QueueHandler(logrecord_queue)
+        rootlogger.addHandler(queue_handler)
+
+        # During dev, handle logrecords immediately also (producing
+        # redundant output).
+        dev_handler = logging.StreamHandler()
+        dev_handler.setFormatter(
+            logging.Formatter(f'DEV {logging.BASIC_FORMAT}'))
+        rootlogger.addHandler(dev_handler)
+
+        logger.debug('Added a QueueHandler to root logger.')
+
+    logger.debug('%s: %r', 'rootlogger.handlers', rootlogger.handlers)
+    logger.debug('%s: %r', 'rootlogger.level', rootlogger.level)
