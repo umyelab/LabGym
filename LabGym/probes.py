@@ -34,7 +34,7 @@ logger.debug('%s: %r', '(__name__, __package__)', (__name__, __package__))
 # Related third party imports.
 import certifi  # Python package for providing Mozilla's CA Bundle.
 import requests  # Python HTTP for Humans.
-# import packaging  # Core utilities for Python packages
+import packaging  # Core utilities for Python packages
 
 # Local application/library specific imports.
 from LabGym import __version__ as version
@@ -85,9 +85,44 @@ def probes() -> None:
              f' because registration_enable: {registration_enable}')
     else:
         # proceed with registration check
-        if not registration.is_registered():
+        #
+        # Either
+        # 1.  sw is registered.
+        #     is_registered() returns True.
+        # 2.  registration was skipped (with unchecked "Don't ask again").
+        #     is_registered() returns False.
+        # 3.  registration was skipped (with checked "Don't ask again").
+        #     Now user is running the same version of LabGym as when
+        #     registration was skipped.
+        #     is_registered() returns True.
+        #     Inspect reginfo['name'] and reginfo['version']
+        # 4.  registration was skipped (with checked "Don't ask again").
+        #     Now user is running a different version of LabGym as when
+        #     registration was skipped.
+        #     is_registered() returns True.
+        #     Inspect reginfo['name'] and reginfo['version']
+        #
+        # Note that is_registered() depends on
+        # <configdir>/registration.yaml.  If the setting for <configdir>
+        # is changed to a dir that doesn't have a registration.yaml,
+        # then is_registered() will return False.
+
+        reginfo = registration.get_reginfo_from_file()
+
+        # if user has skipped registration (with checked "Don't ask again")
+        # but that was selected in some different (earlier?) installation,
+        # then expire or void the "skip-henceforth" behavior.
+        skip_pass_void = (reginfo is not None
+            and reginfo.get('name') == 'skip'
+            and packaging.version.parse(version)
+                != packaging.version.parse(reginfo.get('version'))
+            )
+
+        # if not registration.is_registered():
+        if not registration.is_registered() or skip_pass_void:
             # Get reg info from user, store reginfo locally.  Also, send
-            # reginfo to central receiver via central_logger.
+            # reginfo to central receiver via central_logger (unless
+            # central_logger's disabled attribute is True).
             registration.register()
 
     # Report sw start and context to the central receiver.

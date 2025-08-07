@@ -19,26 +19,27 @@ Email: bingye@umich.edu
 # pylint: enable=line-too-long
 
 # Standard library imports.
-import inspect
 import logging
 from pathlib import Path
-import sys
 
+
+# block begin
+# These statements are intentionally positioned before this module's
+# other imports (against the guidance of PEP 8), to log the loading of
+# this module before other import statements are executed and
+# potentially produce their own log messages.
+
+from LabGym import mylogging
+# Collect logrecords and defer handling until logging is configured.
+mylogging.defer()
 
 # Log the loading of this module (by the module loader, on first import).
-# Configure the logging system.
-#
-# These statements are intentionally positioned before this module's
-# other imports (against the guidance of PEP 8), to log the load of this
-# module before other import statements are executed and potentially
-# produce their own log messages.
-logrecords = [logging.LogRecord(lineno=inspect.stack()[0].lineno,
-    level=logging.DEBUG, exc_info=None, name=__name__, pathname=__file__,
-    msg='%s', args=(f'loading {__file__}',),
-    )]
-from LabGym import mylogging
-# Configure logging based on configfile, then handle list of logrecords.
-mylogging.configure(logrecords)
+logger = logging.getLogger(__name__)
+logger.debug('loading %s', __file__)
+
+# Configure logging based on configfile, then handle collected logrecords.
+mylogging.configure()
+# block end
 
 
 # Related third party imports.
@@ -46,11 +47,11 @@ import requests  # Python HTTP for Humans.
 from packaging import version  # Core utilities for Python packages
 
 # Local application/library specific imports.
+from LabGym import mypkg_resources  # replace deprecated pkg_resources
 from LabGym import __version__, gui_main, probes
 
 
-logger = logging.getLogger(__name__)
-logger.debug('%s: %r', '(__name__, __package__', (__name__, __package__))
+logger.debug('%s: %r', '(__name__, __package__)', (__name__, __package__))
 
 
 def main() -> None:

@@ -2,12 +2,14 @@
 """Provide functions for configuring the logging system.
 
 Functions
-    configure -- Configure logging based on configfile, then handle list
-        of logrecords.
+    defer -- Ensure logrecords are being queued for later handling.
+    configure -- Configure logging based on configfile, then handle
+        deferred logrecords.
 
 Strengths
-  * The configure function is guarded, to log exceptions as warnings, and
-    discard them instead of propagate/re-raise them.
+  * The public functions (defer, configure) are guarded, to log
+    exceptions as warnings, and discard them instead of propagate/
+    re-raise them.
     Why?  Because for this sw, the logging is considered not-essential,
     so logging config trouble is intentionally not fatal.
 
@@ -16,8 +18,8 @@ Notes
     INFO) messages, despite the root logger set to higher-level (like
     WARNING).
 
-    If the user supplies command line args which set logginglevelname to
-    WARNING (like '--logginglevel WARNING'), the root logger level is
+    If the user supplies command line args which set logging_level to
+    WARNING (like '--logging_level WARNING'), the root logger level is
     set to logging.WARNING.
     The user might expect that setting root logger level to WARNING
     would suppress all INFO-level log messages from the console output,
@@ -54,30 +56,38 @@ References
     https://docs.python.org/3/howto/logging-cookbook.html#logging-cookbook
 
 Example 1
+    import logging
+
     # Configure the logging system.
     from LabGym.mylogging import mylogging
     mylogging.config()
 
+    logger = logging.getLogger(__name__)
+    logger.debug('Milestone')
+    logger.info('Milestone')
+    logger.warning('Milestone')
+    logger.error('Milestone')
+
 Example 2, Log the loading of this module, and configure the logging system.
     # Standard library imports.
-    import inspect
     import logging
     ...
 
-    # Log the loading of this module (by the module loader, on first import).
-    # Configure the logging system.
-    #
     # These statements are intentionally positioned before this module's
-    # other imports (against the guidance of PEP 8), to log the load of this
-    # module before other import statements are executed and potentially
-    # produce their own log messages.
-    logrecords = [logging.LogRecord(lineno=inspect.stack()[0].lineno,
-        level=logging.DEBUG, exc_info=None, name=__name__, pathname=__file__,
-        msg='%s', args=(f'loading {__file__}',),
-        )]
+    # other imports (against the guidance of PEP 8), to log the loading of
+    # this module before other import statements are executed and
+    # potentially produce their own log messages.
+
     from LabGym import mylogging
-    # Configure logging based on configfile, then handle list of logrecords.
-    mylogging.configure(logrecords)
+    # Collect logrecords and defer handling until logging is configured.
+    mylogging.defer()
+
+    # Log the loading of this module (by the module loader, on first import).
+    logger = logging.getLogger(__name__)
+    logger.debug('loading %s', __file__)
+
+    # Configure logging based on configfile, then handle collected logrecords.
+    mylogging.configure()
 
     # Related third party imports.
     ...
@@ -85,38 +95,7 @@ Example 2, Log the loading of this module, and configure the logging system.
     # Local application/library specific imports.
     ...
 
-    logger = logging.getLogger(__name__)
-
-    logger.debug('Milestone')
-    logger.info('Milestone')
-    logger.warning('Milestone')
-    logger.error('Milestone')
-
-The output depends on the configuration of the logging system.
-For Example 2 outputs,
-
-(a) If the default config file LabGym/logging.yaml is used, with root
-    logger level=INFO, then there is no console output of the DEBUG
-    messages.
-
-(b) If a modified config file is used (for example
-    ~/.LabGym/logging.yaml) with root logger level=DEBUG, or if command-
-    line arg --verbose is specified, then console output shows messages
-    like
-
-    2025-05-14 09:21:02     DEBUG   [4467582464:LabGym.__main__:__main__:28]        loading /Users/john/Public/LabGym/LabGym/__main__.py
-    2025-05-14 09:21:02     DEBUG   [4467582464:LabGym.mylogging:mylogging:291]     configfile: '/Users/john/.LabGym/logging.yaml'
-    2025-05-14 09:21:02     DEBUG   [4467582464:LabGym.mylogging:mylogging:295]     function get_configdict returned a result
-    2025-05-14 09:21:02     DEBUG   [4467582464:LabGym.__main__:__main__:38]        __name__: 'LabGym.__main__'
-
-(c) If no config file is found or the config file is fouled, then
-    console output shows messages like
-
-    DEBUG:LabGym.__main__:loading /Users/john/Public/LabGym/LabGym/__main__.py
-    DEBUG:LabGym.mylogging:configfile: '/Users/john/.LabGym/logging.toml'
-    WARNING:LabGym.mylogging:Expected '=' after a key in a key/value pair (at line 4, column 8)
-    WARNING:LabGym.mylogging:Trouble configuring logging.  Calling logging.basicConfig(level=logging.DEBUG)
-    DEBUG:LabGym.__main__:__name__: 'LabGym.__main__'
+    logger.debug'%s: %r', '(__name__, __package__', (__name__, __package__))
 """  # noqa: E501
 # pylint: enable=line-too-long
 
@@ -126,10 +105,11 @@ from __future__ import annotations
 # Standard library imports.
 import functools
 import inspect
-import logging.config
+import logging.config, logging.handlers
 import os
 from pathlib import Path
 # import pprint
+import queue
 try:
     # tomllib is included in the Python Standard Library since version 3.11
     import tomllib  # type: ignore
@@ -180,7 +160,7 @@ if development_mode:
 #             f'Continuing after non-fatal exception: {e}'))
 
 def _myLogRecord(myobj: str | Exception, level: int) -> logging.LogRecord:
-    """Return a LogRecord for a string or exception."""
+    """Return a LogRecord for a string or for an exception."""
 
     lineno = inspect.stack()[2].lineno  # type: ignore
 
@@ -191,27 +171,16 @@ def _myLogRecord(myobj: str | Exception, level: int) -> logging.LogRecord:
         exc_info=None, name=__name__, pathname=__file__,
         )
 
-    if prehandle_logrecords and level >= logger.getEffectiveLevel():
-        # for development only
-        #
-        # In general or production use, handling of this logrecord
-        # should be performed only later, after configuring logging.
-        #
-        # To assist debugging during development or maintenance of this
-        # module, handle this logrecord now also (producing redundant
-        # output).
-        logger.handle(logrecord)  # for development only
-
     return logrecord
 
 
 def _mywarning(myobj: str | Exception) -> logging.LogRecord:
-    """Return a WARNING LogRecord for a string or exception."""
+    """Return a WARNING LogRecord for a string or for an exception."""
     return _myLogRecord(myobj, level=logging.WARNING)
 
 
 def _mydebug(myobj: str | Exception) -> logging.LogRecord:
-    """Return a DEBUG LogRecord for a string or exception."""
+    """Return a DEBUG LogRecord for a string or for an exception."""
     return _myLogRecord(myobj, level=logging.DEBUG)
 
 
@@ -259,42 +228,16 @@ def catch_exceptions_and_warn(wrappee):
 
 
 @catch_exceptions_and_warn  # Guard from exceptions.
-def configure(logrecords: List[logging.LogRecord] = []) -> None:
+def configure() -> None:
     """
-    Configure logging based on configfile, then handle list of logrecords.
+    Configure logging based on configfile, then handle deferred logrecords.
 
-    (1) Initialize with logging module's basicConfig(), raiseExceptions,
-        and captureWarnings().
-    (2) Configure the logging system based on settings from a configfile.
-    (3) Honor command-line args that override the root logger level.
-    (4) After configuring, handle each logrecord in the list of
-        accumulated logrecords.
-
-
-    (1) Configure logging based on configfile, or fall back to
-        calling logging.basicConfig(level=logging.DEBUG).
-        Set logging.raiseExceptions to False.  (Why?  Because We want to
-        ignore handler-emit exceptions.)
-
-    (2) Redirect all warnings issued by the warnings module to the
-        logging system.
-
-    (3) After configuring the logging system per configfile, honor
-        command-line args that override the root logger level (-v,
-        --verbose, --logginglevel DEBUG).
-
-    While executing this function, append any new log records to
-    logrecords (for later handling).
-
-    This function guards against propagating/re-raising exceptions.
+    (1) Configure the logging system based on settings from a configfile.
+    (2) Honor command-line args that override the root logger level.
+    (3) Handle the collected/deferred logrecords
     """
 
-    # (1) Initialize ...
-
-    # initialize the logging system.
-    # Remove pre-existing handlers from root logger, then basicConfig().
-    logging.getLogger().handlers = []
-    logging.basicConfig(level=logging.DEBUG)
+    rootlogger = logging.getLogger()
 
     # Set logging.raiseExceptions to False.
     # (Why?  Because we want to ignore handler emit exceptions.)
@@ -303,17 +246,21 @@ def configure(logrecords: List[logging.LogRecord] = []) -> None:
     # Redirect warnings issued by the warning module to the logging system.
     logging.captureWarnings(True)
 
-    # (2) Configure the logging system based on settings from a configfile.
+    # (1) Configure the logging system based on settings from a configfile.
     try:
-        # logrecords is a list of not-yet-handled log records
+        defer()  # Ensure logrecords are being queued.
 
-        # Get all of the values needed from config.get_config().
+        # (1) Get all of the values needed from config.get_config().
         _config = config.get_config()
         logging_configfiles: List[Path] = _config['logging_configfiles']
         logging_configfile: Path|None = _config.get('logging_configfile')
-        logging_levelname: str|None = _config.get('logging_levelname')
+        logging_level: str|None = _config.get('logging_level')
 
-        # if the config defines a specific logging_configfile, only
+        # Copy the queued logrecords to a list, and switch over to
+        # manual logrecord creation until configuring is completed.
+        logrecords = _get_logrecords_from_queue()
+
+        # if the config defines a specific logging_configfile, then only
         # attempt to use it.  Otherwise, step through the list of
         # logging_configfiles and try them until success.
 
@@ -342,34 +289,35 @@ def configure(logrecords: List[logging.LogRecord] = []) -> None:
 
     except Exception as e:
         # log the exception as a warning
+        # initialize the logging system.
         logrecords.append(_mywarning(
             f'Trouble configuring the logging system.  ({e})'))
+        rootlogger.handlers = []
+        logging.basicConfig(level=logging.DEBUG)
 
-    # (3) Honor command-line args that override the root logger level.
+    # (2) Honor command-line args that override the root logger level.
     try:
-        if logging_levelname is not None:
+        if logging_level is not None:
             logrecords.append(_mydebug(
-                f'logging_levelname: {logging_levelname}'))
-            logging.getLogger().setLevel(getattr(logging, logging_levelname))
+                f'logging_level: {logging_level}'))
+            rootlogger.setLevel(logging_level)
 
     except Exception as e:
         # log the exception as a warning
         logrecords.append(_mywarning(
             f'Trouble overriding root logger level.  ({e})'))
 
-    # (4) After configuring, handle each logrecord in the list of
-    #     accumulated logrecords.
-    _handle(logrecords)  # Process the manually created logrecords
+    # Milestone -- The logging system is configured.
+
+    # (3) Handle the collected/deferred logrecords
+    _handle(logrecords)
 
 
-@catch_exceptions_and_warn  # Guard from exceptions.
 def _handle(logrecords: List[logging.LogRecord]) -> None:
-    """For each logrecord, have its named logger handle it.
+    """For each collected/deferred logrecord, have its named logger handle it.
 
-    Arg logrecords is a list of log records that were created manually
-    (instead of by a logger method) without handling, before the logging
-    system was configured.
-    Now, presumably logging has been configured, so for each log record,
+    Now, presumably the python logging system has been configured, so
+    for each log record that was collected (with handling deferred),
     have its named logger handle it based on the current logging
     configuration.
     """
@@ -378,3 +326,61 @@ def _handle(logrecords: List[logging.LogRecord]) -> None:
         logger = logging.getLogger(logrecord.name)
         if logrecord.levelno >= logger.getEffectiveLevel():
             logger.handle(logrecord)
+
+
+@catch_exceptions_and_warn  # Guard from exceptions.
+def defer():
+    """Ensure logrecords are being queued for later handling.
+
+    After the specified logging configuration has been applied to the
+    logging system, function _handle will be called to handle logrecords.
+    """
+
+    rootlogger = logging.getLogger()
+
+    # Check if any of rootlogger's handlers is a QueueHandler.
+    contains_queuehandler = any(
+        isinstance(handler, logging.handlers.QueueHandler)
+        for handler in rootlogger.handlers
+        )
+
+    if not contains_queuehandler:
+        rootlogger.setLevel(logging.NOTSET)
+
+        logrecord_queue = queue.Queue(-1)  # -1 for an unbounded queue
+        queue_handler = logging.handlers.QueueHandler(logrecord_queue)
+        rootlogger.addHandler(queue_handler)
+
+        # # During dev, handle logrecords immediately also (producing
+        # # redundant output).
+        # dev_handler = logging.StreamHandler()
+        # dev_handler.setFormatter(
+        #     logging.Formatter(f'DEV {logging.BASIC_FORMAT}'))
+        # rootlogger.addHandler(dev_handler)
+
+        logger.debug('Added a QueueHandler to root logger.')
+
+    logger.debug('%s: %r', 'rootlogger.handlers', rootlogger.handlers)
+    logger.debug('%s: %r', 'rootlogger.level', rootlogger.level)
+
+
+def _get_logrecords_from_queue():
+    """Return a list of logrecords that were queued by the rootlogger.
+
+    Weaknesses:
+    1.  The expected usage is that the rootlogger has exactly one
+        QueueHandler.  This function could be more defensive regarding
+        confirming that expectation.
+    2.  The queue should be deleted and the handler removed from the
+        rootlogger... but this will happen automatically, right?   When
+        the logging system is configured, the handler will be unused and
+        garbage collected along with its queue. (?)
+    """
+
+    rootlogger = logging.getLogger()
+
+    for handler in rootlogger.handlers:
+        if isinstance(handler, logging.handlers.QueueHandler):
+            return list(handler.queue.queue)
+    else:
+        return []

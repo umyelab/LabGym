@@ -3,7 +3,7 @@
 What about repeated settings within command-line args?
 *   Processed left to right.
 
-*   In this implementation, rightmost overrides those to the left, 
+*   In this implementation, rightmost overrides those to the left,
     except --enable and --disable, which for different featurenames
     accumulates in the enable dict
     For example,
@@ -33,7 +33,7 @@ ResultType = Dict[str, Union[
     str,  # configdir, configfile, logging_configfile (specific)
     # List[Path], # logging_configfiles (potentials)
     List[str], # logging_configfiles (potentials)
-    str,  # logging_levelname
+    str,  # logging_level
     bool,  # anonymous
     Dict[str, bool],  # enable
     ]]
@@ -51,9 +51,9 @@ def parse_args() -> ResultType:
 
     The --enable FEATURE and --disable FEATURE provide a risk-mitigated
     approach to the introduction of new features or behaviors.
-    Introduce the feature defaulting to disabled, and support user 
+    Introduce the feature defaulting to disabled, and support user
     opt-in.
-    After achieving confidence in the feature, change the default to 
+    After achieving confidence in the feature, change the default to
     enabled, and support user opt-out.
 
     Notes
@@ -66,11 +66,11 @@ def parse_args() -> ResultType:
 
     *   As an arg is going through the pattern matching... if it doesn't
         begin with '-', it is considered the first positional command-
-        line arg, and ends the option processing.  
+        line arg, and ends the option processing.
 
     *   A '--' arg is recognized as separating options from positional
         command-line args.  The '--' arg is necessary if the first
-        positional command-line arg starts with '-', to prevent 
+        positional command-line arg starts with '-', to prevent
         processing it as an option.
     """
 
@@ -84,22 +84,22 @@ def parse_args() -> ResultType:
         Usage: {basename} [options]
 
         Options:
-          --anonymous           Send only anonymized stats to the 
+          --anonymous           Send only anonymized stats to the
                                 central receiver.
           --configdir DIR       Find LabGym config files in the config
                                 dir (default '~/.labgym')
           --configfile FILE     LabGym config file (default 'config.toml')
           --enable FEATURE      Enable FEATURE.
-          --debug               Equivalent to --logging_levelname DEBUG.
+          --debug               Equivalent to --logging_level DEBUG.
           --disable FEATURE     Disable FEATURE.
           -h, --help            Show this help message and exit.
           --logging_configfile FILE    Use FILE to configure the logging
                                 system instead of trying the defaults.
-          --logging_levelname LEVELNAME    Set the root logger's level
-                                to logging.LEVELNAME, where LEVELNAME is 
-                                a term recognized by the logging system, 
-                                like DEBUG, INFO, WARNING, or ERROR.
-          -v, --verbose         Equivalent to --logging_levelname DEBUG.
+          --logging_level LEVEL    Set the root logger's level to LEVEL,
+                                where LEVEL is a term recognized by the
+                                logging system, like DEBUG, INFO,
+                                WARNING, or ERROR.
+          -v, --verbose         Equivalent to --logging_level DEBUG.
           --version             Show the LabGym version and exit.
         """)
 
@@ -150,12 +150,12 @@ def parse_args() -> ResultType:
             result['logging_configfile'] = args[1]
             args = args[2:]  # shift 2
 
-        elif arg in ['--logging_levelname']:
-            result['logging_levelname'] = args[1]
+        elif arg in ['--logging_level']:
+            result['logging_level'] = args[1]
             args = args[2:]  # shift 2
 
         elif arg in ['--debug', '-v', '--verbose']:
-            result['logging_levelname'] = 'DEBUG'
+            result['logging_level'] = 'DEBUG'
             args = args[1:]  # shift 1
 
         # standard options
