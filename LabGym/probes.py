@@ -55,10 +55,6 @@ def probes() -> None:
     anonymous: bool = _config['anonymous']
     registration_enable: bool = _config['enable']['registration']
 
-    # PLACEHOLDER for moving this existing probe from __main__ to here.
-    # # Warn if the installed sw is stale.
-    # probe_pypi_check_freshness()
-
     # Check for cacert trouble which might be a fouled installation.
     probe_url_to_verify_cacert()
 
@@ -130,28 +126,19 @@ def probes() -> None:
     central_logger.info(get_context(anonymous))
 
 
-# PLACEHOLDER for moving this existing probe from __main__ to here.
-# def probe_pypi_check_freshness() -> None:
-#     """Probe pypi for sw version, and warn if the installed sw is stale.
-# 
-#     Probe pypi for the LabGym sw version, and compare with the installed
-#     sw version, and warn if the installed sw is stale.
-#     """
-#     ...
-
-
 def probe_url_to_verify_cacert() -> None:
     """Check for cacert trouble which might be a fouled installation.
 
     Send an HTTP GET to https://dl.fbaipublic.com.  If it fails due to
-        cacert trouble, then warn.  (Or should this be fatal?)
+    cacert trouble, then output an error message and carry on.
+    (Or should this be fatal?)
 
     On 2025-05-19 Google AI says,
-      Detectron2 relies on dl.fbaipublicfiles.com for distributing
-      pre-built binaries and model weights.
-      If you're using the pre-built versions of Detectron2 or 
-      downloading pre-trained models, your system will likely be
-      downloading files from dl.fbaipublicfiles.com.
+        Detectron2 relies on dl.fbaipublicfiles.com for distributing
+        pre-built binaries and model weights.
+        If you're using the pre-built versions of Detectron2 or 
+        downloading pre-trained models, your system will likely be
+        downloading files from dl.fbaipublicfiles.com.
     """
 
     url = 'https://dl.fbaipublicfiles.com/detectron2'
@@ -175,20 +162,20 @@ def probe_url_to_verify_cacert() -> None:
         #   requests.certs.where())
         #
         # A review of site-packages/requests shows that 
-                # REQUESTS_CA_BUNDLE or CURL_CA_BUNDLE may be relevant.
+        # REQUESTS_CA_BUNDLE or CURL_CA_BUNDLE may be relevant.
         # logger.debug('%s: %r', "os.environ.get('REQUESTS_CA_BUNDLE')",
         #   os.environ.get('REQUESTS_CA_BUNDLE'))
         # logger.debug('%s: %r', "os.environ.get('CURL_CA_BUNDLE')",
         #   os.environ.get('CURL_CA_BUNDLE'))
-
-        logger.error(e)
+        #
+        # logger.error(e)
         # same, but prefix the msg with the name of the exception
         #   logger.error(f'{e.__module__}.{e.__class__.__name__}: {e}')
         # same, but with lazy eval as preferred by pylint
         #   logger.error('%s.%s: %s', e.__module__, e.__class__.__name__, e)
 
-        # sys.exit(1)
-        logger.error('(non-fatal) Trouble in SSL cert chain...')
+        # sys.exit(f'(fatal) Trouble in SSL cert chain... ({e})')
+        logger.error(f'(non-fatal) Trouble in SSL cert chain... ({e})')
 
 
 def get_context(anonymous: bool=False) -> dict:
