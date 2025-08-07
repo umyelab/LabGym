@@ -47,6 +47,7 @@ import requests  # Python HTTP for Humans.
 from packaging import version  # Core utilities for Python packages
 
 # Local application/library specific imports.
+from LabGym import mypkg_resources  # replace deprecated pkg_resources
 from LabGym import __version__, gui_main, probes
 
 
