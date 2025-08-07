@@ -46,6 +46,7 @@ import requests  # Python HTTP for Humans.
 from packaging import version  # Core utilities for Python packages
 
 # Local application/library specific imports.
+from LabGym import shadow_pkg_resources
 from LabGym import __version__, gui_main, probes
 
 
