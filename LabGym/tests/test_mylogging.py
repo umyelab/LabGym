@@ -24,21 +24,20 @@ def test_success(monkeypatch):
         'logging_configfiles': 
             [Path(mylogging.__file__).parent.joinpath('logging.yaml')],
         'logging_configfile': None,
-        'logging_levelname': 'INFO',
+        'logging_level': 'INFO',
         }
     monkeypatch.setattr(mylogging.config, 'get_config', lambda: _config)
     logging.debug('%s: %r', '_config', _config)
 
     # Act
-    logrecords = []
-    mylogging.configure(logrecords)
+    mylogging.configure()
 
     # Assert
     assert rootlogger.level == logging.INFO  # per logging.yaml
 
 
-# Bad logging_levelname produces a warning message.
-def test_bad_logging_levelname(monkeypatch):
+# Bad logging_level produces a warning message.
+def test_bad_logging_level(monkeypatch):
     # Arrange
     rootlogger_reset()
     assert rootlogger.level == logging.DEBUG
@@ -46,14 +45,13 @@ def test_bad_logging_levelname(monkeypatch):
         'logging_configfiles': 
             [Path(mylogging.__file__).parent.joinpath('logging.yaml')],
         'logging_configfile': None,
-        'logging_levelname': 'WALNUT',  # bad value
+        'logging_level': 'WALNUT',  # bad value
         }
     monkeypatch.setattr(mylogging.config, 'get_config', lambda: _config)
     logging.debug('%s: %r', '_config', _config)
 
     # Act
-    logrecords = []
-    mylogging.configure(logrecords)
+    mylogging.configure()
 
     # Assert
     # WARNING Trouble overriding root logger level.
@@ -68,7 +66,7 @@ def test_bad_specific_logging_configfile(monkeypatch):
     _config = {
         'logging_configfiles': [],
         'logging_configfile': Path('/bravo/charlie.yaml'),
-        # 'logging_levelname': None,
+        # 'logging_level': None,
         }
     monkeypatch.setattr(mylogging.config, 'get_config', lambda: _config)
     logging.debug('%s: %r', '_config', _config)

@@ -31,26 +31,26 @@ def test_parse_args_no_args(monkeypatch):
 def test_parse_args_verbose_then_info(monkeypatch):
     # Arrange
     monkeypatch.setattr(sys, 'argv',
-        ['cmd', '--verbose', '--logging_levelname', 'INFO'])
+        ['cmd', '--verbose', '--logging_level', 'INFO'])
 
     # Act
     result = myargparse.parse_args()
 
     # Assert
-    assert result == {'logging_levelname': 'INFO'}
+    assert result == {'logging_level': 'INFO'}
 
 
-# Args are parsed left-to-right, so logging_levelname gets DEBUG.
+# Args are parsed left-to-right, so logging_level gets DEBUG.
 def test_parse_args_info_then_verbose(monkeypatch):
     # Arrange
     monkeypatch.setattr(sys, 'argv',
-        ['cmd', '--logging_levelname', 'INFO', '--verbose'])
+        ['cmd', '--logging_level', 'INFO', '--verbose'])
 
     # Act
     result = myargparse.parse_args()
 
     # Assert
-    assert result == {'logging_levelname': 'DEBUG'}
+    assert result == {'logging_level': 'DEBUG'}
 
 
 # bad option
@@ -73,7 +73,7 @@ def test_parse_args_bad_option(monkeypatch):
 def test_parse_args_help(monkeypatch, capsys):
     # Arrange
     monkeypatch.setattr(sys, 'argv',
-        ['cmd', '--logging_levelname', 'ALFA', '-v', '--help', 'bravo'])
+        ['cmd', '--logging_level', 'ALFA', '-v', '--help', 'bravo'])
  
     # Act, and assert raises(SystemExit)
     with pytest.raises(SystemExit) as e:
