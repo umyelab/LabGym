@@ -16,6 +16,10 @@ then
 1.  the warning message is caught/suppressed,
 2.  references to pkg_resources are mapped to this module, so
     pkg_resources.resource_filename refers to the function defined here.
+
+After this module is tested, 
+to show that the new_result follows the old_result,
+the load of pkg_resources can be eliminated, and we can rely on the new_result.
 """
 
 import importlib.resources
@@ -50,6 +54,11 @@ def resource_filename(*args, **kwargs):
     try: 
         new_result = str(importlib.resources.files(args[0]) / args[1])
         logger.debug('%s: %r', 'new_result', new_result)
+
+        if new_result == old_result:
+            logger.info(f'agreement {new_result}')
+        else:
+            logger.info(f'disagreement {new_result}, {old_result}')
     except:
         logger.warning(e)
 
