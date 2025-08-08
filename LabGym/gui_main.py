@@ -64,7 +64,8 @@ class InitialWindow(wx.Frame):
 		boxsizer.Add(0,60,0)
 		boxsizer.Add(self.text_welcome,0,wx.LEFT|wx.RIGHT|wx.EXPAND,5)
 		boxsizer.Add(0,60,0)
-		self.text_developers=wx.StaticText(panel,label='Developed by Yujia Hu, Rohan Satapathy, John Ruckstuhl, M. Victor Struman, Kelly Goss, Isabelle Baker\n\nBing Ye Lab, Life Sciences Institute, University of Michigan',style=wx.ALIGN_CENTER|wx.ST_ELLIPSIZE_END)
+		self.text_developers=wx.StaticText(panel,
+			label='Developed by Yujia Hu, Rohan Satapathy, John Ruckstuhl, M. Victor Struman, Kelly Goss, Isabelle Baker, Bobby Tomlinson\n\nBing Ye Lab, Brendon O. Waston Lab, Carrie R. Ferrario Lab\n\nUniversity of Michigan',style=wx.ALIGN_CENTER|wx.ST_ELLIPSIZE_END)
 		boxsizer.Add(self.text_developers,0,wx.LEFT|wx.RIGHT|wx.EXPAND,5)
 		boxsizer.Add(0,60,0)
 		
