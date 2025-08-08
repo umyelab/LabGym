@@ -62,9 +62,15 @@ Also provides visualization of analysis results, including annotated videos/imag
 
 <p>&nbsp;</p>
 
-A tutorial video for a high-level understanding of what LabGym can do and how it works:
+An introduction video for a high-level understanding of what LabGym can do and how it works:
 
 [![Watch the video](https://img.youtube.com/vi/YoYhHMPbf_o/hqdefault.jpg)](https://youtu.be/YoYhHMPbf_o)
+
+<p>&nbsp;</p>
+
+We have been making a series of tutorial videos to explain every function in LabGym. They are coming soon!
+
+<p>&nbsp;</p>
 
 Cite LabGym:
 1. Yujia Hu, Carrie R Ferrario, Alexander D Maitland, Rita B Ionides, Anjesh Ghimire, Brendon Watson, Kenichi Iwasaki, Hope White, Yitao Xi, Jie Zhou, Bing Ye. ***LabGym*: Quantification of user-defined animal behaviors using learning-based holistic assessment.** Cell Reports Methods. 2023 Feb 24;3(3):100415. doi: 10.1016/j.crmeth.2023.100415. [Link](https://www.cell.com/cell-reports-methods/fulltext/S2667-2375(23)00026-7)
