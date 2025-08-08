@@ -6,9 +6,6 @@ Depending on which distribution of Linux you use, the process of installing pack
 If you're using Arch Linux or one of its derivatives, we assume you have the `yay` package manager installed to install dependencies from the AUR.
 ```
 
-```{tip}
-After running and completing a command, you can type `clear` in your terminal and hit Enter to tidy up the screen. It just clears your view—nothing is removed.
-```
 
 1. Update your system's package manager (either 'apt' for Debian-based Linux or 'pacman' for Arch Linux variants), then install `gcc`, `git`, and Python 3.10.
 
