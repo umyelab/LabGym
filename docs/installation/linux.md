@@ -6,7 +6,6 @@ Depending on which distribution of Linux you use, the process of installing pack
 If you're using Arch Linux or one of its derivatives, we assume you have the `yay` package manager installed to install dependencies from the AUR.
 ```
 
-
 1. Update your system's package manager (either 'apt' for Debian-based Linux or 'pacman' for Arch Linux variants), then install `gcc`, `git`, and Python 3.10.
 
    Debian-based (e.g. Ubuntu):
@@ -40,7 +39,6 @@ If you're using Arch Linux or one of its derivatives, we assume you have the `ya
    python3 -m pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
    ```
 
-
 3. Install `pip` if not already installed, and upgrade `pip`, `wheel`, `setuptools`.
 
    ```console
@@ -50,7 +48,7 @@ If you're using Arch Linux or one of its derivatives, we assume you have the `ya
    ```console
    python3 -m pip install --upgrade pip wheel setuptools
    ```
-   
+
 4. Install wxPython
 
    ```console
