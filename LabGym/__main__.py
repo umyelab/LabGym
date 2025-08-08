@@ -54,8 +54,8 @@ from LabGym import __version__, gui_main, probes
 logger.debug('%s: %r', '(__name__, __package__)', (__name__, __package__))
 
 
-def main():
-	"""Perform pre-op probes, then display the main window."""
+def main() -> None:
+	"""Perform some pre-op probing, then display the main window."""
 
 	try:
 

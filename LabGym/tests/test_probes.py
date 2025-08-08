@@ -1,21 +1,26 @@
 import logging
 import os
+from pathlib import Path
 import re
 import sys
 
 from packaging import version
 
-import pytest
-
-from .exitstatus import exitstatus
+import pytest  # pytest: simple powerful testing with Python
 
 from LabGym import probes
+from .exitstatus import exitstatus
+
+
+testdir = Path(__file__[:-3])  # dir containing support files for unit tests
+assert testdir.is_dir()
 
 
 # basicConfig here isn't effective, maybe pytest has already configured logging?
-#   logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
 # so instead, use the root logger's setLevel method
 logging.getLogger().setLevel(logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 # the output from this debug statement is not accessible?
 # instead, perform inside a test function.
@@ -43,17 +48,23 @@ def test_probes(monkeypatch):
     # the probes were run and didn't raise an exception.
 
 
-# def test_handshake_bad_cacert(monkeypatch):
-#     # Arrange
-#     monkeypatch.setenv('REQUESTS_CA_BUNDLE', os.path.join(os.getcwd(), 'cacert.fouled.pem'))
-# 
-#     # Act, and assert raises(SystemExit)
-#     with pytest.raises(SystemExit) as e:
-#         handshake.probe_url_to_verify_cacert()
-# 
-#     assert exitstatus(e.value) == 1
-# 
-# 
+def test_probes_bad_cacert(monkeypatch, caplog):
+    # Arrange
+    monkeypatch.setenv('REQUESTS_CA_BUNDLE', 
+        str(testdir.joinpath('cacert.fouled.pem')))
+
+    # Act (logs an ERROR)
+    probes.probe_url_to_verify_cacert()
+
+    # Assert
+    record = caplog.records[-1]
+    assert record.levelname == "ERROR"
+    assert re.match(r'\(non-fatal\) Trouble in SSL cert chain\.\.\. \(', 
+        record.msg)
+
+    # ERROR    LabGym.probes:probes.py:178 (non-fatal) Trouble in SSL cert chain... (HTTPSConnectionPool(host='dl.fbaipublicfiles.com', port=443): Max retries exceeded with url: /detectron2 (Caused by SSLError(SSLError(136, '[X509: NO_CERTIFICATE_OR_CRL_FOUND] no certificate or crl found (_ssl.c:4149)'))))
+
+
 # def test_version_eq_pypi(monkeypatch, capsys):
 #     # Arrange
 #     return_values = [
