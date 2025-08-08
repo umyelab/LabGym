@@ -6,8 +6,10 @@ Depending on which distribution of Linux you use, the process of installing pack
 If you're using Arch Linux or one of its derivatives, we assume you have the `yay` package manager installed to install dependencies from the AUR.
 ```
 
-1. Update your system's package manager, then install `gcc`, `git`, and Python 3.10.
 
+1. Update your system's package manager (either 'apt' for Debian-based Linux or 'pacman' for Arch Linux variants), then install `gcc`, `git`, and Python 3.10.
+
+   Debian-based (e.g. Ubuntu):
    ```console
    sudo apt update
    ```
@@ -15,6 +17,7 @@ If you're using Arch Linux or one of its derivatives, we assume you have the `ya
    sudo apt install build-essential git python3.10
    ```
 
+   Arch-based (e.g. Arch Linux, Manjaro, etc):
    ```console
    sudo pacman -Syu
    ```
@@ -46,7 +49,11 @@ If you're using Arch Linux or one of its derivatives, we assume you have the `ya
    ```
 
 
-3. Upgrade `pip`, `wheel`, `setuptools`.
+3. Install `pip` if not already installed, and upgrade `pip`, `wheel`, `setuptools`.
+
+   ```console
+   sudo apt install python3-pip
+   ```
 
    ```console
    python3 -m pip install --upgrade pip wheel setuptools
@@ -55,7 +62,7 @@ If you're using Arch Linux or one of its derivatives, we assume you have the `ya
 4. Install wxPython
 
    ```console
-   apt-get install libgtk-3-dev
+   sudo apt-get install libgtk-3-dev
    ```
    ```console
    sudo apt-get install git curl libsdl2-mixer-2.0-0 libsdl2-image-2.0-0 libsdl2-2.0-0
@@ -66,6 +73,10 @@ If you're using Arch Linux or one of its derivatives, we assume you have the `ya
 
 5. Install LabGym via `pip`.
  
+   ```console
+   pip install --upgrade setuptools packaging
+   ```
+
    ```console
    python3 -m pip install LabGym
    ```

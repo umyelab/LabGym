@@ -2,6 +2,7 @@
 
 To access the terminal on macOS, use `Cmd+Space` to enter Spotlight Search, then search for "Terminal" and hit enter to open it. Next, follow these steps to install LabGym.
 
+
 1. Install [Python 3.10](https://www.python.org/downloads/release/python-31011/). Scroll down to the bottom and click the `macOS 64-bit universal2 installer` option. Run the installer and select "Add python to path".
 
 2. Upgrade `pip`, `wheel`, `setuptools`.
