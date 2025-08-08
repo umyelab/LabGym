@@ -156,24 +156,6 @@ def probe_url_to_verify_cacert() -> None:
     except requests.exceptions.SSLError as e:
         logger.debug('%s: %r', 'certifi.where()', certifi.where())
 
-        # A review of site-packages/requests/certs.py shows that
-        # function "requests.certs.where" is function "certifi.where".
-        # logger.debug('%s: %r', 'requests.certs.where()',
-        #   requests.certs.where())
-        #
-        # A review of site-packages/requests shows that 
-        # REQUESTS_CA_BUNDLE or CURL_CA_BUNDLE may be relevant.
-        # logger.debug('%s: %r', "os.environ.get('REQUESTS_CA_BUNDLE')",
-        #   os.environ.get('REQUESTS_CA_BUNDLE'))
-        # logger.debug('%s: %r', "os.environ.get('CURL_CA_BUNDLE')",
-        #   os.environ.get('CURL_CA_BUNDLE'))
-        #
-        # logger.error(e)
-        # same, but prefix the msg with the name of the exception
-        #   logger.error(f'{e.__module__}.{e.__class__.__name__}: {e}')
-        # same, but with lazy eval as preferred by pylint
-        #   logger.error('%s.%s: %s', e.__module__, e.__class__.__name__, e)
-
         # sys.exit(f'(fatal) Trouble in SSL cert chain... ({e})')
         logger.error(f'(non-fatal) Trouble in SSL cert chain... ({e})')
 
