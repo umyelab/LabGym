@@ -32,8 +32,8 @@ logger.debug('%s: %r', '(__name__, __package__)', (__name__, __package__))
 
 
 # Related third party imports.
-# import certifi  # Python package for providing Mozilla's CA Bundle.
-# import requests  # Python HTTP for Humans.
+import certifi  # Python package for providing Mozilla's CA Bundle.
+import requests  # Python HTTP for Humans.
 import packaging  # Core utilities for Python packages
 
 # Local application/library specific imports.
@@ -54,6 +54,9 @@ def probes() -> None:
     _config = config.get_config()
     anonymous: bool = _config['anonymous']
     registration_enable: bool = _config['enable']['registration']
+
+    # Check for cacert trouble which might be a fouled installation.
+    probe_url_to_verify_cacert()
 
     # central logger, for reporting usage to the central receiver
     central_logger = central_logging.get_central_logger()
@@ -123,6 +126,40 @@ def probes() -> None:
     central_logger.info(get_context(anonymous))
 
 
+def probe_url_to_verify_cacert() -> None:
+    """Check for cacert trouble which might be a fouled installation.
+
+    Send an HTTP GET to https://dl.fbaipublic.com.  If it fails due to
+    cacert trouble, then output an error message and carry on.
+    (Or should this be fatal?)
+
+    On 2025-05-19 Google AI says,
+        Detectron2 relies on dl.fbaipublicfiles.com for distributing
+        pre-built binaries and model weights.
+        If you're using the pre-built versions of Detectron2 or 
+        downloading pre-trained models, your system will likely be
+        downloading files from dl.fbaipublicfiles.com.
+    """
+
+    url = 'https://dl.fbaipublicfiles.com/detectron2'
+
+    # With good cacerts.pem & cert chain, requests.get(url) responds with
+    #     <Response [403]>
+    #
+    # With a deficient cacerts.pem, or defective cert chain,
+    # requests.get(url) raises an exception, like
+    #     requests.exceptions.SSLError: HTTPSConnectionPool(host='dl.fbaipublicfiles.com', port=443): Max retries exceeded with url: /detectron2 (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1007)')))
+
+    try:
+        # requests.get(url) returns <Response [403]>
+        response = requests.get(url, timeout=8)
+    except requests.exceptions.SSLError as e:
+        logger.debug('%s: %r', 'certifi.where()', certifi.where())
+
+        # sys.exit(f'(fatal) Trouble in SSL cert chain... ({e})')
+        logger.error(f'(non-fatal) Trouble in SSL cert chain... ({e})')
+
+
 def get_context(anonymous: bool=False) -> dict:
     """Survey and return a dict of context info."""
 
@@ -132,27 +169,27 @@ def get_context(anonymous: bool=False) -> dict:
         reginfo_uuid = None
 
     result = {
-        'schema': 'context 2025-07-10',
+        'schema': 'context 2025-08-10',
 
         # computer name & os, and python version
-        'node': platform.node(),  # the computer's network name
-        'platform': platform.platform(aliased=True),
+        # 'node': platform.node(),  # the computer's network name
+        # 'platform': platform.platform(aliased=True),
         'python_version': platform.python_version(),
 
         # LabGym sw
         'version': version,  # LabGym version
 
         # User info
-        'username': getpass.getuser(),
-        'reginfo_uuid': reginfo_uuid,
+        # 'username': getpass.getuser(),
+        # 'reginfo_uuid': reginfo_uuid,
         }
 
-    # If anonymous-flag is True, then anonymize the context data.
-    if anonymous:
-        result.update({
-            'node': 'anonymous',
-            'username': 'anonymous',
-            'reginfo_uuid': 'anonymous',
-            })
+    # # If anonymous-flag is True, then anonymize the context data.
+    # if anonymous:
+    #     result.update({
+    #         'node': 'anonymous',
+    #         'username': 'anonymous',
+    #         'reginfo_uuid': 'anonymous',
+    #         })
 
     return result
