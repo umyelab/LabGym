@@ -169,27 +169,27 @@ def get_context(anonymous: bool=False) -> dict:
         reginfo_uuid = None
 
     result = {
-        'schema': 'context 2025-07-10',
+        'schema': 'context 2025-08-10',
 
         # computer name & os, and python version
-        'node': platform.node(),  # the computer's network name
-        'platform': platform.platform(aliased=True),
+        # 'node': platform.node(),  # the computer's network name
+        # 'platform': platform.platform(aliased=True),
         'python_version': platform.python_version(),
 
         # LabGym sw
         'version': version,  # LabGym version
 
         # User info
-        'username': getpass.getuser(),
-        'reginfo_uuid': reginfo_uuid,
+        # 'username': getpass.getuser(),
+        # 'reginfo_uuid': reginfo_uuid,
         }
 
-    # If anonymous-flag is True, then anonymize the context data.
-    if anonymous:
-        result.update({
-            'node': 'anonymous',
-            'username': 'anonymous',
-            'reginfo_uuid': 'anonymous',
-            })
+    # # If anonymous-flag is True, then anonymize the context data.
+    # if anonymous:
+    #     result.update({
+    #         'node': 'anonymous',
+    #         'username': 'anonymous',
+    #         'reginfo_uuid': 'anonymous',
+    #         })
 
     return result
