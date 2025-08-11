@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.9.3
+### What's Changed
+* Implemented user registration system.
+* Bug fix in sorting UI.
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.9.2...v2.9.3>
+
 ## v2.9.2
 ### What's Changed
 * Bug fix in Detector module.
