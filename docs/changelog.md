@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.9.4
+### What's Changed
+* Bug fix in Windows installation.
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.9.3...v2.9.4>
+
 ## v2.9.3
 ### What's Changed
 * Implemented user registration system.
