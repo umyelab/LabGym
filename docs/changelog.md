@@ -1,5 +1,11 @@
 # Changelog
 
+## v2.9.5
+### What's Changed
+* Changed welcome interface.
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.9.4...v2.9.5>
+
 ## v2.9.4
 ### What's Changed
 * Bug fix in Windows installation.
