@@ -51,7 +51,7 @@ class InitialWindow(wx.Frame):
 
 	def __init__(self,title):
 
-		super(InitialWindow,self).__init__(parent=None,title=title,size=(750,580))
+		super(InitialWindow,self).__init__(parent=None,title=title,size=(750,600))
 		self.display_window()
 
 
