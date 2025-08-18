@@ -755,7 +755,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 				if len(self.animal_to_include)>1:
 					n=0
 					while n<len(self.animal_to_include):
-						dialog1=ColorPicker(self,'Color for '+self.animal_to_include[n],[self.animal_to_include[n],colors[n]])
+						dialog1=ColorPicker(self,self.animal_to_include[n],[self.animal_to_include[n],colors[n]])
 						if dialog1.ShowModal()==wx.ID_OK:
 							(r,b,g,_)=dialog1.color_picker.GetColour()
 							self.ID_colors.append((b,g,r))
@@ -764,7 +764,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 						dialog1.Destroy()
 						n+=1
 				else:
-					dialog1=ColorPicker(self,'Color for the animal/object',['animal/object',colors[0]])
+					dialog1=ColorPicker(self,'Animal/object color',['animal/object',colors[0]])
 					if dialog1.ShowModal()==wx.ID_OK:
 						(r,b,g,_)=dialog1.color_picker.GetColour()
 						self.ID_colors.append((b,g,r))
@@ -827,7 +827,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 				names_colors={}
 				n=0
 				while n<len(self.behavior_to_include):
-					dialog2=ColorPicker(self,'Color for '+self.behavior_to_include[n],[self.behavior_to_include[n],colors[n]])
+					dialog2=ColorPicker(self,self.behavior_to_include[n],[self.behavior_to_include[n],colors[n]])
 					if dialog2.ShowModal()==wx.ID_OK:
 						(r,b,g,_)=dialog2.color_picker.GetColour()
 						new_color='#%02x%02x%02x'%(r,b,g)
@@ -1368,7 +1368,7 @@ class WindowLv2_PlotBehaviors(wx.Frame):
 			wx.MessageBox('No all_events.xlsx file selected!','Error',wx.OK | wx.ICON_ERROR)
 		else:
 			for behavior in self.names_and_colors:
-				dialog=ColorPicker(self,f'Color for {behavior}',[behavior,self.names_and_colors[behavior]])
+				dialog=ColorPicker(self,f'{behavior}',[behavior,self.names_and_colors[behavior]])
 				if dialog.ShowModal()==wx.ID_OK:
 					(r,b,g,_)=dialog.color_picker.GetColour()
 					new_color='#%02x%02x%02x'%(r,b,g)
