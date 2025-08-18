@@ -142,7 +142,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 		button_selectcategorizer=wx.Button(panel,label='Select a Categorizer for\nbehavior classification',size=(300,40))
 		button_selectcategorizer.Bind(wx.EVT_BUTTON,self.select_categorizer)
 		wx.Button.SetToolTip(button_selectcategorizer,'The fps of the videos to analyze should match that of the selected Categorizer. Uncertain level determines the threshold for the Categorizer to output an ‘NA’ for behavioral classification. See Extended Guide for details.')
-		self.text_selectcategorizer=wx.StaticText(panel,label='Default: no behavior classification, just track animals and quantify motion kinematcis.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
+		self.text_selectcategorizer=wx.StaticText(panel,label='Default: no behavior classification, just track animals and quantify motion kinematics.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
 		module_selectcategorizer.Add(button_selectcategorizer,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		module_selectcategorizer.Add(self.text_selectcategorizer,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		boxsizer.Add(0,10,0)
