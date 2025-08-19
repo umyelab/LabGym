@@ -883,7 +883,7 @@ class WindowLv3_SortExamples(wx.Frame):
 					if only_image is False:
 						frame_count=example_name.split('_len')[0].split('_')[-1]
 						animation=cv2.VideoCapture(os.path.join(self.input_path,example_name+'.avi'))
-						fps=round(animation.get(cv2.CAP_PROP_FPS))
+						fps=animation.get(cv2.CAP_PROP_FPS)
 
 					while True:
 

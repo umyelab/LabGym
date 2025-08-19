@@ -52,7 +52,7 @@ dependencies=[
     'black',
     'ninja',
     'six',
-    'pyobjc-framework-Cocoa',
+    'pyobjc-framework-Cocoa;platform_system=="Darwin"',
 ]
 requires-python='>=3.9,<3.11'
 readme='README.md'
