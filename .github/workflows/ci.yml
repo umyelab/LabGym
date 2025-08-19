@@ -9,7 +9,7 @@ jobs:
   tests:
     name: Tests (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    stragegy:
+    strategy:
       matrix:
         os: [ubuntu-22.04, macos-latest, windows-latest]
     steps:
