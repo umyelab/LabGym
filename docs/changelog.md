@@ -1,5 +1,12 @@
 # Changelog
 
+## v2.9.6
+### What's Changed
+* Fixed issue in installation on Linux.
+* Revised contributor list.
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.9.5...v2.9.6>
+
 ## v2.9.5
 ### What's Changed
 * Changed welcome interface.
