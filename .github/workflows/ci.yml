@@ -20,7 +20,8 @@ jobs:
       # Ubuntu: system libs installed before Python envs are made
       - name: Install system dependencies (Ubuntu)
         if: runner.os == 'Linux'
-        run: ./.github/scripts/ubuntu_runtime_deps.sh
+        shell: bash
+        run: bash .github/scripts/ubuntu_runtime_deps.sh
        
       - name: Install Nox
         uses: wntrblm/nox@2024.03.02
