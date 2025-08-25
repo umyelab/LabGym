@@ -1,3 +1,5 @@
+# suppress '__init__.py:1:0: C0103: Module name "LabGym" doesn't conform to snake_case naming style (invalid-name)'
+# pylint: disable=invalid-name
 '''
 Copyright (C)
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
@@ -20,6 +22,3 @@ Email: bingye@umich.edu
 
 
 __version__='2.9.6'
-
-
-
