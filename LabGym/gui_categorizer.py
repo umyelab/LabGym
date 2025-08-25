@@ -1715,5 +1715,3 @@ class WindowLv2_TestCategorizers(wx.Frame):
 				shutil.rmtree(os.path.join(self.model_path,categorizer))
 			dialog1.Destroy()
 		dialog.Destroy()
-
-

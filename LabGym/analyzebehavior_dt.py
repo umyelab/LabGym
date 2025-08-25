@@ -2429,5 +2429,3 @@ class AnalyzeAnimalDetector():
 					results_df.set_index(names).join(pd.DataFrame.from_dict(animal_information[behavior_name][animal_name]['probability'],orient='index',columns=['probability']).reset_index(drop=True).set_index(names)).to_excel(os.path.join(results_path,behavior_name+'_'+animal_name+'.xlsx'),index_label='imagename/parameter')
 
 			print('All results exported in: '+str(results_path))
-
-

@@ -1525,5 +1525,3 @@ class WindowLv2_CalculateDistances(wx.Frame):
 				all_data=pd.concat(all_data,keys=names,names=['File name','ID/parameter'])
 				all_data.drop(all_data.columns[0],axis=1,inplace=True)
 				all_data.to_excel(os.path.join(self.out_path,'all_summary.xlsx'),float_format='%.2f')
-
-

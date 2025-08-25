@@ -198,5 +198,3 @@ class data_mining():
 		self.writer.close()
 
 		print('Data mining for statistical analysis completed!')
-
-

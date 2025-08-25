@@ -1381,5 +1381,3 @@ class AnalyzeAnimal():
 		capture.release()
 
 		print('Behavior example generation completed!')
-
-

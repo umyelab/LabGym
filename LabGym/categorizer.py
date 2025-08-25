@@ -2038,5 +2038,3 @@ class Categorizers():
 				pd.DataFrame(report).transpose().to_excel(os.path.join(result_path,'testing_reports.xlsx'),float_format='%.2f')
 
 			print('Testing completed!')
-
-

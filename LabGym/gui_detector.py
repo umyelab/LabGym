@@ -547,6 +547,3 @@ class WindowLv2_TestDetectors(wx.Frame):
 				shutil.rmtree(os.path.join(self.detector_path,detector))
 			dialog1.Destroy()
 		dialog.Destroy()
-
-
-

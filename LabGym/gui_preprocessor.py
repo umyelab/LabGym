@@ -784,7 +784,3 @@ class WindowLv3_DrawMarkers(wx.Frame):
 
 
 			print('Marker Drawing completed!')
-
-
-
-

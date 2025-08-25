@@ -18,22 +18,22 @@ A summary of pylint results looks like this,
 with a quality metric in col 2,
 and an observations-count in col 3.
      1	10.00/10  3     __init__.py
-     2	7.27/10   13    __main__.py
-     3	8.23/10   166   analyzebehavior.py
-     4	8.68/10   217   analyzebehavior_dt.py
-     5	7.30/10   255   categorizer.py
-     6	7.29/10   17    central_logging.py
-     7	8.93/10   15    config.py
-     8	7.36/10   30    detector.py
-     9	8.59/10   156   gui_analyzer.py
-    10	8.59/10   172   gui_categorizer.py
-    11	7.98/10   82    gui_detector.py
-    12	6.77/10   67    gui_main.py
-    13	8.60/10   78    gui_preprocessor.py
-    14	7.56/10   31    minedata.py
+     2	7.58/10   12    __main__.py
+     3	8.44/10   145   analyzebehavior.py
+     4	8.81/10   193   analyzebehavior_dt.py
+     5	7.39/10   243   categorizer.py
+     6	8.96/10   9     central_logging.py
+     7	9.42/10   10    config.py
+     8	7.52/10   28    detector.py
+     9	8.66/10   147   gui_analyzer.py
+    10	8.67/10   163   gui_categorizer.py
+    11	8.03/10   80    gui_detector.py
+    12	6.87/10   65    gui_main.py
+    13	8.66/10   75    gui_preprocessor.py
+    14	7.64/10   30    minedata.py
     15	9.50/10   7     myargparse.py
     16	8.35/10   21    mylogging.py
     17	7.50/10   5     mypkg_resources.py
     18	8.12/10   13    probes.py
     19	8.52/10   16    registration.py
-    20	8.57/10   112   tools.py
+    20	8.77/10   94    tools.py
