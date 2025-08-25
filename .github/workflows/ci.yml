@@ -29,12 +29,11 @@ jobs:
           python-versions: "3.9, 3.10"
       
       # Run tests
-
-      # Linux requires a virtual dispaly for wx.App()
+      # Linux (requires a virtual display for wx.App())
       - name: Run tests (Ubuntu Linux under Xvfb)
         if: runner.os == 'Linux'
         run: xvfb-run -a nox -s tests --verbose
-      
+      # macOS/Windows
       - name: Run tests (macOS/Windows)
         if: runner.os != 'Linux'
         run: nox -s tests --verbose
