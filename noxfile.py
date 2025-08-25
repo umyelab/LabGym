@@ -22,7 +22,7 @@ import platform
 
 nox.options.error_on_missing_interpreters=True
 
-EXTRAS_WX_URL = "http://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-22.04"
+EXTRAS_WX_URL = "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-22.04"
 
 
 @nox.session(python=['3.9','3.10'],reuse_venv=True)
