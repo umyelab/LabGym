@@ -162,3 +162,6 @@ LabGym/models/
 !LabGym/models/__init__.py
 LabGym/detectors/
 !LabGym/detectors/__init__.py
+
+# test tmpdirs
+tmp.pylint
