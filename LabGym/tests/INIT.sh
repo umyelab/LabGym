@@ -3,7 +3,8 @@
 # Usage
 #     source INIT.sh
 
-ERROR () { printf "ERROR: %s\n" "$*" >& 2; }
+ERROR () { printf "ERROR\t%s\n" "$(printf "$@")" >& 2; }
+DEBUG () { printf "DEBUG\t%s\n" "$(printf "$@")" >& 2; }
 
 IS_VENV () { [ -n "$VIRTUAL_ENV+1" ]; }  # works in sh, bash, and zsh
     

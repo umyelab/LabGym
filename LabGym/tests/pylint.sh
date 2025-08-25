@@ -1,28 +1,31 @@
 source INIT.sh
 
+PYFILES=$(echo ../*.py)
+
 if [ $# -gt 0 ]; then
     PYFILES=$*
 fi
-printf "%s: %s\n" "\$PYFILES" "$PYFILES"
+
+DEBUG "%s: %s" "\$PYFILES" "$PYFILES"
 
 IS_VENV || { ERROR "Expected a venv..."; exit 1; }
 
-OUTDIR=$PWD/tmp.pylint
-RCFILE=$(basename "$PWD")/pylintrc
+OUTDIR=tmp.pylint
 
 setopt SH_WORD_SPLIT 2> /dev/null
-(cd .. && {
+(
     for F in $PYFILES; do
-        OPTS="--rcfile $RCFILE"
+        OUTFILE=$OUTDIR/pylint.$(echo $F | tr / . | sed "s/^\.\.\.//").out
+        OPTS="--rcfile pylintrc"
 
         # C0301: Line too long (232/100) (line-too-long)
         # W0311: Bad indentation. Found 2 spaces, expected 8 (bad-indentation)
         OPTS="$OPTS${OPTS:+ }--disable=C0301,W0311"
 
-        (set -x; pylint $OPTS $F > "$OUTDIR"/pylint.$F.out)
-        grep -n "^Your code has been rated " "$OUTDIR"/pylint.$F.out
+        (set -x; pylint $OPTS $F > $OUTFILE)
+        grep -n "^Your code has been rated " $OUTFILE
     done
-})
+)
 
 exit $?
 ========================================================================
