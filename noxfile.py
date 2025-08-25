@@ -29,14 +29,25 @@ EXTRAS_WX_URL = "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-
 def tests(session:nox.Session):
     # prefer wheels globally
     session.env["PIP_PREFER_BINARY"]="1"
+    session.env["PIP_NO_CACHE_DIR"]="1"
 
-    # Linux: preintall a wxPython wheel to avoid building from source
+    # Preinstall a wxPython wheel to avoid building from source
     if platform.system() == "Linux":
         session.install(
             "--only-binary=:all:",
             "-f", EXTRAS_WX_URL,
             "wxPython==4.2.1"
         )
+
+        # Force CPU-only PyTorch stack to avoid large CUDA downloads
+        session.install(
+            "--no-cache-dir",
+            "--index-url", "https://download.pytorch.org/whl/cpu",
+            "torch==2.8.0",
+            "torchvision==0.23.0",
+            "torchaudio==2.8.0",
+        )
+
 
     # package and test dependencies
     session.install("-e", ".")
