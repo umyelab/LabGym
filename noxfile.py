@@ -17,27 +17,24 @@ Email: bingye@umich.edu
 '''
 
 import nox
-import sys
+import platform
+
+EXTRAS_WX_URL = "http://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-22.04"
 
 nox.options.error_on_missing_interpreters=True
 
 
 @nox.session(python=['3.9','3.10'],reuse_venv=True)
 def tests(session:nox.Session):
-    # prefer wheels
+    # prefer wheels globally
     session.env["PIP_PREFER_BINARY"]="1"
-    session.install("-U", "pip", "setuptools", "wheel")
 
     # Linux: preintall a wxPython wheel to avoid building from source
-    if sys.platform.startswith("linux"):
+    if platform.system() == "Linux":
         session.run(
-            "python",
-            "-m",
-            "pip",
-            "install",
-            "-f",
-            "http://wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-22.04",
-            'wxPython==4.2.1',
+            "--only-binary=:all:",
+            "-f", EXTRAS_WX_URL,
+            "wxPython==4.2.1"
         )
 
     # package an Python dependencies installed, and test dependencies

@@ -7,5 +7,6 @@ export DEBIAN_FRONTEND=noninteractive
 
 sudo apt-get update
 sudo apt-get install -y --no-install-recommends \
+    libgtk-3-0 \
     libnotify4 \
     libsdl2-2.0-0
