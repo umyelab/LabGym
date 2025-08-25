@@ -6,7 +6,7 @@ set -euxo pipefail
 export DEBIAN_FRONTEND=noninteractive
 
 sudo apt-get update
-sudo apt-get install -y --no-install-recommends \
+sudo apt-get install -y \
     libgtk-3-0 \
     libnotify4 \
     libsdl2-2.0-0

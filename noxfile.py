@@ -19,9 +19,10 @@ Email: bingye@umich.edu
 import nox
 import platform
 
-EXTRAS_WX_URL = "http://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-22.04"
 
 nox.options.error_on_missing_interpreters=True
+
+EXTRAS_WX_URL = "http://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-22.04"
 
 
 @nox.session(python=['3.9','3.10'],reuse_venv=True)
@@ -31,15 +32,17 @@ def tests(session:nox.Session):
 
     # Linux: preintall a wxPython wheel to avoid building from source
     if platform.system() == "Linux":
-        session.run(
+        session.install(
             "--only-binary=:all:",
             "-f", EXTRAS_WX_URL,
             "wxPython==4.2.1"
         )
 
-    # package an Python dependencies installed, and test dependencies
+    # package and test dependencies
     session.install("-e", ".")
     session.install("pytest")
+    
+
     session.run("pytest", "-q")
 
 
