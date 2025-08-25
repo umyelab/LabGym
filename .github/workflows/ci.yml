@@ -17,8 +17,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Ubuntu: system libs installed before Python envs are made
-      - name: Install system dependencies (Ubuntu)
+      # Ubuntu: system libraries installed before Python envs are made
+      - name: Ubuntu runtime libraries
         if: runner.os == 'Linux'
         shell: bash
         run: bash .github/scripts/ubuntu_runtime_deps.sh
@@ -27,7 +27,16 @@ jobs:
         uses: wntrblm/nox@2024.03.02
         with:
           python-versions: "3.9, 3.10"
-      - name: Run tests
+      
+      # Run tests
+
+      # Linux requires a virtual dispaly for wx.App()
+      - name: Run tests (Ubuntu Linux under Xvfb)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a nox -s tests --verbose
+      
+      - name: Run tests (macOS/Windows)
+        if: runner.os != 'Linux'
         run: nox -s tests --verbose
             
         
