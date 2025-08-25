@@ -2,7 +2,7 @@
 Copyright (C)
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext. 
+You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext.
 
 For license issues, please contact:
 
@@ -235,7 +235,7 @@ class Categorizers():
 				if len(name_list)==0:
 					name_list=[i for i in os.listdir(os.path.join(file_path,folder)) if i.endswith('.jpg')]
 					imagedata=True
-			
+
 				for i in name_list:
 
 					if imagedata:
@@ -349,7 +349,7 @@ class Categorizers():
 			name=os.path.splitext(os.path.basename(i))[0].split('_')[0]
 			label=os.path.splitext(i)[0].split('_')[-1]
 			path_to_pattern_image=os.path.splitext(i)[0]+'.jpg'
-			
+
 			random.shuffle(methods)
 
 			for m in methods:
@@ -730,7 +730,7 @@ class Categorizers():
 		else:
 
 			x=Activation('relu')(x)
-		
+
 			x=Conv2D(int(filters*4),(1,1),strides=(1,1))(x)
 			x=BatchNormalization()(x)
 
@@ -779,7 +779,7 @@ class Categorizers():
 		else:
 
 			x=TimeDistributed(Activation('relu'))(x)
-		
+
 			x=TimeDistributed(Conv2D(int(filters*4),(1,1),strides=(1,1)))(x)
 			x=TimeDistributed(BatchNormalization())(x)
 
@@ -892,7 +892,7 @@ class Categorizers():
 			x=LSTM(2048,return_sequences=False,return_state=False)(x)
 		else:
 			x=LSTM(4096,return_sequences=False,return_state=False)(x)
-			
+
 		if with_classifier is False:
 
 			return x
@@ -905,7 +905,7 @@ class Categorizers():
 				x=Dense(2048,activation='relu')(x)
 			else:
 				x=Dense(4096,activation='relu')(x)
-				
+
 			x=Dropout(0.5)(x)
 			if classes==2:
 				x=Dense(1,activation='sigmoid')(x)
@@ -935,7 +935,7 @@ class Categorizers():
 
 		for i in range(round(dim_tconv/60)):
 			filters_tconv=min(int(filters_tconv*2),64)
-		
+
 		for i in range(round(dim_conv/60)):
 			filters_conv=min(int(filters_conv*2),64)
 
@@ -943,7 +943,7 @@ class Categorizers():
 			animation_feature=self.simple_tvgg(animation_inputs,filters_tconv,level=level_tconv,with_classifier=False)
 		else:
 			animation_feature=self.simple_tresnet(animation_inputs,filters_tconv,level=level_tconv,with_classifier=False)
-		
+
 		if level_conv<5:
 			pattern_image_feature=self.simple_vgg(pattern_image_inputs,filters_conv,level=level_conv,with_classifier=False)
 		else:
@@ -1122,7 +1122,7 @@ class Categorizers():
 				pd.DataFrame(report).transpose().to_csv(os.path.join(model_path,'training_metrics.csv'),float_format='%.2f')
 				if out_path is not None:
 					pd.DataFrame(report).transpose().to_excel(os.path.join(out_path,'training_metrics.xlsx'),float_format='%.2f')
-				
+
 				plt.style.use('classic')
 				plt.figure()
 				plt.plot(H.history['loss'],label='train_loss')
@@ -1192,7 +1192,7 @@ class Categorizers():
 
 		for i in range(round(dim/60)):
 			filters=min(int(filters*2),64)
-		
+
 		inputs=Input(shape=(time_step,dim,dim,channel))
 
 		print('Training the Categorizer w/o Pattern Recognizer using the behavior examples in: '+str(data_path))
@@ -1935,7 +1935,7 @@ class Categorizers():
 			else:
 				print('The type of the Categorizer: Pattern Recognizer (Lv '+str(level_conv)+'; Shape '+str(dim_conv)+' X '+str(dim_conv)+' X 3).')
 		if network==1:
-			print('The type of the Categorizer: Animation Analyzer (Lv '+str(level_tconv)+'; Shape '+str(dim_tconv)+' X '+str(channel)+').')		
+			print('The type of the Categorizer: Animation Analyzer (Lv '+str(level_tconv)+'; Shape '+str(dim_tconv)+' X '+str(channel)+').')
 		if network==2:
 			print('The type of the Categorizer: Animation Analyzer (Lv '+str(level_tconv)+'; Shape '+str(dim_tconv)+' X '+str(dim_tconv)+' X '+str(channel)+') + Pattern Recognizer (Lv '+str(level_conv)+'; Shape '+str(dim_conv)+' X '+str(dim_conv)+' X 3).')
 		length=int(parameters['time_step'][0])

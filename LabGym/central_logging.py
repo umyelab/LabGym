@@ -36,7 +36,7 @@ def cleanup(queue_listener):
 http_handler_config = {
     # Host and optional port
     # 'host': 'localhost:8080',
-    'host': 'solid-skill-463519-e0.appspot.com',  
+    'host': 'solid-skill-463519-e0.appspot.com',
     }
 
 http_handler_config.update({
@@ -45,7 +45,7 @@ http_handler_config.update({
     'method': 'POST',  # Specify POST method
 
     # Optional basic authentication
-    # 'credentials': ('username', 'password'),  
+    # 'credentials': ('username', 'password'),
     })
 
 
@@ -68,19 +68,19 @@ def reset_central_logger(logger):
 def get_central_logger(http_handler_config=http_handler_config, reset=False):
     """Return logger 'Central Logger', configured to send to an HTTP server.
 
-    Return logger 'Central Logger', configured to send log records to an 
+    Return logger 'Central Logger', configured to send log records to an
     HTTP server.
-    
-    Strength:  This implementation uses asynchronous handling of log 
+
+    Strength:  This implementation uses asynchronous handling of log
         records.  It uses QueueHandler/QueueListener and queue.Queue to
         let the HTTPHandler do its work on a separate thread.
 
-    References 
+    References
     [1] search: python logging send to url http post
         https://www.google.com/search?q=python+logging+send+to+url+http+post
 
         "Python's built-in logging module can send log records to an HTTP
-        server using the HTTPHandler class. This allows for centralized 
+        server using the HTTPHandler class. This allows for centralized
         log management by sending logs to a remote endpoint."
 
     Dev, with this file named sandbox.py
@@ -111,7 +111,7 @@ def get_central_logger(http_handler_config=http_handler_config, reset=False):
     central_logger.setLevel(logging.INFO)
 
     # Prepare a handler.
-    # An HTTPHandler doesn't use a Formatter, so using setFormatter() to 
+    # An HTTPHandler doesn't use a Formatter, so using setFormatter() to
     # specify a Formatter for an HTTPHandler has no effect.
     http_handler = logging.handlers.HTTPHandler(**http_handler_config)
 
@@ -120,7 +120,7 @@ def get_central_logger(http_handler_config=http_handler_config, reset=False):
     #     central_logger.addHandler(http_handler)
     #     # Milestone -- logrecord handling is configured.
     #
-    # But for this logger, we want non-blocking logging, where log 
+    # But for this logger, we want non-blocking logging, where log
     # records are queued and processed asynchronously.
     # So configure the logger to handle logrecords by putting them into
     # a queue and moving on.  Use a QueueListener running in a separate
@@ -130,18 +130,18 @@ def get_central_logger(http_handler_config=http_handler_config, reset=False):
     # Create a Queue obj.  This queue will store the LogRecord objects.
     logrecord_queue = queue.Queue(-1)  # -1 for an unbounded queue
 
-    # Create a QueueHandler obj.  Its sole purpose is to place LogRecord 
+    # Create a QueueHandler obj.  Its sole purpose is to place LogRecord
     # objects onto the Queue obj (logrecord_queue).
     queue_handler = logging.handlers.QueueHandler(logrecord_queue)
 
     # Attach the QueueHandler obj to the intended Logger obj.
     central_logger.addHandler(queue_handler)
 
-    # Create and Start a QueueListener obj.  This listener runs in a 
-    # separate thread, continuously monitors the logrecord_queue, and 
-    # dispatches the retrieved LogRecord objects to the configured 
+    # Create and Start a QueueListener obj.  This listener runs in a
+    # separate thread, continuously monitors the logrecord_queue, and
+    # dispatches the retrieved LogRecord objects to the configured
     # downstream handlers (http_handler).
-    queue_listener = logging.handlers.QueueListener(logrecord_queue, 
+    queue_listener = logging.handlers.QueueListener(logrecord_queue,
         http_handler)
     queue_listener.start()  # Start the listener thread
 
@@ -162,7 +162,7 @@ if __name__ == '__main__':  # pragma: no cover
     central_logger = get_central_logger()
 
     reginfo = {
-        'name': 'James Stewart', 
+        'name': 'James Stewart',
         'rank': 'Brigadier General',
         'serial number': 'O-433210',
         }

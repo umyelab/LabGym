@@ -2,7 +2,7 @@
 Copyright (C)
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext. 
+You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext.
 
 For license issues, please contact:
 
@@ -821,7 +821,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 			colors=[]
 			for c in complete_colors:
 				colors.append(['#ffffff',c])
-			
+
 			dialog=wx.MessageDialog(self,'Specify the color to represent\nthe behaviors in annotations and plots?','Specify colors for behaviors?',wx.YES_NO|wx.ICON_QUESTION)
 			if dialog.ShowModal()==wx.ID_YES:
 				names_colors={}
@@ -985,7 +985,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 								self.animal_number[animal_name]=1
 						else:
 							self.animal_number=1
-				
+
 					if self.path_to_categorizer is None:
 						self.behavior_mode=0
 						categorize_behavior=False
@@ -1044,7 +1044,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 									all_events[animal_name][len(all_events[animal_name])]=AAD.event_probability[animal_name][n]
 							if len(all_time)<len(AAD.all_time):
 								all_time=AAD.all_time
-					
+
 				if self.path_to_categorizer is not None:
 
 					max_length=len(all_time)
@@ -1196,8 +1196,8 @@ class WindowLv2_MineResults(wx.Frame):
 			self.control=None
 			self.text_selectcontrol.SetLabel('No control group.')
 		dialog.Destroy()
-		
-		 
+
+
 	def select_result_path(self,event):
 
 		dialog=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
@@ -1250,7 +1250,7 @@ class WindowLv2_MineResults(wx.Frame):
 		self.dataset.pop(del_idx)
 		self.file_names.insert(0,self.file_names.pop(del_idx))
 
-	
+
 	def mine_data(self,event):
 
 		if self.file_path is None or self.result_path is None:
@@ -1352,7 +1352,7 @@ class WindowLv2_PlotBehaviors(wx.Frame):
 			self.text_inputfile.SetLabel(f'all_events.xlsx path: {all_events_file}')
 		dialog.Destroy()
 
-		 
+
 	def select_result_path(self,event):
 
 		dialog=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
@@ -1375,7 +1375,7 @@ class WindowLv2_PlotBehaviors(wx.Frame):
 					self.names_and_colors[behavior]=('#ffffff',new_color)
 			self.text_selectcolors.SetLabel('Colors: '+', '.join([f'{behavior}:{color}' for behavior,(_,color) in self.names_and_colors.items()]))
 
-	
+
 	def plot_behavior(self,event):
 
 		if self.events_probability is None or self.time_points is None or self.results_folder is None or self.names_and_colors is None:

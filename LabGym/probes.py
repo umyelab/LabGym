@@ -136,7 +136,7 @@ def probe_url_to_verify_cacert() -> None:
     On 2025-05-19 Google AI says,
         Detectron2 relies on dl.fbaipublicfiles.com for distributing
         pre-built binaries and model weights.
-        If you're using the pre-built versions of Detectron2 or 
+        If you're using the pre-built versions of Detectron2 or
         downloading pre-trained models, your system will likely be
         downloading files from dl.fbaipublicfiles.com.
     """
