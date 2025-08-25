@@ -2,6 +2,19 @@ source INIT.sh
 
 PYFILES=$(echo ../*.py)
 
+OP=pylint  # default OP
+while [ $# -gt 0 ]; do
+    case $1 in
+        --summarize)  OP=summarize; shift;;
+        --)  shift; break;;
+        -*)  ERROR "Bad usage.  Unsupported option ($1)"; exit 1;;
+        *)  break;;
+    esac
+done
+
+case $OP in
+pylint)
+#-----------------------------------------------------------------------
 if [ $# -gt 0 ]; then
     PYFILES=$*
 fi
@@ -26,15 +39,21 @@ setopt SH_WORD_SPLIT 2> /dev/null
         grep -n "^Your code has been rated " $OUTFILE
     done
 )
+#-----------------------------------------------------------------------
+;;
+
+summarize)
+#-----------------------------------------------------------------------
+(cd tmp.pylint && grep -n "Your code has been rated at" *.out) | 
+sed "s/ (previous.*//" | 
+sed "s/^pylint\.\(.*.py\).out:\([0-9]*\):Your code has been rated at \(.*\)/\3\t\2\t\1/" | 
+expand -10,16 |
+cat -n
+#-----------------------------------------------------------------------
+;;
+esac
 
 exit $?
-========================================================================
-To summarize pylint results saved to tmp.pylint,
-    (cd tmp.pylint && grep -n "Your code has been rated at" *.out) | 
-    sed "s/ (previous.*//" | 
-    sed "s/^pylint\.\(.*.py\).out:\([0-9]*\):Your code has been rated at \(.*\)/\3\t\2\t\1/" | 
-    expand -10,16 |
-    cat -n
 ========================================================================
 usage: pylint [options]
 
