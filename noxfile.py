@@ -17,19 +17,49 @@ Email: bingye@umich.edu
 '''
 
 import nox
+import platform
+
 
 nox.options.error_on_missing_interpreters=True
+
+EXTRAS_WX_URL = "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-22.04"
 
 
 @nox.session(python=['3.9','3.10'],reuse_venv=True)
 def tests(session:nox.Session):
-    session.install('-e','.')
-    session.install('pytest')
-    session.run('pytest')
+    # prefer wheels globally
+    session.env["PIP_PREFER_BINARY"]="1"
+    session.env["PIP_NO_CACHE_DIR"]="1"
+
+    # Preinstall a wxPython wheel to avoid building from source
+    if platform.system() == "Linux":
+        session.install(
+            "--only-binary=:all:",
+            "-f", EXTRAS_WX_URL,
+            "wxPython==4.2.1"
+        )
+
+        # Force CPU-only PyTorch stack to avoid large CUDA downloads
+        session.install(
+            "--no-cache-dir",
+            "--index-url", "https://download.pytorch.org/whl/cpu",
+            "torch==2.8.0",
+            "torchvision==0.23.0",
+            "torchaudio==2.8.0",
+        )
+
+
+    # package and test dependencies
+    session.install("-e", ".")
+    session.install("pytest")
+    
+
+    session.run("pytest", "-q")
 
 
 @nox.session(reuse_venv=True)
 def docs(session:nox.Session):
+    session.install("-U", "pip", "setuptools", "wheel")
     session.install('-r','docs/requirements.txt')
     session.run('make','-C','docs','clean',external=True)
     session.run('sphinx-autobuild','docs','docs/_build/html')

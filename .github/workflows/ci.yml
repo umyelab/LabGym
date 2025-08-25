@@ -10,16 +10,32 @@ jobs:
     name: Tests (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        os: [macos-latest, windows-latest]
+        os: [ubuntu-22.04, macos-latest, windows-latest]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      # Ubuntu: system libraries installed before Python envs are made
+      - name: Ubuntu runtime libraries
+        if: runner.os == 'Linux'
+        shell: bash
+        run: bash .github/scripts/ubuntu_runtime_deps.sh
+       
       - name: Install Nox
         uses: wntrblm/nox@2024.03.02
         with:
           python-versions: "3.9, 3.10"
-      - name: Run tests
+      
+      # Run tests
+      # Linux (requires a virtual display for wx.App())
+      - name: Run tests (Ubuntu Linux under Xvfb)
+        if: runner.os == 'Linux'
+        run: xvfb-run -a nox -s tests --verbose
+      # macOS/Windows
+      - name: Run tests (macOS/Windows)
+        if: runner.os != 'Linux'
         run: nox -s tests --verbose
             
         
