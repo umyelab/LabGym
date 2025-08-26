@@ -53,7 +53,7 @@ class data_mining():
 
 	def two_groups(self):
 
-		if self.control!=None:
+		if self.control is not None:
 			self.data.insert(0, self.control)
 
 		for behavior in self.data[0]:
@@ -117,7 +117,7 @@ class data_mining():
 					currentSet=self.data[i][behavior][parameter].dropna()
 					dataset.append(currentSet)
 
-				if self.control!=None:
+				if self.control is not None:
 					currentSet=self.control[behavior][parameter].dropna()
 					dataset.insert(0,currentSet)
 
@@ -154,7 +154,7 @@ class data_mining():
 
 					if test=='ANOVA':
 
-						if self.control==None:
+						if self.control is None:
 							tukey=stats.tukey_hsd(*dataset)
 							print(tukey)
 							posthoc_name='Tukey'
@@ -189,7 +189,7 @@ class data_mining():
 
 	def statistical_analysis(self):
 
-		if (len(self.data)==2 and self.control==None) or (len(self.data)==1 and self.control!=None): # tests for two groups only
+		if (len(self.data)==2 and self.control is None) or (len(self.data)==1 and self.control is not None): # tests for two groups only
 
 			self.two_groups()
 

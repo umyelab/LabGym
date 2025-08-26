@@ -337,7 +337,7 @@ class WindowLv1_AnalysisModule(wx.Frame):
 
 def main_window():
 
-	the_absolute_current_path=str(Path(__file__).resolve().parent)
+	# the_absolute_current_path=str(Path(__file__).resolve().parent)
 	app=wx.App()
 	InitialWindow(f'LabGym v{__version__}')
 	logger.info('The user interface initialized!')

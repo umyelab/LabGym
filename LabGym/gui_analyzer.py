@@ -1244,7 +1244,7 @@ class WindowLv2_MineResults(wx.Frame):
 
 	def control_organization(self):
 
-		if self.control==None:
+		if self.control is None:
 			return
 		del_idx=self.file_names.index(self.control_file_name)
 		self.dataset.pop(del_idx)

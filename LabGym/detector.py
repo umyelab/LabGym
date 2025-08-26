@@ -141,7 +141,7 @@ class Detector():
 		register_coco_instances('LabGym_detector_test',{},path_to_annotation,path_to_testingimages)
 
 		datasetcat=DatasetCatalog.get('LabGym_detector_test')
-		metadatacat=MetadataCatalog.get('LabGym_detector_test')
+		# metadatacat=MetadataCatalog.get('LabGym_detector_test')
 
 		animalmapping=os.path.join(path_to_detector,'model_parameters.txt')
 
