@@ -43,7 +43,7 @@ import tensorflow as tf
 # from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow import keras  # pylint: disable=unused-import
 from keras.models import load_model
-from keras.preprocessing.image import img_to_array
+from keras.utils import img_to_array
 
 # Local application/library specific imports.
 logger.debug('importing tools (starting...)')

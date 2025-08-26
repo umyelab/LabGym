@@ -69,13 +69,14 @@ from keras.models import (
     load_model,
     )
 from keras.optimizers import SGD
-from keras.preprocessing.image import (
-    img_to_array,
-    # load_img,
-    )
+# from keras.preprocessing.image import (
+#     img_to_array,
+#     # load_img,
+#     )
 from keras.utils import (
     # plot_model,
     Sequence,
+    img_to_array,
     )
 
 # Local application/library specific imports.
