@@ -2,7 +2,7 @@
 Copyright (C)
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext. 
+You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext.
 
 For license issues, please contact:
 
@@ -16,22 +16,24 @@ USA
 Email: bingye@umich.edu
 '''
 
+# Standard library imports.
+import logging
+import os
+
 # Log the load of this module (by the module loader, on first import).
 # Intentionally positioning these statements before other imports, against the
 # guidance of PEP-8, to log the load before other imports log messages.
-import logging
-logger =  logging.getLogger(__name__)
-logger.debug('loading %s', __file__)
+logger =  logging.getLogger(__name__)  # pylint: disable=wrong-import-position
+logger.debug('loading %s', __file__)  # pylint: disable=wrong-import-position
 
-
-
-from .tools import preprocess_video
-import wx
-import os
+# Related third party imports.
 import cv2
 import numpy as np
 from PIL import Image,ImageEnhance
+import wx
 
+# Local application/library specific imports.
+from .tools import preprocess_video
 
 
 class WindowLv2_ProcessVideos(wx.Frame):
@@ -237,7 +239,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
 
 			if self.framewidth is not None:
 				frame=cv2.resize(frame,(self.framewidth,int(frame.shape[0]*self.framewidth/frame.shape[1])),interpolation=cv2.INTER_AREA)
-			
+
 			canvas=np.copy(frame)
 			h,w=frame.shape[:2]
 			for y in range(0,h,50):
@@ -278,7 +280,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
 				dialog.Destroy()
 
 			cv2.destroyAllWindows()
-			
+
 
 	def enhance_videos(self,event):
 
@@ -784,7 +786,3 @@ class WindowLv3_DrawMarkers(wx.Frame):
 
 
 			print('Marker Drawing completed!')
-
-
-
-

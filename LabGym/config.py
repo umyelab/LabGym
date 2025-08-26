@@ -7,8 +7,8 @@ Configuration evaluation involves (ordered in increasing precedence)
     4.  command-line options
 
 Notes
-*   Environment variables and command-line options can be used to 
-    override the location of the configuration file, so determine the 
+*   Environment variables and command-line options can be used to
+    override the location of the configuration file, so determine the
     configuration file location before reading it.
 
 *   Typical LabGym configdir organization is
@@ -85,15 +85,15 @@ def get_config_from_environ() -> dict:
     """Get config values from os.environ.
 
     Weaknesses
-    *   Environment variables are case-sensitive.  
-        There could be a collision when mapping names to lowercase, 
-        which should generate a warning or an exception, but that is not 
+    *   Environment variables are case-sensitive.
+        There could be a collision when mapping names to lowercase,
+        which should generate a warning or an exception, but that is not
         implemented.
-        As implemented, the retained value is the value of the 
+        As implemented, the retained value is the value of the
         environment variable whose name sorts higher.
     """
     prefix = 'LABGYM_'
-    result = {name.removeprefix(prefix).lower(): value 
+    result = {name.removeprefix(prefix).lower(): value
         for name, value in sorted(os.environ.items()) if name.startswith(prefix)}
     return result
 
@@ -133,23 +133,23 @@ def get_config():
     """Return a cached config dict. Construct it if necessary.
 
     Strengths
-    *   Instead of reconstructing the config dict each time this 
-        function is called, the config dict is determined the first time 
-        this function is run and then the function always returns the 
+    *   Instead of reconstructing the config dict each time this
+        function is called, the config dict is determined the first time
+        this function is run and then the function always returns the
         same value without reconstructing it.
         This implementation uses the common approach of using a module-
         level variable to store the value after its initial creation.
-        This pattern is often referred to as memoization or lazy 
+        This pattern is often referred to as memoization or lazy
         initialization.
 
     Weaknesses
-    *   Each override could be logged.  
-        The cost of implementation including unit test and complexity 
+    *   Each override could be logged.
+        The cost of implementation including unit test and complexity
         and maintainability may exceed benefit.
 
-    *   Provenances for all settings could be kept in a provenance 
+    *   Provenances for all settings could be kept in a provenance
         dictionary, and be logged before the function returns.
-        The cost of implementation including unit test and complexity 
+        The cost of implementation including unit test and complexity
         and maintainability may exceed benefit.
     """
 
@@ -186,7 +186,7 @@ def get_config():
     assert isinstance(configfile, Path)
 
     # # buffer some key/value pairs for late merge, to override.
-    # buf = {'configdir': configdir, 'configfile': configfile} 
+    # buf = {'configdir': configdir, 'configfile': configfile}
 
     if not os.path.isabs(configfile):
         configfile = configdir.joinpath(configfile)
@@ -195,7 +195,7 @@ def get_config():
     if not configfile.is_file() and provenance.get('configfile') != 'defaults':
         msg = f'Trouble reading user-specified configfile ({configfile})'
         sys.exit(msg)
-            
+
     config_from_configfile = get_config_from_configfile(configfile)
 
     # Aggregate 4 dicts.  Use myupdate instead of dict update method.
@@ -214,7 +214,7 @@ def get_config():
 def myupdate(target: dict, addendum: dict) -> None:
     """..."""
 
-    # if the addendum has 'enable' dict, then merge the existing 
+    # if the addendum has 'enable' dict, then merge the existing
     # target['enable'] into addendum['enable'] before target.update()
 
     if target.get('enable') is not None and addendum.get('enable') is not None:
@@ -222,15 +222,15 @@ def myupdate(target: dict, addendum: dict) -> None:
         buf.update(target['enable'])
         buf.update(addendum['enable'])
         addendum['enable'] = buf
-    
+
     target.update(addendum)
 
 
 def mypathexpand(target: dict) -> None:
     """
     For all items in the target that should be Path objects, ensure
-    they are absolute paths.  
-    Overrides from environment variables need to be converted from str 
+    they are absolute paths.
+    Overrides from environment variables need to be converted from str
     to Path, and, relative paths need to be anchored to configdir.
     """
     if not isinstance(target['configdir'], Path):

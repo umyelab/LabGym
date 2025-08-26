@@ -2,7 +2,7 @@
 Copyright (C)
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext. 
+You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext.
 
 For license issues, please contact:
 
@@ -16,34 +16,56 @@ USA
 Email: bingye@umich.edu
 '''
 
+# Standard library imports.
+from collections import deque
+import datetime
+import functools
+import gc
+import logging
+import math
+import operator
+import os
+
 # Log the load of this module (by the module loader, on first import).
 # Intentionally positioning these statements before other imports, against the
 # guidance of PEP-8, to log the load before other imports log messages.
-import logging
-logger =  logging.getLogger(__name__)
-logger.debug('loading %s', __file__)
+logger =  logging.getLogger(__name__)  # pylint: disable=wrong-import-position
+logger.debug('loading %s', __file__)  # pylint: disable=wrong-import-position
 
-
-
-logger.debug('importing tools (starting...)')
-from .tools import *
-logger.debug('importing tools (done)')
-import os
-import gc
+# Related third party imports.
 import cv2
-import datetime
 import numpy as np
-import math
-from scipy.spatial import distance
-from collections import deque
-import tensorflow as tf
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing.image import img_to_array
 import pandas as pd
-import seaborn as sb
-import functools
-import operator
+from scipy.spatial import distance
+# import seaborn as sb
+import tensorflow as tf
+# from tensorflow.keras.models import load_model
+# from tensorflow.keras.preprocessing.image import img_to_array
+from tensorflow import keras  # pylint: disable=unused-import
+from keras.models import load_model
+from keras.preprocessing.image import img_to_array
 
+# Local application/library specific imports.
+logger.debug('importing tools (starting...)')
+from .tools import (
+    # extract_background,
+    estimate_constants,
+    crop_frame,
+    extract_blob_background,
+    extract_blob_all,
+    # get_inner,
+    contour_frame,
+    generate_patternimage,
+    generate_patternimage_all,
+    # generate_patternimage_interact,
+    # plot_events,
+    # extract_frames,
+    # preprocess_video,
+    # parse_all_events_file,
+    # calculate_distances,
+    # sort_examples_from_csv,
+    )
+logger.debug('importing tools (done)')
 
 
 class AnalyzeAnimal():
@@ -92,7 +114,7 @@ class AnalyzeAnimal():
 		self.event_probability={}
 		self.all_behavior_parameters={}
 		self.log=[]
-		
+
 
 	def prepare_analysis(self,
 		path_to_video, # path to the video for generating behavior examples or behavior analysis
@@ -118,7 +140,7 @@ class AnalyzeAnimal():
 		length=15, # the duration (number of frames) of a behavior example (a behavior episode)
 		animal_vs_bg=0 # 0: animals brighter than the background; 1: animals darker than the background; 2: hard to tell
 		):
-		
+
 		print('Preparation started...')
 		self.log.append('Preparation started...')
 		print(datetime.datetime.now())
@@ -270,7 +292,7 @@ class AnalyzeAnimal():
 		if len(unused_existing_indices)>0:
 			for i in unused_existing_indices:
 				if self.to_deregister[i]<=self.count_to_deregister:
-					self.to_deregister[i]+=1		
+					self.to_deregister[i]+=1
 				else:
 					self.animal_existingcenters[i]=(-10000,-10000)
 				if self.include_bodyparts:
@@ -320,7 +342,7 @@ class AnalyzeAnimal():
 			if time>=start_t:
 
 				self.all_time.append(round((time-start_t),2))
-				
+
 				if (frame_count_analyze+1)%1000==0:
 					print(str(frame_count_analyze+1)+' frames processed...')
 					self.log.append(str(frame_count_analyze+1)+' frames processed...')
@@ -424,7 +446,7 @@ class AnalyzeAnimal():
 			if time>=start_t:
 
 				self.all_time.append(round((time-start_t),2))
-				
+
 				if (frame_count_analyze+1)%1000==0:
 					print(str(frame_count_analyze+1)+' frames processed...')
 					self.log.append(str(frame_count_analyze+1)+' frames processed...')
@@ -613,7 +635,7 @@ class AnalyzeAnimal():
 									self.event_probability[n][i]=[behavior_names[1],prediction[0]]
 							if prediction[0]<0.5:
 								if (1-prediction[0])-prediction[0]>uncertain:
-									self.event_probability[n][i]=[behavior_names[0],1-prediction[0]]		
+									self.event_probability[n][i]=[behavior_names[0],1-prediction[0]]
 						else:
 							if sorted(prediction)[-1]-sorted(prediction)[-2]>uncertain:
 								self.event_probability[n][i]=[behavior_names[np.argmax(prediction)],max(prediction)]
@@ -665,13 +687,13 @@ class AnalyzeAnimal():
 					hex_color=self.all_behavior_parameters[behavior_name]['color'][1].lstrip('#')
 					color=tuple(int(hex_color[i:i+2],16) for i in (0,2,4))
 					colors[behavior_name]=color[::-1]
-			
+
 			if len(behavior_to_include)!=len(self.all_behavior_parameters):
 				for behavior_name in self.all_behavior_parameters:
 					if behavior_name not in behavior_to_include:
 						del colors[behavior_name]
-			
-			if show_legend:	
+
+			if show_legend:
 				scl=self.background.shape[0]/1024
 				if 25*(len(colors)+1)<self.background.shape[0]:
 					intvl=25
@@ -817,7 +839,7 @@ class AnalyzeAnimal():
 						self.all_behavior_parameters[behavior_name]['distance'][i]=0.0
 					if 'latency' in parameter_to_analyze:
 						self.all_behavior_parameters[behavior_name]['latency'][i]='NA'
-			
+
 				for parameter_name in all_parameters:
 					for i in self.event_probability:
 						self.all_behavior_parameters[behavior_name][parameter_name][i]=[np.nan]*len(self.all_time)
@@ -829,7 +851,7 @@ class AnalyzeAnimal():
 					self.all_behavior_parameters['distance'][i]=0.0
 				for parameter_name in all_parameters:
 					self.all_behavior_parameters[parameter_name][i]=[np.nan]*len(self.all_time)
-				
+
 		if len(parameter_to_analyze)>0:
 
 			for i in self.animal_contours:
@@ -847,7 +869,7 @@ class AnalyzeAnimal():
 							if 'count' in parameter_to_analyze:
 								if behavior_name!=self.event_probability[i][n-1][0]:
 									self.all_behavior_parameters[behavior_name]['count'][i]+=1
-									
+
 							if 'duration' in parameter_to_analyze:
 								self.all_behavior_parameters[behavior_name]['duration'][i]+=1
 
@@ -861,7 +883,7 @@ class AnalyzeAnimal():
 									if h is None or self.animal_heights[i][n] is None:
 										height_diff=0.0
 									else:
-										height_diff=abs(h-self.animal_heights[i][n])/h	
+										height_diff=abs(h-self.animal_heights[i][n])/h
 									heights_diffs.append(height_diff)
 								magnitude_length=max(heights_diffs)
 								vigor_length=magnitude_length/((self.length-np.argmax(heights_diffs))/self.fps)
@@ -896,7 +918,7 @@ class AnalyzeAnimal():
 										if ct is None:
 											displacements.append(0)
 										else:
-											displacements.append(math.dist(end_center,ct))		
+											displacements.append(math.dist(end_center,ct))
 									displacement=max(displacements)
 									if normalize_distance:
 										displacement=displacement/calibrator
@@ -1077,7 +1099,7 @@ class AnalyzeAnimal():
 					n+=1
 
 				if self.categorize_behavior:
-				
+
 					if 'duration' in parameter_to_analyze:
 						for behavior_name in self.all_behavior_parameters:
 							if self.all_behavior_parameters[behavior_name]['duration'][i]!=0:
@@ -1119,7 +1141,7 @@ class AnalyzeAnimal():
 
 		if self.categorize_behavior:
 			all_parameters.append('probability')
-			
+
 		if 'count' in parameter_to_analyze:
 			all_parameters.append('count')
 		if 'duration' in parameter_to_analyze:
@@ -1171,7 +1193,7 @@ class AnalyzeAnimal():
 					individual_df.to_excel(os.path.join(self.results_path,parameter_name+'.xlsx'),float_format='%.2f',index_label='time/ID')
 
 			if len(summary)>=1:
-				pd.concat(summary,axis=1).to_excel(os.path.join(self.results_path,'all_summary.xlsx'),float_format='%.2f',index_label='ID/parameter')			
+				pd.concat(summary,axis=1).to_excel(os.path.join(self.results_path,'all_summary.xlsx'),float_format='%.2f',index_label='ID/parameter')
 
 		print('All results exported in: '+str(self.results_path))
 		self.log.append('All results exported in: '+str(self.results_path))
@@ -1186,7 +1208,7 @@ class AnalyzeAnimal():
 		# background_free: whether to include background in animations
 		# black_background: whether to set background black
 		# skip_redundant: the interval (in frames) of two consecutively generated behavior example pairs
-		
+
 		print('Generating behavior examples...')
 		print(datetime.datetime.now())
 
@@ -1303,7 +1325,7 @@ class AnalyzeAnimal():
 		temp_inners=deque(maxlen=self.length)
 		animation=deque(maxlen=self.length)
 		os.makedirs(os.path.join(self.results_path,'examples','0'),exist_ok=True)
-		
+
 		start_t=round((self.t-self.length/self.fps),2)
 		if start_t<0:
 			start_t=0.00
@@ -1366,7 +1388,7 @@ class AnalyzeAnimal():
 
 							path_animation=os.path.join(self.results_path,'examples','0',animation_name)
 							path_pattern_image=os.path.join(self.results_path,'examples','0',pattern_image_name)
-						
+
 							writer=cv2.VideoWriter(path_animation,cv2.VideoWriter_fourcc(*'MJPG'),self.fps/5,(w,h),True)
 							for blob in animation:
 								writer.write(cv2.resize(blob,(w,h),interpolation=cv2.INTER_AREA))
@@ -1381,5 +1403,3 @@ class AnalyzeAnimal():
 		capture.release()
 
 		print('Behavior example generation completed!')
-
-
