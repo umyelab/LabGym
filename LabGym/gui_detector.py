@@ -2,7 +2,7 @@
 Copyright (C)
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext. 
+You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext.
 
 For license issues, please contact:
 
@@ -16,30 +16,30 @@ USA
 Email: bingye@umich.edu
 '''
 
+# Standard library imports.
+import json
+import logging
+from pathlib import Path
+import os
+import shutil
+
 # Log the load of this module (by the module loader, on first import).
 # Intentionally positioning these statements before other imports, against the
 # guidance of PEP-8, to log the load before other imports log messages.
-import logging
-logger =  logging.getLogger(__name__)
-logger.debug('loading %s', __file__)
+logger =  logging.getLogger(__name__)  # pylint: disable=wrong-import-position
+logger.debug('loading %s', __file__)  # pylint: disable=wrong-import-position
 
-
-
-from .tools import extract_frames
-from .detector import Detector
-from pathlib import Path
+# Related third party imports.
 import wx
-import os
-import cv2
-import json
-import shutil
-import torch
+# import cv2
+# import torch
 
-
+# Local application/library specific imports.
+from .detector import Detector
+from .tools import extract_frames
 
 
 the_absolute_current_path=str(Path(__file__).resolve().parent)
-
 
 
 class WindowLv2_GenerateImages(wx.Frame):
@@ -336,7 +336,7 @@ class WindowLv2_TrainDetectors(wx.Frame):
 			self.inference_size=int(dialog.GetValue())
 			self.text_inferencingsize.SetLabel('Inferencing frame size: '+str(self.inference_size)+'.')
 		dialog.Destroy()
-		
+
 
 	def input_iterations(self,event):
 
@@ -547,6 +547,3 @@ class WindowLv2_TestDetectors(wx.Frame):
 				shutil.rmtree(os.path.join(self.detector_path,detector))
 			dialog1.Destroy()
 		dialog.Destroy()
-
-
-

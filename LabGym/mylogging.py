@@ -105,8 +105,8 @@ from __future__ import annotations
 # Standard library imports.
 import functools
 import inspect
-import logging.config, logging.handlers
-import os
+import logging.config
+import logging.handlers
 from pathlib import Path
 # import pprint
 import queue

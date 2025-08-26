@@ -2,7 +2,7 @@
 Copyright (C)
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext. 
+You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext.
 
 For license issues, please contact:
 
@@ -16,31 +16,30 @@ USA
 Email: bingye@umich.edu
 '''
 
+# Standard library imports.
+# import json
+import logging
+from pathlib import Path
+# from urllib import request
+
 # Log the load of this module (by the module loader, on first import).
 # Intentionally positioning these statements before other imports, against the
 # guidance of PEP-8, to log the load before other imports log messages.
-import logging
-logger =  logging.getLogger(__name__)
-logger.debug('loading %s', __file__)
+logger =  logging.getLogger(__name__)  # pylint: disable=wrong-import-position
+logger.debug('loading %s', __file__)  # pylint: disable=wrong-import-position
 
-
-
-
+# Related third party imports.
 import wx
 import wx.lib.agw.hyperlink as hl
-import json
-from urllib import request
-from pathlib import Path
 
+# Local application/library specific imports.
+from LabGym import __version__
 logger.debug('importing %s ...', '.gui_categorizer')
 from .gui_categorizer import WindowLv2_GenerateExamples,WindowLv2_TrainCategorizers,WindowLv2_SortBehaviors,WindowLv2_TestCategorizers
 logger.debug('importing %s done', '.gui_categorizer')
-
 from .gui_detector import WindowLv2_GenerateImages,WindowLv2_TrainDetectors,WindowLv2_TestDetectors
 from .gui_preprocessor import WindowLv2_ProcessVideos,WindowLv2_DrawMarkers
 from .gui_analyzer import WindowLv2_AnalyzeBehaviors,WindowLv2_MineResults,WindowLv2_PlotBehaviors,WindowLv2_CalculateDistances
-from LabGym import __version__
-
 
 
 class InitialWindow(wx.Frame):
@@ -68,7 +67,7 @@ class InitialWindow(wx.Frame):
 			label='Created by Yujia Hu and Bing Ye\n\nLife Sciences Institute, University of Michigan\n\n\n\nContributor list:\n\nJie Zhou, Rohan Satapathy, John Ruckstuhl, Brendon O. Waston, Carrie R. Ferrario,\n\nKelly Goss, Isabelle Baker, M. Victor Struman, Bobby Tomlinson',style=wx.ALIGN_CENTER|wx.ST_ELLIPSIZE_END)
 		boxsizer.Add(self.text_developers,0,wx.LEFT|wx.RIGHT|wx.EXPAND,5)
 		boxsizer.Add(0,60,0)
-		
+
 		links=wx.BoxSizer(wx.HORIZONTAL)
 		homepage=hl.HyperLinkCtrl(panel,0,'Home Page',URL='https://github.com/umyelab/LabGym')
 		userguide=hl.HyperLinkCtrl(panel,0,'Extended Guide',URL='https://github.com/yujiahu415/LabGym/blob/master/LabGym_extended_user_guide.pdf')
@@ -338,7 +337,7 @@ class WindowLv1_AnalysisModule(wx.Frame):
 
 def main_window():
 
-	the_absolute_current_path=str(Path(__file__).resolve().parent)
+	# the_absolute_current_path=str(Path(__file__).resolve().parent)
 	app=wx.App()
 	InitialWindow(f'LabGym v{__version__}')
 	logger.info('The user interface initialized!')
@@ -346,8 +345,6 @@ def main_window():
 
 
 
-if __name__=='__main__':
+if __name__=='__main__':  # pragma: no cover
 
 	main_window()
-
-
