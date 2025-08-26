@@ -37,13 +37,6 @@ from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelBinarizer
 import tensorflow as tf
-# from tensorflow.keras.callbacks import ModelCheckpoint,EarlyStopping,ReduceLROnPlateau
-# from tensorflow.keras.layers import Input,TimeDistributed,BatchNormalization,MaxPooling2D,Activation,ZeroPadding2D,Add
-# from tensorflow.keras.layers import Conv2D,Dropout,Flatten,Dense,LSTM,concatenate,AveragePooling2D,GlobalMaxPooling2D
-# from tensorflow.keras.models import Model,Sequential,load_model
-# from tensorflow.keras.optimizers import SGD
-# from tensorflow.keras.preprocessing.image import img_to_array,load_img
-# from tensorflow.keras.utils import plot_model,Sequence
 from tensorflow import keras  # pylint: disable=unused-import
 from keras.callbacks import ModelCheckpoint,EarlyStopping,ReduceLROnPlateau
 from keras.layers import (
@@ -69,10 +62,6 @@ from keras.models import (
     load_model,
     )
 from keras.optimizers import SGD
-# from keras.preprocessing.image import (
-#     img_to_array,
-#     # load_img,
-#     )
 from keras.utils import (
     # plot_model,
     Sequence,
