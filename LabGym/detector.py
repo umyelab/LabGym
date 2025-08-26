@@ -2,7 +2,7 @@
 Copyright (C)
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext. 
+You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext.
 
 For license issues, please contact:
 
@@ -16,24 +16,25 @@ USA
 Email: bingye@umich.edu
 '''
 
-
-
-
-import os
-import cv2
+# Standard library imports.
 import json
-import torch
+import os
+
+# Related third party imports.
+import cv2
 from .detectron2 import model_zoo
 from .detectron2.checkpoint import DetectionCheckpointer
 from .detectron2.config import get_cfg
 from .detectron2.data import MetadataCatalog,DatasetCatalog,build_detection_test_loader
 from .detectron2.data.datasets import register_coco_instances
 from .detectron2.engine import DefaultTrainer,DefaultPredictor
-from .detectron2.utils.visualizer import Visualizer
 from .detectron2.evaluation import COCOEvaluator,inference_on_dataset
 from .detectron2.modeling import build_model
+from .detectron2.utils.visualizer import Visualizer
+import torch
 
-
+# Local application/library specific imports.
+# (none)
 
 
 class Detector():
@@ -103,7 +104,7 @@ class Detector():
 		trainer.train()
 
 		model_parameters=os.path.join(cfg.OUTPUT_DIR,'model_parameters.txt')
-		
+
 		model_parameters_dict['animal_mapping']={}
 		model_parameters_dict['inferencing_framesize']=int(inference_size)
 
@@ -140,7 +141,7 @@ class Detector():
 		register_coco_instances('LabGym_detector_test',{},path_to_annotation,path_to_testingimages)
 
 		datasetcat=DatasetCatalog.get('LabGym_detector_test')
-		metadatacat=MetadataCatalog.get('LabGym_detector_test')
+		# metadatacat=MetadataCatalog.get('LabGym_detector_test')
 
 		animalmapping=os.path.join(path_to_detector,'model_parameters.txt')
 
@@ -213,5 +214,3 @@ class Detector():
 			outputs=self.current_detector(inputs)
 
 		return outputs
-
-

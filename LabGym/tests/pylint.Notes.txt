@@ -1,0 +1,39 @@
+2025-08-25
+*   Pylint is a static code analysis tool.
+    https://pylint.readthedocs.io/en/latest/
+*   pylint.sh is a homegrown convenience wrapper for running pylint.
+
+1.  Install pylint
+        pip install pylint
+
+2.  Run pylint.sh from this dir to pylint all ../*.py, like
+        sh pylint.sh
+    or pylint specific file(s), like
+        sh pylint.sh ../categorizer.py ../tools.py
+
+3.  Summarize pylint results saved in tmp.pylint
+        sh pylint.sh --summarize
+
+A summary of pylint results looks like this, 
+with a quality metric in col 2,
+and an observations-count in col 3.
+     1	10.00/10  3     __init__.py
+     2	9.39/10   6     __main__.py
+     3	8.93/10   108   analyzebehavior.py
+     4	9.00/10   170   analyzebehavior_dt.py
+     5	8.30/10   175   categorizer.py
+     6	8.96/10   9     central_logging.py
+     7	9.42/10   10    config.py
+     8	7.52/10   28    detector.py
+     9	8.79/10   133   gui_analyzer.py
+    10	8.79/10   148   gui_categorizer.py
+    11	8.49/10   62    gui_detector.py
+    12	7.67/10   49    gui_main.py
+    13	8.86/10   64    gui_preprocessor.py
+    14	7.84/10   27    minedata.py
+    15	9.50/10   7     myargparse.py
+    16	8.54/10   19    mylogging.py
+    17	7.50/10   5     mypkg_resources.py
+    18	8.30/10   12    probes.py
+    19	8.52/10   16    registration.py
+    20	9.09/10   69    tools.py

@@ -2,7 +2,7 @@
 Copyright (C)
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext. 
+You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext.
 
 For license issues, please contact:
 
@@ -16,40 +16,47 @@ USA
 Email: bingye@umich.edu
 '''
 
+# Standard library imports.
+from collections import deque
+import datetime
+import functools
+import gc
+import logging
+import math
+import operator
+import os
+import shutil
+
 # Log the load of this module (by the module loader, on first import).
 # Intentionally positioning these statements before other imports, against the
 # guidance of PEP-8, to log the load before other imports log messages.
-import logging
-logger =  logging.getLogger(__name__)
-logger.debug('loading %s', __file__)
+logger =  logging.getLogger(__name__)  # pylint: disable=wrong-import-position
+logger.debug('loading %s', __file__)  # pylint: disable=wrong-import-position
 
-
-import os
-import gc
+# Related third party imports.
 import cv2
+from matplotlib.colorbar import ColorbarBase
+from matplotlib.colors import LinearSegmentedColormap,Normalize
+import matplotlib.pyplot as plt
 import numpy as np
-import datetime
+import pandas as pd
+from PIL import Image,ImageEnhance
+import seaborn as sb
 from skimage import exposure
 logger.debug('importing tensorflow.keras.preprocessing.image (starting...)')
-from tensorflow.keras.preprocessing.image import img_to_array
+from tensorflow import keras  # pylint: disable=unused-import
+# from tensorflow.keras.preprocessing.image import img_to_array
+from keras.preprocessing.image import img_to_array
 logger.debug('importing tensorflow.keras.preprocessing.image (done)')
-from collections import deque
-import matplotlib.pyplot as plt
-from matplotlib.colors import LinearSegmentedColormap,Normalize
-from matplotlib.colorbar import ColorbarBase
-from PIL import Image,ImageEnhance
-import pandas as pd
-import seaborn as sb
-import functools
-import operator
-import math
-import shutil
+
+# Local application/library specific imports.
+# (none)
 
 
 def extract_background(frames,stable_illumination=True,animal_vs_bg=0):
 
 	'''
-	This function is used in 'background subtraction based detection method', 
+	This function is used in 'background subtraction based detection method',
 	which extract the static background of a video.
 
 	animal_vs_bg: 0--animals brighter than the background
@@ -58,7 +65,7 @@ def extract_background(frames,stable_illumination=True,animal_vs_bg=0):
 	'''
 
 	len_frames=len(frames)
-	
+
 	if len_frames<=3:
 
 		background=None
@@ -79,7 +86,7 @@ def extract_background(frames,stable_illumination=True,animal_vs_bg=0):
 				while n<len_frames-101:
 					frames_temp=frames[n:n+100]
 					mean=frames_temp.mean(0)
-					frames_mean.append(mean)	
+					frames_mean.append(mean)
 					check_frames.append(abs(mean-mean_overall)+frames_temp.std(0))
 					n+=30
 
@@ -94,7 +101,7 @@ def extract_background(frames,stable_illumination=True,animal_vs_bg=0):
 
 			else:
 
-				background=np.uint8(np.median(frames,axis=0))	
+				background=np.uint8(np.median(frames,axis=0))
 
 		else:
 
@@ -139,7 +146,7 @@ def extract_background(frames,stable_illumination=True,animal_vs_bg=0):
 						background=np.uint8(frames.max(0))
 					else:
 						background=np.uint8(frames.min(0))
-	
+
 	return background
 
 
@@ -147,7 +154,7 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,framehe
 
 	'''
 	This function is in 'background subtraction based detection method',
-	which determines the time windows for background extraction and 
+	which determines the time windows for background extraction and
 	estimating animal size, as well as finding the stimulation start time.
 
 	delta: a float number that detemines fold changes of illumination when it's considered as stimulation start time point
@@ -334,7 +341,7 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,framehe
 	print(datetime.datetime.now())
 
 	if delta<10000:
-		
+
 		if ex_start!=0 or path_background is not None:
 
 			capture=cv2.VideoCapture(path_to_video)
@@ -359,7 +366,7 @@ def estimate_constants(path_to_video,delta,animal_number,framewidth=None,framehe
 					if np.mean(frame)>delta*np.mean(frame_initial):
 						stim_t=frame_count/fps
 						break
-						
+
 				frame_count+=1
 
 			capture.release()
@@ -506,7 +513,7 @@ def extract_blob_background(frame,contours,contour=None,channel=1,background_fre
 
 	'''
 	This function is used to keep the pixels for the area
-	inside a contour, and crop the frame to fit a list of 
+	inside a contour, and crop the frame to fit a list of
 	contours. It can also include background pixels.
 
 	channel: 1--gray scale blob
@@ -537,7 +544,7 @@ def extract_blob_all(frame,y_bt,y_tp,x_lf,x_rt,contours=None,channel=1,backgroun
 
 	'''
 	This function is used to keep the pixels for the area
-	inside a list of contours, and crop the frame to fit 
+	inside a list of contours, and crop the frame to fit
 	the y_bt,y_tp,x_lf,x_rt coordinates.
 
 	channel: 1--gray scale blob
@@ -619,7 +626,7 @@ def contour_frame(frame,animal_number,background,background_low,background_high,
 			foreground=cv2.absdiff(frame_dt,background)
 		else:
 			foreground=cv2.subtract(frame_dt,background)
-			
+
 	foreground=cv2.cvtColor(foreground,cv2.COLOR_BGR2GRAY)
 	thred=cv2.threshold(foreground,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)[1]
 	thred=cv2.morphologyEx(thred,cv2.MORPH_CLOSE,np.ones((kernel,kernel),np.uint8))
@@ -662,7 +669,7 @@ def contour_frame(frame,animal_number,background,background_low,background_high,
 def generate_patternimage(frame,outlines,inners=None,std=0):
 
 	'''
-	This function is used to generate pattern images 
+	This function is used to generate pattern images
 	in 'non-interactive' behavior mode.
 
 	inners: the inner contours when body parts are inlcuded in the pattern images
@@ -684,7 +691,7 @@ def generate_patternimage(frame,outlines,inners=None,std=0):
 	for n,outline in enumerate(outlines):
 
 		if outline is not None:
-				
+
 			if inners is not None:
 				background_std=np.zeros_like(frame)
 				cv2.drawContours(background_std,inners[n],-1,(255,255,255),-1)
@@ -694,7 +701,7 @@ def generate_patternimage(frame,outlines,inners=None,std=0):
 				d=n*int((255*4/length))
 				cv2.drawContours(background_outlines,[outline],0,(255,d,0),p_size)
 				if inners is not None:
-					cv2.drawContours(background_inners,inners[n],-1,(255,d,0),p_size)	
+					cv2.drawContours(background_inners,inners[n],-1,(255,d,0),p_size)
 			elif n<length/2:
 				d=int((n-length/4)*(255*4/length))
 				cv2.drawContours(background_outlines,[outline],0,(255,255,d),p_size)
@@ -734,7 +741,7 @@ def generate_patternimage(frame,outlines,inners=None,std=0):
 def generate_patternimage_all(frame,y_bt,y_tp,x_lf,x_rt,outlines_list,inners_list,std=0):
 
 	'''
-	This function is used to generate pattern images 
+	This function is used to generate pattern images
 	in 'interactive basic' behavior mode.
 
 	y_bt...x_rt: the coordinates that determine the border of the pattern images
@@ -772,7 +779,7 @@ def generate_patternimage_all(frame,y_bt,y_tp,x_lf,x_rt,outlines_list,inners_lis
 			cv2.drawContours(background_outlines,outlines,-1,(255,d,0),p_size)
 			if inners_length>0:
 				for inners in inners_list[n]:
-					cv2.drawContours(background_inners,inners,-1,(255,d,0),p_size)	
+					cv2.drawContours(background_inners,inners,-1,(255,d,0),p_size)
 		elif n<length/2:
 			d=int((n-length/4)*(255*4/length))
 			cv2.drawContours(background_outlines,outlines,-1,(255,255,d),p_size)
@@ -817,7 +824,7 @@ def generate_patternimage_all(frame,y_bt,y_tp,x_lf,x_rt,outlines_list,inners_lis
 def generate_patternimage_interact(frame,outlines,other_outlines,inners=None,other_inners=None,std=0):
 
 	'''
-	This function is used to generate pattern images 
+	This function is used to generate pattern images
 	in 'interactive advanced' behavior mode.
 
 	other_outlines: the contours of animals / objects that are not the 'main character'
@@ -911,7 +918,7 @@ def plot_events(result_path,event_probability,time_points,names_and_colors,behav
 	'''
 	This function is used to plot a raster plot for behavior events and probability
 	over time based on the 'event_probability' and 'time_points'.
-	
+
 	names_and_colors: the behavior names and their representative colors
 	width and height: the size of the plot, when ==0, the size is defined automatically
 	'''
@@ -936,7 +943,7 @@ def plot_events(result_path,event_probability,time_points,names_and_colors,behav
 		figure,ax=plt.subplots(figsize=(width,height))
 		if height<=5:
 			figure.subplots_adjust(bottom=0.25)
-	
+
 	for behavior_name in behavior_to_include:
 
 		all_data=[]
@@ -960,19 +967,19 @@ def plot_events(result_path,event_probability,time_points,names_and_colors,behav
 		dataframe=pd.DataFrame(all_data,columns=[float('{:.1f}'.format(i)) for i in time_points])
 
 		heatmap=sb.heatmap(dataframe,mask=masks,xticklabels=x_intvl,cmap=LinearSegmentedColormap.from_list('',names_and_colors[behavior_name]),cbar=False,vmin=0,vmax=1)
-		heatmap.set_xticklabels(heatmap.get_xticklabels(),rotation=90) 
+		heatmap.set_xticklabels(heatmap.get_xticklabels(),rotation=90)
 		# if don't want the ticks
 		# ax.tick_params(axis='both',which='both',length=0)
-	
+
 	plt.savefig(os.path.join(result_path,'behaviors_plot.png'))
 
-	for behavior_name in behavior_to_include: 
+	for behavior_name in behavior_to_include:
 
 		colorbar_fig=plt.figure(figsize=(5,1))
 		ax=colorbar_fig.add_axes([0,1,1,1])
 		colorbar=ColorbarBase(ax,orientation='horizontal',cmap=LinearSegmentedColormap.from_list('',names_and_colors[behavior_name]),norm=Normalize(vmin=0,vmax=1),ticks=[])
 		colorbar.outline.set_linewidth(0)
-			
+
 		plt.savefig(os.path.join(result_path,behavior_name+'_colorbar.png'),bbox_inches='tight')
 		plt.close()
 
@@ -985,7 +992,7 @@ def extract_frames(path_to_video,out_path,framewidth=None,start_t=0,duration=0,s
 
 	'''
 	This function is used to extract frames from a video.
-	
+
 	skip_redundant: the interval between two consecutively extracted frames
 	'''
 
@@ -1001,7 +1008,7 @@ def extract_frames(path_to_video,out_path,framewidth=None,start_t=0,duration=0,s
 	if duration<=0:
 		duration=full_duration
 	end_t=start_t+duration
-		
+
 	frame_count=1
 	frame_count_generate=0
 
@@ -1017,7 +1024,7 @@ def extract_frames(path_to_video,out_path,framewidth=None,start_t=0,duration=0,s
 			break
 
 		if t>=start_t:
-			
+
 			if frame_count_generate%skip_redundant==0:
 
 				if framewidth is not None:
@@ -1055,7 +1062,7 @@ def preprocess_video(
 
 	'''
 	This function is used to preprocess a video.
-	
+
 	time_windows: if trim_video is True, the time_windows will form a new, trimmed video
 	contrast: only valide if enhance_contrast is True
 	left...bottom: the edges defining the cropped frame if crop_frame is True
@@ -1159,17 +1166,17 @@ def preprocess_video(
 def parse_all_events_file(path_to_events):
 
 	'''
-	This function is used to parse an all_events.xlsx file and convert it into 
+	This function is used to parse an all_events.xlsx file and convert it into
 	a dict 'event_probability', a list 'time_points', and a list 'behavior_names'.
 
 	path_to_events: The path to the 'all_events.xlsx' file
 
-	event_probability is a dictionary with the keys as the ID of each animal / object 
-	and the values are lists of lists, where each sub-list has a length of 2 and is 
+	event_probability is a dictionary with the keys as the ID of each animal / object
+	and the values are lists of lists, where each sub-list has a length of 2 and is
 	in one of the following formats:
 
 		- ['NA', -1]
-		- [behavior, probability], where behavior is the name of the behavior 
+		- [behavior, probability], where behavior is the name of the behavior
 		and probability is a float between 0 and 1.
 
 	time_points is a list of floats containing the time points of the analysis duration.
@@ -1207,16 +1214,16 @@ def parse_all_events_file(path_to_events):
 def calculate_distances(path_to_folder,filename,behavior_to_include,out_path):
 
 	'''
-	This function is used to calculate the shortes distance and the total 
-	traveling dsitance and their ratio among the locations of the animals 
+	This function is used to calculate the shortes distance and the total
+	traveling dsitance and their ratio among the locations of the animals
 	when a selected behavior occurs for the first time.
 
 	For example, an animal explores locations A, B, and C in sequence.
-	This function will calculate the shortes distance that connects 
+	This function will calculate the shortes distance that connects
 	locations A, B, and C, in the exploration sequence of the aninmal.
-	It will also calculate the traveling distance of the actual route of 
+	It will also calculate the traveling distance of the actual route of
 	the animal.
-	
+
 	path_to_folder: The path to the folder that stores the 'all_event_probability.xlsx',
 	'all_centers.xlsx', and 'Annotated video.avi'.
 	filename: the name of the path_to_folder
@@ -1374,11 +1381,11 @@ def sort_examples_from_csv(path_to_examples,out_path):
 	'''
 	This function is used to sort behavior examples generated by LabGym according to
 	the manual labeling from other sources. It inputs the unsorted behavior examples
-	generated by LabGym and a .csv file that stores the frame-wise behavior labels, 
+	generated by LabGym and a .csv file that stores the frame-wise behavior labels,
 	and sort the unsorted examples into different behavior categories (labels) that
 	can be used to train a Categorizer in LabGym.
-	
-	path_to_examples: The folder that stores all unsorted examples generated by LabGym. 
+
+	path_to_examples: The folder that stores all unsorted examples generated by LabGym.
 	The .csv file should also be in this folder.
 	out_path: the folder to store the sorted behavior examples
 	'''
@@ -1415,5 +1422,3 @@ def sort_examples_from_csv(path_to_examples,out_path):
 						shutil.move(path_to_pattern_image,os.path.join(out_path,str(behavior_name),os.path.splitext(basename)[0]+'.jpg'))
 
 	print('Sorting completed!')
-
-
