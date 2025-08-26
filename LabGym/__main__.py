@@ -46,9 +46,9 @@ from packaging import version  # Core utilities for Python packages
 import requests  # Python HTTP for Humans.
 
 # Local application/library specific imports.
-from LabGym import __version__, gui_main, probes
 # pylint: disable-next=unused-import
 from LabGym import mypkg_resources  # replace deprecated pkg_resources
+from LabGym import __version__, gui_main, probes
 
 
 logger.debug('%s: %r', '(__name__, __package__)', (__name__, __package__))
