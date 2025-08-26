@@ -2,7 +2,7 @@
 Copyright (C)
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext. 
+You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext.
 
 For license issues, please contact:
 
@@ -16,29 +16,50 @@ USA
 Email: bingye@umich.edu
 '''
 
-
-
-
-from .tools import *
-from .detector import Detector
-import os
-import gc
-import cv2
-import torch
-import datetime
-import numpy as np
-import math
-from scipy.spatial import distance
+# Standard library imports.
 from collections import deque
-import tensorflow as tf
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing.image import img_to_array
-import pandas as pd
-import seaborn as sb
-from skimage import exposure
+import datetime
 import functools
+import gc
+import math
 import operator
+import os
 
+# Related third party imports.
+import cv2
+import numpy as np
+import pandas as pd
+from scipy.spatial import distance
+# import seaborn as sb
+from skimage import exposure
+import tensorflow as tf
+# from tensorflow.keras.models import load_model
+# from tensorflow.keras.preprocessing.image import img_to_array
+from tensorflow import keras  # pylint: disable=unused-import
+from keras.models import load_model
+from keras.preprocessing.image import img_to_array
+import torch
+
+# Local application/library specific imports.
+from .detector import Detector
+from .tools import (
+    # extract_background,
+    # estimate_constants,
+    crop_frame,
+    extract_blob_background,
+    extract_blob_all,
+    get_inner,
+    # contour_frame,
+    generate_patternimage,
+    generate_patternimage_all,
+    generate_patternimage_interact,
+    # plot_events,
+    # extract_frames,
+    # preprocess_video,
+    # parse_all_events_file,
+    # calculate_distances,
+    # sort_examples_from_csv,
+    )
 
 
 class AnalyzeAnimalDetector():
@@ -114,7 +135,7 @@ class AnalyzeAnimalDetector():
 		length=15, # the duration (number of frames) of a behavior example (a behavior episode)
 		social_distance=0 # the distance to determine which two animals / objects form a interactive pair / group
 		):
-		
+
 		print('Preparation started...')
 		self.log.append('Preparation started...')
 		print(datetime.datetime.now())
@@ -460,7 +481,7 @@ class AnalyzeAnimalDetector():
 								mask=goodmasks[x]
 								cnt=goodcontours[x]
 								contours.append(cnt)
-								centers.append((int(cv2.moments(cnt)['m10']/cv2.moments(cnt)['m00']),int(cv2.moments(cnt)['m01']/cv2.moments(cnt)['m00'])))  
+								centers.append((int(cv2.moments(cnt)['m10']/cv2.moments(cnt)['m00']),int(cv2.moments(cnt)['m01']/cv2.moments(cnt)['m00'])))
 								(_,_),(w,h),_=cv2.minAreaRect(cnt)
 								heights.append(max(w,h))
 								if self.include_bodyparts:
@@ -468,7 +489,7 @@ class AnalyzeAnimalDetector():
 									inners.append(get_inner(masked_frame,cnt))
 
 							self.track_animal(frame_count_analyze+1-batch_size+batch_count,animal_name,contours,centers,heights,inners=inners)
-							
+
 							if self.animation_analyzer:
 								for i in self.animal_centers[animal_name]:
 									for n,f in enumerate(self.temp_frames):
@@ -589,7 +610,7 @@ class AnalyzeAnimalDetector():
 								all_masks.append(mask)
 								cnt=goodcontours[x]
 								all_contours.append(cnt)
-								all_centers.append((int(cv2.moments(cnt)['m10']/cv2.moments(cnt)['m00']),int(cv2.moments(cnt)['m01']/cv2.moments(cnt)['m00'])))  
+								all_centers.append((int(cv2.moments(cnt)['m10']/cv2.moments(cnt)['m00']),int(cv2.moments(cnt)['m01']/cv2.moments(cnt)['m00'])))
 								(_,_),(w,h),_=cv2.minAreaRect(cnt)
 								all_heights.append(max(w,h))
 								if self.include_bodyparts:
@@ -702,7 +723,7 @@ class AnalyzeAnimalDetector():
 			if time>=start_t:
 
 				self.all_time.append(round((time-start_t),2))
-				
+
 				if (frame_count_analyze+1)%1000==0:
 					print(str(frame_count_analyze+1)+' frames processed...')
 					self.log.append(str(frame_count_analyze+1)+' frames processed...')
@@ -791,7 +812,7 @@ class AnalyzeAnimalDetector():
 			if time>=start_t:
 
 				self.all_time.append(round((time-start_t),2))
-				
+
 				if (frame_count_analyze+1)%1000==0:
 					print(str(frame_count_analyze+1)+' frames processed...')
 					self.log.append(str(frame_count_analyze+1)+' frames processed...')
@@ -891,7 +912,7 @@ class AnalyzeAnimalDetector():
 										blob=cv2.resize(blob,(self.dim_tconv,self.dim_tconv),interpolation=cv2.INTER_AREA)
 									animation.append(img_to_array(blob))
 									self.animations[name][0][frame_count_analyze+1-batch_size+batch_count]=np.array(animation)
-					
+
 					batch=[]
 					batch_count=0
 
@@ -906,7 +927,7 @@ class AnalyzeAnimalDetector():
 		self.pattern_images[name][0]=self.pattern_images[name][0][:length]
 		self.animal_contours[name][0]=self.animal_contours[name][0][:length]
 		self.animal_centers[name][0]=self.animal_centers[name][0][:length]
-		
+
 		print('Information acquisition completed!')
 		self.log.append('Information acquisition completed!')
 
@@ -936,7 +957,7 @@ class AnalyzeAnimalDetector():
 
 			if len(IDs)==len(to_delete):
 				to_delete.remove(np.argsort(lengths)[-1])
-			
+
 			for i in IDs:
 				if i in to_delete:
 					del self.to_deregister[animal_name][i]
@@ -1154,13 +1175,13 @@ class AnalyzeAnimalDetector():
 					hex_color=self.all_behavior_parameters[self.animal_kinds[0]][behavior_name]['color'][1].lstrip('#')
 					color=tuple(int(hex_color[i:i+2],16) for i in (0,2,4))
 					colors[behavior_name]=color[::-1]
-			
+
 			if len(behavior_to_include)!=len(self.all_behavior_parameters[self.animal_kinds[0]]):
 				for behavior_name in self.all_behavior_parameters[self.animal_kinds[0]]:
 					if behavior_name not in behavior_to_include:
 						del colors[behavior_name]
-			
-			if show_legend:	
+
+			if show_legend:
 				scl=self.background.shape[0]/1024
 				if 25*(len(colors)+1)<self.background.shape[0]:
 					intvl=25
@@ -1243,7 +1264,7 @@ class AnalyzeAnimalDetector():
 
 									if self.categorize_behavior:
 										if self.behavior_mode!=1:
-											cv2.putText(frame,str(animal_name)+' '+str(i),(cx-10,cy-25),cv2.FONT_HERSHEY_SIMPLEX,text_scl,animal_color,text_tk)	
+											cv2.putText(frame,str(animal_name)+' '+str(i),(cx-10,cy-25),cv2.FONT_HERSHEY_SIMPLEX,text_scl,animal_color,text_tk)
 										if self.event_probability[animal_name][i][frame_count_analyze][0]=='NA':
 											if self.behavior_mode==1:
 												cv2.drawContours(frame,self.animal_contours[animal_name][i][frame_count_analyze],-1,(255,255,255),1)
@@ -1327,7 +1348,7 @@ class AnalyzeAnimalDetector():
 						self.all_behavior_parameters[animal_name]['distance'][i]=0.0
 					for parameter_name in all_parameters:
 						self.all_behavior_parameters[animal_name][parameter_name][i]=[np.nan]*len(self.all_time)
-				
+
 		if len(parameter_to_analyze)>0:
 
 			for animal_name in self.animal_kinds:
@@ -1347,7 +1368,7 @@ class AnalyzeAnimalDetector():
 								if 'count' in parameter_to_analyze:
 									if behavior_name!=self.event_probability[animal_name][i][n-1][0]:
 										self.all_behavior_parameters[animal_name][behavior_name]['count'][i]+=1
-										
+
 								if 'duration' in parameter_to_analyze:
 									self.all_behavior_parameters[animal_name][behavior_name]['duration'][i]+=1
 
@@ -1361,7 +1382,7 @@ class AnalyzeAnimalDetector():
 										if h is None or self.animal_heights[animal_name][i][n] is None:
 											height_diff=0.0
 										else:
-											height_diff=abs(h-self.animal_heights[animal_name][i][n])/h	
+											height_diff=abs(h-self.animal_heights[animal_name][i][n])/h
 										heights_diffs.append(height_diff)
 									magnitude_length=max(heights_diffs)
 									vigor_length=magnitude_length/((self.length-np.argmax(heights_diffs))/self.fps)
@@ -1396,7 +1417,7 @@ class AnalyzeAnimalDetector():
 											if ct is None:
 												displacements.append(0)
 											else:
-												displacements.append(math.dist(end_center,ct))		
+												displacements.append(math.dist(end_center,ct))
 										displacement=max(displacements)
 										if normalize_distance:
 											displacement=displacement/calibrator
@@ -1576,7 +1597,7 @@ class AnalyzeAnimalDetector():
 						n+=1
 
 					if self.categorize_behavior:
-					
+
 						if 'duration' in parameter_to_analyze:
 							for behavior_name in self.all_behavior_parameters[animal_name]:
 								if self.all_behavior_parameters[animal_name][behavior_name]['duration'][i]!=0:
@@ -1620,7 +1641,7 @@ class AnalyzeAnimalDetector():
 
 			if self.categorize_behavior:
 				all_parameters.append('probability')
-				
+
 			if 'count' in parameter_to_analyze:
 				all_parameters.append('count')
 			if 'duration' in parameter_to_analyze:
@@ -1672,7 +1693,7 @@ class AnalyzeAnimalDetector():
 						individual_df.to_excel(os.path.join(self.results_path,animal_name+'_'+parameter_name+'.xlsx'),float_format='%.2f',index_label='time/ID')
 
 				if len(summary)>=1:
-					pd.concat(summary,axis=1).to_excel(os.path.join(self.results_path,animal_name+'_all_summary.xlsx'),float_format='%.2f',index_label='ID/parameter')			
+					pd.concat(summary,axis=1).to_excel(os.path.join(self.results_path,animal_name+'_all_summary.xlsx'),float_format='%.2f',index_label='ID/parameter')
 
 		print('All results exported in: '+str(self.results_path))
 		self.log.append('All results exported in: '+str(self.results_path))
@@ -1688,7 +1709,7 @@ class AnalyzeAnimalDetector():
 		# background_free: whether to include background in animations
 		# black_background: whether to set background black
 		# skip_redundant: the interval (in frames) of two consecutively generated behavior example pairs
-		
+
 		print('Generating behavior examples...')
 		print(datetime.datetime.now())
 
@@ -1723,7 +1744,7 @@ class AnalyzeAnimalDetector():
 				self.detect_track_individuals([frame],1,frame_count_analyze,background_free=background_free,black_background=black_background,animation=animation)
 
 				for animal_name in self.animal_kinds:
-						
+
 					if frame_count_analyze>=self.length and frame_count_analyze%skip_redundant==0:
 
 						for n in self.animal_centers[animal_name]:
@@ -2009,7 +2030,7 @@ class AnalyzeAnimalDetector():
 							exclusion_mask[np.where((np.sum(np.logical_and(np.array(animal_masks)[:,None],animal_masks),axis=(2,3))/mask_area[:,None]>0.8) & (mask_area[:,None]<mask_area[None,:]))[0]]=True
 							animal_masks=[m for m,exclude in zip(animal_masks,exclusion_mask) if not exclude]
 							animal_scores=[s for s,exclude in zip(animal_scores,exclusion_mask) if not exclude]
-							
+
 							if len(animal_masks)==0:
 								self.animal_present[animal_name]=0
 								for i in self.animal_centers[animal_name]:
@@ -2429,5 +2450,3 @@ class AnalyzeAnimalDetector():
 					results_df.set_index(names).join(pd.DataFrame.from_dict(animal_information[behavior_name][animal_name]['probability'],orient='index',columns=['probability']).reset_index(drop=True).set_index(names)).to_excel(os.path.join(results_path,behavior_name+'_'+animal_name+'.xlsx'),index_label='imagename/parameter')
 
 			print('All results exported in: '+str(results_path))
-
-

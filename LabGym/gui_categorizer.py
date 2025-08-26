@@ -2,7 +2,7 @@
 Copyright (C)
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext. 
+You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext.
 
 For license issues, please contact:
 
@@ -26,22 +26,11 @@ import os
 from pathlib import Path
 import shutil
 
-
-# Log the load of this module (by the module loader, on first import).
-#
-# These statements are intentionally positioned before this module's
-# other imports (against the guidance of PEP 8), to log the load of this
-# module before other import statements are executed and potentially
-# produce their own log messages.
-#
 # Log the load of this module (by the module loader, on first import).
 # Intentionally positioning these statements before other imports, against the
 # guidance of PEP-8, to log the load before other imports log messages.
-# pylint: disable=wrong-import-position
-logger = logging.getLogger(__name__)
-logger.debug('%s', f'loading {__file__}')
-# pylint: enable=wrong-import-position
-
+logger =  logging.getLogger(__name__)  # pylint: disable=wrong-import-position
+logger.debug('loading %s', __file__)  # pylint: disable=wrong-import-position
 
 # Related third party imports.
 import cv2
@@ -59,9 +48,7 @@ from .categorizer import Categorizers
 from .tools import sort_examples_from_csv
 from LabGym import config
 
-
 the_absolute_current_path=str(Path(__file__).resolve().parent)
-
 
 
 class WindowLv2_GenerateExamples(wx.Frame):
@@ -636,9 +623,9 @@ class WindowLv2_GenerateExamples(wx.Frame):
 				dialog.Destroy()
 
 				if do_nothing is False:
-		
+
 					for i in self.path_to_videos:
-					
+
 						filename=os.path.splitext(os.path.basename(i))[0].split('_')
 						if self.decode_animalnumber:
 							if self.use_detector:
@@ -1079,7 +1066,7 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 		_config = config.get_config()
 
 		self.file_path=None # the folder that stores sorted, unprepared behavior examples (each category is a subfolder)
-		self.new_path=None # the folder that stores prepared behavior examples (contains all examples with a category tag in their names) 
+		self.new_path=None # the folder that stores prepared behavior examples (contains all examples with a category tag in their names)
 		self.behavior_mode=0 # 0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
 		self.animation_analyzer=True # whether to include Animation Analyzer in the Categorizers
 		self.level_tconv=2 # complexity level of Animation Analyzer in Categorizer
@@ -1385,7 +1372,7 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 
 		dialog=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
 		if dialog.ShowModal()==wx.ID_OK:
-			self.data_path=dialog.GetPath()			
+			self.data_path=dialog.GetPath()
 		dialog.Destroy()
 
 		if self.data_path is None:
@@ -1412,7 +1399,7 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 					self.background_free=False
 					self.text_trainingfolder.SetLabel('Static images w/ background in: '+self.data_path+'.')
 				dialog.Destroy()
-		
+
 			else:
 
 				if self.animation_analyzer:
@@ -1500,7 +1487,7 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 				selected='none'
 			else:
 				if self.aug_methods[0]=='default':
-					self.aug_methods=['random rotation','horizontal flipping','vertical flipping','random brightening','random dimming']	
+					self.aug_methods=['random rotation','horizontal flipping','vertical flipping','random brightening','random dimming']
 			dialog.Destroy()
 
 			dialog=wx.MessageDialog(self,'Also augment the validation data?\nSelect "No" if dont know what it is.','Augment validation data?',wx.YES_NO|wx.ICON_QUESTION)
@@ -1542,7 +1529,7 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 		else:
 
 			do_nothing=False
-				
+
 			stop=False
 			while stop is False:
 				dialog=wx.TextEntryDialog(self,'Enter a name for the Categorizer to train','Categorizer name')
@@ -1695,7 +1682,7 @@ class WindowLv2_TestCategorizers(wx.Frame):
 		if dialog.ShowModal()==wx.ID_OK:
 			self.file_path=dialog.GetPath()
 			self.text_inputexamples.SetLabel('Path to ground-truth behavior examples: '+self.file_path+'.')
-		dialog.Destroy()	
+		dialog.Destroy()
 
 
 	def select_reportpath(self,event):
@@ -1740,5 +1727,3 @@ class WindowLv2_TestCategorizers(wx.Frame):
 				shutil.rmtree(os.path.join(self.model_path,categorizer))
 			dialog1.Destroy()
 		dialog.Destroy()
-
-

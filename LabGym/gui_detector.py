@@ -2,7 +2,7 @@
 Copyright (C)
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext. 
+You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext.
 
 For license issues, please contact:
 
@@ -26,36 +26,24 @@ import os
 from pathlib import Path
 import shutil
 
-
-# Log the load of this module (by the module loader, on first import).
-#
-# These statements are intentionally positioned before this module's
-# other imports (against the guidance of PEP 8), to log the load of this
-# module before other import statements are executed and potentially
-# produce their own log messages.
-#
 # Log the load of this module (by the module loader, on first import).
 # Intentionally positioning these statements before other imports, against the
 # guidance of PEP-8, to log the load before other imports log messages.
-# pylint: disable=wrong-import-position
-logger = logging.getLogger(__name__)
-logger.debug('%s', f'loading {__file__}')
-# pylint: enable=wrong-import-position
-
+logger =  logging.getLogger(__name__)  # pylint: disable=wrong-import-position
+logger.debug('loading %s', __file__)  # pylint: disable=wrong-import-position
 
 # Related third party imports.
-import cv2
-import torch
+# import cv2
+# import torch
 import wx
 
 # Local application/library specific imports.
-from .tools import extract_frames
-from .detector import Detector
 from LabGym import config
+from .detector import Detector
+from .tools import extract_frames
 
 
 the_absolute_current_path=str(Path(__file__).resolve().parent)
-
 
 
 class WindowLv2_GenerateImages(wx.Frame):
@@ -356,7 +344,7 @@ class WindowLv2_TrainDetectors(wx.Frame):
 			self.inference_size=int(dialog.GetValue())
 			self.text_inferencingsize.SetLabel('Inferencing frame size: '+str(self.inference_size)+'.')
 		dialog.Destroy()
-		
+
 
 	def input_iterations(self,event):
 
@@ -571,6 +559,3 @@ class WindowLv2_TestDetectors(wx.Frame):
 				shutil.rmtree(os.path.join(self.detector_path,detector))
 			dialog1.Destroy()
 		dialog.Destroy()
-
-
-

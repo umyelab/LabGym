@@ -2,7 +2,7 @@
 Copyright (C)
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext. 
+You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext.
 For license issues, please contact:
 Dr. Bing Ye
 Life Sciences Institute
@@ -13,16 +13,18 @@ USA
 Email: bingye@umich.edu
 '''
 
-
-
-
-import scipy
-from scipy import stats
-import scikit_posthocs as sp
-import pandas as pd
+# Standard library imports.
 import os
-import openpyxl
 
+# Related third party imports.
+# import openpyxl
+import pandas as pd
+import scikit_posthocs as sp
+# import scipy
+from scipy import stats
+
+# Local application/library specific imports.
+# (none)
 
 
 class data_mining():
@@ -51,7 +53,7 @@ class data_mining():
 
 	def two_groups(self):
 
-		if self.control!=None:
+		if self.control is not None:
 			self.data.insert(0, self.control)
 
 		for behavior in self.data[0]:
@@ -115,7 +117,7 @@ class data_mining():
 					currentSet=self.data[i][behavior][parameter].dropna()
 					dataset.append(currentSet)
 
-				if self.control!=None:
+				if self.control is not None:
 					currentSet=self.control[behavior][parameter].dropna()
 					dataset.insert(0,currentSet)
 
@@ -152,7 +154,7 @@ class data_mining():
 
 					if test=='ANOVA':
 
-						if self.control==None:
+						if self.control is None:
 							tukey=stats.tukey_hsd(*dataset)
 							print(tukey)
 							posthoc_name='Tukey'
@@ -169,7 +171,7 @@ class data_mining():
 
 					else:
 
-						dunn=sp.posthoc_dunn(dataset) 
+						dunn=sp.posthoc_dunn(dataset)
 						dunn.columns=self.file_names
 						dunn.index=self.file_names
 						print('\t'*2,'Dunns post-hoc results:')
@@ -187,7 +189,7 @@ class data_mining():
 
 	def statistical_analysis(self):
 
-		if (len(self.data)==2 and self.control==None) or (len(self.data)==1 and self.control!=None): # tests for two groups only
+		if (len(self.data)==2 and self.control is None) or (len(self.data)==1 and self.control is not None): # tests for two groups only
 
 			self.two_groups()
 
@@ -198,5 +200,3 @@ class data_mining():
 		self.writer.close()
 
 		print('Data mining for statistical analysis completed!')
-
-

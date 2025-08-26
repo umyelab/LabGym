@@ -2,7 +2,7 @@
 Copyright (C)
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext. 
+You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext.
 
 For license issues, please contact:
 
@@ -25,18 +25,11 @@ import logging
 import os
 from pathlib import Path
 
-
 # Log the load of this module (by the module loader, on first import).
-#
-# These statements are intentionally positioned before this module's
-# other imports (against the guidance of PEP 8), to log the load of this
-# module before other import statements are executed and potentially
-# produce their own log messages.
-# pylint: disable=wrong-import-position
-logger = logging.getLogger(__name__)
-logger.debug('%s', f'loading {__file__}')
-# pylint: enable=wrong-import-position
-
+# Intentionally positioning these statements before other imports, against the
+# guidance of PEP-8, to log the load before other imports log messages.
+logger =  logging.getLogger(__name__)  # pylint: disable=wrong-import-position
+logger.debug('loading %s', __file__)  # pylint: disable=wrong-import-position
 
 # Related third party imports.
 import matplotlib as mpl
@@ -47,13 +40,12 @@ import wx
 # Local application/library specific imports.
 from .analyzebehavior import AnalyzeAnimal
 from .analyzebehavior_dt import AnalyzeAnimalDetector
-from .tools import plot_events, parse_all_events_file, calculate_distances
-from .minedata import data_mining
 from LabGym import config
+from .minedata import data_mining
+from .tools import plot_events, parse_all_events_file, calculate_distances
 
 
 the_absolute_current_path=str(Path(__file__).resolve().parent)
-
 
 
 class ColorPicker(wx.Dialog):
@@ -837,7 +829,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 			colors=[]
 			for c in complete_colors:
 				colors.append(['#ffffff',c])
-			
+
 			dialog=wx.MessageDialog(self,'Specify the color to represent\nthe behaviors in annotations and plots?','Specify colors for behaviors?',wx.YES_NO|wx.ICON_QUESTION)
 			if dialog.ShowModal()==wx.ID_YES:
 				names_colors={}
@@ -1001,7 +993,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 								self.animal_number[animal_name]=1
 						else:
 							self.animal_number=1
-				
+
 					if self.path_to_categorizer is None:
 						self.behavior_mode=0
 						categorize_behavior=False
@@ -1060,7 +1052,7 @@ class WindowLv2_AnalyzeBehaviors(wx.Frame):
 									all_events[animal_name][len(all_events[animal_name])]=AAD.event_probability[animal_name][n]
 							if len(all_time)<len(AAD.all_time):
 								all_time=AAD.all_time
-					
+
 				if self.path_to_categorizer is not None:
 
 					max_length=len(all_time)
@@ -1212,8 +1204,8 @@ class WindowLv2_MineResults(wx.Frame):
 			self.control=None
 			self.text_selectcontrol.SetLabel('No control group.')
 		dialog.Destroy()
-		
-		 
+
+
 	def select_result_path(self,event):
 
 		dialog=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
@@ -1260,13 +1252,13 @@ class WindowLv2_MineResults(wx.Frame):
 
 	def control_organization(self):
 
-		if self.control==None:
+		if self.control is None:
 			return
 		del_idx=self.file_names.index(self.control_file_name)
 		self.dataset.pop(del_idx)
 		self.file_names.insert(0,self.file_names.pop(del_idx))
 
-	
+
 	def mine_data(self,event):
 
 		if self.file_path is None or self.result_path is None:
@@ -1368,7 +1360,7 @@ class WindowLv2_PlotBehaviors(wx.Frame):
 			self.text_inputfile.SetLabel(f'all_events.xlsx path: {all_events_file}')
 		dialog.Destroy()
 
-		 
+
 	def select_result_path(self,event):
 
 		dialog=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
@@ -1391,7 +1383,7 @@ class WindowLv2_PlotBehaviors(wx.Frame):
 					self.names_and_colors[behavior]=('#ffffff',new_color)
 			self.text_selectcolors.SetLabel('Colors: '+', '.join([f'{behavior}:{color}' for behavior,(_,color) in self.names_and_colors.items()]))
 
-	
+
 	def plot_behavior(self,event):
 
 		if self.events_probability is None or self.time_points is None or self.results_folder is None or self.names_and_colors is None:
@@ -1541,5 +1533,3 @@ class WindowLv2_CalculateDistances(wx.Frame):
 				all_data=pd.concat(all_data,keys=names,names=['File name','ID/parameter'])
 				all_data.drop(all_data.columns[0],axis=1,inplace=True)
 				all_data.to_excel(os.path.join(self.out_path,'all_summary.xlsx'),float_format='%.2f')
-
-
