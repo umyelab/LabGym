@@ -16,24 +16,25 @@ USA
 Email: bingye@umich.edu
 '''
 
-
-
-
-import os
-import cv2
+# Standard library imports.
 import json
-import torch
+import os
+
+# Related third party imports.
+import cv2
 from .detectron2 import model_zoo
 from .detectron2.checkpoint import DetectionCheckpointer
 from .detectron2.config import get_cfg
 from .detectron2.data import MetadataCatalog,DatasetCatalog,build_detection_test_loader
 from .detectron2.data.datasets import register_coco_instances
 from .detectron2.engine import DefaultTrainer,DefaultPredictor
-from .detectron2.utils.visualizer import Visualizer
 from .detectron2.evaluation import COCOEvaluator,inference_on_dataset
 from .detectron2.modeling import build_model
+from .detectron2.utils.visualizer import Visualizer
+import torch
 
-
+# Local application/library specific imports.
+# (none)
 
 
 class Detector():

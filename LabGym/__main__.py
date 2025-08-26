@@ -22,14 +22,13 @@ Email: bingye@umich.edu
 import logging
 from pathlib import Path
 
-
 # block begin
 # These statements are intentionally positioned before this module's
 # other imports (against the guidance of PEP 8), to log the loading of
 # this module before other import statements are executed and
 # potentially produce their own log messages.
-
-from LabGym import mylogging
+# pylint: disable=wrong-import-position
+from LabGym import mylogging  # pylint: disable=ungrouped-imports
 # Collect logrecords and defer handling until logging is configured.
 mylogging.defer()
 
@@ -39,16 +38,17 @@ logger.debug('loading %s', __file__)
 
 # Configure logging based on configfile, then handle collected logrecords.
 mylogging.configure()
+# pylint: enable=wrong-import-position
 # block end
 
-
 # Related third party imports.
-import requests  # Python HTTP for Humans.
 from packaging import version  # Core utilities for Python packages
+import requests  # Python HTTP for Humans.
 
 # Local application/library specific imports.
-from LabGym import mypkg_resources  # replace deprecated pkg_resources
 from LabGym import __version__, gui_main, probes
+# pylint: disable-next=unused-import
+from LabGym import mypkg_resources  # replace deprecated pkg_resources
 
 
 logger.debug('%s: %r', '(__name__, __package__)', (__name__, __package__))

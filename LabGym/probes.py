@@ -8,15 +8,9 @@ sw and its configuration, and outside resources.
 from __future__ import annotations
 
 # Standard library imports.
-# import inspect
-import getpass
-# import json
+# import getpass
 import logging
-# import os
-# from pathlib import Path
 import platform
-# import sys
-
 
 # Log the load of this module (by the module loader, on first import).
 #
@@ -29,7 +23,6 @@ logger = logging.getLogger(__name__)
 logger.debug('%s', f'loading {__file__}')
 logger.debug('%s: %r', '(__name__, __package__)', (__name__, __package__))
 # pylint: enable=wrong-import-position
-
 
 # Related third party imports.
 import certifi  # Python package for providing Mozilla's CA Bundle.

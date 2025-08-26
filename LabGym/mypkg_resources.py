@@ -13,11 +13,11 @@ with warnings.catch_warnings():
 #
 # LabGym and detectron2 presently (2025-07-28) use the pkg_resources
 # package in a single module, detectron2/model_zoo/model_zoo.py.
-#      4	import pkg_resources
+#      4  import pkg_resources
 #         ...
-#    139	    cfg_file = pkg_resources.resource_filename(
-#    140	        "detectron2.model_zoo", os.path.join("configs", config_path)
-#    141	    )
+#    139      cfg_file = pkg_resources.resource_filename(
+#    140          "detectron2.model_zoo", os.path.join("configs", config_path)
+#    141      )
 #
 # The pkg_resources package is deprecated.
 # When loaded, the pkg_resources package produces a user-facing warning.

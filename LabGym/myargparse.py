@@ -21,8 +21,10 @@ import sys
 import textwrap
 from typing import List, Union, Dict, Any
 
+# Related third party imports.
+# (none)
+
 # Local application/library specific imports.
-# import LabGym.__version__ as version
 from LabGym import __version__ as version
 
 

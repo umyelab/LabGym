@@ -16,34 +16,41 @@ USA
 Email: bingye@umich.edu
 '''
 
+# Standard library imports.
+from collections import deque
+import datetime
+import functools
+import gc
+import logging
+import math
+import operator
+import os
+import shutil
+
 # Log the load of this module (by the module loader, on first import).
 # Intentionally positioning these statements before other imports, against the
 # guidance of PEP-8, to log the load before other imports log messages.
-import logging
-logger =  logging.getLogger(__name__)
-logger.debug('loading %s', __file__)
+logger =  logging.getLogger(__name__)  # pylint: disable=wrong-import-position
+logger.debug('loading %s', __file__)  # pylint: disable=wrong-import-position
 
-
-import os
-import gc
+# Related third party imports.
 import cv2
+from matplotlib.colorbar import ColorbarBase
+from matplotlib.colors import LinearSegmentedColormap,Normalize
+import matplotlib.pyplot as plt
 import numpy as np
-import datetime
+import pandas as pd
+from PIL import Image,ImageEnhance
+import seaborn as sb
 from skimage import exposure
 logger.debug('importing tensorflow.keras.preprocessing.image (starting...)')
-from tensorflow.keras.preprocessing.image import img_to_array
+from tensorflow import keras  # pylint: disable=unused-import
+# from tensorflow.keras.preprocessing.image import img_to_array
+from keras.preprocessing.image import img_to_array
 logger.debug('importing tensorflow.keras.preprocessing.image (done)')
-from collections import deque
-import matplotlib.pyplot as plt
-from matplotlib.colors import LinearSegmentedColormap,Normalize
-from matplotlib.colorbar import ColorbarBase
-from PIL import Image,ImageEnhance
-import pandas as pd
-import seaborn as sb
-import functools
-import operator
-import math
-import shutil
+
+# Local application/library specific imports.
+# (none)
 
 
 def extract_background(frames,stable_illumination=True,animal_vs_bg=0):

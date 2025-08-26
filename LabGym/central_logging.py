@@ -15,7 +15,7 @@ import logging.handlers
 import queue
 
 # Related third party imports.
-# None
+# (none)
 
 # Local application/library specific imports.
 from LabGym import config

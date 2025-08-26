@@ -16,31 +16,30 @@ USA
 Email: bingye@umich.edu
 '''
 
+# Standard library imports.
+# import json
+import logging
+from pathlib import Path
+# from urllib import request
+
 # Log the load of this module (by the module loader, on first import).
 # Intentionally positioning these statements before other imports, against the
 # guidance of PEP-8, to log the load before other imports log messages.
-import logging
-logger =  logging.getLogger(__name__)
-logger.debug('loading %s', __file__)
+logger =  logging.getLogger(__name__)  # pylint: disable=wrong-import-position
+logger.debug('loading %s', __file__)  # pylint: disable=wrong-import-position
 
-
-
-
+# Related third party imports.
 import wx
 import wx.lib.agw.hyperlink as hl
-import json
-from urllib import request
-from pathlib import Path
 
+# Local application/library specific imports.
+from LabGym import __version__
 logger.debug('importing %s ...', '.gui_categorizer')
 from .gui_categorizer import WindowLv2_GenerateExamples,WindowLv2_TrainCategorizers,WindowLv2_SortBehaviors,WindowLv2_TestCategorizers
 logger.debug('importing %s done', '.gui_categorizer')
-
 from .gui_detector import WindowLv2_GenerateImages,WindowLv2_TrainDetectors,WindowLv2_TestDetectors
 from .gui_preprocessor import WindowLv2_ProcessVideos,WindowLv2_DrawMarkers
 from .gui_analyzer import WindowLv2_AnalyzeBehaviors,WindowLv2_MineResults,WindowLv2_PlotBehaviors,WindowLv2_CalculateDistances
-from LabGym import __version__
-
 
 
 class InitialWindow(wx.Frame):
@@ -346,6 +345,6 @@ def main_window():
 
 
 
-if __name__=='__main__':
+if __name__=='__main__':  # pragma: no cover
 
 	main_window()

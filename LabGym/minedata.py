@@ -13,16 +13,18 @@ USA
 Email: bingye@umich.edu
 '''
 
-
-
-
-import scipy
-from scipy import stats
-import scikit_posthocs as sp
-import pandas as pd
+# Standard library imports.
 import os
-import openpyxl
 
+# Related third party imports.
+# import openpyxl
+import pandas as pd
+import scikit_posthocs as sp
+# import scipy
+from scipy import stats
+
+# Local application/library specific imports.
+# (none)
 
 
 class data_mining():

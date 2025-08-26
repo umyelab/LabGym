@@ -16,32 +16,32 @@ USA
 Email: bingye@umich.edu
 '''
 
+# Standard library imports.
+import logging
+import json
+import os
+from pathlib import Path
+
 # Log the load of this module (by the module loader, on first import).
 # Intentionally positioning these statements before other imports, against the
 # guidance of PEP-8, to log the load before other imports log messages.
-import logging
-logger =  logging.getLogger(__name__)
-logger.debug('loading %s', __file__)
+logger =  logging.getLogger(__name__)  # pylint: disable=wrong-import-position
+logger.debug('loading %s', __file__)  # pylint: disable=wrong-import-position
 
-
-
-
-import wx
-import os
+# Related third party imports.
 import matplotlib as mpl
-from pathlib import Path
 import pandas as pd
 import torch
-import json
+import wx
+
+# Local application/library specific imports.
 from .analyzebehavior import AnalyzeAnimal
 from .analyzebehavior_dt import AnalyzeAnimalDetector
-from .tools import plot_events,parse_all_events_file,calculate_distances
 from .minedata import data_mining
-
+from .tools import plot_events,parse_all_events_file,calculate_distances
 
 
 the_absolute_current_path=str(Path(__file__).resolve().parent)
-
 
 
 class ColorPicker(wx.Dialog):

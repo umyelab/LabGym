@@ -16,22 +16,24 @@ USA
 Email: bingye@umich.edu
 '''
 
+# Standard library imports.
+import logging
+import os
+
 # Log the load of this module (by the module loader, on first import).
 # Intentionally positioning these statements before other imports, against the
 # guidance of PEP-8, to log the load before other imports log messages.
-import logging
-logger =  logging.getLogger(__name__)
-logger.debug('loading %s', __file__)
+logger =  logging.getLogger(__name__)  # pylint: disable=wrong-import-position
+logger.debug('loading %s', __file__)  # pylint: disable=wrong-import-position
 
-
-
-from .tools import preprocess_video
-import wx
-import os
+# Related third party imports.
 import cv2
 import numpy as np
 from PIL import Image,ImageEnhance
+import wx
 
+# Local application/library specific imports.
+from .tools import preprocess_video
 
 
 class WindowLv2_ProcessVideos(wx.Frame):

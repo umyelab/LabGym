@@ -16,36 +16,73 @@ USA
 Email: bingye@umich.edu
 '''
 
-
-
-
-from .tools import *
-import matplotlib
-matplotlib.use('Agg')
-import os
-import cv2
-import datetime
-import numpy as np
-import matplotlib.pyplot as plt
-import random
+# Standard library imports.
 from collections import deque
+import datetime
+import itertools
+import os
+import random
+
+# Related third party imports.
+import cv2
+import matplotlib
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+# import scipy.ndimage as ndimage
+from scipy import ndimage
 from skimage import exposure,transform
 from skimage.transform import AffineTransform
-import scipy.ndimage as ndimage
-import tensorflow as tf
-from tensorflow.keras.preprocessing.image import img_to_array,load_img
-from tensorflow.keras.layers import Input,TimeDistributed,BatchNormalization,MaxPooling2D,Activation,ZeroPadding2D,Add
-from tensorflow.keras.layers import Conv2D,Dropout,Flatten,Dense,LSTM,concatenate,AveragePooling2D,GlobalMaxPooling2D
-from tensorflow.keras.models import Model,Sequential,load_model
-from tensorflow.keras.optimizers import SGD
-from tensorflow.keras.callbacks import ModelCheckpoint,EarlyStopping,ReduceLROnPlateau
-from tensorflow.keras.utils import plot_model,Sequence
-from sklearn.preprocessing import LabelBinarizer
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
-import pandas as pd
-import itertools
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelBinarizer
+import tensorflow as tf
+# from tensorflow.keras.callbacks import ModelCheckpoint,EarlyStopping,ReduceLROnPlateau
+# from tensorflow.keras.layers import Input,TimeDistributed,BatchNormalization,MaxPooling2D,Activation,ZeroPadding2D,Add
+# from tensorflow.keras.layers import Conv2D,Dropout,Flatten,Dense,LSTM,concatenate,AveragePooling2D,GlobalMaxPooling2D
+# from tensorflow.keras.models import Model,Sequential,load_model
+# from tensorflow.keras.optimizers import SGD
+# from tensorflow.keras.preprocessing.image import img_to_array,load_img
+# from tensorflow.keras.utils import plot_model,Sequence
+from tensorflow import keras  # pylint: disable=unused-import
+from keras.callbacks import ModelCheckpoint,EarlyStopping,ReduceLROnPlateau
+from keras.layers import (
+    Activation,
+    Add,
+    AveragePooling2D,
+    BatchNormalization,
+    Conv2D,
+    Dense,
+    Dropout,
+    Flatten,
+    # GlobalMaxPooling2D,
+    Input,
+    LSTM,
+    MaxPooling2D,
+    TimeDistributed,
+    ZeroPadding2D,
+    concatenate,
+    )
+from keras.models import (
+    Model,
+    # Sequential,
+    load_model,
+    )
+from keras.optimizers import SGD
+from keras.preprocessing.image import (
+    img_to_array,
+    # load_img,
+    )
+from keras.utils import (
+    # plot_model,
+    Sequence,
+    )
 
+# Local application/library specific imports.
+# (none)
+
+
+matplotlib.use('Agg')
 
 
 class DatasetFromPath_AA(Sequence):
