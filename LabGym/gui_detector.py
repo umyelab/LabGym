@@ -16,6 +16,7 @@ USA
 Email: bingye@umich.edu
 '''
 
+
 # Standard library imports.
 import json
 import logging
@@ -31,8 +32,6 @@ logger.debug('loading %s', __file__)  # pylint: disable=wrong-import-position
 
 # Related third party imports.
 import wx
-# import cv2
-# import torch
 
 # Local application/library specific imports.
 from .detector import Detector
