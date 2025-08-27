@@ -15,7 +15,10 @@ Ann Arbor, MI 48109-2216
 USA
 
 Email: bingye@umich.edu
-'''  # noqa
+'''
+
+
+# noqa
 # pylint: enable=line-too-long
 
 # Standard library imports.
