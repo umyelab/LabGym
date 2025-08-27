@@ -17,7 +17,6 @@ Email: bingye@umich.edu
 '''
 
 
-
 # Standard library imports.
 import json
 import os
@@ -37,7 +36,6 @@ import torch
 
 # Local application/library specific imports.
 # (none)
-
 
 
 class Detector():
