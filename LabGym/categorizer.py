@@ -29,7 +29,6 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-# import scipy.ndimage as ndimage
 from scipy import ndimage
 from skimage import exposure,transform
 from skimage.transform import AffineTransform
@@ -40,33 +39,30 @@ import tensorflow as tf
 from tensorflow import keras  # pylint: disable=unused-import
 from keras.callbacks import ModelCheckpoint,EarlyStopping,ReduceLROnPlateau
 from keras.layers import (
-    Activation,
-    Add,
-    AveragePooling2D,
-    BatchNormalization,
-    Conv2D,
-    Dense,
-    Dropout,
-    Flatten,
-    # GlobalMaxPooling2D,
-    Input,
-    LSTM,
-    MaxPooling2D,
-    TimeDistributed,
-    ZeroPadding2D,
-    concatenate,
-    )
+	Activation,
+	Add,
+	AveragePooling2D,
+	BatchNormalization,
+	Conv2D,
+	Dense,
+	Dropout,
+	Flatten,
+	Input,
+	LSTM,
+	MaxPooling2D,
+	TimeDistributed,
+	ZeroPadding2D,
+	concatenate,
+	)
 from keras.models import (
-    Model,
-    # Sequential,
-    load_model,
-    )
+	Model,
+	load_model,
+	)
 from keras.optimizers import SGD
 from keras.utils import (
-    # plot_model,
-    Sequence,
-    img_to_array,
-    )
+	Sequence,
+	img_to_array,
+	)
 
 # Local application/library specific imports.
 # (none)
