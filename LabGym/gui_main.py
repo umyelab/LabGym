@@ -16,11 +16,11 @@ USA
 Email: bingye@umich.edu
 '''
 
+
 # Standard library imports.
 # import json
 import logging
 from pathlib import Path
-# from urllib import request
 
 # Log the load of this module (by the module loader, on first import).
 # Intentionally positioning these statements before other imports, against the
@@ -337,7 +337,6 @@ class WindowLv1_AnalysisModule(wx.Frame):
 
 def main_window():
 
-	# the_absolute_current_path=str(Path(__file__).resolve().parent)
 	app=wx.App()
 	InitialWindow(f'LabGym v{__version__}')
 	logger.info('The user interface initialized!')
