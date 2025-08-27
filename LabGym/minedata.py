@@ -13,14 +13,13 @@ USA
 Email: bingye@umich.edu
 '''
 
+
 # Standard library imports.
 import os
 
 # Related third party imports.
-# import openpyxl
 import pandas as pd
 import scikit_posthocs as sp
-# import scipy
 from scipy import stats
 
 # Local application/library specific imports.
