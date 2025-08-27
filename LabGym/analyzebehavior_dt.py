@@ -30,7 +30,6 @@ import cv2
 import numpy as np
 import pandas as pd
 from scipy.spatial import distance
-# import seaborn as sb
 from skimage import exposure
 import tensorflow as tf
 from tensorflow import keras  # pylint: disable=unused-import
@@ -41,23 +40,14 @@ import torch
 # Local application/library specific imports.
 from .detector import Detector
 from .tools import (
-    # extract_background,
-    # estimate_constants,
-    crop_frame,
-    extract_blob_background,
-    extract_blob_all,
-    get_inner,
-    # contour_frame,
-    generate_patternimage,
-    generate_patternimage_all,
-    generate_patternimage_interact,
-    # plot_events,
-    # extract_frames,
-    # preprocess_video,
-    # parse_all_events_file,
-    # calculate_distances,
-    # sort_examples_from_csv,
-    )
+	crop_frame,
+	extract_blob_background,
+	extract_blob_all,
+	get_inner,
+	generate_patternimage,
+	generate_patternimage_all,
+	generate_patternimage_interact,
+	)
 
 
 class AnalyzeAnimalDetector():
