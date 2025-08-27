@@ -45,8 +45,7 @@ import seaborn as sb
 from skimage import exposure
 logger.debug('importing tensorflow.keras.preprocessing.image (starting...)')
 from tensorflow import keras  # pylint: disable=unused-import
-# from tensorflow.keras.preprocessing.image import img_to_array
-from keras.preprocessing.image import img_to_array
+from keras.utils import img_to_array
 logger.debug('importing tensorflow.keras.preprocessing.image (done)')
 
 # Local application/library specific imports.
