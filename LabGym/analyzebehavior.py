@@ -37,7 +37,6 @@ import cv2
 import numpy as np
 import pandas as pd
 from scipy.spatial import distance
-# import seaborn as sb
 import tensorflow as tf
 from tensorflow import keras  # pylint: disable=unused-import
 from keras.models import load_model
@@ -46,23 +45,14 @@ from keras.utils import img_to_array
 # Local application/library specific imports.
 logger.debug('importing tools (starting...)')
 from .tools import (
-    # extract_background,
-    estimate_constants,
-    crop_frame,
-    extract_blob_background,
-    extract_blob_all,
-    # get_inner,
-    contour_frame,
-    generate_patternimage,
-    generate_patternimage_all,
-    # generate_patternimage_interact,
-    # plot_events,
-    # extract_frames,
-    # preprocess_video,
-    # parse_all_events_file,
-    # calculate_distances,
-    # sort_examples_from_csv,
-    )
+	estimate_constants,
+	crop_frame,
+	extract_blob_background,
+	extract_blob_all,
+	contour_frame,
+	generate_patternimage,
+	generate_patternimage_all,
+	)
 logger.debug('importing tools (done)')
 
 
