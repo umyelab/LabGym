@@ -16,8 +16,6 @@ USA
 Email: bingye@umich.edu
 '''
 
-# Allow use of newer syntax Python 3.10 type hints in Python 3.9.
-from __future__ import annotations
 
 # Standard library imports.
 import json
@@ -33,8 +31,6 @@ logger =  logging.getLogger(__name__)  # pylint: disable=wrong-import-position
 logger.debug('loading %s', __file__)  # pylint: disable=wrong-import-position
 
 # Related third party imports.
-# import cv2
-# import torch
 import wx
 
 # Local application/library specific imports.

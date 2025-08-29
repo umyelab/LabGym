@@ -16,8 +16,6 @@ USA
 Email: bingye@umich.edu
 '''
 
-# Allow use of newer syntax Python 3.10 type hints in Python 3.9.
-from __future__ import annotations
 
 # Standard library imports.
 import json

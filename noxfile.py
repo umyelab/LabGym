@@ -21,11 +21,12 @@ import platform
 
 
 nox.options.error_on_missing_interpreters=True
+nox.options.reuse_existing_virtualenvs=False
 
 EXTRAS_WX_URL = "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-22.04"
 
 
-@nox.session(python=['3.9','3.10'],reuse_venv=True)
+@nox.session(python=['3.9','3.10'])
 def tests(session:nox.Session):
     # prefer wheels globally
     session.env["PIP_PREFER_BINARY"]="1"
@@ -43,9 +44,9 @@ def tests(session:nox.Session):
         session.install(
             "--no-cache-dir",
             "--index-url", "https://download.pytorch.org/whl/cpu",
-            "torch==2.8.0",
-            "torchvision==0.23.0",
-            "torchaudio==2.8.0",
+            "torch==2.8.0+cpu",
+            "torchvision==0.23.0+cpu",
+            "torchaudio==2.8.0+cpu",
         )
 
 
