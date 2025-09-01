@@ -49,15 +49,16 @@ from .tools import sort_examples_from_csv
 the_absolute_current_path=str(Path(__file__).resolve().parent)
 
 
-class WindowLv2_GenerateExamples(wx.Frame):
+class PanelLv2_GenerateExamples(wx.Panel):
 
 	'''
 	The 'Generate Behavior Examples' functional unit
 	'''
 
-	def __init__(self,title):
+	def __init__(self, parent):
 
-		super(WindowLv2_GenerateExamples,self).__init__(parent=None,title=title,size=(1000,530))
+		super().__init__(parent)
+		self.notebook = parent
 		self.behavior_mode=0 # 0: non-interactive behavior; 1: interact basic; 2: interact advanced; 3: static images
 		self.use_detector=False # whether the Detector is used
 		self.detector_path=None # the 'LabGym/detectors' folder, which stores all the trained Detectors
@@ -93,7 +94,7 @@ class WindowLv2_GenerateExamples(wx.Frame):
 
 	def display_window(self):
 
-		panel=wx.Panel(self)
+		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
 
 		module_specifymode=wx.BoxSizer(wx.HORIZONTAL)
@@ -672,21 +673,22 @@ class WindowLv2_GenerateExamples(wx.Frame):
 
 
 
-class WindowLv2_SortBehaviors(wx.Frame):
+class PanelLv2_SortBehaviors(wx.Panel):
 
 	'''
 	The 'Sort Behavior Examples' functional unit
 	'''
 
-	def __init__(self,title):
+	def __init__(self, parent):
 
-		super(WindowLv2_SortBehaviors,self).__init__(parent=None,title=title,size=(500,230))
+		super().__init__(parent)
+		self.notebook = parent
 		self.display_window()
 
 
 	def display_window(self):
 
-		panel=wx.Panel(self)
+		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
 		boxsizer.Add(0,40,0)
 
@@ -1046,15 +1048,16 @@ class WindowLv3_SortExamplesCSV(wx.Frame):
 
 
 
-class WindowLv2_TrainCategorizers(wx.Frame):
+class PanelLv2_TrainCategorizers(wx.Panel):
 
 	'''
 	The 'Train Categorizers' functional unit
 	'''
 
-	def __init__(self,title):
+	def __init__(self, parent):
 
-		super(WindowLv2_TrainCategorizers,self).__init__(parent=None,title=title,size=(1000,540))
+		super().__init__(parent)
+		self.notebook = parent
 		self.file_path=None # the folder that stores sorted, unprepared behavior examples (each category is a subfolder)
 		self.new_path=None # the folder that stores prepared behavior examples (contains all examples with a category tag in their names)
 		self.behavior_mode=0 # 0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
@@ -1085,7 +1088,7 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 
 	def display_window(self):
 
-		panel=wx.Panel(self)
+		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
 
 		module_inputexamples=wx.BoxSizer(wx.HORIZONTAL)
@@ -1558,15 +1561,16 @@ class WindowLv2_TrainCategorizers(wx.Frame):
 
 
 
-class WindowLv2_TestCategorizers(wx.Frame):
+class PanelLv2_TestCategorizers(wx.Panel):
 
 	'''
 	The 'Test Categorizers' functional unit
 	'''
 
-	def __init__(self,title):
+	def __init__(self, parent):
 
-		super(WindowLv2_TestCategorizers,self).__init__(parent=None,title=title,size=(1000,260))
+		super().__init__(parent)
+		self.notebook = parent
 		self.file_path=None # the folder that stores the ground-truth examples (each subfolder is a behavior category)
 		self.model_path=os.path.join(the_absolute_current_path,'models') # the 'LabGym/models' folder, which stores all the trained Categorizers
 		self.path_to_categorizer=None # path to the Categorizer
@@ -1577,7 +1581,7 @@ class WindowLv2_TestCategorizers(wx.Frame):
 
 	def display_window(self):
 
-		panel=wx.Panel(self)
+		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
 
 		module_selectcategorizer=wx.BoxSizer(wx.HORIZONTAL)

@@ -36,7 +36,7 @@ import wx.lib.agw.hyperlink as hl
 # Local application/library specific imports.
 from LabGym import __version__
 logger.debug('importing %s ...', '.gui_categorizer')
-from .gui_categorizer import WindowLv2_GenerateExamples,WindowLv2_TrainCategorizers,WindowLv2_SortBehaviors,WindowLv2_TestCategorizers
+from .gui_categorizer import PanelLv2_GenerateExamples,PanelLv2_TrainCategorizers,PanelLv2_SortBehaviors,PanelLv2_TestCategorizers
 logger.debug('importing %s done', '.gui_categorizer')
 from .gui_detector import WindowLv2_GenerateImages,WindowLv2_TrainDetectors,WindowLv2_TestDetectors
 from .gui_preprocessor import WindowLv2_ProcessVideos,WindowLv2_DrawMarkers
@@ -272,22 +272,30 @@ class PanelLv1_TrainingModule(wx.Panel):
 
 	def generate_behaviorexamples(self,event):
 
-		WindowLv2_GenerateExamples('Generate Behavior Examples')
+		panel = PanelLv2_GenerateExamples(self.notebook)
+		title = 'Generate Behavior Examples'
+		self.notebook.AddPage(panel, title, select=True)
 
 
 	def sort_behaviorexamples(self,event):
 
-		WindowLv2_SortBehaviors('Sort Behavior Examples')
+		panel = PanelLv2_SortBehaviors(self.notebook)
+		title = 'Sort Behavior Examples'
+		self.notebook.AddPage(panel, title, select=True)
 
 
 	def train_categorizers(self,event):
 
-		WindowLv2_TrainCategorizers('Train Categorizers')
+		panel = PanelLv2_TrainCategorizers(self.notebook)
+		title = 'Train Categorizers'
+		self.notebook.AddPage(panel, title, select=True)
 
 
 	def test_categorizers(self,event):
 
-		WindowLv2_TestCategorizers('Test Categorizers')
+		panel PanelLv2_TestCategorizers(self.notebook)
+		title = 'Test Categorizers'
+		self.notebook.AddPage(panel, title, select=True)
 
 
 
