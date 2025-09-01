@@ -40,7 +40,7 @@ from .gui_categorizer import WindowLv2_GenerateExamples,WindowLv2_TrainCategoriz
 logger.debug('importing %s done', '.gui_categorizer')
 from .gui_detector import WindowLv2_GenerateImages,WindowLv2_TrainDetectors,WindowLv2_TestDetectors
 from .gui_preprocessor import WindowLv2_ProcessVideos,WindowLv2_DrawMarkers
-from .gui_analyzer import WindowLv2_AnalyzeBehaviors,WindowLv2_MineResults,WindowLv2_PlotBehaviors,WindowLv2_CalculateDistances
+from .gui_analyzer import PanelLv2_AnalyzeBehaviors,PanelLv2_MineResults,PanelLv2_PlotBehaviors,PanelLv2_CalculateDistances
 
 
 # class InitialWindow(wx.Frame):
@@ -346,22 +346,30 @@ class PanelLv1_AnalysisModule(wx.Panel):
 
 	def analyze_behaviors(self,event):
 
-		WindowLv2_AnalyzeBehaviors('Analyze Behaviors')
+		panel = PanelLv2_AnalyzeBehaviors(self.notebook)
+		title = 'Analyze Behaviors'
+		self.notebook.AddPage(panel, title, select=True)
 
 
 	def mine_results(self,event):
 
-		WindowLv2_MineResults('Mine Results')
+		panel = PanelLv2_MineResults(self.notebook)
+		title = 'Mine Results'
+		self.notebook.AddPage(panel, title, select=True)
 
 
 	def plot_behavior(self,event):
 
-		WindowLv2_PlotBehaviors('Generate Behavior Plot')
+		panel = PanelLv2_PlotBehaviors(self.notebook)
+		title = 'Generate Behavior Plot'
+		self.notebook.AddPage(panel, title, select=True)
 
 
 	def calculate_distances(self,event):
 
-		WindowLv2_CalculateDistances('Calculate Distances')
+		panel = PanelLv2_CalculateDistances(self.notebook)
+		title = 'Calculate Distances'
+		self.notebook.AddPage(panel, title, select=True)
 
 
 
