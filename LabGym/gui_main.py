@@ -30,6 +30,7 @@ logger.debug('loading %s', __file__)  # pylint: disable=wrong-import-position
 
 # Related third party imports.
 import wx
+import wx.aui
 import wx.lib.agw.hyperlink as hl
 
 # Local application/library specific imports.
@@ -42,21 +43,26 @@ from .gui_preprocessor import WindowLv2_ProcessVideos,WindowLv2_DrawMarkers
 from .gui_analyzer import WindowLv2_AnalyzeBehaviors,WindowLv2_MineResults,WindowLv2_PlotBehaviors,WindowLv2_CalculateDistances
 
 
-class InitialWindow(wx.Frame):
+# class InitialWindow(wx.Frame):
+class InitialPanel(wx.Panel):
 
 	'''
 	The main window of LabGym
 	'''
 
-	def __init__(self,title):
+	# def __init__(self,title):
+	def __init__(self, parent):
 
-		super(InitialWindow,self).__init__(parent=None,title=title,size=(750,600))
+		# super(InitialWindow,self).__init__(parent=None,title=title,size=(750,600))
+		super().__init__(parent)
+		self.notebook = parent
 		self.display_window()
 
 
 	def display_window(self):
 
-		panel=wx.Panel(self)
+		# panel=wx.Panel(self)
+		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
 
 		self.text_welcome=wx.StaticText(panel,label='Welcome to LabGym!',style=wx.ALIGN_CENTER|wx.ST_ELLIPSIZE_END)
@@ -100,35 +106,49 @@ class InitialWindow(wx.Frame):
 
 	def window_preprocess(self,event):
 
-		WindowLv1_ProcessModule('Preprocessing Module')
+		# WindowLv1_ProcessModule('Preprocessing Module')
+		panel = PanelLv1_ProcessModule(self.notebook)
+		title = 'Preprocessing Module'
+		self.notebook.AddPage(panel, title, select=True)
 
 
 	def window_train(self,event):
 
-		WindowLv1_TrainingModule('Training Module')
+		# WindowLv1_TrainingModule('Training Module')
+		panel = PanelLv1_TrainingModule(self.notebook)
+		title = 'Training Module'
+		self.notebook.AddPage(panel, title, select=True)
 
 
 	def window_analyze(self,event):
 
-		WindowLv1_AnalysisModule('Analysis Module')
+		# WindowLv1_AnalysisModule('Analysis Module')
+		panel = PanelLv1_AnalysisModule(self.notebook)
+		title = 'Analysis Module'
+		self.notebook.AddPage(panel, title, select=True)
 
 
 
-class WindowLv1_ProcessModule(wx.Frame):
+# class WindowLv1_ProcessModule(wx.Frame):
+class PanelLv1_ProcessModule(wx.Panel):
 
 	'''
 	The Preprocessing Module
 	'''
 
-	def __init__(self,title):
+	# def __init__(self,title):
+	def __init__(self, parent):
 
-		super(WindowLv1_ProcessModule,self).__init__(parent=None,title=title,size=(500,230))
+		# super(WindowLv1_ProcessModule,self).__init__(parent=None,title=title,size=(500,230))
+		super().__init__(parent)
+		self.notebook = parent
 		self.display_window()
 
 
 	def display_window(self):
 
-		panel=wx.Panel(self)
+		# panel=wx.Panel(self)
+		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
 		boxsizer.Add(0,40,0)
 
@@ -160,21 +180,26 @@ class WindowLv1_ProcessModule(wx.Frame):
 		WindowLv2_DrawMarkers('Draw Markers')
 
 
-class WindowLv1_TrainingModule(wx.Frame):
+# class WindowLv1_TrainingModule(wx.Frame):
+class PanelLv1_TrainingModule(wx.Panel):
 
 	'''
 	The Training Module
 	'''
 
-	def __init__(self,title):
+	# def __init__(self,title):
+	def __init__(self, parent):
 
-		super(WindowLv1_TrainingModule,self).__init__(parent=None,title=title,size=(500,560))
+		# super(WindowLv1_TrainingModule,self).__init__(parent=None,title=title,size=(500,560))
+		super().__init__(parent)
+		self.notebook = parent
 		self.display_window()
 
 
 	def display_window(self):
 
-		panel=wx.Panel(self)
+		# panel=wx.Panel(self)
+		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
 		boxsizer.Add(0,60,0)
 
@@ -266,21 +291,26 @@ class WindowLv1_TrainingModule(wx.Frame):
 
 
 
-class WindowLv1_AnalysisModule(wx.Frame):
+# class WindowLv1_AnalysisModule(wx.Frame):
+class PanelLv1_AnalysisModule(wx.Panel):
 
 	'''
 	The Analysis Module
 	'''
 
-	def __init__(self,title):
+	# def __init__(self,title):
+	def __init__(self, parent):
 
-		super(WindowLv1_AnalysisModule,self).__init__(parent=None,title=title,size=(500,350))
+		# super(WindowLv1_AnalysisModule,self).__init__(parent=None,title=title,size=(500,350))
+		super().__init__(parent)
+		self.notebook = parent
 		self.display_window()
 
 
 	def display_window(self):
 
-		panel=wx.Panel(self)
+		# panel=wx.Panel(self)
+		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
 		boxsizer.Add(0,40,0)
 
@@ -335,10 +365,48 @@ class WindowLv1_AnalysisModule(wx.Frame):
 
 
 
+class MainFrame(wx.Frame):
+	"""Main frame and its notebook.
+
+	(The MainFrame obj is the) main frame and its notebook.
+	The notebook is initialized with one panel, the Welcome panel.
+	"""
+
+	def __init__(self):
+		super().__init__(None, title=f'LabGym v{__version__}')
+		self.SetSize((750, 600))
+
+		# Create the aui_manager to manage this frame/window.
+		self.aui_manager = wx.aui.AuiManager()
+		self.aui_manager.SetManagedWindow(self)
+
+		# Create the notebook.
+		self.notebook = wx.aui.AuiNotebook(self)
+		# Add the notebook as a pane to the aui_manager.
+		self.aui_manager.AddPane(
+			self.notebook,
+			wx.aui.AuiPaneInfo().CenterPane(),
+			)
+
+		# Add panel as a page to the notebook.
+		# InitialWindow(f'LabGym v{__version__}')
+		panel = InitialPanel(self.notebook)
+		title = 'Welcome'
+		self.notebook.AddPage(panel, title, select=True)
+
+		# Use a sizer to ensure the notebook fills the frame.
+		sizer = wx.BoxSizer(wx.VERTICAL)
+		sizer.Add(self.notebook, 1, wx.EXPAND)
+		self.SetSizer(sizer)
+
+		# Batch apply changes to any managed panes.
+		self.aui_manager.Update()
+		self.Show()  # display the frame
+
 def main_window():
 
 	app=wx.App()
-	InitialWindow(f'LabGym v{__version__}')
+	MainFrame()  # Create the main frame and its notebook
 	logger.info('The user interface initialized!')
 	app.MainLoop()
 
