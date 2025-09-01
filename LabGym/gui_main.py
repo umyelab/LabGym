@@ -43,17 +43,14 @@ from .gui_preprocessor import PanelLv2_ProcessVideos,PanelLv2_DrawMarkers
 from .gui_analyzer import PanelLv2_AnalyzeBehaviors,PanelLv2_MineResults,PanelLv2_PlotBehaviors,PanelLv2_CalculateDistances
 
 
-# class InitialWindow(wx.Frame):
 class InitialPanel(wx.Panel):
 
 	'''
 	The main window of LabGym
 	'''
 
-	# def __init__(self,title):
 	def __init__(self, parent):
 
-		# super(InitialWindow,self).__init__(parent=None,title=title,size=(750,600))
 		super().__init__(parent)
 		self.notebook = parent
 		self.display_window()
@@ -61,7 +58,6 @@ class InitialPanel(wx.Panel):
 
 	def display_window(self):
 
-		# panel=wx.Panel(self)
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
 
@@ -106,7 +102,6 @@ class InitialPanel(wx.Panel):
 
 	def window_preprocess(self,event):
 
-		# WindowLv1_ProcessModule('Preprocessing Module')
 		panel = PanelLv1_ProcessModule(self.notebook)
 		title = 'Preprocessing Module'
 		self.notebook.AddPage(panel, title, select=True)
@@ -114,7 +109,6 @@ class InitialPanel(wx.Panel):
 
 	def window_train(self,event):
 
-		# WindowLv1_TrainingModule('Training Module')
 		panel = PanelLv1_TrainingModule(self.notebook)
 		title = 'Training Module'
 		self.notebook.AddPage(panel, title, select=True)
@@ -122,24 +116,20 @@ class InitialPanel(wx.Panel):
 
 	def window_analyze(self,event):
 
-		# WindowLv1_AnalysisModule('Analysis Module')
 		panel = PanelLv1_AnalysisModule(self.notebook)
 		title = 'Analysis Module'
 		self.notebook.AddPage(panel, title, select=True)
 
 
 
-# class WindowLv1_ProcessModule(wx.Frame):
 class PanelLv1_ProcessModule(wx.Panel):
 
 	'''
 	The Preprocessing Module
 	'''
 
-	# def __init__(self,title):
 	def __init__(self, parent):
 
-		# super(WindowLv1_ProcessModule,self).__init__(parent=None,title=title,size=(500,230))
 		super().__init__(parent)
 		self.notebook = parent
 		self.display_window()
@@ -147,7 +137,6 @@ class PanelLv1_ProcessModule(wx.Panel):
 
 	def display_window(self):
 
-		# panel=wx.Panel(self)
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
 		boxsizer.Add(0,40,0)
@@ -184,17 +173,14 @@ class PanelLv1_ProcessModule(wx.Panel):
 		self.notebook.AddPage(panel, title, select=True)
 
 
-# class WindowLv1_TrainingModule(wx.Frame):
 class PanelLv1_TrainingModule(wx.Panel):
 
 	'''
 	The Training Module
 	'''
 
-	# def __init__(self,title):
 	def __init__(self, parent):
 
-		# super(WindowLv1_TrainingModule,self).__init__(parent=None,title=title,size=(500,560))
 		super().__init__(parent)
 		self.notebook = parent
 		self.display_window()
@@ -202,7 +188,6 @@ class PanelLv1_TrainingModule(wx.Panel):
 
 	def display_window(self):
 
-		# panel=wx.Panel(self)
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
 		boxsizer.Add(0,60,0)
@@ -309,17 +294,14 @@ class PanelLv1_TrainingModule(wx.Panel):
 
 
 
-# class WindowLv1_AnalysisModule(wx.Frame):
 class PanelLv1_AnalysisModule(wx.Panel):
 
 	'''
 	The Analysis Module
 	'''
 
-	# def __init__(self,title):
 	def __init__(self, parent):
 
-		# super(WindowLv1_AnalysisModule,self).__init__(parent=None,title=title,size=(500,350))
 		super().__init__(parent)
 		self.notebook = parent
 		self.display_window()
@@ -327,7 +309,6 @@ class PanelLv1_AnalysisModule(wx.Panel):
 
 	def display_window(self):
 
-		# panel=wx.Panel(self)
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
 		boxsizer.Add(0,40,0)
@@ -415,7 +396,6 @@ class MainFrame(wx.Frame):
 			)
 
 		# Add panel as a page to the notebook.
-		# InitialWindow(f'LabGym v{__version__}')
 		panel = InitialPanel(self.notebook)
 		title = 'Welcome'
 		self.notebook.AddPage(panel, title, select=True)
