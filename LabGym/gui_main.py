@@ -303,7 +303,7 @@ class PanelLv1_TrainingModule(wx.Panel):
 
 	def test_categorizers(self,event):
 
-		panel PanelLv2_TestCategorizers(self.notebook)
+		panel = PanelLv2_TestCategorizers(self.notebook)
 		title = 'Test Categorizers'
 		self.notebook.AddPage(panel, title, select=True)
 
