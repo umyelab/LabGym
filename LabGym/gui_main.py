@@ -403,6 +403,7 @@ class MainFrame(wx.Frame):
 		self.aui_manager.Update()
 		self.Show()  # display the frame
 
+
 def main_window():
 
 	app=wx.App()
