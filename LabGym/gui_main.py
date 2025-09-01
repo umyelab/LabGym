@@ -38,7 +38,7 @@ from LabGym import __version__
 logger.debug('importing %s ...', '.gui_categorizer')
 from .gui_categorizer import PanelLv2_GenerateExamples,PanelLv2_TrainCategorizers,PanelLv2_SortBehaviors,PanelLv2_TestCategorizers
 logger.debug('importing %s done', '.gui_categorizer')
-from .gui_detector import WindowLv2_GenerateImages,WindowLv2_TrainDetectors,WindowLv2_TestDetectors
+from .gui_detector import PanelLv2_GenerateImages,PanelLv2_TrainDetectors,PanelLv2_TestDetectors
 from .gui_preprocessor import WindowLv2_ProcessVideos,WindowLv2_DrawMarkers
 from .gui_analyzer import PanelLv2_AnalyzeBehaviors,PanelLv2_MineResults,PanelLv2_PlotBehaviors,PanelLv2_CalculateDistances
 
@@ -257,17 +257,23 @@ class PanelLv1_TrainingModule(wx.Panel):
 
 	def generate_images(self,event):
 
-		WindowLv2_GenerateImages('Generate Image Examples')
+		panel = WindowLv2_GenerateImages(self.notebook)
+		title = 'Generate Image Examples'
+		self.notebook.AddPage(panel, title, select=True)
 
 
 	def train_detectors(self,event):
 
-		WindowLv2_TrainDetectors('Train Detectors')
+		panel = WindowLv2_TrainDetectors(self.notebook)
+		title = 'Train Detectors'
+		self.notebook.AddPage(panel, title, select=True)
 
 
 	def test_detectors(self,event):
 
-		WindowLv2_TestDetectors('Test Detectors')
+		panel = WindowLv2_TestDetectors(self.notebook)
+		title = 'Test Detectors'
+		self.notebook.AddPage(panel, title, select=True)
 
 
 	def generate_behaviorexamples(self,event):
