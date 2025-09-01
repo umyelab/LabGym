@@ -39,7 +39,7 @@ logger.debug('importing %s ...', '.gui_categorizer')
 from .gui_categorizer import PanelLv2_GenerateExamples,PanelLv2_TrainCategorizers,PanelLv2_SortBehaviors,PanelLv2_TestCategorizers
 logger.debug('importing %s done', '.gui_categorizer')
 from .gui_detector import PanelLv2_GenerateImages,PanelLv2_TrainDetectors,PanelLv2_TestDetectors
-from .gui_preprocessor import WindowLv2_ProcessVideos,WindowLv2_DrawMarkers
+from .gui_preprocessor import PanelLv2_ProcessVideos,PanelLv2_DrawMarkers
 from .gui_analyzer import PanelLv2_AnalyzeBehaviors,PanelLv2_MineResults,PanelLv2_PlotBehaviors,PanelLv2_CalculateDistances
 
 
@@ -172,12 +172,16 @@ class PanelLv1_ProcessModule(wx.Panel):
 
 	def process_videos(self,event):
 
-		WindowLv2_ProcessVideos('Preprocess Videos')
+		panel = PanelLv2_ProcessVideos(self.notebook)
+		title = 'Preprocess Videos'
+		self.notebook.AddPage(panel, title, select=True)
 
 
 	def draw_markers(self,event):
 
-		WindowLv2_DrawMarkers('Draw Markers')
+		panel = PanelLv2_DrawMarkers(self.notebook)
+		title = 'Draw Markers'
+		self.notebook.AddPage(panel, title, select=True)
 
 
 # class WindowLv1_TrainingModule(wx.Frame):
@@ -257,21 +261,21 @@ class PanelLv1_TrainingModule(wx.Panel):
 
 	def generate_images(self,event):
 
-		panel = WindowLv2_GenerateImages(self.notebook)
+		panel = PanelLv2_GenerateImages(self.notebook)
 		title = 'Generate Image Examples'
 		self.notebook.AddPage(panel, title, select=True)
 
 
 	def train_detectors(self,event):
 
-		panel = WindowLv2_TrainDetectors(self.notebook)
+		panel = PanelLv2_TrainDetectors(self.notebook)
 		title = 'Train Detectors'
 		self.notebook.AddPage(panel, title, select=True)
 
 
 	def test_detectors(self,event):
 
-		panel = WindowLv2_TestDetectors(self.notebook)
+		panel = PanelLv2_TestDetectors(self.notebook)
 		title = 'Test Detectors'
 		self.notebook.AddPage(panel, title, select=True)
 
