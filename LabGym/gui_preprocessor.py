@@ -37,15 +37,16 @@ import wx
 from .tools import preprocess_video
 
 
-class WindowLv2_ProcessVideos(wx.Frame):
+class PanelLv2_ProcessVideos(wx.Panel):
 
 	'''
 	The 'Preprocess Videos' functional unit
 	'''
 
-	def __init__(self,title):
+	def __init__(self, parent):
 
-		super(WindowLv2_ProcessVideos,self).__init__(parent=None,title=title,size=(1000,400))
+		super().__init__(parent)
+		self.notebook = parent
 		self.path_to_videos=None # path to a batch of videos for preprocessing
 		self.framewidth=None # if not None, will resize the video frame keeping the original w:h ratio
 		self.result_path=None # the folder for storing preprocessed videos
@@ -68,7 +69,7 @@ class WindowLv2_ProcessVideos(wx.Frame):
 
 	def display_window(self):
 
-		panel=wx.Panel(self)
+		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
 
 		module_inputvideos=wx.BoxSizer(wx.HORIZONTAL)
@@ -420,15 +421,16 @@ class WindowLv2_ProcessVideos(wx.Frame):
 
 
 
-class WindowLv2_DrawMarkers(wx.Frame):
+class PanelLv2_DrawMarkers(wx.Panel):
 
 	'''
 	The 'Draw Markers' functional unit
 	'''
 
-	def __init__(self,title):
+	def __init__(self, parent):
 
-		super(WindowLv2_DrawMarkers,self).__init__(parent=None,title=title,size=(1000,220))
+		super().__init__(parent)
+		self.notebook = parent
 		self.path_to_videos=None # path to a batch of videos for marker drawing
 		self.framewidth=None # if not None, will resize the video frame keeping the original w:h ratio
 		self.result_path=None # the folder for storing videos with markers
@@ -438,7 +440,7 @@ class WindowLv2_DrawMarkers(wx.Frame):
 
 	def display_window(self):
 
-		panel=wx.Panel(self)
+		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
 
 		module_inputvideos=wx.BoxSizer(wx.HORIZONTAL)
