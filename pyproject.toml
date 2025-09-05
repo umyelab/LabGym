@@ -83,6 +83,11 @@ distribution=true
 source='file'
 path='LabGym/__init__.py'
 
+[tool.pdm.build]
+includes = [
+    "LabGym/assets/icons/*"
+]
+
 [tool.pdm.dev-dependencies]
 docs=[
     'sphinx>=7.2.6',

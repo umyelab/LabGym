@@ -21,6 +21,8 @@ Email: bingye@umich.edu
 # import json
 import logging
 from pathlib import Path
+import sys
+from importlib.resources import files
 
 # Log the load of this module (by the module loader, on first import).
 # Intentionally positioning these statements before other imports, against the
@@ -42,6 +44,47 @@ from .gui_detector import PanelLv2_GenerateImages,PanelLv2_TrainDetectors,PanelL
 from .gui_preprocessor import PanelLv2_ProcessVideos,PanelLv2_DrawMarkers
 from .gui_analyzer import PanelLv2_AnalyzeBehaviors,PanelLv2_MineResults,PanelLv2_PlotBehaviors,PanelLv2_CalculateDistances
 
+
+def _icon_relpath() -> str:
+	# Prefer .ico on Windows; otherwise, use PNG
+	if sys.platform.startswith("win"):
+		ico = files("LabGym") / "assets/icons/labgym.ico"
+		if ico.is_file():
+			return "assets/icons/labgym.ico"
+
+	# default to PNG (works on all)
+	return "assets/icons/labgym.png"
+
+
+def _set_frame_icon(frame) -> None:
+	# Sets the window/titlebar icon on all OSes via wx
+	try:
+		import wx
+		icon_rel = _icon_relpath()
+		icon_file = files("LabGym") / icon_rel
+		if icon_file.is_file():
+			frame.SetIcon(wx.Icon(str(icon_file)))
+	except Exception:
+		pass # non-fatal error, fails gracefully
+
+
+def _set_macos_dock_icon() -> None:
+	# Sets the Dock title icon at runtime on macOS (use of optional PyObjC)
+	if sys.platform != "darwin":
+		return
+	try:
+		from AppKit import NSApplication, NSImage
+		from Foundation import NSURL
+		icon_file = files("LabGym") / "assets/icons/labgym.png"
+		if icon_file.is_file():
+			app = NSApplication.sharedApplication()
+			img = NSImage.alloc().initWithContentsOfURL_(
+				NSURL.fileURLWithPath_(str(icon_file))
+			)
+			if img:
+				app.setApplicationIconImage_(img)
+	except Exception:
+		pass # PyObjC missing, not compatble with PyObjC, etc.
 
 class InitialPanel(wx.Panel):
 
@@ -383,6 +426,9 @@ class MainFrame(wx.Frame):
 		super().__init__(None, title=f'LabGym v{__version__}')
 		self.SetSize((750, 600))
 
+		# sets the app icon within GUI
+		_set_frame_icon(self)
+
 		# Create the aui_manager to manage this frame/window.
 		self.aui_manager = wx.aui.AuiManager()
 		self.aui_manager.SetManagedWindow(self)
@@ -413,6 +459,7 @@ class MainFrame(wx.Frame):
 def main_window():
 
 	app=wx.App()
+	_set_macos_dock_icon() # no-op on non-macOS or if no PyObjC
 	MainFrame()  # Create the main frame and its notebook
 	logger.info('The user interface initialized!')
 	app.MainLoop()
