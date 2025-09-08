@@ -23,6 +23,7 @@ import logging
 from pathlib import Path
 import sys
 from importlib.resources import files
+from functools import lru_cache
 
 # Log the load of this module (by the module loader, on first import).
 # Intentionally positioning these statements before other imports, against the
@@ -45,77 +46,47 @@ from .gui_preprocessor import PanelLv2_ProcessVideos,PanelLv2_DrawMarkers
 from .gui_analyzer import PanelLv2_AnalyzeBehaviors,PanelLv2_MineResults,PanelLv2_PlotBehaviors,PanelLv2_CalculateDistances
 
 
-def _icon_relpath(use_fallback=False) -> str:
-	# Prefer .ico on Windows and Linux; otherwise, use PNG
+@lru_cache(maxsize=1)
+def _get_icon_paths():
+	"""Get all icon paths once and cache them."""
+	base_path = files("LabGym") / "assets/icons"
+	return {
+		'small_ico': base_path / "labgym_small.ico",
+		'main_ico': base_path / "labgym.ico", 
+		'icns': base_path / "labgym.icns",
+		'png': base_path / "labgym.png"
+	}
+
+def _get_icon_for_context(context='normal', size=16):
+	"""Get appropriate icon path for given context and size."""
+	icon_paths = _get_icon_paths()
+	
 	if sys.platform.startswith(("win", "linux")):
-		if use_fallback:
-			# Use fallback ICO for small icon sizes (like taskbar, panel icons)
-			fallback_ico = files("LabGym") / "assets/icons/labgym_small.ico"
-			if fallback_ico.is_file():
-				return "assets/icons/labgym_small.ico"
+		if context == 'small' or size <= 24:
+			return str(icon_paths['small_ico']) if icon_paths['small_ico'].is_file() else str(icon_paths['png'])
 		else:
-			# Use main ICO for normal window icons
-			ico = files("LabGym") / "assets/icons/labgym.ico"
-			if ico.is_file():
-				return "assets/icons/labgym.ico"
+			return str(icon_paths['main_ico']) if icon_paths['main_ico'].is_file() else str(icon_paths['png'])
+	
+	# macOS or fallback
+	return str(icon_paths['png']) if icon_paths['png'].is_file() else ""
 
-	# default to PNG (works on all, including macOS)
-	return "assets/icons/labgym.png"
-
-
-def _set_frame_icon(frame) -> None:
-	# Sets the window/titlebar icon on all OSes via wx
-	# Use fallback ICO on Windows and Linux for better small-size display in title bar
+def _set_frame_icon(frame, context='normal', size=16):
+	"""Set frame icon with proper error handling."""
 	try:
 		import wx
-		# On Windows and Linux, use fallback ICO for title bar (small size context)
-		# On macOS, use main icon (PNG)
-		use_fallback = sys.platform.startswith(("win", "linux"))
-		icon_rel = _icon_relpath(use_fallback=use_fallback)
-		icon_file = files("LabGym") / icon_rel
-		if icon_file.is_file():
-			# Create wx.Icon with explicit size for better compatibility
-			icon = wx.Icon(str(icon_file), wx.BITMAP_TYPE_ANY)
-			if icon.IsOk():
-				frame.SetIcon(icon)
-				logger.info("Set frame icon using %s: %s", 
-					"fallback ICO" if use_fallback else "main icon", icon_file)
-			else:
-				logger.warning("Failed to create valid wx.Icon from %s", icon_file)
+		icon_path = _get_icon_for_context(context, size)
+		if not icon_path or not Path(icon_path).is_file():
+			logger.warning("Icon file not found: %s", icon_path)
+			return
+			
+		icon = wx.Icon(icon_path, wx.BITMAP_TYPE_ANY)
+		if icon.IsOk():
+			frame.SetIcon(icon)
+			logger.info("Set frame icon: %s", icon_path)
 		else:
-			logger.warning("Icon file not found: %s", icon_file)
+			logger.warning("Failed to create valid wx.Icon from %s", icon_path)
 	except Exception as e:
 		logger.warning("Failed to set frame icon: %r", e)
-		pass # non-fatal error, fails gracefully
-
-
-def _set_small_icon(frame) -> None:
-	# Specifically sets a small icon for Windows and Linux title bar using fallback ICO
-	if not sys.platform.startswith(("win", "linux")):
-		return
-	try:
-		import wx
-		# Use fallback ICO which should have better small-size optimization
-		fallback_ico = files("LabGym") / "assets/icons/labgym_small.ico"
-		if fallback_ico.is_file():
-			# Try to create icon with specific size (16x16 for title bar)
-			icon = wx.Icon(str(fallback_ico), wx.BITMAP_TYPE_ICO, 16, 16)
-			if not icon.IsOk():
-				# Fallback to any size from the ICO
-				icon = wx.Icon(str(fallback_ico), wx.BITMAP_TYPE_ANY)
-			
-			if icon.IsOk():
-				frame.SetIcon(icon)
-				platform_name = "Windows" if sys.platform.startswith("win") else "Linux"
-				logger.info("Set %s title bar icon using fallback ICO (16x16): %s", platform_name, fallback_ico)
-			else:
-				logger.warning("Failed to create valid wx.Icon from fallback ICO: %s", fallback_ico)
-		else:
-			logger.warning("Fallback ICO file not found: %s", fallback_ico)
-	except Exception as e:
-		logger.warning("Failed to set small icon: %r", e)
-		pass # Non-fatal error, fails gracefully
-
 
 def _set_windows_taskbar_icon_with_fallback() -> None:
 	# Sets the Windows taskbar icon using fallback ICO for better small-size visibility
@@ -130,12 +101,11 @@ def _set_windows_taskbar_icon_with_fallback() -> None:
 		ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
 		logger.info("Set Windows AppUserModelID to: %s", app_id)
 		
-		# Force use of fallback ICO for taskbar (small size context)
-		icon_rel = _icon_relpath(use_fallback=True)
-		icon_file = files("LabGym") / icon_rel
-		if icon_file.is_file():
-			# Create wx.Icon from fallback ICO
-			icon = wx.Icon(str(icon_file), wx.BITMAP_TYPE_ANY)
+		# Use small icon for taskbar (small size context)
+		icon_path = _get_icon_for_context(context='small', size=16)
+		if icon_path and Path(icon_path).is_file():
+			# Create wx.Icon from small ICO
+			icon = wx.Icon(icon_path, wx.BITMAP_TYPE_ANY)
 			if icon.IsOk():
 				# Get the main app instance and set its icon
 				app = wx.GetApp()
@@ -143,35 +113,15 @@ def _set_windows_taskbar_icon_with_fallback() -> None:
 					app.SetAppDisplayName("LabGym")
 					# Note: wxPython doesn't have a direct way to set taskbar icon
 					# The AppUserModelID above should help Windows associate the correct icon
-					logger.info("Using fallback ICO for taskbar (optimized for small sizes): %s", icon_file)
+					logger.info("Using small ICO for taskbar (optimized for small sizes): %s", icon_path)
 			else:
-				logger.warning("Failed to create valid wx.Icon from fallback ICO: %s", icon_file)
+				logger.warning("Failed to create valid wx.Icon from small ICO: %s", icon_path)
 		else:
-			logger.warning("Fallback ICO file not found: %s", icon_file)
+			logger.warning("Small ICO file not found: %s", icon_path)
 			
 	except Exception as e:
 		logger.warning("Failed to set Windows taskbar icon with fallback: %r", e)
 		pass # Non-fatal error, fails gracefully
-
-
-def _get_icon_for_size(icon_size=16) -> str:
-	# Returns the appropriate icon file based on the requested size
-	# For small sizes (<= 24px), use fallback ICO; for larger sizes, use main ICO
-	if sys.platform.startswith(("win", "linux")):
-		if icon_size <= 24:
-			# Use fallback ICO for small sizes (taskbar, panel icons, window controls, etc.)
-			fallback_ico = files("LabGym") / "assets/icons/labgym_small.ico"
-			if fallback_ico.is_file():
-				return str(fallback_ico)
-		else:
-			# Use main ICO for larger sizes (window title bar, etc.)
-			main_ico = files("LabGym") / "assets/icons/labgym.ico"
-			if main_ico.is_file():
-				return str(main_ico)
-	
-	# Default to PNG for macOS or if ICO files not found
-	png_file = files("LabGym") / "assets/icons/labgym.png"
-	return str(png_file) if png_file.is_file() else ""
 
 
 def _set_macos_dock_icon() -> None:
@@ -535,10 +485,10 @@ class MainFrame(wx.Frame):
 		super().__init__(None, title=f'LabGym v{__version__}')
 		self.SetSize((750, 600))
 
-		# sets the app icon within GUI
-		_set_frame_icon(self)
-		# On Windows and Linux, also set a specific small icon for better title bar display
-		_set_small_icon(self)
+		# Set the app icon within GUI
+		_set_frame_icon(self, context='normal')  # Set normal icon first
+		if sys.platform.startswith(("win", "linux")):
+			_set_frame_icon(self, context='small', size=16)  # Override with small icon for title bar
 
 		# Create the aui_manager to manage this frame/window.
 		self.aui_manager = wx.aui.AuiManager()
@@ -568,23 +518,16 @@ class MainFrame(wx.Frame):
 
 
 def main_window():
-
-	app=wx.App()
-	_set_macos_dock_icon() # no-op on non-macOS or if no PyObjC
-	_set_windows_taskbar_icon_with_fallback() # no-op on non-Windows, uses fallback ICO
+	app = wx.App()
+	_set_macos_dock_icon()  # no-op on non-macOS or if no PyObjC
+	_set_windows_taskbar_icon_with_fallback()  # no-op on non-Windows, uses small ICO
 	
-	# Log icon usage for debugging
-	if sys.platform.startswith("win"):
-		logger.info("Windows detected - using fallback ICO for small icon contexts")
-		logger.info("Main ICO: %s", str(files("LabGym") / "assets/icons/labgym.ico"))
-		logger.info("Fallback ICO: %s", str(files("LabGym") / "assets/icons/labgym_small.ico"))
-	elif sys.platform.startswith("linux"):
-		logger.info("Linux detected - using fallback ICO for small icon contexts")
-		logger.info("Main ICO: %s", str(files("LabGym") / "assets/icons/labgym.ico"))
-		logger.info("Fallback ICO: %s", str(files("LabGym") / "assets/icons/labgym_small.ico"))
+	# Simplified logging
+	if sys.platform.startswith(("win", "linux")):
+		logger.info("Using small ICO for title bar contexts")
 	
 	MainFrame()  # Create the main frame and its notebook
-	logger.info('Bobby\'s  user interface initialized!')
+	logger.info('Bobby\'s user interface initialized!')
 	app.MainLoop()
 
 
