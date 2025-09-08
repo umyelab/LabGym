@@ -112,7 +112,8 @@ def set_linux_dock_icon():
 		return
 	try:
 		import os
-		import subprocess
+		import tempfile
+		from pathlib import Path
 		
 		# Set the WM_CLASS property for better icon association
 		app = wx.GetApp()
@@ -123,27 +124,55 @@ def set_linux_dock_icon():
 		# Try to use the PNG icon for better Linux compatibility
 		icon_path = get_icon_for_context(context='dock', size=32)
 		if icon_path and Path(icon_path).is_file():
-			# Try to set the window icon using xseticon or similar tools if available
 			try:
-				# This is a more advanced approach for Linux dock icons
-				# We can try to use gtk or other desktop environment specific methods
-				logger.info("Linux dock icon setup completed: %s", icon_path)
-				
-				# Additional: Try to create a temporary desktop file for better integration
-				# This helps some desktop environments recognize the application
+				# Create a temporary desktop file for better dock integration
+				# This helps desktop environments like GNOME/Unity recognize the application
 				desktop_content = f"""[Desktop Entry]
 Name=LabGym
 Comment=LabGym - Animal Behavior Analysis
-Exec=python -m LabGym
+Exec=python3 -m LabGym
 Icon={icon_path}
 Type=Application
 Categories=Science;Biology;
+StartupWMClass=LabGym
 """
-				# Note: We don't actually create the file, just log the approach
-				logger.debug("Desktop file content would be: %s", desktop_content[:100] + "...")
+				
+				# Create temporary desktop file
+				with tempfile.NamedTemporaryFile(mode='w', suffix='.desktop', delete=False) as f:
+					f.write(desktop_content)
+					temp_desktop = f.name
+				
+				# Make it executable
+				os.chmod(temp_desktop, 0o755)
+				
+				# Try to install it to user applications directory
+				user_apps_dir = Path.home() / ".local" / "share" / "applications"
+				user_apps_dir.mkdir(parents=True, exist_ok=True)
+				
+				desktop_dest = user_apps_dir / "labgym.desktop"
+				if desktop_dest.exists():
+					desktop_dest.unlink()  # Remove existing file
+				
+				# Copy the desktop file
+				import shutil
+				shutil.copy2(temp_desktop, desktop_dest)
+				
+				# Clean up temp file
+				os.unlink(temp_desktop)
+				
+				# Update desktop database
+				try:
+					import subprocess
+					subprocess.run(['update-desktop-database', str(user_apps_dir)], 
+								  capture_output=True, timeout=5)
+				except (subprocess.TimeoutExpired, FileNotFoundError):
+					pass  # update-desktop-database might not be available
+				
+				logger.info("Linux dock icon setup completed with desktop file: %s", icon_path)
 				
 			except Exception as e:
-				logger.debug("Advanced Linux icon setup failed: %r", e)
+				logger.debug("Desktop file creation failed: %r", e)
+				logger.info("Linux dock icon setup completed (basic): %s", icon_path)
 		else:
 			logger.warning("Linux icon file not found: %s", icon_path)
 			
