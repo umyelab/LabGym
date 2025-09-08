@@ -74,16 +74,18 @@ def _set_macos_dock_icon() -> None:
 		return
 	try:
 		from AppKit import NSApplication, NSImage
-		from Foundation import NSURL
-		icon_file = files("LabGym") / "assets/icons/labgym.png"
-		if icon_file.is_file():
-			app = NSApplication.sharedApplication()
-			img = NSImage.alloc().initWithContentsOfURL_(
-				NSURL.fileURLWithPath_(str(icon_file))
-			)
-			if img:
-				app.setApplicationIconImage_(img)
-	except Exception:
+		baseIconDir = files("LabGym")
+		icns = baseIconDir / "assets/icons/labgym.icns"
+		png = baseIconDir / "assets/icons/labgym.png"
+
+		icon_path = str(icns if icns.is_file() else png)
+		img = NSImage.alloc().initWithContentsOfFile_(icon_path)
+		if img:
+			NSApplication.sharedApplication().setApplicationIconImage_(img)
+		else:
+			logger.warning("NSImage failed to load dock icon from %s", icon_path)
+	except Exception as e:
+		logger.warning("Dock icon set failed: %r", e)
 		pass # PyObjC missing, not compatble with PyObjC, etc.
 
 class InitialPanel(wx.Panel):
