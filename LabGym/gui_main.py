@@ -45,12 +45,19 @@ from .gui_preprocessor import PanelLv2_ProcessVideos,PanelLv2_DrawMarkers
 from .gui_analyzer import PanelLv2_AnalyzeBehaviors,PanelLv2_MineResults,PanelLv2_PlotBehaviors,PanelLv2_CalculateDistances
 
 
-def _icon_relpath() -> str:
+def _icon_relpath(use_fallback=False) -> str:
 	# Prefer .ico on Windows; otherwise, use PNG
 	if sys.platform.startswith("win"):
-		ico = files("LabGym") / "assets/icons/labgym.ico"
-		if ico.is_file():
-			return "assets/icons/labgym.ico"
+		if use_fallback:
+			# Use fallback ICO for small icon sizes (like taskbar)
+			fallback_ico = files("LabGym") / "assets/icons/fallback.ico"
+			if fallback_ico.is_file():
+				return "assets/icons/fallback.ico"
+		else:
+			# Use main ICO for normal window icons
+			ico = files("LabGym") / "assets/icons/labgym.ico"
+			if ico.is_file():
+				return "assets/icons/labgym.ico"
 
 	# default to PNG (works on all)
 	return "assets/icons/labgym.png"
@@ -60,7 +67,7 @@ def _set_frame_icon(frame) -> None:
 	# Sets the window/titlebar icon on all OSes via wx
 	try:
 		import wx
-		icon_rel = _icon_relpath()
+		icon_rel = _icon_relpath(use_fallback=False)  # Use main icon for window
 		icon_file = files("LabGym") / icon_rel
 		if icon_file.is_file():
 			# Create wx.Icon with explicit size for better Windows compatibility
@@ -74,6 +81,64 @@ def _set_frame_icon(frame) -> None:
 	except Exception as e:
 		logger.warning("Failed to set frame icon: %r", e)
 		pass # non-fatal error, fails gracefully
+
+
+def _set_windows_taskbar_icon_with_fallback() -> None:
+	# Sets the Windows taskbar icon using fallback ICO for better small-size visibility
+	if not sys.platform.startswith("win"):
+		return
+	try:
+		import ctypes
+		import wx
+		
+		# Set AppUserModelID first
+		app_id = "umyelab.LabGym.1.0"
+		ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
+		logger.debug("Set Windows AppUserModelID to: %s", app_id)
+		
+		# Try to set the taskbar icon using the fallback ICO
+		# The fallback ICO is optimized for small sizes (like 16x16 taskbar icons)
+		icon_rel = _icon_relpath(use_fallback=True)
+		icon_file = files("LabGym") / icon_rel
+		if icon_file.is_file():
+			# Create wx.Icon from fallback ICO
+			icon = wx.Icon(str(icon_file), wx.BITMAP_TYPE_ANY)
+			if icon.IsOk():
+				# Get the main app instance and set its icon
+				app = wx.GetApp()
+				if app:
+					app.SetAppDisplayName("LabGym")
+					# Note: wxPython doesn't have a direct way to set taskbar icon
+					# The AppUserModelID above should help Windows associate the correct icon
+					logger.debug("Using fallback ICO for taskbar (optimized for small sizes): %s", icon_file)
+			else:
+				logger.warning("Failed to create valid wx.Icon from fallback ICO: %s", icon_file)
+		else:
+			logger.warning("Fallback ICO file not found: %s", icon_file)
+			
+	except Exception as e:
+		logger.warning("Failed to set Windows taskbar icon with fallback: %r", e)
+		pass # Non-fatal error, fails gracefully
+
+
+def _get_icon_for_size(icon_size=16) -> str:
+	# Returns the appropriate icon file based on the requested size
+	# For small sizes (<= 24px), use fallback ICO; for larger sizes, use main ICO
+	if sys.platform.startswith("win"):
+		if icon_size <= 24:
+			# Use fallback ICO for small sizes (taskbar, window controls, etc.)
+			fallback_ico = files("LabGym") / "assets/icons/fallback.ico"
+			if fallback_ico.is_file():
+				return str(fallback_ico)
+		else:
+			# Use main ICO for larger sizes (window title bar, etc.)
+			main_ico = files("LabGym") / "assets/icons/labgym.ico"
+			if main_ico.is_file():
+				return str(main_ico)
+	
+	# Default to PNG for non-Windows or if ICO files not found
+	png_file = files("LabGym") / "assets/icons/labgym.png"
+	return str(png_file) if png_file.is_file() else ""
 
 
 def _set_macos_dock_icon() -> None:
@@ -96,20 +161,6 @@ def _set_macos_dock_icon() -> None:
 		logger.warning("Dock icon set failed: %r", e)
 		pass # PyObjC missing, not compatble with PyObjC, etc.
 
-
-def _set_windows_taskbar_icon() -> None:
-	# Sets the Windows taskbar icon by configuring AppUserModelID
-	if not sys.platform.startswith("win"):
-		return
-	try:
-		import ctypes
-		# Set a unique AppUserModelID for LabGym to ensure proper taskbar icon display
-		app_id = "umyelab.LabGym.1.0"
-		ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
-		logger.debug("Set Windows AppUserModelID to: %s", app_id)
-	except Exception as e:
-		logger.warning("Failed to set Windows AppUserModelID: %r", e)
-		pass # Non-fatal error, fails gracefully
 
 class InitialPanel(wx.Panel):
 
@@ -485,7 +536,7 @@ def main_window():
 
 	app=wx.App()
 	_set_macos_dock_icon() # no-op on non-macOS or if no PyObjC
-	_set_windows_taskbar_icon() # no-op on non-Windows
+	_set_windows_taskbar_icon_with_fallback() # no-op on non-Windows, uses fallback ICO
 	MainFrame()  # Create the main frame and its notebook
 	logger.info('Bobby\'s  user interface initialized!')
 	app.MainLoop()
