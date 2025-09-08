@@ -23,7 +23,6 @@ contexts (normal, small).
 '''
 # Standard library imports.
 import sys
-import logging
 from pathlib import Path
 from importlib.resources import files
 from functools import lru_cache
@@ -37,9 +36,6 @@ if sys.platform == "darwin":
 		from AppKit import NSApplication, NSImage
 	except ImportError:
 		NSApplication = None
-
-
-logger = logging.getLogger(__name__)
 
 
 @lru_cache(maxsize=1)
@@ -74,17 +70,13 @@ def set_frame_icon(frame, context='normal', size=16):
 	try:
 		icon_path = get_icon_for_context(context, size)
 		if not icon_path or not Path(icon_path).is_file():
-			logger.warning("Icon file not found: %s", icon_path)
 			return
 			
 		icon = wx.Icon(icon_path, wx.BITMAP_TYPE_ANY)
 		if icon.IsOk():
 			frame.SetIcon(icon)
-			logger.info("Set frame icon: %s", icon_path)
-		else:
-			logger.warning("Failed to create valid wx.Icon from %s", icon_path)
-	except Exception as e:
-		logger.warning("Failed to set frame icon: %r", e)
+	except Exception:
+		pass
 
 
 def set_windows_taskbar_icon():
@@ -95,12 +87,11 @@ def set_windows_taskbar_icon():
 	if not sys.platform.startswith("win"):
 		return
 	try:
-		# Set AppUserModelID first - this is crucial for proper taskbar icon association
-		app_id = "umyelab.LabGym.1.0"
+		# This sets AppUserModelID first - this is crucial for proper taskbar icon association
+		app_id = "umyelab.LabGym"
 		ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
-		logger.info("Set Windows AppUserModelID to: %s", app_id)
-	except Exception as e:
-		logger.warning("Failed to set Windows taskbar icon: %r", e)
+	except Exception:
+		pass
 
 
 def set_macos_dock_icon():
@@ -118,18 +109,11 @@ def set_macos_dock_icon():
 		img = NSImage.alloc().initWithContentsOfFile_(icon_path)
 		if img:
 			NSApplication.sharedApplication().setApplicationIconImage_(img)
-			logger.info("Set macOS dock icon: %s", icon_path)
-		else:
-			logger.warning("NSImage failed to load dock icon from %s", icon_path)
-	except Exception as e:
-		logger.warning("Dock icon set failed: %r", e)
+	except Exception:
+		pass
 
 
 def setup_application_icons():
 	"""Set up all application icons for the current platform."""
-	set_macos_dock_icon()  # no-op on non-macOS or if no PyObjC
-	set_windows_taskbar_icon()  # no-op on non-Windows, uses small ICO
-	
-	# Log icon usage for debugging
-	if sys.platform.startswith("win"):
-		logger.info("Windows: Using small ICO for title bar contexts")
+	set_macos_dock_icon()
+	set_windows_taskbar_icon()

@@ -425,7 +425,7 @@ def main_window():
 	setup_application_icons()  # Set up all platform-specific icons
 	
 	MainFrame()  # Create the main frame and its notebook
-	logger.info('Bobby\'s user interface initialized!')
+	logger.info('User interface initialized!')
 	app.MainLoop()
 
 
