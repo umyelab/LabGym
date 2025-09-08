@@ -114,6 +114,7 @@ def set_linux_dock_icon():
 		import os
 		import tempfile
 		from pathlib import Path
+		import shutil
 		
 		# Set the WM_CLASS property for better icon association
 		app = wx.GetApp()
@@ -125,13 +126,24 @@ def set_linux_dock_icon():
 		icon_path = get_icon_for_context(context='dock', size=32)
 		if icon_path and Path(icon_path).is_file():
 			try:
+				# Also copy the icon to the user's icon theme directory for robustness
+				icon_theme_dir = Path.home() / ".local" / "share" / "icons" / "hicolor" / "48x48" / "apps"
+				icon_theme_dir.mkdir(parents=True, exist_ok=True)
+
+				icon_dest = icon_theme_dir / "labgym.png"
+				if Path(icon_path).exists():
+					shutil.copy2(icon_path, icon_dest)
+					logger.info("Copied icon to theme directory: %s", icon_dest)
+				else:
+					# Fallback if icon source is missing for some reason
+					icon_dest = "application-x-executable"
 				# Create a temporary desktop file for better dock integration
 				# This helps desktop environments like GNOME/Unity recognize the application
 				desktop_content = f"""[Desktop Entry]
 Name=LabGym
 Comment=LabGym - Animal Behavior Analysis
 Exec=python3 -m LabGym
-Icon=labgym
+Icon={icon_dest}
 Type=Application
 Categories=Science;Biology;
 StartupWMClass=LabGym
@@ -154,17 +166,7 @@ StartupWMClass=LabGym
 					desktop_dest.unlink()  # Remove existing file
 				
 				# Copy the desktop file
-				import shutil
 				shutil.copy2(temp_desktop, desktop_dest)
-				
-				# Also copy the icon to the user's icon theme directory
-				icon_theme_dir = Path.home() / ".local" / "share" / "icons" / "hicolor" / "48x48" / "apps"
-				icon_theme_dir.mkdir(parents=True, exist_ok=True)
-				
-				icon_dest = icon_theme_dir / "labgym.png"
-				if Path(icon_path).exists():
-					shutil.copy2(icon_path, icon_dest)
-					logger.info("Copied icon to theme directory: %s", icon_dest)
 				
 				# Clean up temp file
 				os.unlink(temp_desktop)
