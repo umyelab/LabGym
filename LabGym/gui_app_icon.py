@@ -1,19 +1,43 @@
 '''
-GUI application icon module for LabGym.
+Copyright (C)
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+You should have received a copy of the GNU General Public License along with this program. If not, see https://tldrlegal.com/license/gnu-general-public-license-v3-(gpl-3)#fulltext.
 
-This module provides cross-platform icon handling functionality for the LabGym GUI,
-including support for different icon formats (ICO, ICNS, PNG) and contexts (normal, small).
+For license issues, please contact:
+
+Dr. Bing Ye
+Life Sciences Institute
+University of Michigan
+210 Washtenaw Avenue, Room 5403
+Ann Arbor, MI 48109-2216
+USA
+
+Email: bingye@umich.edu
 '''
 
-# Standard library imports
+'''GUI application icon module for LabGym.
+This module provides cross-platform icon handling functionality for the LabGym
+GUI, including support for different icon formats (ICO, ICNS, PNG) and
+contexts (normal, small).
+'''
+# Standard library imports.
 import sys
 import logging
 from pathlib import Path
 from importlib.resources import files
 from functools import lru_cache
+if sys.platform.startswith("win"):
+	import ctypes
 
-# Related third party imports
+# Related third party imports.
 import wx
+if sys.platform == "darwin":
+	try:
+		from AppKit import NSApplication, NSImage
+	except ImportError:
+		NSApplication = None
+
 
 logger = logging.getLogger(__name__)
 
@@ -64,46 +88,28 @@ def set_frame_icon(frame, context='normal', size=16):
 
 
 def set_windows_taskbar_icon():
-	"""Set the Windows taskbar icon using small ICO for better small-size visibility."""
+	"""Set the Windows taskbar icon.
+	Set the Windows taskbar icon using small ICO for better small-size
+	visibility.
+	"""
 	if not sys.platform.startswith("win"):
 		return
 	try:
-		import ctypes
-		
 		# Set AppUserModelID first - this is crucial for proper taskbar icon association
 		app_id = "umyelab.LabGym.1.0"
 		ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
 		logger.info("Set Windows AppUserModelID to: %s", app_id)
-		
-		# Use small icon for taskbar (small size context)
-		icon_path = get_icon_for_context(context='small', size=16)
-		if icon_path and Path(icon_path).is_file():
-			# Create wx.Icon from small ICO
-			icon = wx.Icon(icon_path, wx.BITMAP_TYPE_ANY)
-			if icon.IsOk():
-				# Get the main app instance and set its icon
-				app = wx.GetApp()
-				if app:
-					app.SetAppDisplayName("LabGym")
-					# Note: wxPython doesn't have a direct way to set taskbar icon
-					# The AppUserModelID above should help Windows associate the correct icon
-					logger.info("Using small ICO for taskbar (optimized for small sizes): %s", icon_path)
-			else:
-				logger.warning("Failed to create valid wx.Icon from small ICO: %s", icon_path)
-		else:
-			logger.warning("Small ICO file not found: %s", icon_path)
-			
 	except Exception as e:
 		logger.warning("Failed to set Windows taskbar icon: %r", e)
-		pass # Non-fatal error, fails gracefully
 
 
 def set_macos_dock_icon():
-	"""Set the Dock icon at runtime on macOS (requires optional PyObjC)."""
-	if sys.platform != "darwin":
+	"""Set the Dock icon on macOS.
+	Set the Dock icon at runtime on macOS (requires optional PyObjC).
+	"""
+	if sys.platform != "darwin" or not NSApplication:
 		return
 	try:
-		from AppKit import NSApplication, NSImage
 		baseIconDir = files("LabGym")
 		icns = baseIconDir / "assets/icons/labgym.icns"
 		png = baseIconDir / "assets/icons/labgym.png"
@@ -117,7 +123,6 @@ def set_macos_dock_icon():
 			logger.warning("NSImage failed to load dock icon from %s", icon_path)
 	except Exception as e:
 		logger.warning("Dock icon set failed: %r", e)
-		pass # PyObjC missing, not compatible with PyObjC, etc.
 
 
 def setup_application_icons():

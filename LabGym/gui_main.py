@@ -47,10 +47,7 @@ from .gui_analyzer import PanelLv2_AnalyzeBehaviors,PanelLv2_MineResults,PanelLv
 
 
 class InitialPanel(wx.Panel):
-
-	'''
-	The main window of LabGym
-	'''
+	"""Initial panel, the main window of LabGym."""
 
 	def __init__(self, parent):
 
@@ -104,6 +101,7 @@ class InitialPanel(wx.Panel):
 
 
 	def window_preprocess(self,event):
+		"""Open the Preprocessing Module."""
 
 		panel = PanelLv1_ProcessModule(self.notebook)
 		title = 'Preprocessing Module'
@@ -111,6 +109,7 @@ class InitialPanel(wx.Panel):
 
 
 	def window_train(self,event):
+		"""Open the Training Module."""
 
 		panel = PanelLv1_TrainingModule(self.notebook)
 		title = 'Training Module'
@@ -118,6 +117,7 @@ class InitialPanel(wx.Panel):
 
 
 	def window_analyze(self,event):
+		"""Open the Analysis Module."""
 
 		panel = PanelLv1_AnalysisModule(self.notebook)
 		title = 'Analysis Module'
@@ -126,10 +126,7 @@ class InitialPanel(wx.Panel):
 
 
 class PanelLv1_ProcessModule(wx.Panel):
-
-	'''
-	The Preprocessing Module
-	'''
+	"""The Preprocessing Module."""
 
 	def __init__(self, parent):
 
@@ -163,6 +160,7 @@ class PanelLv1_ProcessModule(wx.Panel):
 
 
 	def process_videos(self,event):
+		"""Open the Preprocess Videos panel."""
 
 		panel = PanelLv2_ProcessVideos(self.notebook)
 		title = 'Preprocess Videos'
@@ -170,6 +168,7 @@ class PanelLv1_ProcessModule(wx.Panel):
 
 
 	def draw_markers(self,event):
+		"""Open the Draw Markers panel."""
 
 		panel = PanelLv2_DrawMarkers(self.notebook)
 		title = 'Draw Markers'
@@ -177,10 +176,7 @@ class PanelLv1_ProcessModule(wx.Panel):
 
 
 class PanelLv1_TrainingModule(wx.Panel):
-
-	'''
-	The Training Module
-	'''
+	"""The Training Module."""
 
 	def __init__(self, parent):
 
@@ -248,6 +244,7 @@ class PanelLv1_TrainingModule(wx.Panel):
 
 
 	def generate_images(self,event):
+		"""Open the Generate Image Examples panel."""
 
 		panel = PanelLv2_GenerateImages(self.notebook)
 		title = 'Generate Image Examples'
@@ -255,6 +252,7 @@ class PanelLv1_TrainingModule(wx.Panel):
 
 
 	def train_detectors(self,event):
+		"""Open the Train Detectors panel."""
 
 		panel = PanelLv2_TrainDetectors(self.notebook)
 		title = 'Train Detectors'
@@ -262,6 +260,7 @@ class PanelLv1_TrainingModule(wx.Panel):
 
 
 	def test_detectors(self,event):
+		"""Open the Test Detectors panel."""
 
 		panel = PanelLv2_TestDetectors(self.notebook)
 		title = 'Test Detectors'
@@ -269,6 +268,7 @@ class PanelLv1_TrainingModule(wx.Panel):
 
 
 	def generate_behaviorexamples(self,event):
+		"""Open the Generate Behavior Examples panel."""
 
 		panel = PanelLv2_GenerateExamples(self.notebook)
 		title = 'Generate Behavior Examples'
@@ -276,6 +276,7 @@ class PanelLv1_TrainingModule(wx.Panel):
 
 
 	def sort_behaviorexamples(self,event):
+		"""Open the Sort Behavior Examples panel."""
 
 		panel = PanelLv2_SortBehaviors(self.notebook)
 		title = 'Sort Behavior Examples'
@@ -283,6 +284,7 @@ class PanelLv1_TrainingModule(wx.Panel):
 
 
 	def train_categorizers(self,event):
+		"""Open the Train Categorizers panel."""
 
 		panel = PanelLv2_TrainCategorizers(self.notebook)
 		title = 'Train Categorizers'
@@ -290,6 +292,7 @@ class PanelLv1_TrainingModule(wx.Panel):
 
 
 	def test_categorizers(self,event):
+		"""Open the Test Categorizers panel."""
 
 		panel = PanelLv2_TestCategorizers(self.notebook)
 		title = 'Test Categorizers'
@@ -298,10 +301,7 @@ class PanelLv1_TrainingModule(wx.Panel):
 
 
 class PanelLv1_AnalysisModule(wx.Panel):
-
-	'''
-	The Analysis Module
-	'''
+	"""The Analysis Module."""
 
 	def __init__(self, parent):
 
@@ -347,6 +347,7 @@ class PanelLv1_AnalysisModule(wx.Panel):
 
 
 	def analyze_behaviors(self,event):
+		"""Open the Analyze Behaviors panel."""
 
 		panel = PanelLv2_AnalyzeBehaviors(self.notebook)
 		title = 'Analyze Behaviors'
@@ -354,6 +355,7 @@ class PanelLv1_AnalysisModule(wx.Panel):
 
 
 	def mine_results(self,event):
+		"""Open the Mine Results panel."""
 
 		panel = PanelLv2_MineResults(self.notebook)
 		title = 'Mine Results'
@@ -361,6 +363,7 @@ class PanelLv1_AnalysisModule(wx.Panel):
 
 
 	def plot_behavior(self,event):
+		"""Open the Generate Behavior Plot panel."""
 
 		panel = PanelLv2_PlotBehaviors(self.notebook)
 		title = 'Generate Behavior Plot'
@@ -368,6 +371,7 @@ class PanelLv1_AnalysisModule(wx.Panel):
 
 
 	def calculate_distances(self,event):
+		"""Open the Calculate Distances panel."""
 
 		panel = PanelLv2_CalculateDistances(self.notebook)
 		title = 'Calculate Distances'
@@ -376,11 +380,7 @@ class PanelLv1_AnalysisModule(wx.Panel):
 
 
 class MainFrame(wx.Frame):
-	"""Main frame and its notebook.
-
-	(The MainFrame obj is the) main frame and its notebook.
-	The notebook is initialized with one panel, the Welcome panel.
-	"""
+	"""Main frame and its notebook."""
 
 	def __init__(self):
 		super().__init__(None, title=f'LabGym v{__version__}')
@@ -419,6 +419,7 @@ class MainFrame(wx.Frame):
 
 
 def main_window():
+	"""Display the main window."""
 	app = wx.App()
 	app.SetAppName("LabGym") # Set app name to influence WM_CLASS
 	setup_application_icons()  # Set up all platform-specific icons
