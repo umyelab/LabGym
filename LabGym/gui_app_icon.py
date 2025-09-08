@@ -131,7 +131,7 @@ def set_linux_dock_icon():
 Name=LabGym
 Comment=LabGym - Animal Behavior Analysis
 Exec=python3 -m LabGym
-Icon={icon_path}
+Icon=labgym
 Type=Application
 Categories=Science;Biology;
 StartupWMClass=LabGym
@@ -172,24 +172,27 @@ StartupWMClass=LabGym
 				# Update desktop database and force icon cache refresh
 				try:
 					import subprocess
-					# Update desktop database
-					subprocess.run(['update-desktop-database', str(user_apps_dir)], 
-								  capture_output=True, timeout=5)
-					
+					logger.debug("Attempting to update desktop database...")
+					result = subprocess.run(['update-desktop-database', str(user_apps_dir)],
+								  capture_output=True, timeout=5, check=False)
+					if result.returncode != 0:
+						logger.warning("update-desktop-database failed: %s", result.stderr.decode('utf-8', 'ignore'))
+					else:
+						logger.debug("update-desktop-database succeeded.")
+
 					# Force icon cache refresh for GTK
-					subprocess.run(['gtk-update-icon-cache', '-f', '-t', str(user_apps_dir.parent / "icons")], 
-								  capture_output=True, timeout=5)
-					
-					# Try to refresh the dock/launcher (less aggressive approach)
-					try:
-						subprocess.run(['dbus-send', '--session', '--dest=org.gnome.Shell', 
-									   '--type=method_call', '/org/gnome/Shell', 
-									   'org.gnome.Shell.Eval', 'string:global.reexec_self()'], 
-									  capture_output=True, timeout=2)
-					except:
-						pass
-				except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.CalledProcessError):
-					pass  # Commands might not be available or might fail
+					# The icon directory is ~/.local/share/icons
+					gtk_icon_cache_dir = Path.home() / ".local" / "share" / "icons"
+					logger.debug("Attempting to update GTK icon cache for %s", gtk_icon_cache_dir)
+					result = subprocess.run(['gtk-update-icon-cache', '-f', '-t', str(gtk_icon_cache_dir)],
+								  capture_output=True, timeout=5, check=False)
+					if result.returncode != 0:
+						logger.warning("gtk-update-icon-cache failed: %s", result.stderr.decode('utf-8', 'ignore'))
+					else:
+						logger.debug("gtk-update-icon-cache succeeded.")
+
+				except (subprocess.TimeoutExpired, FileNotFoundError) as e:
+					logger.warning("Failed to run desktop update commands: %s", e)
 				
 				# Also try to set the icon directly on the window
 				try:
@@ -204,7 +207,7 @@ StartupWMClass=LabGym
 				except Exception:
 					pass
 				
-				logger.info("Linux dock icon setup completed with desktop file: %s", icon_path)
+				logger.info("Linux dock icon setup completed with desktop file: %s", desktop_dest)
 				
 			except Exception as e:
 				logger.debug("Desktop file creation failed: %r", e)

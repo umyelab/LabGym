@@ -424,6 +424,7 @@ class MainFrame(wx.Frame):
 
 def main_window():
 	app = wx.App()
+	app.SetAppName("LabGym") # Set app name to influence WM_CLASS
 	setup_application_icons()  # Set up all platform-specific icons
 	
 	MainFrame()  # Create the main frame and its notebook
