@@ -157,16 +157,52 @@ StartupWMClass=LabGym
 				import shutil
 				shutil.copy2(temp_desktop, desktop_dest)
 				
+				# Also copy the icon to the user's icon theme directory
+				icon_theme_dir = Path.home() / ".local" / "share" / "icons" / "hicolor" / "48x48" / "apps"
+				icon_theme_dir.mkdir(parents=True, exist_ok=True)
+				
+				icon_dest = icon_theme_dir / "labgym.png"
+				if Path(icon_path).exists():
+					shutil.copy2(icon_path, icon_dest)
+					logger.info("Copied icon to theme directory: %s", icon_dest)
+				
 				# Clean up temp file
 				os.unlink(temp_desktop)
 				
-				# Update desktop database
+				# Update desktop database and force icon cache refresh
 				try:
 					import subprocess
+					# Update desktop database
 					subprocess.run(['update-desktop-database', str(user_apps_dir)], 
 								  capture_output=True, timeout=5)
-				except (subprocess.TimeoutExpired, FileNotFoundError):
-					pass  # update-desktop-database might not be available
+					
+					# Force icon cache refresh for GTK
+					subprocess.run(['gtk-update-icon-cache', '-f', '-t', str(user_apps_dir.parent / "icons")], 
+								  capture_output=True, timeout=5)
+					
+					# Try to refresh the dock/launcher (less aggressive approach)
+					try:
+						subprocess.run(['dbus-send', '--session', '--dest=org.gnome.Shell', 
+									   '--type=method_call', '/org/gnome/Shell', 
+									   'org.gnome.Shell.Eval', 'string:global.reexec_self()'], 
+									  capture_output=True, timeout=2)
+					except:
+						pass
+				except (subprocess.TimeoutExpired, FileNotFoundError, subprocess.CalledProcessError):
+					pass  # Commands might not be available or might fail
+				
+				# Also try to set the icon directly on the window
+				try:
+					# Get the main frame and set its class name for better matching
+					app = wx.GetApp()
+					if app and app.GetTopWindow():
+						frame = app.GetTopWindow()
+						# Set window class name to match desktop file
+						frame.SetName("LabGym")
+						# Force a window refresh
+						frame.Refresh()
+				except Exception:
+					pass
 				
 				logger.info("Linux dock icon setup completed with desktop file: %s", icon_path)
 				

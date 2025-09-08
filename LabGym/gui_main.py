@@ -385,6 +385,10 @@ class MainFrame(wx.Frame):
 	def __init__(self):
 		super().__init__(None, title=f'LabGym v{__version__}')
 		self.SetSize((750, 600))
+		
+		# Set window class name for better Linux desktop integration
+		if sys.platform.startswith("linux"):
+			self.SetName("LabGym")
 
 		# Set the app icon within GUI
 		set_frame_icon(self, context='normal')  # Set normal icon first
