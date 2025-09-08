@@ -20,10 +20,8 @@ Email: bingye@umich.edu
 # Standard library imports.
 # import json
 import logging
-from pathlib import Path
 import sys
-from importlib.resources import files
-from functools import lru_cache
+from .gui_app_icon import set_frame_icon, setup_application_icons
 
 # Log the load of this module (by the module loader, on first import).
 # Intentionally positioning these statements before other imports, against the
@@ -46,103 +44,6 @@ from .gui_preprocessor import PanelLv2_ProcessVideos,PanelLv2_DrawMarkers
 from .gui_analyzer import PanelLv2_AnalyzeBehaviors,PanelLv2_MineResults,PanelLv2_PlotBehaviors,PanelLv2_CalculateDistances
 
 
-@lru_cache(maxsize=1)
-def _get_icon_paths():
-	"""Get all icon paths once and cache them."""
-	base_path = files("LabGym") / "assets/icons"
-	return {
-		'small_ico': base_path / "labgym_small.ico",
-		'main_ico': base_path / "labgym.ico", 
-		'icns': base_path / "labgym.icns",
-		'png': base_path / "labgym.png"
-	}
-
-def _get_icon_for_context(context='normal', size=16):
-	"""Get appropriate icon path for given context and size."""
-	icon_paths = _get_icon_paths()
-	
-	if sys.platform.startswith(("win", "linux")):
-		if context == 'small' or size <= 24:
-			return str(icon_paths['small_ico']) if icon_paths['small_ico'].is_file() else str(icon_paths['png'])
-		else:
-			return str(icon_paths['main_ico']) if icon_paths['main_ico'].is_file() else str(icon_paths['png'])
-	
-	# macOS or fallback
-	return str(icon_paths['png']) if icon_paths['png'].is_file() else ""
-
-def _set_frame_icon(frame, context='normal', size=16):
-	"""Set frame icon with proper error handling."""
-	try:
-		import wx
-		icon_path = _get_icon_for_context(context, size)
-		if not icon_path or not Path(icon_path).is_file():
-			logger.warning("Icon file not found: %s", icon_path)
-			return
-			
-		icon = wx.Icon(icon_path, wx.BITMAP_TYPE_ANY)
-		if icon.IsOk():
-			frame.SetIcon(icon)
-			logger.info("Set frame icon: %s", icon_path)
-		else:
-			logger.warning("Failed to create valid wx.Icon from %s", icon_path)
-	except Exception as e:
-		logger.warning("Failed to set frame icon: %r", e)
-
-def _set_windows_taskbar_icon_with_fallback() -> None:
-	# Sets the Windows taskbar icon using fallback ICO for better small-size visibility
-	if not sys.platform.startswith("win"):
-		return
-	try:
-		import ctypes
-		import wx
-		
-		# Set AppUserModelID first - this is crucial for proper taskbar icon association
-		app_id = "umyelab.LabGym.1.0"
-		ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
-		logger.info("Set Windows AppUserModelID to: %s", app_id)
-		
-		# Use small icon for taskbar (small size context)
-		icon_path = _get_icon_for_context(context='small', size=16)
-		if icon_path and Path(icon_path).is_file():
-			# Create wx.Icon from small ICO
-			icon = wx.Icon(icon_path, wx.BITMAP_TYPE_ANY)
-			if icon.IsOk():
-				# Get the main app instance and set its icon
-				app = wx.GetApp()
-				if app:
-					app.SetAppDisplayName("LabGym")
-					# Note: wxPython doesn't have a direct way to set taskbar icon
-					# The AppUserModelID above should help Windows associate the correct icon
-					logger.info("Using small ICO for taskbar (optimized for small sizes): %s", icon_path)
-			else:
-				logger.warning("Failed to create valid wx.Icon from small ICO: %s", icon_path)
-		else:
-			logger.warning("Small ICO file not found: %s", icon_path)
-			
-	except Exception as e:
-		logger.warning("Failed to set Windows taskbar icon with fallback: %r", e)
-		pass # Non-fatal error, fails gracefully
-
-
-def _set_macos_dock_icon() -> None:
-	# Sets the Dock title icon at runtime on macOS (use of optional PyObjC)
-	if sys.platform != "darwin":
-		return
-	try:
-		from AppKit import NSApplication, NSImage
-		baseIconDir = files("LabGym")
-		icns = baseIconDir / "assets/icons/labgym.icns"
-		png = baseIconDir / "assets/icons/labgym.png"
-
-		icon_path = str(icns if icns.is_file() else png)
-		img = NSImage.alloc().initWithContentsOfFile_(icon_path)
-		if img:
-			NSApplication.sharedApplication().setApplicationIconImage_(img)
-		else:
-			logger.warning("NSImage failed to load dock icon from %s", icon_path)
-	except Exception as e:
-		logger.warning("Dock icon set failed: %r", e)
-		pass # PyObjC missing, not compatble with PyObjC, etc.
 
 
 class InitialPanel(wx.Panel):
@@ -486,9 +387,9 @@ class MainFrame(wx.Frame):
 		self.SetSize((750, 600))
 
 		# Set the app icon within GUI
-		_set_frame_icon(self, context='normal')  # Set normal icon first
+		set_frame_icon(self, context='normal')  # Set normal icon first
 		if sys.platform.startswith(("win", "linux")):
-			_set_frame_icon(self, context='small', size=16)  # Override with small icon for title bar
+			set_frame_icon(self, context='small', size=16)  # Override with small icon for title bar
 
 		# Create the aui_manager to manage this frame/window.
 		self.aui_manager = wx.aui.AuiManager()
@@ -519,12 +420,7 @@ class MainFrame(wx.Frame):
 
 def main_window():
 	app = wx.App()
-	_set_macos_dock_icon()  # no-op on non-macOS or if no PyObjC
-	_set_windows_taskbar_icon_with_fallback()  # no-op on non-Windows, uses small ICO
-	
-	# Simplified logging
-	if sys.platform.startswith(("win", "linux")):
-		logger.info("Using small ICO for title bar contexts")
+	setup_application_icons()  # Set up all platform-specific icons
 	
 	MainFrame()  # Create the main frame and its notebook
 	logger.info('Bobby\'s user interface initialized!')
