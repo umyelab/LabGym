@@ -40,14 +40,6 @@ def get_icon_for_context(context='normal', size=16):
 			return str(icon_paths['small_ico']) if icon_paths['small_ico'].is_file() else str(icon_paths['png'])
 		else:
 			return str(icon_paths['main_ico']) if icon_paths['main_ico'].is_file() else str(icon_paths['png'])
-	elif sys.platform.startswith("linux"):
-		# Linux: Prefer PNG for dock icons, ICO for title bar
-		if context == 'dock':
-			return str(icon_paths['png']) if icon_paths['png'].is_file() else str(icon_paths['main_ico'])
-		elif context == 'small' or size <= 24:
-			return str(icon_paths['small_ico']) if icon_paths['small_ico'].is_file() else str(icon_paths['png'])
-		else:
-			return str(icon_paths['main_ico']) if icon_paths['main_ico'].is_file() else str(icon_paths['png'])
 	
 	# macOS or fallback
 	return str(icon_paths['png']) if icon_paths['png'].is_file() else ""
@@ -106,122 +98,6 @@ def set_windows_taskbar_icon():
 		pass # Non-fatal error, fails gracefully
 
 
-def set_linux_dock_icon():
-	"""Set the Linux dock/desktop icon using desktop file and icon theme."""
-	if not sys.platform.startswith("linux"):
-		return
-	try:
-		import os
-		import tempfile
-		from pathlib import Path
-		import shutil
-		
-		# Set the WM_CLASS property for better icon association
-		app = wx.GetApp()
-		if app:
-			# Set application name for better desktop integration
-			app.SetAppDisplayName("LabGym")
-			
-		# Try to use the PNG icon for better Linux compatibility
-		icon_path = get_icon_for_context(context='dock', size=32)
-		if icon_path and Path(icon_path).is_file():
-			try:
-				# Also copy the icon to the user's icon theme directory for robustness
-				icon_theme_dir = Path.home() / ".local" / "share" / "icons" / "hicolor" / "48x48" / "apps"
-				icon_theme_dir.mkdir(parents=True, exist_ok=True)
-
-				icon_dest = icon_theme_dir / "labgym.png"
-				if Path(icon_path).exists():
-					shutil.copy2(icon_path, icon_dest)
-					logger.info("Copied icon to theme directory: %s", icon_dest)
-				else:
-					# Fallback if icon source is missing for some reason
-					icon_dest = "application-x-executable"
-				# Create a temporary desktop file for better dock integration
-				# This helps desktop environments like GNOME/Unity recognize the application
-				desktop_content = f"""[Desktop Entry]
-Name=LabGym
-Comment=LabGym - Animal Behavior Analysis
-Exec=python3 -m LabGym
-Icon={icon_dest}
-Type=Application
-Categories=Science;Biology;
-StartupWMClass=LabGym
-"""
-				
-				# Create temporary desktop file
-				with tempfile.NamedTemporaryFile(mode='w', suffix='.desktop', delete=False) as f:
-					f.write(desktop_content)
-					temp_desktop = f.name
-				
-				# Make it executable
-				os.chmod(temp_desktop, 0o755)
-				
-				# Try to install it to user applications directory
-				user_apps_dir = Path.home() / ".local" / "share" / "applications"
-				user_apps_dir.mkdir(parents=True, exist_ok=True)
-				
-				desktop_dest = user_apps_dir / "labgym.desktop"
-				if desktop_dest.exists():
-					desktop_dest.unlink()  # Remove existing file
-				
-				# Copy the desktop file
-				shutil.copy2(temp_desktop, desktop_dest)
-				
-				# Clean up temp file
-				os.unlink(temp_desktop)
-				
-				# Update desktop database and force icon cache refresh
-				try:
-					import subprocess
-					logger.debug("Attempting to update desktop database...")
-					result = subprocess.run(['update-desktop-database', str(user_apps_dir)],
-								  capture_output=True, timeout=5, check=False)
-					if result.returncode != 0:
-						logger.warning("update-desktop-database failed: %s", result.stderr.decode('utf-8', 'ignore'))
-					else:
-						logger.debug("update-desktop-database succeeded.")
-
-					# Force icon cache refresh for GTK
-					# The icon directory is ~/.local/share/icons
-					gtk_icon_cache_dir = Path.home() / ".local" / "share" / "icons"
-					logger.debug("Attempting to update GTK icon cache for %s", gtk_icon_cache_dir)
-					result = subprocess.run(['gtk-update-icon-cache', '-f', '-t', str(gtk_icon_cache_dir)],
-								  capture_output=True, timeout=5, check=False)
-					if result.returncode != 0:
-						logger.warning("gtk-update-icon-cache failed: %s", result.stderr.decode('utf-8', 'ignore'))
-					else:
-						logger.debug("gtk-update-icon-cache succeeded.")
-
-				except (subprocess.TimeoutExpired, FileNotFoundError) as e:
-					logger.warning("Failed to run desktop update commands: %s", e)
-				
-				# Also try to set the icon directly on the window
-				try:
-					# Get the main frame and set its class name for better matching
-					app = wx.GetApp()
-					if app and app.GetTopWindow():
-						frame = app.GetTopWindow()
-						# Set window class name to match desktop file
-						frame.SetName("LabGym")
-						# Force a window refresh
-						frame.Refresh()
-				except Exception:
-					pass
-				
-				logger.info("Linux dock icon setup completed with desktop file: %s", desktop_dest)
-				
-			except Exception as e:
-				logger.debug("Desktop file creation failed: %r", e)
-				logger.info("Linux dock icon setup completed (basic): %s", icon_path)
-		else:
-			logger.warning("Linux icon file not found: %s", icon_path)
-			
-	except Exception as e:
-		logger.warning("Linux dock icon setup failed: %r", e)
-		pass # Non-fatal error, fails gracefully
-
-
 def set_macos_dock_icon():
 	"""Set the Dock icon at runtime on macOS (requires optional PyObjC)."""
 	if sys.platform != "darwin":
@@ -248,10 +124,7 @@ def setup_application_icons():
 	"""Set up all application icons for the current platform."""
 	set_macos_dock_icon()  # no-op on non-macOS or if no PyObjC
 	set_windows_taskbar_icon()  # no-op on non-Windows, uses small ICO
-	set_linux_dock_icon()  # no-op on non-Linux, sets up dock integration
 	
 	# Log icon usage for debugging
 	if sys.platform.startswith("win"):
 		logger.info("Windows: Using small ICO for title bar contexts")
-	elif sys.platform.startswith("linux"):
-		logger.info("Linux: Using PNG for dock and ICO for title bar contexts")
