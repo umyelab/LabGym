@@ -50,9 +50,9 @@ def _icon_relpath(use_fallback=False) -> str:
 	if sys.platform.startswith(("win", "linux")):
 		if use_fallback:
 			# Use fallback ICO for small icon sizes (like taskbar, panel icons)
-			fallback_ico = files("LabGym") / "assets/icons/fallback.ico"
+			fallback_ico = files("LabGym") / "assets/icons/labgym_small.ico"
 			if fallback_ico.is_file():
-				return "assets/icons/fallback.ico"
+				return "assets/icons/labgym_small.ico"
 		else:
 			# Use main ICO for normal window icons
 			ico = files("LabGym") / "assets/icons/labgym.ico"
@@ -96,7 +96,7 @@ def _set_small_icon(frame) -> None:
 	try:
 		import wx
 		# Use fallback ICO which should have better small-size optimization
-		fallback_ico = files("LabGym") / "assets/icons/fallback.ico"
+		fallback_ico = files("LabGym") / "assets/icons/labgym_small.ico"
 		if fallback_ico.is_file():
 			# Try to create icon with specific size (16x16 for title bar)
 			icon = wx.Icon(str(fallback_ico), wx.BITMAP_TYPE_ICO, 16, 16)
@@ -160,7 +160,7 @@ def _get_icon_for_size(icon_size=16) -> str:
 	if sys.platform.startswith(("win", "linux")):
 		if icon_size <= 24:
 			# Use fallback ICO for small sizes (taskbar, panel icons, window controls, etc.)
-			fallback_ico = files("LabGym") / "assets/icons/fallback.ico"
+			fallback_ico = files("LabGym") / "assets/icons/labgym_small.ico"
 			if fallback_ico.is_file():
 				return str(fallback_ico)
 		else:
@@ -577,11 +577,11 @@ def main_window():
 	if sys.platform.startswith("win"):
 		logger.info("Windows detected - using fallback ICO for small icon contexts")
 		logger.info("Main ICO: %s", str(files("LabGym") / "assets/icons/labgym.ico"))
-		logger.info("Fallback ICO: %s", str(files("LabGym") / "assets/icons/fallback.ico"))
+		logger.info("Fallback ICO: %s", str(files("LabGym") / "assets/icons/labgym_small.ico"))
 	elif sys.platform.startswith("linux"):
 		logger.info("Linux detected - using fallback ICO for small icon contexts")
 		logger.info("Main ICO: %s", str(files("LabGym") / "assets/icons/labgym.ico"))
-		logger.info("Fallback ICO: %s", str(files("LabGym") / "assets/icons/fallback.ico"))
+		logger.info("Fallback ICO: %s", str(files("LabGym") / "assets/icons/labgym_small.ico"))
 	
 	MainFrame()  # Create the main frame and its notebook
 	logger.info('Bobby\'s  user interface initialized!')
