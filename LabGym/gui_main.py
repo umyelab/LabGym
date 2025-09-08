@@ -463,7 +463,7 @@ def main_window():
 	app=wx.App()
 	_set_macos_dock_icon() # no-op on non-macOS or if no PyObjC
 	MainFrame()  # Create the main frame and its notebook
-	logger.info('The user interface initialized!')
+	logger.info('Bobby\'s  user interface initialized!')
 	app.MainLoop()
 
 
