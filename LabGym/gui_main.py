@@ -46,10 +46,10 @@ from .gui_analyzer import PanelLv2_AnalyzeBehaviors,PanelLv2_MineResults,PanelLv
 
 
 def _icon_relpath(use_fallback=False) -> str:
-	# Prefer .ico on Windows; otherwise, use PNG
-	if sys.platform.startswith("win"):
+	# Prefer .ico on Windows and Linux; otherwise, use PNG
+	if sys.platform.startswith(("win", "linux")):
 		if use_fallback:
-			# Use fallback ICO for small icon sizes (like taskbar)
+			# Use fallback ICO for small icon sizes (like taskbar, panel icons)
 			fallback_ico = files("LabGym") / "assets/icons/fallback.ico"
 			if fallback_ico.is_file():
 				return "assets/icons/fallback.ico"
@@ -59,22 +59,22 @@ def _icon_relpath(use_fallback=False) -> str:
 			if ico.is_file():
 				return "assets/icons/labgym.ico"
 
-	# default to PNG (works on all)
+	# default to PNG (works on all, including macOS)
 	return "assets/icons/labgym.png"
 
 
 def _set_frame_icon(frame) -> None:
 	# Sets the window/titlebar icon on all OSes via wx
-	# Use fallback ICO on Windows for better small-size display in title bar
+	# Use fallback ICO on Windows and Linux for better small-size display in title bar
 	try:
 		import wx
-		# On Windows, use fallback ICO for title bar (small size context)
-		# On other platforms, use main icon
-		use_fallback = sys.platform.startswith("win")
+		# On Windows and Linux, use fallback ICO for title bar (small size context)
+		# On macOS, use main icon (PNG)
+		use_fallback = sys.platform.startswith(("win", "linux"))
 		icon_rel = _icon_relpath(use_fallback=use_fallback)
 		icon_file = files("LabGym") / icon_rel
 		if icon_file.is_file():
-			# Create wx.Icon with explicit size for better Windows compatibility
+			# Create wx.Icon with explicit size for better compatibility
 			icon = wx.Icon(str(icon_file), wx.BITMAP_TYPE_ANY)
 			if icon.IsOk():
 				frame.SetIcon(icon)
@@ -89,9 +89,9 @@ def _set_frame_icon(frame) -> None:
 		pass # non-fatal error, fails gracefully
 
 
-def _set_windows_small_icon(frame) -> None:
-	# Specifically sets a small icon for Windows title bar using fallback ICO
-	if not sys.platform.startswith("win"):
+def _set_small_icon(frame) -> None:
+	# Specifically sets a small icon for Windows and Linux title bar using fallback ICO
+	if not sys.platform.startswith(("win", "linux")):
 		return
 	try:
 		import wx
@@ -106,13 +106,14 @@ def _set_windows_small_icon(frame) -> None:
 			
 			if icon.IsOk():
 				frame.SetIcon(icon)
-				logger.info("Set Windows title bar icon using fallback ICO (16x16): %s", fallback_ico)
+				platform_name = "Windows" if sys.platform.startswith("win") else "Linux"
+				logger.info("Set %s title bar icon using fallback ICO (16x16): %s", platform_name, fallback_ico)
 			else:
 				logger.warning("Failed to create valid wx.Icon from fallback ICO: %s", fallback_ico)
 		else:
 			logger.warning("Fallback ICO file not found: %s", fallback_ico)
 	except Exception as e:
-		logger.warning("Failed to set Windows small icon: %r", e)
+		logger.warning("Failed to set small icon: %r", e)
 		pass # Non-fatal error, fails gracefully
 
 
@@ -156,9 +157,9 @@ def _set_windows_taskbar_icon_with_fallback() -> None:
 def _get_icon_for_size(icon_size=16) -> str:
 	# Returns the appropriate icon file based on the requested size
 	# For small sizes (<= 24px), use fallback ICO; for larger sizes, use main ICO
-	if sys.platform.startswith("win"):
+	if sys.platform.startswith(("win", "linux")):
 		if icon_size <= 24:
-			# Use fallback ICO for small sizes (taskbar, window controls, etc.)
+			# Use fallback ICO for small sizes (taskbar, panel icons, window controls, etc.)
 			fallback_ico = files("LabGym") / "assets/icons/fallback.ico"
 			if fallback_ico.is_file():
 				return str(fallback_ico)
@@ -168,7 +169,7 @@ def _get_icon_for_size(icon_size=16) -> str:
 			if main_ico.is_file():
 				return str(main_ico)
 	
-	# Default to PNG for non-Windows or if ICO files not found
+	# Default to PNG for macOS or if ICO files not found
 	png_file = files("LabGym") / "assets/icons/labgym.png"
 	return str(png_file) if png_file.is_file() else ""
 
@@ -536,8 +537,8 @@ class MainFrame(wx.Frame):
 
 		# sets the app icon within GUI
 		_set_frame_icon(self)
-		# On Windows, also set a specific small icon for better title bar display
-		_set_windows_small_icon(self)
+		# On Windows and Linux, also set a specific small icon for better title bar display
+		_set_small_icon(self)
 
 		# Create the aui_manager to manage this frame/window.
 		self.aui_manager = wx.aui.AuiManager()
@@ -575,6 +576,10 @@ def main_window():
 	# Log icon usage for debugging
 	if sys.platform.startswith("win"):
 		logger.info("Windows detected - using fallback ICO for small icon contexts")
+		logger.info("Main ICO: %s", str(files("LabGym") / "assets/icons/labgym.ico"))
+		logger.info("Fallback ICO: %s", str(files("LabGym") / "assets/icons/fallback.ico"))
+	elif sys.platform.startswith("linux"):
+		logger.info("Linux detected - using fallback ICO for small icon contexts")
 		logger.info("Main ICO: %s", str(files("LabGym") / "assets/icons/labgym.ico"))
 		logger.info("Fallback ICO: %s", str(files("LabGym") / "assets/icons/fallback.ico"))
 	
