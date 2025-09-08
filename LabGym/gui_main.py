@@ -63,8 +63,16 @@ def _set_frame_icon(frame) -> None:
 		icon_rel = _icon_relpath()
 		icon_file = files("LabGym") / icon_rel
 		if icon_file.is_file():
-			frame.SetIcon(wx.Icon(str(icon_file)))
-	except Exception:
+			# Create wx.Icon with explicit size for better Windows compatibility
+			icon = wx.Icon(str(icon_file), wx.BITMAP_TYPE_ANY)
+			if icon.IsOk():
+				frame.SetIcon(icon)
+			else:
+				logger.warning("Failed to create valid wx.Icon from %s", icon_file)
+		else:
+			logger.warning("Icon file not found: %s", icon_file)
+	except Exception as e:
+		logger.warning("Failed to set frame icon: %r", e)
 		pass # non-fatal error, fails gracefully
 
 
@@ -87,6 +95,21 @@ def _set_macos_dock_icon() -> None:
 	except Exception as e:
 		logger.warning("Dock icon set failed: %r", e)
 		pass # PyObjC missing, not compatble with PyObjC, etc.
+
+
+def _set_windows_taskbar_icon() -> None:
+	# Sets the Windows taskbar icon by configuring AppUserModelID
+	if not sys.platform.startswith("win"):
+		return
+	try:
+		import ctypes
+		# Set a unique AppUserModelID for LabGym to ensure proper taskbar icon display
+		app_id = "umyelab.LabGym.1.0"
+		ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
+		logger.debug("Set Windows AppUserModelID to: %s", app_id)
+	except Exception as e:
+		logger.warning("Failed to set Windows AppUserModelID: %r", e)
+		pass # Non-fatal error, fails gracefully
 
 class InitialPanel(wx.Panel):
 
@@ -462,6 +485,7 @@ def main_window():
 
 	app=wx.App()
 	_set_macos_dock_icon() # no-op on non-macOS or if no PyObjC
+	_set_windows_taskbar_icon() # no-op on non-Windows
 	MainFrame()  # Create the main frame and its notebook
 	logger.info('Bobby\'s  user interface initialized!')
 	app.MainLoop()
