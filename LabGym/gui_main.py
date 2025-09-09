@@ -18,7 +18,6 @@ Email: bingye@umich.edu
 
 
 # Standard library imports.
-# import json
 import logging
 import sys
 from .gui_app_icon import set_frame_icon, setup_application_icons
