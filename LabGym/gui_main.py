@@ -18,7 +18,6 @@ Email: bingye@umich.edu
 
 
 # Standard library imports.
-# import json
 import logging
 import sys
 from .gui_app_icon import set_frame_icon, setup_application_icons
@@ -79,13 +78,13 @@ class InitialPanel(wx.Panel):
 		boxsizer.Add(0,50,0)
 
 		module_modules=wx.BoxSizer(wx.HORIZONTAL)
-		button_preprocess=wx.Button(panel,label='Preprocessing Module',size=(200,40))
+		button_preprocess=wx.Button(panel,label='Preprocessing Module',size=(250,40))
 		button_preprocess.Bind(wx.EVT_BUTTON,self.window_preprocess)
 		wx.Button.SetToolTip(button_preprocess,'Enhance video contrast / crop frames to exclude unnecessary region / trim videos to only keep necessary time windows.')
-		button_train=wx.Button(panel,label='Training Module',size=(200,40))
+		button_train=wx.Button(panel,label='Training Module',size=(250,40))
 		button_train.Bind(wx.EVT_BUTTON,self.window_train)
 		wx.Button.SetToolTip(button_train,'Teach LabGym to recognize the animals / objects of your interest and identify their behaviors that are defined by you.')
-		button_analyze=wx.Button(panel,label='Analysis Module',size=(200,40))
+		button_analyze=wx.Button(panel,label='Analysis Module',size=(250,40))
 		button_analyze.Bind(wx.EVT_BUTTON,self.window_analyze)
 		wx.Button.SetToolTip(button_analyze,'Use LabGym to track the animals / objects of your interest, identify and quantify their behaviors, and display the statistically significant findings.')
 		module_modules.Add(button_preprocess,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
@@ -384,7 +383,8 @@ class MainFrame(wx.Frame):
 
 	def __init__(self):
 		super().__init__(None, title=f'LabGym v{__version__}')
-		self.SetSize((750, 600))
+
+		self.SetSize((1000, 600))
 		
 		# Set the app icon within GUI
 		set_frame_icon(self, context='normal')  # Set normal icon first
@@ -415,6 +415,7 @@ class MainFrame(wx.Frame):
 
 		# Batch apply changes to any managed panes.
 		self.aui_manager.Update()
+		self.Centre()
 		self.Show()  # display the frame
 
 
