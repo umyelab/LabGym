@@ -35,6 +35,7 @@ import wx.lib.agw.hyperlink as hl
 
 # Local application/library specific imports.
 from LabGym import __version__
+from .gui_utils import add_or_select_notebook_page
 logger.debug('importing %s ...', '.gui_categorizer')
 from .gui_categorizer import PanelLv2_GenerateExamples,PanelLv2_TrainCategorizers,PanelLv2_SortBehaviors,PanelLv2_TestCategorizers
 logger.debug('importing %s done', '.gui_categorizer')
@@ -102,25 +103,22 @@ class InitialPanel(wx.Panel):
 	def window_preprocess(self,event):
 		"""Open the Preprocessing Module."""
 
-		panel = PanelLv1_ProcessModule(self.notebook)
 		title = 'Preprocessing Module'
-		self.notebook.AddPage(panel, title, select=True)
+		add_or_select_notebook_page(self.notebook, lambda: PanelLv1_ProcessModule(self.notebook), title)
 
 
 	def window_train(self,event):
 		"""Open the Training Module."""
 
-		panel = PanelLv1_TrainingModule(self.notebook)
 		title = 'Training Module'
-		self.notebook.AddPage(panel, title, select=True)
+		add_or_select_notebook_page(self.notebook, lambda: PanelLv1_TrainingModule(self.notebook), title)
 
 
 	def window_analyze(self,event):
 		"""Open the Analysis Module."""
 
-		panel = PanelLv1_AnalysisModule(self.notebook)
 		title = 'Analysis Module'
-		self.notebook.AddPage(panel, title, select=True)
+		add_or_select_notebook_page(self.notebook, lambda: PanelLv1_AnalysisModule(self.notebook), title)
 
 
 
@@ -161,17 +159,15 @@ class PanelLv1_ProcessModule(wx.Panel):
 	def process_videos(self,event):
 		"""Open the Preprocess Videos panel."""
 
-		panel = PanelLv2_ProcessVideos(self.notebook)
 		title = 'Preprocess Videos'
-		self.notebook.AddPage(panel, title, select=True)
+		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_ProcessVideos(self.notebook), title)
 
 
 	def draw_markers(self,event):
 		"""Open the Draw Markers panel."""
 
-		panel = PanelLv2_DrawMarkers(self.notebook)
 		title = 'Draw Markers'
-		self.notebook.AddPage(panel, title, select=True)
+		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_DrawMarkers(self.notebook), title)
 
 
 class PanelLv1_TrainingModule(wx.Panel):
@@ -245,57 +241,50 @@ class PanelLv1_TrainingModule(wx.Panel):
 	def generate_images(self,event):
 		"""Open the Generate Image Examples panel."""
 
-		panel = PanelLv2_GenerateImages(self.notebook)
 		title = 'Generate Image Examples'
-		self.notebook.AddPage(panel, title, select=True)
+		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_GenerateImages(self.notebook), title)
 
 
 	def train_detectors(self,event):
 		"""Open the Train Detectors panel."""
 
-		panel = PanelLv2_TrainDetectors(self.notebook)
 		title = 'Train Detectors'
-		self.notebook.AddPage(panel, title, select=True)
+		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_TrainDetectors(self.notebook), title)
 
 
 	def test_detectors(self,event):
 		"""Open the Test Detectors panel."""
 
-		panel = PanelLv2_TestDetectors(self.notebook)
 		title = 'Test Detectors'
-		self.notebook.AddPage(panel, title, select=True)
+		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_TestDetectors(self.notebook), title)
 
 
 	def generate_behaviorexamples(self,event):
 		"""Open the Generate Behavior Examples panel."""
 
-		panel = PanelLv2_GenerateExamples(self.notebook)
 		title = 'Generate Behavior Examples'
-		self.notebook.AddPage(panel, title, select=True)
+		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_GenerateExamples(self.notebook), title)
 
 
 	def sort_behaviorexamples(self,event):
 		"""Open the Sort Behavior Examples panel."""
 
-		panel = PanelLv2_SortBehaviors(self.notebook)
 		title = 'Sort Behavior Examples'
-		self.notebook.AddPage(panel, title, select=True)
+		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_SortBehaviors(self.notebook), title)
 
 
 	def train_categorizers(self,event):
 		"""Open the Train Categorizers panel."""
 
-		panel = PanelLv2_TrainCategorizers(self.notebook)
 		title = 'Train Categorizers'
-		self.notebook.AddPage(panel, title, select=True)
+		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_TrainCategorizers(self.notebook), title)
 
 
 	def test_categorizers(self,event):
 		"""Open the Test Categorizers panel."""
 
-		panel = PanelLv2_TestCategorizers(self.notebook)
 		title = 'Test Categorizers'
-		self.notebook.AddPage(panel, title, select=True)
+		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_TestCategorizers(self.notebook), title)
 
 
 
@@ -348,33 +337,29 @@ class PanelLv1_AnalysisModule(wx.Panel):
 	def analyze_behaviors(self,event):
 		"""Open the Analyze Behaviors panel."""
 
-		panel = PanelLv2_AnalyzeBehaviors(self.notebook)
 		title = 'Analyze Behaviors'
-		self.notebook.AddPage(panel, title, select=True)
+		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_AnalyzeBehaviors(self.notebook), title)
 
 
 	def mine_results(self,event):
 		"""Open the Mine Results panel."""
 
-		panel = PanelLv2_MineResults(self.notebook)
 		title = 'Mine Results'
-		self.notebook.AddPage(panel, title, select=True)
+		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_MineResults(self.notebook), title)
 
 
 	def plot_behavior(self,event):
 		"""Open the Generate Behavior Plot panel."""
 
-		panel = PanelLv2_PlotBehaviors(self.notebook)
 		title = 'Generate Behavior Plot'
-		self.notebook.AddPage(panel, title, select=True)
+		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_PlotBehaviors(self.notebook), title)
 
 
 	def calculate_distances(self,event):
 		"""Open the Calculate Distances panel."""
 
-		panel = PanelLv2_CalculateDistances(self.notebook)
 		title = 'Calculate Distances'
-		self.notebook.AddPage(panel, title, select=True)
+		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_CalculateDistances(self.notebook), title)
 
 
 
@@ -405,8 +390,11 @@ class MainFrame(wx.Frame):
 
 		# Add panel as a page to the notebook.
 		panel = InitialPanel(self.notebook)
-		title = 'Welcome'
+		title = 'Home'
 		self.notebook.AddPage(panel, title, select=True)
+		
+		# Bind the close event to prevent Home tab from being closed
+		self.notebook.Bind(wx.aui.EVT_AUINOTEBOOK_PAGE_CLOSE, self.on_page_close)
 
 		# Use a sizer to ensure the notebook fills the frame.
 		sizer = wx.BoxSizer(wx.VERTICAL)
@@ -417,6 +405,16 @@ class MainFrame(wx.Frame):
 		self.aui_manager.Update()
 		self.Centre()
 		self.Show()  # display the frame
+
+	def on_page_close(self, event):
+		"""Handle page close events to prevent Home tab from being closed."""
+		# Prevent the Home tab (index 0) from being closed
+		if event.GetSelection() == 0:
+			event.Veto()
+		else:
+			# Allow other tabs to be closed normally
+			event.Skip()
+
 
 
 def main_window():

@@ -43,8 +43,10 @@ logger.debug('importing %s ...', '.analyzebehavior_dt')
 from .analyzebehavior_dt import AnalyzeAnimalDetector
 logger.debug('importing %s done', '.analyzebehavior_dt')
 from .categorizer import Categorizers
-from .tools import sort_examples_from_csv
 from LabGym import config
+from .tools import sort_examples_from_csv
+from .gui_utils import add_or_select_notebook_page
+
 
 the_absolute_current_path=str(Path(__file__).resolve().parent)
 
@@ -716,16 +718,14 @@ class PanelLv2_SortBehaviors(wx.Panel):
 
 	def sort_examples(self,event):
 
-		panel = PanelLv3_SortExamples(self.notebook)
 		title = 'Sort Examples (LabGym UI)'
-		self.notebook.AddPage(panel, title, select=True)
+		add_or_select_notebook_page(self.notebook, lambda: PanelLv3_SortExamples(self.notebook), title)
 
 
 	def sort_examples_csv(self,event):
 
-		panel = PanelLv3_SortExamplesCSV(self.notebook)
 		title = 'Sort Examples (from .csv)'
-		self.notebook.AddPage(panel, title, select=True)
+		add_or_select_notebook_page(self.notebook, lambda: PanelLv3_SortExamplesCSV(self.notebook), title)
 
 
 
