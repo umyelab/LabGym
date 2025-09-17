@@ -43,9 +43,6 @@ from .minedata import data_mining
 from .tools import plot_events, parse_all_events_file, calculate_distances
 
 
-the_absolute_current_path=str(Path(__file__).resolve().parent)
-
-
 class ColorPicker(wx.Dialog):
 
 	'''
@@ -253,6 +250,7 @@ class PanelLv2_AnalyzeBehaviors(wx.Panel):
 
 		if self.model_path is None:
 			self.model_path = self._config['models']
+			logger.debug('%s: %r', 'self.model_path', self.model_path)
 
 		categorizers=[i for i in os.listdir(self.model_path) if os.path.isdir(os.path.join(self.model_path,i))]
 		if '__pycache__' in categorizers:
@@ -563,6 +561,7 @@ class PanelLv2_AnalyzeBehaviors(wx.Panel):
 
 				self.animal_number={}
 				self.detector_path = self._config['detectors']
+				logger.debug('%s: %r', 'self.detector_path', self.detector_path)
 				self.text_animalnumber.SetLabel('Default: 1.')
 
 				detectors=[i for i in os.listdir(self.detector_path) if os.path.isdir(os.path.join(self.detector_path,i))]
