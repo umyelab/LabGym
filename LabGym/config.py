@@ -67,8 +67,8 @@ defaults = {
 
     'anonymous': False,
 
-    'detectors': Path(__file__).parent.joinpath('detectors'),
-    'models': Path(__file__).parent.joinpath('models'),
+    'detectors': str(Path(__file__).parent.joinpath('detectors')),
+    'models': str(Path(__file__).parent.joinpath('models')),
 }
 
 logger = logging.getLogger(__name__)
