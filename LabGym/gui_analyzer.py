@@ -617,8 +617,8 @@ class PanelLv2_AnalyzeBehaviors(wx.Panel):
 					self.animal_number=None
 					self.animal_to_include=[]
 					self.ID_colors=[(255,255,255)]
-					self.text_detection=wx.StaticText(panel,label='Default: Background subtraction-based method.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
-					self.text_animalnumber=wx.StaticText(panel,label='Default: 1.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
+					self.text_detection.SetLabel('Default: Background subtraction-based method.')
+					self.text_animalnumber.SetLabel('Default: 1.')
 				else:
 					self.use_detector=True
 					if self.behavior_mode<3:
