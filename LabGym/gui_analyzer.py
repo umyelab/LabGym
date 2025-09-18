@@ -85,7 +85,7 @@ class PanelLv2_AnalyzeBehaviors(wx.Panel):
 		self.notebook = parent
 
 		# Get all of the values needed from config.get_config().
-		self._config = config.get_config()
+		self.config = config.get_config('detectors', 'models')
 
 		self.behavior_mode=0 # 0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
 		self.use_detector=False # whether the Detector is used
@@ -249,7 +249,7 @@ class PanelLv2_AnalyzeBehaviors(wx.Panel):
 	def select_categorizer(self,event):
 
 		if self.model_path is None:
-			self.model_path = self._config['models']
+			self.model_path = self.config['models']
 			logger.debug('%s: %r', 'self.model_path', self.model_path)
 
 		categorizers=[i for i in os.listdir(self.model_path) if os.path.isdir(os.path.join(self.model_path,i))]
@@ -560,7 +560,7 @@ class PanelLv2_AnalyzeBehaviors(wx.Panel):
 			else:
 
 				self.animal_number={}
-				self.detector_path = self._config['detectors']
+				self.detector_path = self.config['detectors']
 				logger.debug('%s: %r', 'self.detector_path', self.detector_path)
 				self.text_animalnumber.SetLabel('Default: 1.')
 
