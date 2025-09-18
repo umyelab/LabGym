@@ -379,6 +379,7 @@ class PanelLv2_GenerateExamples(wx.Panel):
 				self.use_detector=True
 				self.animal_number={}
 				self.detector_path = self.config['detectors']
+				logger.debug('%s: %r', 'self.detector_path', self.detector_path)
 
 				detectors=[i for i in os.listdir(self.detector_path) if os.path.isdir(os.path.join(self.detector_path,i))]
 				if '__pycache__' in detectors:
@@ -1083,7 +1084,9 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 		self.augvalid=True # whether to perform augmentation for validation data as well
 		self.data_path=None # the folder that stores prepared behavior examples
 		self.model_path = self.config['models']  # the 'LabGym/models' folder, which stores all the trained Categorizers
+		logger.debug('%s: %r', 'self.model_path', self.model_path)
 		self.path_to_categorizer = self.config['models'].joinpath('New_model')  # path to the Categorizer
+		logger.debug('%s: %r', 'self.path_to_categorizer', self.path_to_categorizer)
 		self.out_path=None # the folder for storing the training reports
 		self.include_bodyparts=False # whether to include body parts in the pattern images
 		self.std=0 # a value between 0 and 255, higher value, less body parts will be included in the pattern images
@@ -1588,6 +1591,7 @@ class PanelLv2_TestCategorizers(wx.Panel):
 
 		self.file_path=None # the folder that stores the ground-truth examples (each subfolder is a behavior category)
 		self.model_path = self.config['models']  # the 'LabGym/models' folder, which stores all the trained Categorizers
+		logger.debug('%s: %r', 'self.model_path', self.model_path)
 		self.path_to_categorizer=None # path to the Categorizer
 		self.out_path=None # for storing the testing reports
 

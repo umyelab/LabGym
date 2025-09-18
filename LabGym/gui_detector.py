@@ -243,6 +243,7 @@ class PanelLv2_TrainDetectors(wx.Panel):
 		self.inference_size=480 # the Detector inferencing frame size
 		self.iteration_num=200 # the number of training iterations
 		self.detector_path = self.config['detectors']  # the 'LabGym/detectors' folder, which stores all the trained Detectors
+		logger.debug('%s: %r', 'self.detector_path', self.detector_path)
 		self.path_to_detector=None # path to the Detector
 
 		self.display_window()
@@ -399,6 +400,7 @@ class PanelLv2_TestDetectors(wx.Panel):
 		self.path_to_testingimages=None # the folder that stores all the testing images
 		self.path_to_annotation=None # the path to the .json file that stores the annotations in coco format
 		self.detector_path = self.config['detectors']  # the 'LabGym/detectors' folder, which stores all the trained Detectors
+		logger.debug('%s: %r', 'self.detector_path', self.detector_path)
 		self.path_to_detector=None # path to the Detector
 		self.output_path=None # the folder that stores the testing images with annotations
 
