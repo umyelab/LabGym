@@ -48,9 +48,6 @@ from .tools import sort_examples_from_csv
 from .gui_utils import add_or_select_notebook_page
 
 
-the_absolute_current_path=str(Path(__file__).resolve().parent)
-
-
 class PanelLv2_GenerateExamples(wx.Panel):
 
 	'''
@@ -63,7 +60,7 @@ class PanelLv2_GenerateExamples(wx.Panel):
 		self.notebook = parent
 
 		# Get all of the values needed from config.get_config().
-		self._config = config.get_config()
+		self.config = config.get_config('detectors', 'models')
 
 		self.behavior_mode=0 # 0: non-interactive behavior; 1: interact basic; 2: interact advanced; 3: static images
 		self.use_detector=False # whether the Detector is used
@@ -381,7 +378,7 @@ class PanelLv2_GenerateExamples(wx.Panel):
 
 				self.use_detector=True
 				self.animal_number={}
-				self.detector_path = self._config['detectors']
+				self.detector_path = self.config['detectors']
 
 				detectors=[i for i in os.listdir(self.detector_path) if os.path.isdir(os.path.join(self.detector_path,i))]
 				if '__pycache__' in detectors:
@@ -1070,7 +1067,7 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 		self.notebook = parent
 
 		# Get all of the values needed from config.get_config().
-		_config = config.get_config()
+		self.config = config.get_config('models')
 
 		self.file_path=None # the folder that stores sorted, unprepared behavior examples (each category is a subfolder)
 		self.new_path=None # the folder that stores prepared behavior examples (contains all examples with a category tag in their names)
@@ -1085,8 +1082,8 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 		self.aug_methods=[] # the methods for augment training and validation examples
 		self.augvalid=True # whether to perform augmentation for validation data as well
 		self.data_path=None # the folder that stores prepared behavior examples
-		self.model_path = _config['models']  # the 'LabGym/models' folder, which stores all the trained Categorizers
-		self.path_to_categorizer = _config['models'].joinpath('New_model')  # path to the Categorizer
+		self.model_path = self.config['models']  # the 'LabGym/models' folder, which stores all the trained Categorizers
+		self.path_to_categorizer = self.config['models'].joinpath('New_model')  # path to the Categorizer
 		self.out_path=None # the folder for storing the training reports
 		self.include_bodyparts=False # whether to include body parts in the pattern images
 		self.std=0 # a value between 0 and 255, higher value, less body parts will be included in the pattern images
@@ -1587,10 +1584,10 @@ class PanelLv2_TestCategorizers(wx.Panel):
 		self.notebook = parent
 
 		# Get all of the values needed from config.get_config().
-		_config = config.get_config()
+		self.config = config.get_config('models')
 
 		self.file_path=None # the folder that stores the ground-truth examples (each subfolder is a behavior category)
-		self.model_path = _config['models']  # the 'LabGym/models' folder, which stores all the trained Categorizers
+		self.model_path = self.config['models']  # the 'LabGym/models' folder, which stores all the trained Categorizers
 		self.path_to_categorizer=None # path to the Categorizer
 		self.out_path=None # for storing the testing reports
 
