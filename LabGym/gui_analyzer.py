@@ -18,8 +18,8 @@ Email: bingye@umich.edu
 
 
 # Standard library imports.
-import logging
 import json
+import logging
 import os
 from pathlib import Path
 
@@ -38,11 +38,9 @@ import wx
 # Local application/library specific imports.
 from .analyzebehavior import AnalyzeAnimal
 from .analyzebehavior_dt import AnalyzeAnimalDetector
+from LabGym import config
 from .minedata import data_mining
-from .tools import plot_events,parse_all_events_file,calculate_distances
-
-
-the_absolute_current_path=str(Path(__file__).resolve().parent)
+from .tools import plot_events, parse_all_events_file, calculate_distances
 
 
 class ColorPicker(wx.Dialog):
@@ -85,6 +83,10 @@ class PanelLv2_AnalyzeBehaviors(wx.Panel):
 
 		super().__init__(parent)
 		self.notebook = parent
+
+		# Get all of the values needed from config.get_config().
+		self.config = config.get_config('detectors', 'models')
+
 		self.behavior_mode=0 # 0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
 		self.use_detector=False # whether the Detector is used
 		self.detector_path=None # the 'LabGym/detectors' folder, which stores all the trained Detectors
@@ -247,7 +249,8 @@ class PanelLv2_AnalyzeBehaviors(wx.Panel):
 	def select_categorizer(self,event):
 
 		if self.model_path is None:
-			self.model_path=os.path.join(the_absolute_current_path,'models')
+			self.model_path = self.config['models']
+			logger.debug('%s: %r', 'self.model_path', self.model_path)
 
 		categorizers=[i for i in os.listdir(self.model_path) if os.path.isdir(os.path.join(self.model_path,i))]
 		if '__pycache__' in categorizers:
@@ -557,7 +560,8 @@ class PanelLv2_AnalyzeBehaviors(wx.Panel):
 			else:
 
 				self.animal_number={}
-				self.detector_path=os.path.join(the_absolute_current_path,'detectors')
+				self.detector_path = self.config['detectors']
+				logger.debug('%s: %r', 'self.detector_path', self.detector_path)
 				self.text_animalnumber.SetLabel('Default: 1.')
 
 				detectors=[i for i in os.listdir(self.detector_path) if os.path.isdir(os.path.join(self.detector_path,i))]

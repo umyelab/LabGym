@@ -8,13 +8,14 @@ Configuration evaluation involves (ordered in increasing precedence)
 
 Notes
 *   Environment variables and command-line options can be used to
-    override the location of the configuration file, so determine the
-    configuration file location before reading it.
+    override the location of the configuration file, so its location is
+    determined (from defaults, environment variables, and command-line
+    options) before reading it.
 
 *   Typical LabGym configdir organization is
         ~/.labgym/config.toml  (optional)
                   logging.yaml  (optional)
-                  registration.done  (created at registration)
+                  registration.yaml  (created at registration)
 
     To use a different configfile only (without changing the references
     to other configdir files),
@@ -66,6 +67,9 @@ defaults = {
         },
 
     'anonymous': False,
+
+    'detectors': str(Path(__file__).parent.joinpath('detectors')),
+    'models': str(Path(__file__).parent.joinpath('models')),
 }
 
 logger = logging.getLogger(__name__)
@@ -129,8 +133,25 @@ def get_config_from_configfile(configfile: Path) -> dict:
     return result
 
 
-def get_config():
-    """Return a cached config dict. Construct it if necessary.
+def get_config(*args) -> dict:
+    """Return a copy of the cached config dict (or a subset of its pairs).
+
+    If args are passed, then return a new dict of only those keys and
+    their values from the cached config dict.
+    """
+
+    fullconfig = get_fullconfig()
+
+    if len(args) == 0:
+        result = fullconfig
+    else:
+        result = {key: fullconfig[key] for key in args}
+
+    return copy.deepcopy(result)
+
+
+def get_fullconfig() -> dict:
+    """Return a copy of the cached config dict. Construct it if necessary.
 
     Strengths
     *   Instead of reconstructing the config dict each time this

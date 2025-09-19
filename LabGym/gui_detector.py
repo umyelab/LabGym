@@ -20,8 +20,8 @@ Email: bingye@umich.edu
 # Standard library imports.
 import json
 import logging
-from pathlib import Path
 import os
+from pathlib import Path
 import shutil
 
 # Log the load of this module (by the module loader, on first import).
@@ -34,11 +34,9 @@ logger.debug('loading %s', __file__)  # pylint: disable=wrong-import-position
 import wx
 
 # Local application/library specific imports.
+from LabGym import config
 from .detector import Detector
 from .tools import extract_frames
-
-
-the_absolute_current_path=str(Path(__file__).resolve().parent)
 
 
 class PanelLv2_GenerateImages(wx.Panel):
@@ -236,11 +234,16 @@ class PanelLv2_TrainDetectors(wx.Panel):
 
 		super().__init__(parent)
 		self.notebook = parent
+
+		# Get all of the values needed from config.get_config().
+		self.config = config.get_config('detectors')
+
 		self.path_to_trainingimages=None # the folder that stores all the training images
 		self.path_to_annotation=None # the path to the .json file that stores the annotations in coco format
 		self.inference_size=480 # the Detector inferencing frame size
 		self.iteration_num=200 # the number of training iterations
-		self.detector_path=os.path.join(the_absolute_current_path,'detectors') # the 'LabGym/detectors' folder, which stores all the trained Detectors
+		self.detector_path = self.config['detectors']  # the 'LabGym/detectors' folder, which stores all the trained Detectors
+		logger.debug('%s: %r', 'self.detector_path', self.detector_path)
 		self.path_to_detector=None # path to the Detector
 
 		self.display_window()
@@ -390,9 +393,14 @@ class PanelLv2_TestDetectors(wx.Panel):
 
 		super().__init__(parent)
 		self.notebook = parent
+
+		# Get all of the values needed from config.get_config().
+		self.config = config.get_config('detectors')
+
 		self.path_to_testingimages=None # the folder that stores all the testing images
 		self.path_to_annotation=None # the path to the .json file that stores the annotations in coco format
-		self.detector_path=os.path.join(the_absolute_current_path,'detectors') # the 'LabGym/detectors' folder, which stores all the trained Detectors
+		self.detector_path = self.config['detectors']  # the 'LabGym/detectors' folder, which stores all the trained Detectors
+		logger.debug('%s: %r', 'self.detector_path', self.detector_path)
 		self.path_to_detector=None # path to the Detector
 		self.output_path=None # the folder that stores the testing images with annotations
 
