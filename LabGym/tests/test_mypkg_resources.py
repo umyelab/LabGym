@@ -60,10 +60,10 @@ def test_resource_filename():
     result = pkg_resources.resource_filename(*args)
 
     # Assert
-    assert result == os.path.join(
+    assert result == os.path.normpath(os.path.join(
         os.path.dirname(LabGym.detectron2.model_zoo.__file__),
         'configs/COCO-InstanceSegmentation/mask_rcnn_R_50_FPN_3x.yaml',
-        )
+        ))
 
 
 def test_pkg_resources_is_mypkg_resources():
