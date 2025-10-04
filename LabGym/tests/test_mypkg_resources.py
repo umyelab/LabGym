@@ -7,22 +7,12 @@ import pytest  # pytest: simple powerful testing with Python
 
 from LabGym import mypkg_resources  # replace deprecated pkg_resources
 
-# this import should find that pkg_resources is already in sys.modules, so 
-# pkg_resources will not be loaded.
-import pkg_resources
+# The mypkg_resources module copies itself into sys.modules['pkg_resources'],
+# so this next import statement will not load the pkg_resources package.
+import pkg_resources  # will not load pkg_resources
 
-# By default, detectron2 imports cv2, and coverage analysis produces
-# warnings regarding two cv2 py-files
-#   .../site-packages/cv2/config.py
-#   .../site-packages/cv2/config-3.py
-# like
-#   Couldn't parse '.../LabGym/LabGym/tests/config-3.py':
-#   Couldn't parse '.../LabGym/LabGym/tests/config.py':
-# (because coverage is looking for the source in cwd instead of in 
-# site-packages/cv2?)
-#
-# One way to avoid those two coverage warnings to disable detectron2's 
-# import of cv2.
+# Avoid two coverage warnings from detectron2's import of cv2.
+# (see Notes.opencv-python-and-coverage-warnings.txt)
 os.environ['DETECTRON2_DISABLE_CV2'] = '1'  # use '1' for True here.
 
 import LabGym.detectron2.model_zoo
