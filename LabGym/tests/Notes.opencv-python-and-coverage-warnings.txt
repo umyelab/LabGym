@@ -1,0 +1,40 @@
+By default, detectron2 imports cv2 (opencv-python), and coverage 
+analysis with pytest-cov (which uses "coverage"), produces warnings 
+regarding two cv2 py-files
+    .../site-packages/cv2/config-3.py
+    .../site-packages/cv2/config.py
+like
+    .../site-packages/coverage/report_core.py:113: 
+    CoverageWarning: Couldn't parse ...: No source for code: '.../LabGym/LabGym/tests/config-3.py'.
+    (couldnt-parse); see https://coverage.readthedocs.io/en/7.10.7/messages.html#warning-couldnt-parse
+      coverage._warn(msg, slug="couldnt-parse")
+    .../site-packages/coverage/report_core.py:113: 
+    CoverageWarning: Couldn't parse ...: No source for code: '.../LabGym/LabGym/tests/config.py'.
+    (couldnt-parse); see https://coverage.readthedocs.io/en/7.10.7/messages.html#warning-couldnt-parse
+      coverage._warn(msg, slug="couldnt-parse")
+because coverage is looking for the source in cwd, instead of in 
+site-packages/cv2.
+
+This was reported to pytest-dev/pytest-cov on 2025-10-04.
+See https://github.com/pytest-dev/pytest-cov/issues/721
+    "cv2 import has pytest-cov looking for two source files in cwd 
+    instead of in site-packages/cv2"
+
+This was reported to opencv/opencv on 2025-10-04.
+See https://github.com/opencv/opencv/issues/27867
+    "Ambitious meta programming in opencv-python produces warnings from 
+    coverage analysis static analysis tool."
+
+One workaround to avoid the two coverage warnings during coverage 
+analysis is to, in the unit test testfile, disable detectron2's import 
+of cv2, like this:
+    # Avoid two coverage warnings from detectron2's import of cv2.
+    # (see Notes.opencv-python-and-coverage-warnings.txt)
+    os.environ['DETECTRON2_DISABLE_CV2'] = '1'  # use '1' for True here.
+
+    from LabGym.detectron2 import model_zoo
+    from LabGym.detectron2.config import get_cfg
+    from LabGym.detectron2.modeling import build_model
+
+Other workarounds may include 
+*   using "filterwarnings"

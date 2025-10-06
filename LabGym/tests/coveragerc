@@ -1,3 +1,25 @@
+# The .coveragerc file is a configuration file used by coverage.py, a
+# tool for measuring code coverage in Python projects. This file allows
+# users to customize various aspects of how coverage.py operates,
+# including which files to include or exclude from coverage reports, how
+# to handle specific lines of code, and the format of the output
+# reports.
+#
+# Key aspects of a .coveragerc file: 
+#   Purpose: It provides a centralized way to configure coverage.py
+#   settings, making it easier to maintain consistent coverage
+#   measurement across multiple test runs and environments.
+#   
+#   Location and Naming: The default name for the configuration file is
+#   .coveragerc, and it should be placed in the same directory where
+#   coverage.py is being run. Alternatively, a different file and
+#   location can be specified using the --rcfile command-line option or
+#   the COVERAGE_RCFILE environment variable.
+#   
+#   Content: The file uses an INI-style format with sections like [run],
+#   [report], [html], and [json], each containing specific options
+#   related to different stages of the coverage process.
+
 [run]
 omit =
     */detectron2/*
