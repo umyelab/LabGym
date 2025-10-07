@@ -25,16 +25,36 @@ See https://github.com/opencv/opencv/issues/27867
     "Ambitious meta programming in opencv-python produces warnings from 
     coverage analysis static analysis tool."
 
-One workaround to avoid the two coverage warnings during coverage 
-analysis is to, in the unit test testfile, disable detectron2's import 
-of cv2, like this:
-    # Avoid two coverage warnings from detectron2's import of cv2.
-    # (see Notes.opencv-python-and-coverage-warnings.txt)
-    os.environ['DETECTRON2_DISABLE_CV2'] = '1'  # use '1' for True here.
+Workarounds to avoid the two coverage warnings during coverage analysis
+include:
 
-    from LabGym.detectron2 import model_zoo
-    from LabGym.detectron2.config import get_cfg
-    from LabGym.detectron2.modeling import build_model
+1.  In the test module (the unit test testfile), disable detectron2's 
+    import of cv2, like this:
 
-Other workarounds may include 
-*   using "filterwarnings"
+        # Avoid two coverage warnings from detectron2's import of cv2.
+        # (see Notes.opencv-python-and-coverage-warnings.txt)
+        os.environ['DETECTRON2_DISABLE_CV2'] = '1'  # use '1' for True here.
+
+        from LabGym.detectron2 import model_zoo
+        from LabGym.detectron2.config import get_cfg
+        from LabGym.detectron2.modeling import build_model
+
+2.  Use warning filters.
+
+    Warning filters can be specified
+    (a) as options on the pytest command line, like this:
+
+            pytest --cov=.. \
+                -W ignore:"Couldn't parse '$PWD/config-3.py'":coverage.exceptions.CoverageWarning \
+                -W ignore:"Couldn't parse '$PWD/config.py'":coverage.exceptions.CoverageWarning
+
+    (b) or, specified with filterwarnings and a regex in 
+        pytest.ini or pyproject.toml, like this:
+
+            # pytest.ini
+            [pytest]
+            # Avoid two coverage warnings from detectron2's import of cv2.
+            # (see Notes.opencv-python-and-coverage-warnings.txt)
+            filterwarnings =
+                ignore:Couldn't parse .*/config-3.py:coverage.exceptions.CoverageWarning
+                ignore:Couldn't parse .*/config.py:coverage.exceptions.CoverageWarning
