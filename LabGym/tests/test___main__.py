@@ -1,7 +1,6 @@
 import importlib
 import logging
 import os
-import pprint
 import re
 import sys
 import time
@@ -28,46 +27,6 @@ import pytest
 
 
 logger = logging.getLogger(__name__)
-
-
-def test_load_duration(monkeypatch):
-    """Determine how long the initial imports (the module loads) take.
-    
-    The statement "from LabGym import __main__" will take ~30 sec?
-
-    Actually, this isn't a fair measurement, because although the 
-    import statements above may have saved negligible time, other unit 
-    test files executed during the pytest session may have already 
-    imported/loaded some heavy packages, hiding their load-duration
-    from this measurement.
-
-    Try to assess?
-
-    # if 'cv2' in sys.modules and sys.modules['cv2'] is None:
-    #     del sys.modules['cv2']
-    #     import cv2
-    #     # if detectron2 isn't loaded yet, don't foul up cv2 on load.
-    #     # os.environ['DETECTRON2_DISABLE_CV2'] = '0'  # use '0' for False here.
-    """
-
-    # Arrange
-    # patch configure, in mylogging, *before* importing __main__
-    from LabGym import mylogging
-    monkeypatch.setattr(mylogging, 'configure', lambda *args: None)
-
-    # logger.debug('%s:\n%s', 'sys.modules', pprint.pformat(sys.modules))
-    # logger.debug('%s: %r', 'os.environ[''],
-
-    # Act
-    # Time consuming... (typical 24 sec, 25 sec, 34 sec)
-
-    T0 = time.time()
-    from LabGym import __main__  
-    loadtime = time.time() - T0
-    logging.info(f'load time for import __main__: {loadtime:.0f} seconds')
-
-    # Assert... not needed.  
-    # This unit test passes if __main__.main doesn't raise an exception.
 
 
 def test_main(monkeypatch):
