@@ -1,34 +1,34 @@
-By default, detectron2 imports cv2 (opencv-python), and coverage 
-analysis with pytest-cov (which uses "coverage"), produces warnings 
+By default, detectron2 imports cv2 (opencv-python), and coverage
+analysis with pytest-cov (which uses "coverage"), produces warnings
 regarding two cv2 py-files
     .../site-packages/cv2/config-3.py
     .../site-packages/cv2/config.py
 like
-    .../site-packages/coverage/report_core.py:113: 
+    .../site-packages/coverage/report_core.py:113:
     CoverageWarning: Couldn't parse ...: No source for code: '.../LabGym/LabGym/tests/config-3.py'.
     (couldnt-parse); see https://coverage.readthedocs.io/en/7.10.7/messages.html#warning-couldnt-parse
       coverage._warn(msg, slug="couldnt-parse")
-    .../site-packages/coverage/report_core.py:113: 
+    .../site-packages/coverage/report_core.py:113:
     CoverageWarning: Couldn't parse ...: No source for code: '.../LabGym/LabGym/tests/config.py'.
     (couldnt-parse); see https://coverage.readthedocs.io/en/7.10.7/messages.html#warning-couldnt-parse
       coverage._warn(msg, slug="couldnt-parse")
-because coverage is looking for the source in cwd, instead of in 
+because coverage is looking for the source in cwd, instead of in
 site-packages/cv2.
 
 This was reported to pytest-dev/pytest-cov on 2025-10-04.
 See https://github.com/pytest-dev/pytest-cov/issues/721
-    "cv2 import has pytest-cov looking for two source files in cwd 
+    "cv2 import has pytest-cov looking for two source files in cwd
     instead of in site-packages/cv2"
 
 This was reported to opencv/opencv on 2025-10-04.
 See https://github.com/opencv/opencv/issues/27867
-    "Ambitious meta programming in opencv-python produces warnings from 
+    "Ambitious meta programming in opencv-python produces warnings from
     coverage analysis static analysis tool."
 
 Workarounds to avoid the two coverage warnings during coverage analysis
 include:
 
-1.  In the test module (the unit test testfile), disable detectron2's 
+1.  In the test module (the unit test testfile), disable detectron2's
     import of cv2, like this:
 
         # Avoid two coverage warnings from detectron2's import of cv2.
@@ -48,7 +48,7 @@ include:
                 -W ignore:"Couldn't parse '$PWD/config-3.py'":coverage.exceptions.CoverageWarning \
                 -W ignore:"Couldn't parse '$PWD/config.py'":coverage.exceptions.CoverageWarning
 
-    (b) or, specified with filterwarnings and a regex in 
+    (b) or, specified with filterwarnings and a regex in
         pytest.ini or pyproject.toml, like this:
 
             # pytest.ini
