@@ -11,10 +11,6 @@ from LabGym import mypkg_resources  # replace deprecated pkg_resources
 # so this next import statement will not load the pkg_resources package.
 import pkg_resources  # will not load pkg_resources
 
-# Avoid two coverage warnings from detectron2's import of cv2.
-# (see Notes.opencv-python-and-coverage-warnings.txt)
-os.environ['DETECTRON2_DISABLE_CV2'] = '1'  # use '1' for True here.
-
 import LabGym.detectron2.model_zoo
 from LabGym.detectron2 import model_zoo  # redundant, but convenient
 from LabGym.detectron2.config import get_cfg

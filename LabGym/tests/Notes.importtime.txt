@@ -1,0 +1,54 @@
+To obtain detailed timing for LabGym imports,
+
+1.  Prepare a customized LabGym script, adding the python importtime
+    option
+        sed "1s/$/ -X importtime/" < $(which LabGym) > LabGym-importtime
+
+        # chmod --reference=$(which LabGym) LabGym-importtime
+        chmod +x LabGym-importtime
+
+2.  Run the custom script "LabGym-importtime" to produce a report of
+    import times on stderr.
+
+From Google AI Overview, on 2025-10-09:
+    The Python -X importtime option is a built-in feature, available since
+    Python 3.7, designed to profile and analyze the time spent importing
+    modules during the execution of a Python program. When this option is
+    enabled, Python outputs detailed timing statistics to standard error
+    (stderr), providing insights into the self-time and cumulative time
+    taken by each imported module.
+
+    How it works:
+    * Enabling the option: You can enable it by running your Python script
+      with the -X importtime flag:
+
+      Code
+        python -X importtime your_script.py
+
+      Alternatively, you can set the PYTHONPROFILEIMPORTTIME environment
+      variable to 1:
+
+      Code
+        PYTHONPROFILEIMPORTTIME=1 python your_script.py
+
+    Output format: The output is a textual report, typically a tree-like
+    structure, showing the import order and the time spent on each module.
+    It includes:
+    * Self time: The time taken specifically by the module's own code during
+      import, excluding the time spent importing its dependencies.
+
+    * Cumulative time: The total time taken for the module and all its
+      dependencies to be imported.
+
+    Analysis: The raw output can be extensive for large projects. Tools like
+    importtime-waterfall or web-based visualizers like
+    kmichel.github.io/python-importtime-graph/ can be used to create
+    graphical representations (e.g., treemaps) of the import times, making
+    it easier to identify slow-loading modules and optimize startup
+    performance.
+
+    Purpose: The primary purpose of -X importtime is to help developers
+    identify and address performance bottlenecks related to module imports,
+    which can significantly impact the startup time of Python applications,
+    especially in environments where quick scaling is important (e.g., cloud
+    deployments, serverless functions).

@@ -5,11 +5,6 @@ import re
 import sys
 import time
 
-# basicConfig here isn't effective, maybe pytest has already configured logging?
-#   logging.basicConfig(level=logging.DEBUG)
-# so instead, use the root logger's setLevel method
-logging.getLogger().setLevel(logging.DEBUG)
-
 from packaging import version
 
 # Deliberately importing __main__ inside test functions instead of here.
@@ -18,28 +13,20 @@ from packaging import version
 # test function (duration is significant, ~30 sec?).
 # from LabGym import __main__
 
+# But, it's possible that detectron2 has been loaded already, without cv2!
+# which produces errors...
+#     FAILED ... - ModuleNotFoundError: import of cv2 halted; None in sys.modules
+# in which case, import cv2.
+# if 'cv2' in sys.modules and sys.modules['cv2'] is None:
+#     del sys.modules['cv2']
+#     import cv2
+#     # if detectron2 isn't loaded yet, don't foul up cv2 on load.
+#     os.environ['DETECTRON2_DISABLE_CV2'] = '0'  # use '0' for False here.
+
 import pytest
 
 
-def test_load_duration(monkeypatch):
-    """Determine how long the initial imports (the module loads) take.
-    
-    The statement "from LabGym import __main__" will take ~30 sec?
-    """
-    # Arrange
-    # patch configure, in mylogging, *before* importing __main__
-    from LabGym import mylogging
-    monkeypatch.setattr(mylogging, 'configure', lambda *args: None)
-
-    # Act
-    # Time consuming... (typical 24 sec, 25 sec, 34 sec)
-    T0 = time.time()
-    from LabGym import __main__  
-    loadtime = time.time() - T0
-    logging.info(f'load time for import __main__: {loadtime:.0f} seconds')
-
-    # Assert... not needed.  
-    # This unit test passes if __main__.main doesn't raise an exception.
+logger = logging.getLogger(__name__)
 
 
 def test_main(monkeypatch):
