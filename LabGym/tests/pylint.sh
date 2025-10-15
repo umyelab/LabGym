@@ -1,3 +1,13 @@
+# Examples
+#   # Run pylint with custom options on ../*.py.
+#   sh pylint.sh
+#
+#   # Run pylint with custom options on two files.
+#   sh pylint.sh ../categorizer.py ../detector.py
+#
+#   # Don't run pylint... just summarize existing results in tmp.pylint.
+#   sh pylint.sh --summarize
+
 source INIT.sh
 
 PYFILES=$(echo ../*.py)
@@ -13,7 +23,7 @@ while [ $# -gt 0 ]; do
 done
 
 case $OP in
-pylint)
+    pylint)
 #-----------------------------------------------------------------------
 if [ $# -gt 0 ]; then
     PYFILES=$*
@@ -25,32 +35,65 @@ IS_VENV || { ERROR "Expected a venv..."; exit 1; }
 
 OUTDIR=tmp.pylint
 
+# OPTS="--rcfile pylintrc"
+OPTS="--rcfile pylintrc --enable=useless-suppression"
+
+# Examples of line-too-long, wrong-import-position, bad-indentation.
+#   C0301: Line too long (232/100) (line-too-long)
+#   C0413: Import "import wx" should be placed at the top of the module (wrong-import-position)
+#   W0311: Bad indentation. Found 2 spaces, expected 8 (bad-indentation)
+#
+# Disable line-too-long, wrong-import-position, bad-indentation.
+OPTS="$OPTS${OPTS:+ }--disable=C0301,C0413,W0311"
+
+# Examples of invalid-name.
+#   C0103: Class name "PanelLv1_AnalysisModule" doesn't conform to PascalCase naming style (invalid-name)
+#   C0103: Constant name "development_mode" doesn't conform to UPPER_CASE naming style (invalid-name)
+#   C0103: Argument name "ID_colors" doesn't conform to snake_case naming style (invalid-name)
+#   C0103: Attribute name "ID_colors" doesn't conform to snake_case naming style (invalid-name)
+#   C0103: Function name "_myLogRecord" doesn't conform to snake_case naming style (invalid-name)
+#   C0103: Method name "GetInputValues" doesn't conform to snake_case naming style (invalid-name)
+#   C0103: Variable name "currentSet" doesn't conform to snake_case naming style (invalid-name)
+#
+# Disable invalid-name.
+OPTS="$OPTS${OPTS:+ }--disable=invalid-name"
+
 setopt SH_WORD_SPLIT 2> /dev/null
-(
-    for F in $PYFILES; do
-        OUTFILE=$OUTDIR/pylint.$(echo $F | tr / . | sed "s/^\.\.\.//").out
-        OPTS="--rcfile pylintrc"
 
-        # C0301: Line too long (232/100) (line-too-long)
-        # W0311: Bad indentation. Found 2 spaces, expected 8 (bad-indentation)
-        OPTS="$OPTS${OPTS:+ }--disable=C0301,W0311"
+for F in $PYFILES; do
+    OUTFILE=$OUTDIR/pylint.$(echo $F | tr / . | sed "s/^\.\.\.//").out
 
-        (set -x; pylint $OPTS $F > $OUTFILE)
-        grep -n "^Your code has been rated " $OUTFILE
-    done
-)
+    # (set -x; pylint $OPTS $F > $OUTFILE)
+    printf "%s\n" "+ pylint $OPTS $F > $OUTFILE"
+    pylint $OPTS $F > $OUTFILE
+
+    grep -n "^Your code has been rated " $OUTFILE
+done
 #-----------------------------------------------------------------------
-;;
+    ;;
 
-summarize)
+    summarize)
+    # Don't run pylint... just summarize existing results in tmp.pylint.
 #-----------------------------------------------------------------------
-(cd tmp.pylint && grep -n "Your code has been rated at" *.out) | 
-sed "s/ (previous.*//" | 
-sed "s/^pylint\.\(.*.py\).out:\([0-9]*\):Your code has been rated at \(.*\)/\3\t\2\t\1/" | 
+[ $# -eq 0 ] || { ERROR "Bad usage.  \$#: $#"; exit 1; }
+
+(cd tmp.pylint && grep -n "Your code has been rated at" *.out) |
+
+sed \
+    -e "s/^pylint\.//" \
+    -e "s/ (previous run: .*//" \
+    -e "s/\(.*.py\).out:\([0-9]*\):/\1\t\2\t/" \
+    -e "s/Your code has been rated at //" |
+
+# print rating, number of messages (assuming N-3), filename
+AWK -F"\t" 'BEGIN {OFS = "\t"}; {print $3, $2-3, $1}' |
+
 expand -10,16 |
 cat -n
 #-----------------------------------------------------------------------
-;;
+    ;;
+
+    *)  { ERROR "Impossible.  \$OP: $OP"; exit 1; };;
 esac
 
 exit $?
@@ -98,7 +141,7 @@ Main:
                         specific errors.
   --verbose , -v        In verbose mode, extra non-checker-related info will
                         be displayed.
-  --enable-all-extensions 
+  --enable-all-extensions
                         Load and enable all available extensions. Use --list-
                         extensions to see a list all available extensions.
   --ignore <file>[,<file>...]

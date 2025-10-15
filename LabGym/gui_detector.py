@@ -21,14 +21,14 @@ Email: bingye@umich.edu
 import json
 import logging
 import os
-from pathlib import Path
+# from pathlib import Path
 import shutil
 
 # Log the load of this module (by the module loader, on first import).
 # Intentionally positioning these statements before other imports, against the
 # guidance of PEP-8, to log the load before other imports log messages.
-logger =  logging.getLogger(__name__)  # pylint: disable=wrong-import-position
-logger.debug('loading %s', __file__)  # pylint: disable=wrong-import-position
+logger = logging.getLogger(__name__)
+logger.debug('loading %s', __file__)
 
 # Related third party imports.
 import wx

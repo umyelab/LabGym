@@ -18,11 +18,9 @@ import platform
 # other imports (against the guidance of PEP 8), to log the load of this
 # module before other import statements are executed and potentially
 # produce their own log messages.
-# pylint: disable=wrong-import-position
 logger = logging.getLogger(__name__)
 logger.debug('%s', f'loading {__file__}')
 logger.debug('%s: %r', '(__name__, __package__)', (__name__, __package__))
-# pylint: enable=wrong-import-position
 
 # Related third party imports.
 import certifi  # Python package for providing Mozilla's CA Bundle.

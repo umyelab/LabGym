@@ -79,9 +79,7 @@ import uuid
 from zoneinfo import ZoneInfo
 
 # Related third party imports.
-# pylint: disable=wrong-import-position
 if sys.platform == 'darwin':  # macOS
-# pylint: enable=wrong-import-position
     # AppKit is from package pyobjc-framework-Cocoa, "Wrappers for the
     # Cocoa frameworks on macOS".
     from AppKit import NSApp, NSApplication

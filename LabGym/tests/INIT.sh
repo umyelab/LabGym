@@ -7,6 +7,8 @@ ERROR () { printf "ERROR\t%s\n" "$(printf "$@")" >& 2; }
 DEBUG () { printf "DEBUG\t%s\n" "$(printf "$@")" >& 2; }
 
 IS_VENV () { [ -n "$VIRTUAL_ENV+1" ]; }  # works in sh, bash, and zsh
+
+AWK () { awk "$@"; }
     
 PYFILES=$(cd .. && echo *.py)
 # printf "%s: %s\n" "\$PYFILES" "$PYFILES"

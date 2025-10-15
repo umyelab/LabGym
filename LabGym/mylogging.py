@@ -1,4 +1,3 @@
-# pylint: disable=line-too-long
 """Provide functions for configuring the logging system.
 
 Functions
@@ -97,7 +96,6 @@ Example 2, Log the loading of this module, and configure the logging system.
 
     logger.debug'%s: %r', '(__name__, __package__', (__name__, __package__))
 """  # noqa: E501
-# pylint: enable=line-too-long
 
 # Allow use of newer syntax Python 3.10 type hints in Python 3.9.
 from __future__ import annotations
