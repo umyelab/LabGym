@@ -304,9 +304,6 @@ def _get_reginfo_from_form() -> dict | None:
         interact with other application windows while it's open.
     """
 
-    # Create a wx.App instance.
-    app = wx.App()
-
     with RegFormDialog(None) as dlg:
         logger.debug('%s -- %s', 'Milestone ShowModal', 'calling...')
         dlg.bring_to_foreground()
