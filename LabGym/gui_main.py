@@ -416,10 +416,9 @@ class MainFrame(wx.Frame):
 			event.Skip()
 
 
-
 def main_window():
 	"""Display the main window."""
-	app = wx.App()
+	app = wx.GetApp()  # reference to the currently running wx.App instance
 	app.SetAppName("LabGym") # Set app name to influence WM_CLASS
 	setup_application_icons()  # Set up all platform-specific icons
 	

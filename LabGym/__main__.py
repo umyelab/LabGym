@@ -51,7 +51,7 @@ import requests  # Python HTTP for Humans.
 # Local application/library specific imports.
 # pylint: disable-next=unused-import
 from LabGym import mypkg_resources  # replace deprecated pkg_resources
-from LabGym import __version__, gui_main, probes
+from LabGym import __version__, gui_main, mywx, probes
 
 
 logger.debug('%s: %r', '(__name__, __package__)', (__name__, __package__))
@@ -82,6 +82,10 @@ def main() -> None:
 	except:
 
 		pass
+
+	# Create a single persistent, wx.App instance, as it may be
+        # needed for probe dialogs prior to calling gui_main.main_window.
+	mywx.App()
 
 	# Perform some pre-op sanity checks and probes of outside resources.
 	probes.probes()
