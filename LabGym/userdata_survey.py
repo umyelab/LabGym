@@ -1,17 +1,19 @@
 """
 Provide functions for surveying the locations of user data.
 
-Public functions:
-    survey
-    assert_userdata_dirs_are_separate
-    offer_to_mkdir_userdata_dirs
-    advise_on_internal_userdata_dirs
+Public functions
+    Specialized Functions
+        survey
+        assert_userdata_dirs_are_separate
+        offer_to_mkdir_userdata_dirs
+        advise_on_internal_userdata_dirs
+        warn_on_orphaned_userdata
 
-    is_path_under(path1: str|Path, path2: str|Path) -> bool
-    is_path_equivalent(path1: str|Path, path2: str|Path) -> bool
-    resolve(path1: str|Path) -> str
-    dict2str(arg: dict, hanging_indent: str=' '*16) -> str
-(consider making some public functions private?)
+    General-purpose Functions
+        is_path_under(path1: str|Path, path2: str|Path) -> bool
+        is_path_equivalent(path1: str|Path, path2: str|Path) -> bool
+        resolve(path1: str|Path) -> str
+        dict2str(arg: dict, hanging_indent: str=' '*16) -> str
 
 Public classes: None
 
@@ -179,21 +181,19 @@ def offer_to_mkdir_userdata_dirs(
 
 def advise_on_internal_userdata_dirs(
         labgym_dir: str, detectors_dir: str, models_dir: str) -> None:
-    """
-    """
-    if not (is_path_under(labgym_dir, detectors_dir) or
-            is_path_under(labgym_dir, models_dir)):
-        # No advice is warranted.
-        return
+    """..."""
 
-    # One or both userdata dirs is under labgym_dir.
-    # Prepare the message.
+    # One or both userdata dirs is internal, that is, under labgym_dir.
+    assert (is_path_under(labgym_dir, detectors_dir) or
+            is_path_under(labgym_dir, models_dir))
 
     title = 'LabGym Configuration: internal userdata dirs'
 
+    # Prepare the message.
+
     msg = textwrap.dedent("""\
-        Your LabGym configuration (or the configuration 
-        defaults) presently define userdata dirs as 
+        Your LabGym configuration (or the configuration
+        defaults) presently define userdata dirs as
         located within the LabGym tree.
         This arrangement is now deprecated.
 
@@ -205,14 +205,34 @@ def advise_on_internal_userdata_dirs(
     # if detectors_dir is internal, and no data is stored, then advise
     # (a) configure new external detectors dir, (b) make the dir.
     # elif detectors_dir is internal, and data is stored, then advise
-    # (a) configure new external detectors dir, (b) make the dir, 
+    # (a) configure new external detectors dir, (b) make the dir,
     # (d) back up data, (e) move data.
+    #
+    #         change config, make dirs, backup data, move data.
+    #         Press OK to quit LabGym.  Press Cancel to carry on with
+    #         deprecated configuration.
 
     # msg += textwrap.dedent("""\
-    #     
+    #
     #     """)
     #     #-----------------------------------------------
-       
+
+    logger.debug('%s:\n%s', 'msg', msg)
+
+    with mywx.OK_Dialog(None, title=title, msg=msg) as dlg:
+        mywx.bring_wxapp_to_foreground()
+
+        result = dlg.ShowModal()  # will return wx.ID_OK upon OK or dismiss
+        logger.debug('%s: %r', 'result', result)
+
+
+def warn_on_orphaned_userdata(
+        labgym_dir: str, detectors_dir: str, models_dir: str) -> None:
+    """..."""
+
+    title = 'title...'
+    msg = 'msg...'
+
     logger.debug('%s:\n%s', 'msg', msg)
 
     with mywx.OK_Dialog(None, title=title, msg=msg) as dlg:
@@ -236,10 +256,11 @@ def survey(
     2.  Check for user data dirs that are external, but don't exist.
         If any, offer to attempt mkdir.
 
-    3.  Check for userdata dirs still located within the LabGym tree.
-        If any, advise user to change config, make dirs, backup data,
-        move data.  Press OK to quit LabGym.  Press Cancel to
-        carry on with deprecated configuration.
+    3.  If any userdata dirs are configured as located within the
+        LabGym tree, then advise user to resolve.
+        Otherwise, the userdata dirs are already configured as
+        external.  Warn about any orphaned data still sitting in
+        traditional internal locations.
     """
 
     # Get all of the values needed from config.get_config().
@@ -262,11 +283,18 @@ def survey(
     #     If any, offer to attempt mkdir.
     offer_to_mkdir_userdata_dirs(labgym_dir, detectors_dir, models_dir)
 
-    # 3.  Check for userdata dirs still located within the LabGym tree.
-    #     If any, advise user to change config, make dirs, backup data,
-    #     move data.  Press OK to quit LabGym.  Press Cancel to
-    #     carry on with deprecated configuration.
-    advise_on_internal_userdata_dirs(labgym_dir, detectors_dir, models_dir)
+    # 3.  If any userdata dirs are configured as located within the
+    #     LabGym tree, then advise user to resolve.
+    #     Otherwise, the userdata dirs are already configured as
+    #     external.  Warn about any orphaned data still sitting in
+    #     traditional internal locations.
+    if (is_path_under(labgym_dir, detectors_dir) or
+            is_path_under(labgym_dir, models_dir)):
+        # one or more userdata dirs are configured as located internal.
+        advise_on_internal_userdata_dirs(labgym_dir, detectors_dir, models_dir)
+    else:
+        # all userdata dirs are configured as located external.
+        warn_on_orphaned_userdata(labgym_dir, detectors_dir, models_dir)
 
     if enable_userdata_survey_exit:
         sys.exit(f'Exiting early.'
