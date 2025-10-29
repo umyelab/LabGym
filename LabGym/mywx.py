@@ -1,13 +1,21 @@
-"""Provide function to guard from multiple instantiations of wx.App
+"""Provide some wx utility functions and some wx.Dialog subclasses.
+
+Originally, this module simply provided App, a function to guard from 
+multiple instantiations of wx.App.
+During development of userdata_survey, more wx-related functions and 
+classes are being parked in this module, but there may be a better way
+to reorganize them after userdata_survey is stable.
 
 Public Functions
     App -- Return the wx.App object.
     bring_wxapp_to_foreground -- Bring the wx app to the foreground.
 
 Public Classes
-    None
+    OK_Dialog -- A wx.Dialog with left-aligned msg, and centered OK button.
+    OK_Cancel_Dialog -- A wx.Dialog with left-aligned msg, and centered
+            OK and Cancel buttons.
 
-Use
+Usage for mywx.App
     import mywx
     app = mywx.App()
 or
@@ -112,3 +120,77 @@ def bring_wxapp_to_foreground() -> None:
     if sys.platform == 'darwin':  # macOS
         NSApplication.sharedApplication()
         NSApp().activateIgnoringOtherApps_(True)
+
+
+class OK_Dialog(wx.Dialog):
+    """An OK dialog object, with the message text left-aligned.
+
+    Why use a custom class instead of using wx.MessageDialog?
+    Because left-alignment of the message is preferred, and a
+    wx.MessageDialog cannot be customized to control the alignment of
+    its message text or buttons.
+
+    (class purpose and functionality, and optionally its attributes and methods)
+    """
+
+    def __init__(self, parent, title='', msg=''):
+        super().__init__(parent, title=title)
+
+        panel = wx.Panel(self)
+        main_sizer = wx.BoxSizer(wx.VERTICAL)
+
+        # Add the msg
+        main_sizer.Add(wx.StaticText(panel, label=msg),
+            0,  # proportion (int).  0 means the item won't expand
+                # beyond its minimal size.
+
+            # border on all sides, and align left
+            wx.ALL | wx.LEFT,
+
+            10,  # width (in pixels) of the borders specified
+            )
+
+        # Create sizers for layout.
+        button_sizer = wx.StdDialogButtonSizer()
+
+        # Create buttons, Add buttons to sizers, and Bind event handlers
+        self.add_buttons(panel, button_sizer)
+
+        # Realize the sizer to apply platform-specific layout
+        button_sizer.Realize()
+
+        # Add the button sizer to the main sizer
+        main_sizer.Add(button_sizer, 0, wx.ALL | wx.EXPAND, 10)
+
+        panel.SetSizer(main_sizer)
+        main_sizer.Fit(self)
+        # self.SetSizerAndFit(main_sizer)  # is this equivalent??
+
+    def add_buttons(self, panel, button_sizer):
+        """Create and add buttons to sizers, and bind event handlers.
+
+        Create standard buttons with their respective IDs.
+        Add buttons to the StdDialogButtonSizer.
+        Bind event handlers for the buttons.
+        """
+        # Create/Add/Bind for the OK button
+        ok_button = wx.Button(panel, wx.ID_OK)
+        button_sizer.AddButton(ok_button)
+        self.Bind(wx.EVT_BUTTON, self.on_ok, id=wx.ID_OK)
+
+    def on_ok(self, event):
+        self.EndModal(wx.ID_OK)
+
+
+class OK_Cancel_Dialog(OK_Dialog):
+    def add_buttons(self, panel, button_sizer):
+        # Create/Add/Bind for the OK button
+        super().add_buttons(panel, button_sizer)  
+
+        # Create/Add/Bind for the Cancel button
+        cancel_button = wx.Button(panel, wx.ID_CANCEL)
+        button_sizer.AddButton(cancel_button)
+        self.Bind(wx.EVT_BUTTON, self.on_cancel, id=wx.ID_CANCEL)
+
+    def on_cancel(self, event):
+        self.EndModal(wx.ID_CANCEL)
