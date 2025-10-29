@@ -4,12 +4,15 @@ Provide functions for surveying the locations of user data.
 Public functions:
     survey
     verify_userdata_dir_separation
+    offer_mkdir_userdata_dirs
 
     is_path_under(path1: str|Path, path2: str|Path) -> bool
     is_path_equivalent(path1: str|Path, path2: str|Path) -> bool
     resolve(path1: str|Path) -> str
     dict2str(arg: dict, hanging_indent: str=' '*16) -> str
 (consider making some public functions private?)
+
+Public classes: None
 
 The survey function has an early-exit capability, for demonstration 
 purposes.  If LabGym is started with --enable userdata_survey_exit,
@@ -91,7 +94,7 @@ def verify_userdata_dir_separation(
         detectors_dir: str, models_dir: str) -> None:
     """Verify the separation of configuration's userdata dirs.
 
-    If bad (not separate), then display an error message, then sys.exit().
+    If not separate, then display an error message, then sys.exit().
 
     Enforce an expectation that the detectors_dir and models_dir are
     separate, and do not have a "direct, lineal relationshop", where one
@@ -134,9 +137,9 @@ def offer_mkdir_userdata_dirs(
         (b) don't already exist. 
     then offer to attempt to mkdir them.
 
-    Note that the attempts can fail and raise an exception for several
-    reasons, including insufficient permissions, or parent dir of the
-    target dir doesn't exist.
+    Note that the attempts to mkdir can fail and raise an exception for 
+    several reasons, including insufficient permissions, or parent dir 
+    of the target dir doesn't exist.
     """
 
     mkdir_targets = {}
@@ -149,9 +152,9 @@ def offer_mkdir_userdata_dirs(
         mkdir_targets.update({'models': models_dir})
 
     if mkdir_targets:
-        title = 'LabGym Configuration: make dir(s)?'
+        title = 'LabGym Configuration: make directories?'
         msg = textwrap.dedent(f"""\
-            These folders are specified by your LabGym
+            These directories are specified by your LabGym
             configuration, but they don't exist yet.
                 {dict2str(mkdir_targets)}
 
@@ -173,6 +176,13 @@ def offer_mkdir_userdata_dirs(
                       os.mkdir(value)
         
 
+def check_for_internal_userdata_dirs(
+        labgym_dir: str, detectors_dir: str, models_dir: str) -> None:
+    """
+    """
+    pass
+
+
 def survey(
     labgym_dir: str,
     detectors_dir: str,
@@ -180,13 +190,17 @@ def survey(
     ) -> None:
     """Display guidance if userdata dirs are within the LabGym tree.
 
-    1.  verify_userdata_dir_separation(detectors_dir, models_dir)
-        Verify the separation of configuration's userdata dirs.
+    1.  Verify the separation of configuration's userdata dirs.
         If bad (not separate), 
         then display an error message, then sys.exit().
 
     2.  Check for user data dirs that are external, but don't exist.
         If any, offer to attempt mkdir.
+
+    3.  Check for userdata dirs still located within the LabGym tree.
+        If any, advise user to change config, make dirs, backup data,
+        move data.  Press OK to quit LabGym.  Press Cancel to
+        carry on with deprecated configuration.
     """
 
     # Get all of the values needed from config.get_config().
@@ -197,8 +211,7 @@ def survey(
     logger.debug('%s: %r', 'detectors_dir', detectors_dir)
     logger.debug('%s: %r', 'models_dir', models_dir)
 
-    # 1.  verify_userdata_dir_separation(detectors_dir, models_dir)
-    #     Verify the separation of configuration's userdata dirs.
+    # 1.  Verify the separation of configuration's userdata dirs.
     #     If bad (not separate), 
     #     then display an error message, then sys.exit().
     verify_userdata_dir_separation(detectors_dir, models_dir)
@@ -209,6 +222,12 @@ def survey(
     # 2.  Check for user data dirs that are external, but don't exist.
     #     If any, offer to attempt mkdir.
     offer_mkdir_userdata_dirs(labgym_dir, detectors_dir, models_dir)
+
+    # 3.  Check for userdata dirs still located within the LabGym tree.
+    #     If any, advise user to change config, make dirs, backup data,
+    #     move data.  Press OK to quit LabGym.  Press Cancel to
+    #     carry on with deprecated configuration.
+    check_for_internal_userdata_dirs(labgym_dir, detectors_dir, models_dir)
 
     if enable_userdata_survey_exit:
         sys.exit(f'Exiting early.'
