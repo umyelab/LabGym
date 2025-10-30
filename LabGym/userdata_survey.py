@@ -17,9 +17,22 @@ Public functions
 
 Public classes: None
 
+The path args for the functions in this module should be absolute 
+(full) paths, not relative (partial) paths.  That's the assumption
+during development.  If that assumption is violated, are unintended 
+consequences possible?
+Instead of answering that question, implement guards.
+(1) Enforce with asserts?
+        assert Path(arg).is_absolute()
+(2) Or, enforce with asserts in the Specialized functions, but not the 
+    General-purpose functions?
+(3) Or, guard by decorating selected functions, instead of individually 
+    adding the right mix of assert statements to function bodies.
+For now, choosing (2).
+
 The survey function has an early-exit capability, for demonstration
 purposes.  If LabGym is started with --enable userdata_survey_exit,
-then survey will call sys.exit('Intentionally exiting early').
+then survey will call sys.exit('Exiting early').
 
 Design with paths as strings, or, paths as pathlib.Path objects?
 Since the paths are configured as strings, assume the calls from outside
@@ -48,9 +61,9 @@ from LabGym import config, mywx
 
 logger = logging.getLogger(__name__)
 
-
 def is_path_under(path1: str|Path, path2: str|Path) -> bool:
     """Return True if path2 is under path1."""
+
     p1 = Path(path1).resolve()
     p2 = Path(path2).resolve()
     return p1 in p2.parents
@@ -73,6 +86,7 @@ def is_path_equivalent(path1: str|Path, path2: str|Path) -> bool:
 
 def resolve(path1: str|Path) -> str:
     """Return a string representation of the resolved string or Path obj."""
+
     return str(Path(path1).resolve())
 
 
@@ -102,7 +116,12 @@ def assert_userdata_dirs_are_separate(
     Enforce an expectation that the detectors_dir and models_dir are
     separate, and do not have a "direct, lineal relationshop", where one
     is under the other.
+
+    Also, enforce the expectation that the path args are absolute (full).
     """
+
+    assert Path(detectors_dir).is_absolute()
+    assert Path(models_dir).is_absolute()
 
     if (is_path_equivalent(detectors_dir, models_dir)
             or is_path_under(detectors_dir, models_dir)
@@ -143,7 +162,12 @@ def offer_to_mkdir_userdata_dirs(
     Note that the attempts to mkdir can fail and raise an exception for
     several reasons, including insufficient permissions, or parent dir
     of the target dir doesn't exist.
+
+    Also, enforce the expectation that the path args are absolute (full).
     """
+    assert Path(labgym_dir).is_absolute()
+    assert Path(detectors_dir).is_absolute()
+    assert Path(models_dir).is_absolute()
 
     mkdir_targets = {}
 
@@ -181,7 +205,14 @@ def offer_to_mkdir_userdata_dirs(
 
 def advise_on_internal_userdata_dirs(
         labgym_dir: str, detectors_dir: str, models_dir: str) -> None:
-    """..."""
+    """...
+
+    Also, enforce the expectation that the path args are absolute (full).
+    """
+
+    assert Path(labgym_dir).is_absolute()
+    assert Path(detectors_dir).is_absolute()
+    assert Path(models_dir).is_absolute()
 
     # One or both userdata dirs is internal, that is, under labgym_dir.
     assert (is_path_under(labgym_dir, detectors_dir) or
@@ -228,7 +259,14 @@ def advise_on_internal_userdata_dirs(
 
 def warn_on_orphaned_userdata(
         labgym_dir: str, detectors_dir: str, models_dir: str) -> None:
-    """..."""
+    """...
+
+    Also, enforce the expectation that the path args are absolute (full).
+    """
+
+    assert Path(labgym_dir).is_absolute()
+    assert Path(detectors_dir).is_absolute()
+    assert Path(models_dir).is_absolute()
 
     title = 'title...'
     msg = 'msg...'
@@ -261,6 +299,14 @@ def survey(
         Otherwise, the userdata dirs are already configured as
         external.  Warn about any orphaned data still sitting in
         traditional internal locations.
+
+    Also, enforce the expectation that the path args are absolute (full).
+    """
+
+    assert Path(labgym_dir).is_absolute()
+    assert Path(detectors_dir).is_absolute()
+    assert Path(models_dir).is_absolute()
+
     """
 
     # Get all of the values needed from config.get_config().
