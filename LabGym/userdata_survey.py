@@ -1,5 +1,5 @@
 """
-Provide functions for surveying the locations of user data.
+Provide functions for flagging user data that is located internal to LabGym.
 
 Public functions
     Specialized Functions
@@ -14,25 +14,51 @@ Public functions
         is_path_equivalent(path1: str|Path, path2: str|Path) -> bool
         resolve(path1: str|Path) -> str
         dict2str(arg: dict, hanging_indent: str=' '*16) -> str
+        get_list_of_subdirs(parent_dir: str|Path) -> List[str]
+        open_in_browser
 
 Public classes: None
 
-The path args for the functions in this module should be absolute 
+Design issues
+*   Why is the user-facing text using the term "folder" instead of "dir"
+    or "directory"?
+    As Gemini says,
+        When authoring dialog text for display to the user, "folder" is
+        generally the better terminology for a general audience using a
+        graphical user interface (GUI), while "directory" is appropriate
+        for technical users or command-line interfaces (CLI). The
+        abbreviation "dir" should be avoided in user-facing text.
+
+*   Why sometimes use a webbrowser instead of only dialog text?
+    Because
+    +   The user can't select and copy the wx.Dialog text into a 
+        clipboard (observed on MacOS).  
+    +   A wx.Dialog disappears when LabGym is quit.  By displaying 
+        instructions in a separate app, they can still be referenced 
+        after LabGym is quit.
+    +   Formatting... It's more efficient to write content in html 
+        instead of hand-formatting text for a wx.Dialog.
+    There are other possible approaches... prepare the instructions in
+    html, then use html2text library to get formatted text from the 
+    html, and display that in a wx.Dialog.
+
+The path args for the functions in this module should be absolute
 (full) paths, not relative (partial) paths.  That's the assumption
-during development.  If that assumption is violated, are unintended 
+during development.  If that assumption is violated, are unintended
 consequences possible?
 Instead of answering that question, implement guards.
 (1) Enforce with asserts?
         assert Path(arg).is_absolute()
-(2) Or, enforce with asserts in the Specialized functions, but not the 
+(2) Or, enforce with asserts in the Specialized functions, but not the
     General-purpose functions?
-(3) Or, guard by decorating selected functions, instead of individually 
+(3) Or, guard by decorating selected functions, instead of individually
     adding the right mix of assert statements to function bodies.
 For now, choosing (2).
 
 The survey function has an early-exit capability, for demonstration
-purposes.  If LabGym is started with --enable userdata_survey_exit,
-then survey will call sys.exit('Exiting early').
+purposes.  If LabGym is started with
+    --enable userdata_survey_exit
+then survey will call sys.exit('Exiting early') instead of returning.
 
 Design with paths as strings, or, paths as pathlib.Path objects?
 Since the paths are configured as strings, assume the calls from outside
@@ -50,7 +76,9 @@ import logging
 import os
 from pathlib import Path
 import sys
+import tempfile
 import textwrap
+import webbrowser
 
 # Related third party imports.
 import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
@@ -107,6 +135,49 @@ def dict2str(arg: dict, hanging_indent: str=' '*16) -> str:
     return result
 
 
+def get_list_of_subdirs(parent_dir: str|Path) -> List[str]:
+    """Return a sorted list of strings of the names of the child dirs.
+
+    ... excluding __pycache__.
+    If parent_dir is not an existing dir, then return an empty list.
+    """
+
+    parent_path = Path(parent_dir)
+
+    if parent_path.is_dir():
+        result = [str(item) for item in parent_path.iterdir()
+            if str(item) not in ['__init__', '__init__.py', '__pycache__']
+            and (parent_path / item).is_dir()]
+    else:
+        result = []
+
+    result.sort()
+    return result
+
+
+def open_html_in_browser(html_content):
+    """
+    Creates a temporary HTML file with the provided content and opens it 
+    in a new web browser window.
+    """
+    # Use NamedTemporaryFile to ensure the file is eventually deleted by the OS
+    with tempfile.NamedTemporaryFile('w', delete=False, suffix='.html', encoding='utf-8') as f:
+        f.write(html_content)
+        file_path = f.name
+    
+    # Create a file URL for the browser
+    url = 'file://' + os.path.abspath(file_path)
+    
+    # Open the URL in a new browser window (new=1) or a new tab (new=2)
+    # The default is to try opening in a new window/tab if possible.
+    webbrowser.open(url, new=1) 
+    
+    # Note: The temporary file will not be automatically deleted 
+    # as long as the Python script is running. You might need to 
+    # manually delete it after the browser is closed or when your 
+    # application exits if you need immediate cleanup.
+
+
 def assert_userdata_dirs_are_separate(
         detectors_dir: str, models_dir: str) -> None:
     """Verify the separation of configuration's userdata dirs.
@@ -131,10 +202,16 @@ def assert_userdata_dirs_are_separate(
         title = 'LabGym Configuration Error'
         msg = textwrap.dedent(f"""\
             LabGym Configuration Error
-                detectors: {detectors_dir!r} ({resolve(detectors_dir)!r})
-                models: {models_dir!r} ({resolve(models_dir)!r})
+                The detectors folder is specified by config or defaults as 
+                    {detectors_dir!r}
+                    which resolves to 
+                    {resolve(detectors_dir)!r}
+                The models folder is specified by config or defaults as 
+                    {models_dir!r}
+                    which resolves to 
+                    {resolve(models_dir)!r}
 
-            The userdata dirs must be separate.
+            The userdata folders must be separate.
             """)
 
         logger.error('%s', msg)
@@ -179,14 +256,15 @@ def offer_to_mkdir_userdata_dirs(
         mkdir_targets.update({'models': models_dir})
 
     if mkdir_targets:
-        title = 'LabGym Configuration: make directories?'
+        title = 'LabGym Configuration: make folders?'
         msg = textwrap.dedent(f"""\
-            These directories are specified by your LabGym
-            configuration, but they don't exist yet.
+            These folders are specified by your LabGym configuration, but
+            they don't exist yet.
                 {dict2str(mkdir_targets)}
 
             Try to create them?
             """)
+            # 64-char ruler -----------------------------------------------!
         logger.debug('%s:\n%s', 'msg', msg)
 
         with mywx.OK_Cancel_Dialog(None, title=title, msg=msg) as dlg:
@@ -201,6 +279,76 @@ def offer_to_mkdir_userdata_dirs(
                       # to avoid unintentionally creating a mistake with
                       # multiple levels...
                       os.mkdir(value)
+
+
+def get_instructions(folder, name, labgym_configfile):
+    """Return html <li> element of instructions for a folder inside LabGym.
+    
+    If there are userdata subfolders, then extra instructions will be
+    given to back them up and move them.
+    """
+
+    example_new_config_value = f'"{str(Path.home())}/LabGym_{name}"'
+
+    list_of_subdirs = get_list_of_subdirs(folder)
+    if len(list_of_subdirs) > 0:
+        result = f"""
+        <li>Move {name} userdata.
+        <ol type="a">
+        <li>
+        Define "{name}" as a folder somewhere OUTSIDE of the LabGym folder.  
+        For example, in the LabGym config toml-file, which might be this
+        <br><code>&nbsp;&nbsp;&nbsp;&nbsp;
+            {labgym_configfile}
+        </code><br>
+        specify like (as an example)
+        <br><code>&nbsp;&nbsp;&nbsp;&nbsp;
+            {name} = {example_new_config_value}
+        </code><br>
+        (use forward slash "/" inside the toml-file, even on Windows)
+        </li>
+        <li>
+        Ensure the newly specified folder exists.
+        </li>
+        <li>
+        The old, internal {name} folder (LabGym/{name}) contains 
+        {len(list_of_subdirs)} subfolders of user data.
+        <br>(i) Back them up, 
+        <br>(ii) move them into the new {name} folder.  
+            (If you just copy them, and leave the originals in the old 
+            location, then they will be noticed later as "orphaned" data.
+        </li>
+        </ol></li>
+        """
+    else:
+        # the internal userdata dir has no userdata to preserve.
+        result = f"""
+        <li>Move {name} userdata subfolders.
+        <ol type="a">
+        <li>
+        Define "{name}" as a folder somewhere OUTSIDE of the LabGym folder.  
+        For example, in LabGym config toml-file
+        <br><code>&nbsp;&nbsp;&nbsp;&nbsp;
+            {labgym_configfile}
+        </code><br>
+        specify like (as an example)
+        <br><code>&nbsp;&nbsp;&nbsp;&nbsp;
+            {name} = {example_new_config_value}
+        </code><br>
+        (use forward slash "/" inside the toml-file, even on Windows)
+        </li>
+        <li>
+        Ensure the newly specified folder exists.
+        </li>
+
+        <li>
+        The old, internal detectors (LabGym/{name}) contains no 
+        subfolders of user data.
+        </li>
+        </ol></li>
+        """
+
+    return result
 
 
 def advise_on_internal_userdata_dirs(
@@ -218,43 +366,134 @@ def advise_on_internal_userdata_dirs(
     assert (is_path_under(labgym_dir, detectors_dir) or
             is_path_under(labgym_dir, models_dir))
 
+    # Get all of the values needed from config.get_config().
+    labgym_configfile: str = str(config.get_config()['configfile'])
+
     title = 'LabGym Configuration: internal userdata dirs'
 
-    # Prepare the message.
-
+    # Prepare the dialog message.
     msg = textwrap.dedent("""\
-        Your LabGym configuration (or the configuration
-        defaults) presently define userdata dirs as
-        located within the LabGym tree.
-        This arrangement is now deprecated.
+        Your LabGym configuration (or the configuration defaults) 
+        presently define userdata folders as located within the LabGym 
+        folder.  
+        This arrangement is now deprecated.  
+        It's better that the userdata folders are located external to 
+        the LabGym folder.  
 
-        Please follow these instructions to resolve,
+        Intructions are being displayed in a webbrowser page "LabGym
+        Configuration Instructions".
+        Please follow the instructions to make the recommended changes, 
+        Quit this session of LabGym,
         then restart LabGym.
+
+        Quit LabGym Now?  (press OK)
+        To carry on with the existing configuration, press Cancel.
         """)
-        #-----------------------------------------------
+        # 64-char ruler -----------------------------------------------!
 
-    # if detectors_dir is internal, and no data is stored, then advise
-    # (a) configure new external detectors dir, (b) make the dir.
-    # elif detectors_dir is internal, and data is stored, then advise
-    # (a) configure new external detectors dir, (b) make the dir,
-    # (d) back up data, (e) move data.
-    #
-    #         change config, make dirs, backup data, move data.
-    #         Press OK to quit LabGym.  Press Cancel to carry on with
-    #         deprecated configuration.
+    # Prepare the instructions in html.
+    instructions_html_body = ''
 
-    # msg += textwrap.dedent("""\
-    #
-    #     """)
-    #     #-----------------------------------------------
+    if is_path_under(labgym_dir, detectors_dir):
+        instructions_html_body += get_instructions(
+            detectors_dir, 'detectors', labgym_configfile)
+
+    if is_path_under(labgym_dir, models_dir):
+        instructions_html_body += get_instructions(
+            models_dir, 'models', labgym_configfile)
+            
+    # <style>
+    #     body { background-color: lightblue; text-align: center; }
+    #     h1 { color: white; }
+    #     p { color: navy; font-size: 20px; }
+    # </style>
+    instructions_html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>LabGym Configuration Instructions</title>
+        </head>
+        <body>
+            <h1>LabGym Configuration Instructions</h1>
+            <ol>
+                {instructions_html_body}
+            </ol>
+            (Close this page when instructions are completed.)
+        </body>
+    """
+
+    alt_instructions_html = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>LabGym Configuration Instructions</title>
+        </head>
+        <body>
+            <h1>LabGym Configuration Instructions</h1>
+            <ol>
+                {instructions_html_body}
+            </ol>
+        </body>
+    """
+
+    open_html_in_browser(instructions_html)
 
     logger.debug('%s:\n%s', 'msg', msg)
 
-    with mywx.OK_Dialog(None, title=title, msg=msg) as dlg:
+    with mywx.OK_Cancel_Dialog(None, title=title, msg=msg) as dlg:
         mywx.bring_wxapp_to_foreground()
 
-        result = dlg.ShowModal()  # will return wx.ID_OK upon OK or dismiss
+        result = dlg.ShowModal()
         logger.debug('%s: %r', 'result', result)
+
+        if result == wx.ID_OK:
+            sys.exit('User pressed OK to quit')
+        else:
+            logger.debug('%s', 'User pressed Cancel, or dismissed the dialog')
+
+    # (begin of alt) --------
+    import html2text
+    altmsg = textwrap.dedent("""\
+        Your LabGym configuration (or the configuration defaults) 
+        presently define userdata folders as located within the LabGym 
+        folder.  
+        This arrangement is now deprecated.  
+        It's better that the userdata folders are located external to 
+        the LabGym folder.
+        """)
+        # 64-char ruler -----------------------------------------------!
+
+    altmsg += """
+        """
+
+    altmsg += html2text.html2text(alt_instructions_html)
+
+    """
+        Intructions are being displayed in a webbrowser page "LabGym
+        Configuration Instructions".
+        Please follow the instructions to make the recommended changes, 
+        Quit this session of LabGym,
+        then restart LabGym.
+        """
+
+    altmsg += textwrap.dedent("""\
+        Quit LabGym Now?  (press OK)
+        To carry on with the existing configuration, press Cancel.
+        """)
+        # 64-char ruler -----------------------------------------------!
+    #----
+
+    with mywx.OK_Cancel_Dialog(None, title=title, msg=altmsg) as dlg:
+        mywx.bring_wxapp_to_foreground()
+
+        result = dlg.ShowModal()
+        logger.debug('%s: %r', 'result', result)
+
+        if result == wx.ID_OK:
+            sys.exit('User pressed OK to quit')
+        else:
+            logger.debug('%s', 'User pressed Cancel, or dismissed the dialog')
+    # (end of alt) -------- 
 
 
 def warn_on_orphaned_userdata(
