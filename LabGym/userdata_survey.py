@@ -297,7 +297,7 @@ def get_instructions(folder, name, labgym_configfile):
         <ol type="a">
         <li>
         Define "{name}" as a folder somewhere OUTSIDE of the LabGym folder.  
-        For example, in the LabGym config toml-file, which might be this
+        For example, in the LabGym config toml-file,
         <br><code>&nbsp;&nbsp;&nbsp;&nbsp;
             {labgym_configfile}
         </code><br>
@@ -323,11 +323,11 @@ def get_instructions(folder, name, labgym_configfile):
     else:
         # the internal userdata dir has no userdata to preserve.
         result = f"""
-        <li>Move {name} userdata subfolders.
+        <li>Move {name} userdata.
         <ol type="a">
         <li>
         Define "{name}" as a folder somewhere OUTSIDE of the LabGym folder.  
-        For example, in LabGym config toml-file
+        For example, in the LabGym config toml-file,
         <br><code>&nbsp;&nbsp;&nbsp;&nbsp;
             {labgym_configfile}
         </code><br>
@@ -343,7 +343,7 @@ def get_instructions(folder, name, labgym_configfile):
 
         <li>
         The old, internal detectors (LabGym/{name}) contains no 
-        subfolders of user data.
+        subfolders of user data to move, so, nothing further to do for {name}.
         </li>
         </ol></li>
         """
@@ -384,7 +384,7 @@ def advise_on_internal_userdata_dirs(
         Configuration Instructions".
         Please follow the instructions to make the recommended changes, 
         Quit this session of LabGym,
-        then restart LabGym.
+        and restart LabGym.
 
         Quit LabGym Now?  (press OK)
         To carry on with the existing configuration, press Cancel.
@@ -466,17 +466,25 @@ def advise_on_internal_userdata_dirs(
     altmsg += """
         """
 
-    altmsg += html2text.html2text(alt_instructions_html)
+    # altmsg += html2text.html2text(alt_instructions_html)
+    # html2text.BODY_WIDTH = 48  
+    html2text.config.BODY_WIDTH = 64 
+    # html2text is using backtick to denote a code element... strip backticks.
+    altmsg += html2text.html2text(alt_instructions_html).replace('`','')
+    # weird, I'm not seeing the wrapping I expect on some li elements.
 
-    """
-        Intructions are being displayed in a webbrowser page "LabGym
-        Configuration Instructions".
+    #     Intructions are being displayed in a webbrowser page "LabGym
+    #     Configuration Instructions".
+
+    altmsg += textwrap.dedent(f"""\
+
         Please follow the instructions to make the recommended changes, 
-        Quit this session of LabGym,
-        then restart LabGym.
-        """
+        then Quit this session of LabGym,
+        and restart LabGym.
+        """)
 
     altmsg += textwrap.dedent("""\
+
         Quit LabGym Now?  (press OK)
         To carry on with the existing configuration, press Cancel.
         """)
@@ -507,8 +515,41 @@ def warn_on_orphaned_userdata(
     assert Path(detectors_dir).is_absolute()
     assert Path(models_dir).is_absolute()
 
-    title = 'title...'
-    msg = 'msg...'
+    # all userdata dirs are configured as located external.
+
+    title = 'Warning: Orphaned LabGym Userdata Found'
+    msg = textwrap.dedent(f"""\
+        Your LabGym configuration is specifying userdata folders
+        external to the LabGym folder.  (Good!)
+
+        There remain, however, userdata folders inside the LabGym 
+        folder which are "orphaned".  Please back them up and handle 
+        them.
+        """)
+
+    name = 'detectors'
+    subdirs = get_list_of_subdirs(Path(__file__).parent / name)
+
+    if len(subdirs) > 0:
+        msg += textwrap.dedent(f"""\
+
+            In LabGym/{name}, {len(subdirs)} folders:
+        """)
+        for subdir in subdirs:
+            msg += f"    {subdir}\n"
+        # 64-char ruler -----------------------------------------------!
+
+    name = 'models'
+    subdirs = get_list_of_subdirs(Path(__file__).parent / name)
+
+    if len(subdirs) > 0:
+        msg += textwrap.dedent(f"""\
+
+            In LabGym/{name}, {len(subdirs)} folders:
+        """)
+        for subdir in subdirs:
+            msg += f"    {subdir}\n"
+        # 64-char ruler -----------------------------------------------!
 
     logger.debug('%s:\n%s', 'msg', msg)
 
