@@ -23,7 +23,7 @@ This module provides additional utility functions for the LabGym GUI. Currently,
 
 def add_or_select_notebook_page(notebook, panel_factory, title):
 	"""Helper function to add a new page or select existing page if it already exists.
-	
+
 	Args:
 		notebook: The notebook widget
 		panel_factory: A function that creates the panel (to avoid creating unnecessary panels)
@@ -36,14 +36,14 @@ def add_or_select_notebook_page(notebook, panel_factory, title):
 			if notebook.GetPageText(i) == 'Home':
 				notebook.SetSelection(i)
 				return
-	
+
 	# Checks if a page with this title already exists
 	for i in range(notebook.GetPageCount()):
 		if notebook.GetPageText(i) == title:
 			# Page exists, select it instead of creating a new one
 			notebook.SetSelection(i)
 			return
-	
+
 	# Page doesn't exist, create and add it
 	panel = panel_factory()	# panel factory, as opposed to an actual panel
 

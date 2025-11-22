@@ -14,9 +14,9 @@ author = "Yujia Hu"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
-    "myst_parser",
-    "sphinx_copybutton",
-    "sphinx_inline_tabs",
+	"myst_parser",
+	"sphinx_copybutton",
+	"sphinx_inline_tabs",
 ]
 
 templates_path = ["_templates"]
