@@ -81,7 +81,7 @@ def main() -> None:
 		pass
 
 	# Create a single persistent, wx.App instance, as it may be
-        # needed for probe dialogs prior to calling gui_main.main_window.
+	# needed for probe dialogs prior to calling gui_main.main_window.
 	mywx.App()
 
 	# Perform some pre-op sanity checks and probes of outside resources.

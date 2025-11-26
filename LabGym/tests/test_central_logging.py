@@ -15,16 +15,16 @@ logging.getLogger().setLevel(logging.DEBUG)
 
 # success cases
 def test_enable_true(monkeypatch):
-    # Arrange
-    _config = {'enable': {'central_logger': True}}
-    monkeypatch.setattr(central_logging.config, 'get_config', lambda: _config)
-    logging.debug('%s: %r', '_config', _config)
+	# Arrange
+	_config = {'enable': {'central_logger': True}}
+	monkeypatch.setattr(central_logging.config, 'get_config', lambda: _config)
+	logging.debug('%s: %r', '_config', _config)
 
-    # Act
-    central_logger = central_logging.get_central_logger(reset=True)
+	# Act
+	central_logger = central_logging.get_central_logger(reset=True)
 
-    # Assert
-    assert central_logger.disabled == False
+	# Assert
+	assert central_logger.disabled == False
 
-    assert central_logger.name == 'Central Logger'
-    assert central_logger.level == logging.INFO
+	assert central_logger.name == 'Central Logger'
+	assert central_logger.level == logging.INFO
