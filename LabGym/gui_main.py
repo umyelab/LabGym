@@ -370,7 +370,7 @@ class MainFrame(wx.Frame):
 		super().__init__(None, title=f'LabGym v{__version__}')
 
 		self.SetSize((1000, 600))
-		
+
 		# Set the app icon within GUI
 		set_frame_icon(self, context='normal')  # Set normal icon first
 		if sys.platform.startswith("win"):
@@ -392,7 +392,7 @@ class MainFrame(wx.Frame):
 		panel = InitialPanel(self.notebook)
 		title = 'Home'
 		self.notebook.AddPage(panel, title, select=True)
-		
+
 		# Bind the close event to prevent Home tab from being closed
 		self.notebook.Bind(wx.aui.EVT_AUINOTEBOOK_PAGE_CLOSE, self.on_page_close)
 
@@ -421,7 +421,7 @@ def main_window():
 	app = wx.GetApp()  # reference to the currently running wx.App instance
 	app.SetAppName("LabGym") # Set app name to influence WM_CLASS
 	setup_application_icons()  # Set up all platform-specific icons
-	
+
 	MainFrame()  # Create the main frame and its notebook
 	logger.info('User interface initialized!')
 	app.MainLoop()

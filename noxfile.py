@@ -28,39 +28,39 @@ EXTRAS_WX_URL = "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-
 
 @nox.session(python=['3.9','3.10'])
 def tests(session:nox.Session):
-    # prefer wheels globally
-    session.env["PIP_PREFER_BINARY"]="1"
-    session.env["PIP_NO_CACHE_DIR"]="1"
+	# prefer wheels globally
+	session.env["PIP_PREFER_BINARY"]="1"
+	session.env["PIP_NO_CACHE_DIR"]="1"
 
-    # Preinstall a wxPython wheel to avoid building from source
-    if platform.system() == "Linux":
-        session.install(
-            "--only-binary=:all:",
-            "-f", EXTRAS_WX_URL,
-            "wxPython==4.2.1"
-        )
+	# Preinstall a wxPython wheel to avoid building from source
+	if platform.system() == "Linux":
+		session.install(
+			"--only-binary=:all:",
+			"-f", EXTRAS_WX_URL,
+			"wxPython==4.2.1"
+		)
 
-        # Force CPU-only PyTorch stack to avoid large CUDA downloads
-        session.install(
-            "--no-cache-dir",
-            "--index-url", "https://download.pytorch.org/whl/cpu",
-            "torch==2.8.0+cpu",
-            "torchvision==0.23.0+cpu",
-            "torchaudio==2.8.0+cpu",
-        )
+		# Force CPU-only PyTorch stack to avoid large CUDA downloads
+		session.install(
+			"--no-cache-dir",
+			"--index-url", "https://download.pytorch.org/whl/cpu",
+			"torch==2.8.0+cpu",
+			"torchvision==0.23.0+cpu",
+			"torchaudio==2.8.0+cpu",
+		)
 
 
-    # package and test dependencies
-    session.install("-e", ".")
-    session.install("pytest")
-    
+	# package and test dependencies
+	session.install("-e", ".")
+	session.install("pytest")
 
-    session.run("pytest", "-q")
+
+	session.run("pytest", "-q")
 
 
 @nox.session(reuse_venv=True)
 def docs(session:nox.Session):
-    session.install("-U", "pip", "setuptools", "wheel")
-    session.install('-r','docs/requirements.txt')
-    session.run('make','-C','docs','clean',external=True)
-    session.run('sphinx-autobuild','docs','docs/_build/html')
+	session.install("-U", "pip", "setuptools", "wheel")
+	session.install('-r','docs/requirements.txt')
+	session.run('make','-C','docs','clean',external=True)
+	session.run('sphinx-autobuild','docs','docs/_build/html')

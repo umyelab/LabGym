@@ -44,7 +44,7 @@ def _get_icon_paths():
 	base_path = files("LabGym") / "assets/icons"
 	return {
 		'small_ico': base_path / "labgym_small.ico",
-		'main_ico': base_path / "labgym.ico", 
+		'main_ico': base_path / "labgym.ico",
 		'icns': base_path / "labgym.icns",
 		'png': base_path / "labgym.png"
 	}
@@ -53,14 +53,14 @@ def _get_icon_paths():
 def get_icon_for_context(context='normal', size=16):
 	"""Get appropriate icon path for given context and size."""
 	icon_paths = _get_icon_paths()
-	
+
 	if sys.platform.startswith("win"):
 		# Windows: Use ICO files for better compatibility
 		if context == 'small' or size <= 24:
 			return str(icon_paths['small_ico']) if icon_paths['small_ico'].is_file() else str(icon_paths['png'])
 		else:
 			return str(icon_paths['main_ico']) if icon_paths['main_ico'].is_file() else str(icon_paths['png'])
-	
+
 	# macOS or fallback
 	return str(icon_paths['png']) if icon_paths['png'].is_file() else ""
 
@@ -71,7 +71,7 @@ def set_frame_icon(frame, context='normal', size=16):
 		icon_path = get_icon_for_context(context, size)
 		if not icon_path or not Path(icon_path).is_file():
 			return
-			
+
 		icon = wx.Icon(icon_path, wx.BITMAP_TYPE_ANY)
 		if icon.IsOk():
 			frame.SetIcon(icon)
