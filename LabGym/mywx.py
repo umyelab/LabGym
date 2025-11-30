@@ -86,6 +86,9 @@ def App():
 	# Milestone -- This must be the first time running this function.
 	# Construct the app obj, cache it, and return it.
 
+	app = wx.App()
+	logger.debug('%s: %r', 'app', app)
+
 	_cached_app = app
 	return app
 
