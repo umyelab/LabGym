@@ -79,7 +79,7 @@ import uuid
 from zoneinfo import ZoneInfo
 
 # Related third party imports.
-import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
+# import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
 import yaml  # PyYAML, YAML parser and emitter for Python
 
 # Local application/library specific imports.
@@ -87,6 +87,9 @@ from LabGym import __version__ as version
 from LabGym import central_logging
 from LabGym import config
 from LabGym import mywx
+import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
+
+# import patch_wx, wx  # wxPython, with wx.App patched to be a strict singleton
 
 
 logger = logging.getLogger(__name__)
