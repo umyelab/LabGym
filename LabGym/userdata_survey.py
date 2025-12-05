@@ -7,6 +7,7 @@ Public functions
 		assert_userdata_dirs_are_separate
 		offer_to_mkdir_userdata_dirs
 		advise_on_internal_userdata_dirs
+		get_instructions
 		warn_on_orphaned_userdata
 
 	General-purpose Functions
@@ -15,7 +16,7 @@ Public functions
 		resolve(path1: str|Path) -> str
 		dict2str(arg: dict, hanging_indent: str=' '*16) -> str
 		get_list_of_subdirs(parent_dir: str|Path) -> List[str]
-		open_in_browser
+		open_html_in_browser(html_content)
 
 Public classes: None
 
@@ -89,6 +90,7 @@ from LabGym import config, mywx
 
 logger = logging.getLogger(__name__)
 
+
 def is_path_under(path1: str|Path, path2: str|Path) -> bool:
 	"""Return True if path2 is under path1."""
 
@@ -146,7 +148,8 @@ def get_list_of_subdirs(parent_dir: str|Path) -> List[str]:
 
 	if parent_path.is_dir():
 		result = [str(item) for item in parent_path.iterdir()
-			if str(item) not in ['__init__', '__init__.py', '__pycache__']
+			# if str(item) not in ['__init__', '__init__.py', '__pycache__']
+			if str(item) not in ['__pycache__']
 			and (parent_path / item).is_dir()]
 	else:
 		result = []
@@ -223,7 +226,7 @@ def assert_userdata_dirs_are_separate(
 			result = dlg.ShowModal()  # will return wx.ID_OK upon OK or dismiss
 			logger.debug('%s: %r', 'result', result)
 
-			sys.exit('Bad configuration')
+		sys.exit('Bad configuration')
 
 
 def offer_to_mkdir_userdata_dirs(
@@ -568,17 +571,21 @@ def survey(
 	"""Display guidance if userdata dirs are within the LabGym tree.
 
 	1.  Verify the separation of configuration's userdata dirs.
-		If bad (not separate),
+		If not separate,
 		then display an error message, then sys.exit().
 
-	2.  Check for user data dirs that are external, but don't exist.
-		If any, offer to attempt mkdir.
+	2.  Check for user data dirs that are defined/configured as
+		"external", but don't exist.  If any, then warn.
+		(this action could be enhanced -- offer to attempt mkdir.)
 
 	3.  If any userdata dirs are configured as located within the
-		LabGym tree, then advise user to resolve.
-		Otherwise, the userdata dirs are already configured as
-		external.  Warn about any orphaned data still sitting in
-		traditional internal locations.
+		LabGym tree, then warn.
+		(this could be enhanced -- provide info and specific instructions
+		to the user for resolution.)
+
+	4.  For any userdata dirs configured as external to LabGym tree,
+		if there is "orphaned" data, remaining in the "traditional"
+		location (internal, within the LabGym tree), then warn.
 
 	Also, enforce the expectation that the path args are absolute (full).
 	"""
@@ -587,41 +594,84 @@ def survey(
 	assert Path(detectors_dir).is_absolute()
 	assert Path(models_dir).is_absolute()
 
-	"""
+	logger.debug('%s: %r', 'labgym_dir', labgym_dir)
+	logger.debug('%s: %r', 'detectors_dir', detectors_dir)
+	logger.debug('%s: %r', 'models_dir', models_dir)
 
 	# Get all of the values needed from config.get_config().
 	enable_userdata_survey_exit: bool = config.get_config(
 		)['enable'].get('userdata_survey_exit', False)
 
-	logger.debug('%s: %r', 'labgym_dir', labgym_dir)
-	logger.debug('%s: %r', 'detectors_dir', detectors_dir)
-	logger.debug('%s: %r', 'models_dir', models_dir)
-
 	# 1.  Verify the separation of configuration's userdata dirs.
-	#	 If bad (not separate),
-	#	 then display an error message, then sys.exit().
+	#	  If not separate,
+	#	  then display an error message, then sys.exit().
 	assert_userdata_dirs_are_separate(detectors_dir, models_dir)
 
-	# At this point, the configured detectors_dir models_dir are not in
+	# The detectors_dir and models_dir are defined by the configuration
+	# and passed in to this function.
+	# At this point, the detectors_dir and models_dir are not in
 	# fundamental conflict, at least.
 
-	# 2.  Check for user data dirs that are external, but don't exist.
-	#	 If any, offer to attempt mkdir.
-	offer_to_mkdir_userdata_dirs(labgym_dir, detectors_dir, models_dir)
+	userdata_dirs = {
+		'detectors': detectors_dir,
+		'models': models_dir,
+		}
+	internal_userdata_dirs = {key: value for key, value in userdata_dirs.items()
+		if is_path_under(labgym_dir, value)}
+	external_userdata_dirs = {key: value for key, value in userdata_dirs.items()
+		if not is_path_under(labgym_dir, value)}
+
+	# 2.  Check for user data dirs that are defined/configured as
+	#     "external", but don't exist.  If any, then warn.
+	#     (this action could be enhanced -- offer to attempt mkdir.)
+	# old:
+	#     offer_to_mkdir_userdata_dirs(labgym_dir, detectors_dir, models_dir)
+	missing_userdata_dirs = [value for value in external_userdata_dirs.values()
+		if not os.path.isdir(value)]
+	if missing_userdata_dirs:
+		logger.warn('%s  %s: %r',
+			'Found external Userdata folders specified by config,'
+			' but not existing.',
+			'missing_userdata_dirs', missing_userdata_dirs)
 
 	# 3.  If any userdata dirs are configured as located within the
-	#	 LabGym tree, then advise user to resolve.
-	#	 Otherwise, the userdata dirs are already configured as
-	#	 external.  Warn about any orphaned data still sitting in
-	#	 traditional internal locations.
-	if (is_path_under(labgym_dir, detectors_dir) or
-			is_path_under(labgym_dir, models_dir)):
-		# one or more userdata dirs are configured as located internal.
-		advise_on_internal_userdata_dirs(labgym_dir, detectors_dir, models_dir)
-	else:
-		# all userdata dirs are configured as located external.
-		warn_on_orphaned_userdata(labgym_dir, detectors_dir, models_dir)
+	#     LabGym tree, then warn.
+	#     (this could be enhanced -- provide info and specific instructions
+	#     to the user for resolution.)
+	if internal_userdata_dirs:
+		logger.warn('%s  %s: %r',
+			'Found internal Userdata folders specified by config,'
+			' but the use of internal Userdata folders is deprecated.',
+			'internal_userdata_dirs', internal_userdata_dirs)
 
+		# advise_on_internal_userdata_dirs(
+		#     labgym_dir, detectors_dir, models_dir)
+
+	# 4.  For any userdata dirs configured as external to LabGym tree,
+	#     if there is "orphaned" data, remaining in the "traditional"
+	#     location (internal, within the LabGym tree), then warn.
+	if external_userdata_dirs:
+		orphans = []
+		if 'detectors' in external_userdata_dirs.keys():
+			 # contents of LabGym/detectors are orphans
+			 old = Path(__file__).parent / 'detectors' # old userdata dir
+			 orphans.extend([
+				 str(old / subdir) for subdir in get_list_of_subdirs(old)])
+		if 'models' in external_userdata_dirs.keys():
+			 # contents of LabGym/modelsare orphans
+			 old = Path(__file__).parent / 'models' # old userdata dir
+			 orphans.extend([
+				 str(old / subdir) for subdir in get_list_of_subdirs(old)])
+
+		if orphans:
+			logger.warn('%s  %s: %r',
+				'Found Userdata orphaned in old Userdata folders.',
+				'orphans', orphans)
+
+		# warn_on_orphaned_userdata(labgym_dir, detectors_dir, models_dir)
+
+	# If flag is set, then exit early instead of return normally.
+	# (this for feature development and demonstration)
 	if enable_userdata_survey_exit:
 		sys.exit(f'Exiting early.'
 			f'  enable_userdata_survey_exit: {enable_userdata_survey_exit}')
