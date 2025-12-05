@@ -629,7 +629,7 @@ def survey(
 	missing_userdata_dirs = [value for value in external_userdata_dirs.values()
 		if not os.path.isdir(value)]
 	if missing_userdata_dirs:
-		logger.warn('%s  %s: %r',
+		logger.warning('%s  %s: %r',
 			'Found external Userdata folders specified by config,'
 			' but not existing.',
 			'missing_userdata_dirs', missing_userdata_dirs)
@@ -639,7 +639,7 @@ def survey(
 	#     (this could be enhanced -- provide info and specific instructions
 	#     to the user for resolution.)
 	if internal_userdata_dirs:
-		logger.warn('%s  %s: %r',
+		logger.warning('%s  %s: %r',
 			'Found internal Userdata folders specified by config,'
 			' but the use of internal Userdata folders is deprecated.',
 			'internal_userdata_dirs', internal_userdata_dirs)
@@ -664,7 +664,7 @@ def survey(
 				 str(old / subdir) for subdir in get_list_of_subdirs(old)])
 
 		if orphans:
-			logger.warn('%s  %s: %r',
+			logger.warning('%s  %s: %r',
 				'Found Userdata orphaned in old Userdata folders.',
 				'orphans', orphans)
 
