@@ -31,12 +31,21 @@ logger = logging.getLogger(__name__)
 #     logging.debug('%s: %r', "os.getenv('PYTHONPATH')", os.getenv('PYTHONPATH'))
 
 
-def test_probes(monkeypatch):
+def test_probes(monkeypatch, tmp_path):
 	# Arrange
 	_config = {
 		'anonymous': True,
 		'enable': {'registration': False, 'central_logger': False},
 		}
+
+	# prepare some userdata dirs outside of LabGym, and include in _config.
+	_detectors = str(tmp_path / 'detectors')
+	_models = str(tmp_path / 'models')
+	# Path(_detectors).mkdir()
+	# Path(_models).mkdir()
+	_config.update({'detectors': _detectors, 'models': _models})
+	logging.debug('%s: %r', '_config', _config)
+
 	monkeypatch.setattr(probes.config, 'get_config', lambda: _config)
 	logging.debug('%s: %r', '_config', _config)
 	monkeypatch.setattr(probes.central_logging.config, 'get_config', lambda: _config)
