@@ -191,9 +191,9 @@ def assert_userdata_dirs_are_separate(
 	separate, and do not have a "direct, lineal relationshop", where one
 	is under the other.
 
-	Also, enforce the expectation that the path args are absolute (full).
 	"""
 
+	# Enforce the expectation that the path args are absolute (full).
 	assert Path(detectors_dir).is_absolute()
 	assert Path(models_dir).is_absolute()
 
@@ -205,26 +205,22 @@ def assert_userdata_dirs_are_separate(
 		title = 'LabGym Configuration Error'
 		msg = textwrap.dedent(f"""\
 			LabGym Configuration Error
-				The detectors folder is specified by config or defaults as
-					{detectors_dir!r}
-					which resolves to
-					{resolve(detectors_dir)!r}
-				The models folder is specified by config or defaults as
-					{models_dir!r}
-					which resolves to
-					{resolve(models_dir)!r}
-
 			The userdata folders must be separate.
+			The detectors folder is specified by config or defaults as
+				{detectors_dir!r}
+				which resolves to
+				{resolve(detectors_dir)!r}
+			The models folder is specified by config or defaults as
+				{models_dir!r}
+				which resolves to
+				{resolve(models_dir)!r}
 			""")
 
 		logger.error('%s', msg)
 
 		# Show the error msg with an OK_Dialog.
 		with mywx.OK_Dialog(None, title=title, msg=msg) as dlg:
-			mywx.bring_wxapp_to_foreground()
-
 			result = dlg.ShowModal()  # will return wx.ID_OK upon OK or dismiss
-			logger.debug('%s: %r', 'result', result)
 
 		sys.exit('Bad configuration')
 
@@ -271,8 +267,6 @@ def offer_to_mkdir_userdata_dirs(
 		logger.debug('%s:\n%s', 'msg', msg)
 
 		with mywx.OK_Cancel_Dialog(None, title=title, msg=msg) as dlg:
-			mywx.bring_wxapp_to_foreground()
-
 			result = dlg.ShowModal()  # will return wx.ID_OK upon OK or dismiss
 			logger.debug('%s: %r', 'result', result)
 
@@ -444,8 +438,6 @@ def advise_on_internal_userdata_dirs(
 	logger.debug('%s:\n%s', 'msg', msg)
 
 	with mywx.OK_Cancel_Dialog(None, title=title, msg=msg) as dlg:
-		mywx.bring_wxapp_to_foreground()
-
 		result = dlg.ShowModal()
 		logger.debug('%s: %r', 'result', result)
 
@@ -495,8 +487,6 @@ def advise_on_internal_userdata_dirs(
 	#----
 
 	with mywx.OK_Cancel_Dialog(None, title=title, msg=altmsg) as dlg:
-		mywx.bring_wxapp_to_foreground()
-
 		result = dlg.ShowModal()
 		logger.debug('%s: %r', 'result', result)
 
@@ -557,39 +547,51 @@ def warn_on_orphaned_userdata(
 	logger.debug('%s:\n%s', 'msg', msg)
 
 	with mywx.OK_Dialog(None, title=title, msg=msg) as dlg:
-		mywx.bring_wxapp_to_foreground()
-
 		result = dlg.ShowModal()  # will return wx.ID_OK upon OK or dismiss
 		logger.debug('%s: %r', 'result', result)
 
 
 def survey(
-	labgym_dir: str,
-	detectors_dir: str,
-	models_dir: str,
-	) -> None:
-	"""Display guidance if userdata dirs are within the LabGym tree.
+		labgym_dir: str,
+		detectors_dir: str,
+		models_dir: str,
+		) -> None:
+	"""Warn (and display guidance?) if userdata dirs need reorganization.
+
+	The locations of detectors and models dirs are specified by the
+	configuration, obtained from the configuration before calling this
+	function, and passed into this function.
 
 	1.  Verify the separation of configuration's userdata dirs.
-		If not separate,
-		then display an error message, then sys.exit().
+		If not separate, then display an error message, then sys.exit().
 
-	2.  Check for user data dirs that are defined/configured as
-		"external", but don't exist.  If any, then warn.
-		(this action could be enhanced -- offer to attempt mkdir.)
+	2.  Check for userdata dirs that are defined/configured as
+		"external" to LabGym, but don't exist.  If any, then warn.
 
-	3.  If any userdata dirs are configured as located within the
-		LabGym tree, then warn.
-		(this could be enhanced -- provide info and specific instructions
-		to the user for resolution.)
+		This action could be expanded -- offer to attempt mkdir?
+
+	3.  Check for userdata dirs that are defined/configured as
+		"internal" to LabGym.  If any, then warn.
+
+		This action could be expanded --
+		3a. provide info and specific instructions to the user for
+			resolution.
+		3b. (or,) for each internal userdata dir (detectors, models),
+			automatically
+			+   mkdir new external dir
+			+   update the config to point at new external dir
+			+   for each subdir of internal dir
+			+       copy subdir to new external dir
+			+       back up existing original
+			+       delete existing original
+			then exit (don't continue with old config!)
 
 	4.  For any userdata dirs configured as external to LabGym tree,
 		if there is "orphaned" data, remaining in the "traditional"
 		location (internal, within the LabGym tree), then warn.
-
-	Also, enforce the expectation that the path args are absolute (full).
 	"""
 
+	# Enforce the expectation that the path args are absolute (full).
 	assert Path(labgym_dir).is_absolute()
 	assert Path(detectors_dir).is_absolute()
 	assert Path(models_dir).is_absolute()
@@ -597,20 +599,6 @@ def survey(
 	logger.debug('%s: %r', 'labgym_dir', labgym_dir)
 	logger.debug('%s: %r', 'detectors_dir', detectors_dir)
 	logger.debug('%s: %r', 'models_dir', models_dir)
-
-	# Get all of the values needed from config.get_config().
-	enable_userdata_survey_exit: bool = config.get_config(
-		)['enable'].get('userdata_survey_exit', False)
-
-	# 1.  Verify the separation of configuration's userdata dirs.
-	#	  If not separate,
-	#	  then display an error message, then sys.exit().
-	assert_userdata_dirs_are_separate(detectors_dir, models_dir)
-
-	# The detectors_dir and models_dir are defined by the configuration
-	# and passed in to this function.
-	# At this point, the detectors_dir and models_dir are not in
-	# fundamental conflict, at least.
 
 	userdata_dirs = {
 		'detectors': detectors_dir,
@@ -621,28 +609,55 @@ def survey(
 	external_userdata_dirs = {key: value for key, value in userdata_dirs.items()
 		if not is_path_under(labgym_dir, value)}
 
+	# Get all of the values needed from config.get_config().
+	enable_userdata_survey_exit: bool = config.get_config(
+		)['enable'].get('userdata_survey_exit', False)
+
+	# 1.  Verify the separation of configuration's userdata dirs.
+	#	  If not separate, then display an error message, then sys.exit().
+	assert_userdata_dirs_are_separate(detectors_dir, models_dir)
+
 	# 2.  Check for user data dirs that are defined/configured as
 	#     "external", but don't exist.  If any, then warn.
-	#     (this action could be enhanced -- offer to attempt mkdir.)
+	#     (this action could be expanded -- offer to attempt mkdir?)
+
 	# old:
 	#     offer_to_mkdir_userdata_dirs(labgym_dir, detectors_dir, models_dir)
+
 	missing_userdata_dirs = [value for value in external_userdata_dirs.values()
 		if not os.path.isdir(value)]
+
 	if missing_userdata_dirs:
-		logger.warning('%s  %s: %r',
-			'Found external Userdata folders specified by config,'
-			' but not existing.',
-			'missing_userdata_dirs', missing_userdata_dirs)
+		title = 'LabGym Configuration Warning'
+		msg = textwrap.dedent(f"""\
+			External Userdata folders specified by config don't exist.
+			missing_userdata_dirs: {missing_userdata_dirs!r}'
+			""").strip()
+
+		logger.warning('%s', msg)
+
+		# Show the warning msg with an OK_Dialog.
+		with mywx.OK_Dialog(None, title=title, msg=textwrap.fill(msg)) as dlg:
+			result = dlg.ShowModal()  # will return wx.ID_OK upon OK or dismiss
 
 	# 3.  If any userdata dirs are configured as located within the
 	#     LabGym tree, then warn.
 	#     (this could be enhanced -- provide info and specific instructions
 	#     to the user for resolution.)
+
 	if internal_userdata_dirs:
-		logger.warning('%s  %s: %r',
-			'Found internal Userdata folders specified by config,'
-			' but the use of internal Userdata folders is deprecated.',
-			'internal_userdata_dirs', internal_userdata_dirs)
+		title = 'LabGym Configuration Warning'
+		msg = textwrap.dedent(f"""\
+			Found internal Userdata folders specified by config.
+			The use of internal Userdata folders is deprecated.
+			internal_userdata_dirs: {internal_userdata_dirs!r}
+			""").strip()
+
+		logger.warning('%s', msg)
+
+		# Show the warning msg with an OK_Dialog.
+		with mywx.OK_Dialog(None, title=title, msg=textwrap.fill(msg)) as dlg:
+			result = dlg.ShowModal()  # will return wx.ID_OK upon OK or dismiss
 
 		# advise_on_internal_userdata_dirs(
 		#     labgym_dir, detectors_dir, models_dir)
@@ -650,8 +665,9 @@ def survey(
 	# 4.  For any userdata dirs configured as external to LabGym tree,
 	#     if there is "orphaned" data, remaining in the "traditional"
 	#     location (internal, within the LabGym tree), then warn.
+
+	orphans = []
 	if external_userdata_dirs:
-		orphans = []
 		if 'detectors' in external_userdata_dirs.keys():
 			 # contents of LabGym/detectors are orphans
 			 old = Path(__file__).parent / 'detectors' # old userdata dir
@@ -663,10 +679,18 @@ def survey(
 			 orphans.extend([
 				 str(old / subdir) for subdir in get_list_of_subdirs(old)])
 
-		if orphans:
-			logger.warning('%s  %s: %r',
-				'Found Userdata orphaned in old Userdata folders.',
-				'orphans', orphans)
+	if orphans:
+		title = 'LabGym Configuration Warning'
+		msg = textwrap.dedent(f"""\
+			Found Userdata orphaned in old Userdata folders.
+			orphans: {orphans!r}
+			""").strip()
+
+		logger.warning('%s', msg)
+
+		# Show the warning msg with an OK_Dialog.
+		with mywx.OK_Dialog(None, title=title, msg=textwrap.fill(msg)) as dlg:
+			result = dlg.ShowModal()  # will return wx.ID_OK upon OK or dismiss
 
 		# warn_on_orphaned_userdata(labgym_dir, detectors_dir, models_dir)
 
