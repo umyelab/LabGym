@@ -1,24 +1,8 @@
 """
 Monkeypatch wx.App, and provide wx utility functions and wx.Dialog subclasses.
 
-Originally, this module simply provided App, a function to guard from
-multiple instantiations of wx.App.
-But I'm not seeing a good way to ensure that wx.App isn't used directly
-in some future development work, defeating the protection.
-So now ...
-
-Load this module to monkeypatch wx.App to prevent multiple instances.
-
-The loading of this module
-	(a) loads wx for the first time, and
-	(b) monkeypatches wx.App to prevent multiple instances.
-
-Usage
-	import mywx  # on load, monkeypatch wx.App to be a singleton
-
-During development of a LabGym feature, more wx-related functions and
-classes are being parked in this module out of convenience, but there
-may be a better way to reorganize them after the feature code is stable.
+Import this module before the first import of wx, to prevent multiple
+instances of wx.App.
 
 Public Functions
 	bring_wxapp_to_foreground -- Bring the wx app to the foreground.
@@ -28,14 +12,77 @@ Public Classes
 	OK_Cancel_Dialog -- A wx.Dialog with left-aligned msg, and centered
 		OK and Cancel buttons.
 
-Why patch wx.App?  Because
+Example -- Do this before the first import of wx!
+	import mywx  # on load, monkeypatch wx.App to be a strict-singleton
+
+Example -- Display a modal dialog.
+	import mywx  # on load, monkeypatch wx.App to be a strict-singleton
+	import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
+
+	# Dialog obj requires that the wx.App obj exists already.
+	if not wx.GetApp():
+		wx.App()
+		mywx.bring_wxapp_to_foreground()
+
+	# Show modal dialog.
+	title = 'My Title'
+	msg = 'My message'
+	with mywx.OK_Dialog(None, title=title, msg=msg) as dlg:
+		result = dlg.ShowModal()  # will return wx.ID_OK upon OK or dismiss
+
+Notes
+*   Why patch wx.App?  Because
 	"wx.App is supposed to be used as a singleton.  It doesn't own the
 	frames that are created in its OnInit, but instead assumes that it
 	is supposed to manage and deliver events to all the windows that
 	exist in the application."
 
-"the OnInit is called during the construction of the App (after the
-toolkit has been initialized) not during the MainLoop call."
+*   "the OnInit is called during the construction of the App (after the
+	toolkit has been initialized) not during the MainLoop call."
+
+*   Why patch wx.App to be a "strict singleton" (that raises an
+	exception on a second instantiation attempt) instead of a singleton
+	that returns the existing instance?
+	Because the intention is to prevent the misuse of wx (according to
+	the third-party lib documentation), not to accommodate the misuse of
+	wx.
+
+*   Why use a new wx module attribute to indicate that App is patched,
+	wouldn't this be sufficient to avoid an unpatched wx.App?
+		import sys
+		assert 'wx' not in sys.modules
+		import wx
+		(patch wx)
+	No.  While that would work if this module were loaded/executed only
+	once, it would raise a false alarm if loaded/executed a second time.
+
+*   During development of a LabGym feature, more wx-related functions
+	and classes are being parked in this module out of convenience, but
+	there may be a better way to reorganize them after the feature code
+	is stable.
+
+History
+	Originally, this module simply provided App, a function to guard
+	from multiple instantiations of wx.App.
+	But a weakness of that implementation is that it didn't prevent some
+	future work calling wx.App() directly, instead of mywx.App().
+	So it remained easy to inadventently bypass the intended protection.
+
+
+------------------------------------------------------------------------
+The loading of this module
+	(a) loads wx for the first time, and
+	(b) monkeypatches wx.App to be a "strict singleton", to prevent
+		multiple instantiations.
+or, if wx is already loaded, asserts that wx.App is already patched.
+
+*   If wx has already been loaded, the import of this module will raise
+	an exception.
+
+*   Ensure that either (a) wx has not been loaded yet, and therefore no
+	unpatched wx.App objects have been instantiated, or (b) this module
+	is being loaded/executed again (!) but
+------------------------------------------------------------------------
 """
 
 # Allow use of newer syntax Python 3.10 type hints in Python 3.9.
@@ -49,22 +96,30 @@ import sys
 # Intentionally positioning these statements before other imports, against the
 # guidance of PEP-8, to log the load before other imports log messages.
 logger =  logging.getLogger(__name__)
-logger.debug('loading %s', __file__)
+logger.debug('%s', f'loading {__name__} from {__file__}')
 
 # Related third party imports.
 if sys.platform == 'darwin':  # macOS
 	# AppKit is from package pyobjc-framework-Cocoa, "Wrappers for the
 	# Cocoa frameworks on macOS".
 	from AppKit import NSApp, NSApplication
+
 # Verify the assumption that wx is not yet loaded.
-assert sys.modules.get('wx') is None
+# If wx is already loaded, but wx.App is not patched, then raise  exception.
+if 'wx' in sys.modules:
+	import wx
+	assert hasattr(wx, 'App_is_patched')
+	patched = True
+else:
+	patched = False
+
 import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
 
 # Local application/library specific imports.
 # (none)
 
 
-class Patch_A(wx.App):
+class Singleton(wx.App):
 	_instance = None  # Class variable to hold the single instance
 
 	def __new__(cls, *args, **kwargs):
@@ -83,7 +138,7 @@ class Patch_A(wx.App):
 			self._initialized = True
 
 
-class Patch_B(wx.App):
+class StrictSingleton(wx.App):
 	_instance = None  # Class variable to hold the single instance
 
 	def __new__(cls, *args, **kwargs):
@@ -97,64 +152,10 @@ class Patch_B(wx.App):
 		return cls._instance
 
 
-# monkeypatch wx.App
-wx.App = Patch_B
-
-
-# def App():
-#     """Return the wx.App object.
-#
-#     To ensure that only one wx.App object is instantiated, developers
-#     may use this function instead of calling wx.App().
-#
-#     *   If wx.App was called before the first call to this function,
-#         then raise an exception.
-#     *   If wx.App is called after the first call to this function,
-#         then raise an exception.
-#     """
-#
-#     return wx.App()
-
-#     global _cached_app
-#
-#     if _cached_app is not None:
-#         return _cached_app
-#
-#     # Milestone -- This must be the first time running this function.
-#
-#     # If wx.GetApp() shows that wx.App was called before the first call
-#     # to this function, then raise an exception.  But wx.GetApp is an
-#     # imperfect indicator... if wx is already fouled, then wx.GetApp()
-#     # may return None.
-#     if wx.GetApp():
-#         raise AssertionError('wx.App() is called once at most.')
-#
-#     # wx.GetApp() returned None, so either
-#     # (a) this will be the # first call to wx.App(), or,
-#     # (b) wx is already fouled and this call to # wx.App() will crash like
-#     #         objc[88558]: Invalid or prematurely-freed autorelease pool 0x7f8bb28113e0.
-#
-#     # Construct the app obj, cache it
-#     logger.debug('wx.App() -- Calling')
-#     app = wx.App()
-#     logger.debug('%s: %r', 'app', app)
-#
-#     _cached_app = app
-#
-#     # If wx.App is called after the first call to this function,
-#     # then raise an exception.
-#     # Implement this future behavior by monkeypatching/sabotaging
-#     # the __new__ method.
-#
-#     # wx.App.__new__ = lambda *args, **kwargs: (
-#     #     raise AssertionError('wx.App() is called once at most.'))
-#
-#     def _raise(e):
-#         raise e
-#     wx.App.__new__ = lambda *args, **kwargs: _raise(
-#         AssertionError('wx.App() is called once at most.'))
-#
-#     return app
+if not patched:
+	# monkeypatch wx.App
+	wx.App = StrictSingleton
+	wx.App_is_patched = True
 
 
 def bring_wxapp_to_foreground() -> None:
