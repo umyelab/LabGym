@@ -277,7 +277,7 @@ def _get_reginfo_from_form() -> dict | None:
 
 	with RegFormDialog(None) as dlg:
 		logger.debug('%s -- %s', 'Milestone ShowModal', 'calling...')
-		mywx.bring_wxapp_to_foreground()
+		# mywx.bring_wxapp_to_foreground()
 		if dlg.ShowModal() == wx.ID_OK:
 			logger.debug('%s -- %s', 'Milestone ShowModal', 'returned')
 			logger.debug('User pressed [Register]')

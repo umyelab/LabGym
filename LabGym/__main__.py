@@ -89,6 +89,7 @@ def main() -> None:
 	# needed for probe dialogs prior to calling gui_main.main_window.
 	assert wx.GetApp() is None
 	wx.App()
+	mywx.bring_wxapp_to_foreground()
 
 	# Perform some pre-op sanity checks and probes of outside resources.
 	probes.probes()
