@@ -50,6 +50,8 @@ def test_probes(monkeypatch, tmp_path):
 	logging.debug('%s: %r', '_config', _config)
 	monkeypatch.setattr(probes.central_logging.config, 'get_config', lambda: _config)
 
+	monkeypatch.setattr(probes.userdata_survey, 'survey', lambda *args, **kwargs: None)
+
 	# Act
 	probes.probes()
 
