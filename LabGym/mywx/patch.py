@@ -21,7 +21,7 @@ logger.debug('%s', f'loading {__name__}')
 
 # Related third party imports.
 # Verify the assumption that wx is not yet loaded, so there's been no
-# no opportunity to create an unpatched instance of wx.App, and import wx.
+# opportunity to create an unpatched instance of wx.App, then import wx.
 try:
 	assert 'wx' not in sys.modules
 	import wx

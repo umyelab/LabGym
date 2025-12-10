@@ -31,7 +31,7 @@ if sys.platform == 'darwin':  # macOS
 import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
 
 # Local application/library specific imports.
-# (none)
+# None
 
 
 def bring_wxapp_to_foreground() -> None:
