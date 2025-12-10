@@ -12,11 +12,15 @@ Public Classes
 	OK_Cancel_Dialog -- A wx.Dialog with left-aligned msg, and centered
 		OK and Cancel buttons.
 
-Example -- Do this before the first import of wx!
-	import mywx  # on load, monkeypatch wx.App to be a strict-singleton
+Example -- Import mywx before the first import of wx.
+	If mywx is in a dir in sys.path, that is, mywx is not in a package,
+		import mywx  # on load, monkeypatch wx.App to be a strict-singleton
 
-Example -- Display a modal dialog.
-	import mywx  # on load, monkeypatch wx.App to be a strict-singleton
+	If mywx is inside a package "mypkg", then
+		from mypkg import mywx  # on load, monkeypatch wx.App to be a strict-singleton
+
+Example -- Display a modal dialog.  mywx is inside a package "mypkg"
+	from mypkg import mywx  # on load, monkeypatch wx.App to be a strict-singleton
 	import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
 
 	# Dialog obj requires that the wx.App obj exists already.

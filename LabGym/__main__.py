@@ -37,7 +37,7 @@ mylogging.defer()
 
 # Log the loading of this module (by the module loader, on first import).
 logger = logging.getLogger(__name__)
-logger.debug('loading %s', __file__)
+logger.debug('%s', f'loading {__name__} from {__file__}')
 
 # Configure logging based on configfile, then handle collected logrecords.
 mylogging.configure()
@@ -47,7 +47,7 @@ mylogging.configure()
 # Related third party imports.
 from packaging import version  # Core utilities for Python packages
 import requests  # Python HTTP for Humans.
-from LabGym import mywx  # on load, monkeypatch wx.App to be a singleton
+from LabGym import mywx  # on load, monkeypatch wx.App to be a strict-singleton
 import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
 
 # Local application/library specific imports.
