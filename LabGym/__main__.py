@@ -35,9 +35,11 @@ from LabGym import mylogging  # pylint: disable=ungrouped-imports
 # Collect logrecords and defer handling until logging is configured.
 mylogging.defer()
 
-# Log the loading of this module (by the module loader, on first import).
+# Log the load of this module (by the module loader, on first import).
+# Intentionally positioning these statements before other imports, against the
+# guidance of PEP 8, to log the load before other imports log messages.
 logger = logging.getLogger(__name__)
-logger.debug('%s', f'loading {__name__} from {__file__}')
+logger.debug('%s', f'loading {__name__}')
 
 # Configure logging based on configfile, then handle collected logrecords.
 mylogging.configure()
