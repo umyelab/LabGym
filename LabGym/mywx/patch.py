@@ -59,7 +59,7 @@ class Singleton(wx.App):
 		logger.debug('patched __init__ -- entered')
 		if not hasattr(self, '_initialized'):
 			logger.debug('patched __init__ -- initializing')
-			super().__init__(self, *args, **kwargs)
+			super().__init__(*args, **kwargs)
 			self._initialized = True
 			wx.mywx_AppCount += 1
 

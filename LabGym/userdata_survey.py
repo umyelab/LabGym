@@ -36,7 +36,7 @@ Design issues
 		clipboard (observed on MacOS).
 	+   A wx.Dialog disappears when LabGym is quit.  By displaying
 		instructions in a separate app, they can still be referenced
-		after LabGym is quit.
+		after LabGym is quit, until the user dismisses them.
 	+   Formatting... It's more efficient to write content in html
 		instead of hand-formatting text for a wx.Dialog.
 	There are other possible approaches... prepare the instructions in
@@ -59,7 +59,8 @@ For now, choosing (2).
 The survey function has an early-exit capability, for demonstration
 purposes.  If LabGym is started with
 	--enable userdata_survey_exit
-then survey will call sys.exit('Exiting early') instead of returning.
+then survey will call sys.exit('Exiting early') instead of returning and
+proceeding.
 
 Design with paths as strings, or, paths as pathlib.Path objects?
 Since the paths are configured as strings, assume the calls from outside
@@ -148,9 +149,9 @@ def get_list_of_subdirs(parent_dir: str|Path) -> List[str]:
 	parent_path = Path(parent_dir)
 
 	if parent_path.is_dir():
-		result = [str(item) for item in parent_path.iterdir()
-			# if str(item) not in ['__init__', '__init__.py', '__pycache__']
-			if str(item) not in ['__pycache__']
+		result = [item.name for item in parent_path.iterdir()
+			# if item.name not in ['__init__', '__init__.py', '__pycache__']
+			if item.name not in ['__pycache__']
 			and (parent_path / item).is_dir()]
 	else:
 		result = []
@@ -208,13 +209,13 @@ def assert_userdata_dirs_are_separate(
 			LabGym Configuration Error
 			The userdata folders must be separate.
 			The detectors folder is specified by config or defaults as
-				{detectors_dir!r}
+				{str(detectors_dir)}
 				which resolves to
-				{resolve(detectors_dir)!r}
+				{str(resolve(detectors_dir))}
 			The models folder is specified by config or defaults as
-				{models_dir!r}
+				{str(models_dir)}
 				which resolves to
-				{resolve(models_dir)!r}
+				{str(resolve(models_dir))}
 			""")
 
 		logger.error('%s', msg)
@@ -671,12 +672,12 @@ def survey(
 	if external_userdata_dirs:
 		if 'detectors' in external_userdata_dirs.keys():
 			 # contents of LabGym/detectors are orphans
-			 old = Path(__file__).parent / 'detectors' # old userdata dir
+			 old = Path(labgym_dir) / 'detectors' # old userdata dir
 			 orphans.extend([
 				 str(old / subdir) for subdir in get_list_of_subdirs(old)])
 		if 'models' in external_userdata_dirs.keys():
 			 # contents of LabGym/modelsare orphans
-			 old = Path(__file__).parent / 'models' # old userdata dir
+			 old = Path(labgym_dir) / 'models' # old userdata dir
 			 orphans.extend([
 				 str(old / subdir) for subdir in get_list_of_subdirs(old)])
 
