@@ -44,24 +44,24 @@ except AssertionError as e:
 # None
 
 
-class Singleton(wx.App):
-	_instance = None  # Class variable to hold the single instance
-
-	def __new__(cls, *args, **kwargs):
-		logger.debug('patched __new__ -- entered')
-		if cls._instance is None:
-			logger.debug('patched __new__ -- instantiating')
-			cls._instance = super().__new__(cls)
-		logger.debug(f'patched __new__ -- returning {cls._instance}')
-		return cls._instance
-
-	def __init__(self, *args, **kwargs):
-		logger.debug('patched __init__ -- entered')
-		if not hasattr(self, '_initialized'):
-			logger.debug('patched __init__ -- initializing')
-			super().__init__(*args, **kwargs)
-			self._initialized = True
-			wx.mywx_AppCount += 1
+# class Singleton(wx.App):
+#     _instance = None  # Class variable to hold the single instance
+#
+#     def __new__(cls, *args, **kwargs):
+#         logger.debug('patched __new__ -- entered')
+#         if cls._instance is None:
+#             logger.debug('patched __new__ -- instantiating')
+#             cls._instance = super().__new__(cls)
+#         logger.debug(f'patched __new__ -- returning {cls._instance}')
+#         return cls._instance
+#
+#     def __init__(self, *args, **kwargs):
+#         logger.debug('patched __init__ -- entered')
+#         if not hasattr(self, '_initialized'):
+#             logger.debug('patched __init__ -- initializing')
+#             super().__init__(*args, **kwargs)
+#             self._initialized = True
+#             wx.mywx_AppCount += 1
 
 
 class StrictSingleton(wx.App):
