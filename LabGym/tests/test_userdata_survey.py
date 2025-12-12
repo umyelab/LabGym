@@ -127,33 +127,6 @@ def test_get_list_of_subdirs(tmp_path):
 	assert result == expected
 
 
-# def open_html_in_browser(html_content):
-def test_open_html_in_browser():
-	instructions_html = """
-		<!DOCTYPE html>
-		<html>
-		<head>
-			<title>Instructions</title>
-		</head>
-		<body>
-			<h1>Instructions</h1>
-			<ol>
-				<li>Shake</li>
-				<li>Bake</li>
-			</ol>
-			(Close this page when instructions are completed.)
-		</body>
-		"""
-
-	# display in browser
-	userdata_survey.open_html_in_browser(instructions_html)
-
-	# Yuck.
-	# There's no handle to this new window or tab, so, no way to
-	# automate the tear down.
-	# Need to use playwright or selenium?
-
-
 # def assert_userdata_dirs_are_separate(
 def test_assert_userdata_dirs_are_separate(
 		monkeypatch, tmp_path, wx_app, caplog):

@@ -16,7 +16,6 @@ Public functions
 		resolve(path1: str|Path) -> str
 		dict2str(arg: dict, hanging_indent: str=' '*16) -> str
 		get_list_of_subdirs(parent_dir: str|Path) -> List[str]
-		open_html_in_browser(html_content)
 
 Public classes: None
 
@@ -152,29 +151,6 @@ def get_list_of_subdirs(parent_dir: str|Path) -> List[str]:
 
 	result.sort()
 	return result
-
-
-def open_html_in_browser(html_content):
-	"""
-	Creates a temporary HTML file with the provided content and opens it
-	in a new web browser window.
-	"""
-	# Use NamedTemporaryFile to ensure the file is eventually deleted by the OS
-	with tempfile.NamedTemporaryFile('w', delete=False, suffix='.html', encoding='utf-8') as f:
-		f.write(html_content)
-		file_path = f.name
-
-	# Create a file URL for the browser
-	url = 'file://' + os.path.abspath(file_path)
-
-	# Open the URL in a new browser window (new=1) or a new tab (new=2)
-	# The default is to try opening in a new window/tab if possible.
-	webbrowser.open(url, new=1)
-
-	# Note: The temporary file will not be automatically deleted
-	# as long as the Python script is running. You might need to
-	# manually delete it after the browser is closed or when your
-	# application exits if you need immediate cleanup.
 
 
 def assert_userdata_dirs_are_separate(
