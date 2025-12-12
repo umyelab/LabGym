@@ -186,7 +186,7 @@ def test_survey_case1(monkeypatch, tmp_path, wx_app, caplog):
 	# Use a custom self- OK-ing subclass of the dialog object.
 	monkeypatch.setattr(userdata_survey.mywx, 'OK_Dialog', AutoclickOK)
 	monkeypatch.setattr(userdata_survey.config, 'get_config',
-		lambda: {'enable': {'userdata_survey_exit': False}})
+		lambda: {'enable': {'assess_userdata_folders': True}})
 
 	# prepare args
 	labgym = os.path.join(tmp_path, 'LabGym')
@@ -215,7 +215,7 @@ def test_survey_case2(monkeypatch, tmp_path, wx_app, caplog):
 	# Use a custom self- OK-ing subclass of the dialog object.
 	monkeypatch.setattr(userdata_survey.mywx, 'OK_Dialog', AutoclickOK)
 	monkeypatch.setattr(userdata_survey.config, 'get_config',
-		lambda: {'enable': {'userdata_survey_exit': False}})
+		lambda: {'enable': {'assess_userdata_folders': True}})
 
 	# prepare args
 	labgym = os.path.join(tmp_path, 'LabGym')
@@ -237,7 +237,7 @@ def test_survey_case3(monkeypatch, tmp_path, wx_app, caplog):
 	# Use a custom self- OK-ing subclass of the dialog object.
 	monkeypatch.setattr(userdata_survey.mywx, 'OK_Dialog', AutoclickOK)
 	monkeypatch.setattr(userdata_survey.config, 'get_config',
-		lambda: {'enable': {'userdata_survey_exit': False}})
+		lambda: {'enable': {'assess_userdata_folders': True}})
 
 	# prepare args
 	labgym = os.path.join(tmp_path, 'LabGym')
@@ -258,7 +258,7 @@ def test_survey_case4(monkeypatch, tmp_path, wx_app, caplog):
 	# Use a custom self- OK-ing subclass of the dialog object.
 	monkeypatch.setattr(userdata_survey.mywx, 'OK_Dialog', AutoclickOK)
 	monkeypatch.setattr(userdata_survey.config, 'get_config',
-		lambda: {'enable': {'userdata_survey_exit': False}})
+		lambda: {'enable': {'assess_userdata_folders': True}})
 
 	# prepare args
 	labgym = os.path.join(tmp_path, 'LabGym')

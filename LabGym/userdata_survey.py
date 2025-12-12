@@ -56,12 +56,6 @@ Instead of answering that question, implement guards.
 	adding the right mix of assert statements to function bodies.
 For now, choosing (2).
 
-The survey function has an early-exit capability, for demonstration
-purposes.  If LabGym is started with
-	--enable userdata_survey_exit
-then survey will call sys.exit('Exiting early') instead of returning and
-proceeding.
-
 Design with paths as strings, or, paths as pathlib.Path objects?
 Since the paths are configured as strings, assume the calls from outside
 this module pass strings, and inside this module, developer is free to
@@ -286,8 +280,11 @@ def survey(
 		if not is_path_under(labgym_dir, value)}
 
 	# Get all of the values needed from config.get_config().
-	enable_userdata_survey_exit: bool = config.get_config(
-		)['enable'].get('userdata_survey_exit', False)
+	assess_userdata_folders: bool = config.get_config(
+		)['enable'].get('assess_userdata_folders', False)
+
+	if assess_userdata_folders == False:
+		return
 
 	# 1.  Verify the separation of configuration's userdata dirs.
 	#	  If not separate, then display an error message, then sys.exit().
@@ -296,9 +293,6 @@ def survey(
 	# 2.  Check for user data dirs that are defined/configured as
 	#     "external", but don't exist.  If any, then warn.
 	#     (this action could be expanded -- offer to attempt mkdir?)
-
-	# old:
-	#     offer_to_mkdir_userdata_dirs(labgym_dir, detectors_dir, models_dir)
 
 	missing_userdata_dirs = [value for value in external_userdata_dirs.values()
 		if not os.path.isdir(value)]
@@ -335,9 +329,6 @@ def survey(
 		with mywx.OK_Dialog(None, title=title, msg=textwrap.fill(msg)) as dlg:
 			result = dlg.ShowModal()  # will return wx.ID_OK upon OK or dismiss
 
-		# advise_on_internal_userdata_dirs(
-		#     labgym_dir, detectors_dir, models_dir)
-
 	# 4.  For any userdata dirs configured as external to LabGym tree,
 	#     if there is "orphaned" data, remaining in the "traditional"
 	#     location (internal, within the LabGym tree), then warn.
@@ -367,11 +358,3 @@ def survey(
 		# Show the warning msg with an OK_Dialog.
 		with mywx.OK_Dialog(None, title=title, msg=textwrap.fill(msg)) as dlg:
 			result = dlg.ShowModal()  # will return wx.ID_OK upon OK or dismiss
-
-		# warn_on_orphaned_userdata(labgym_dir, detectors_dir, models_dir)
-
-	# If flag is set, then exit early instead of return normally.
-	# (this for feature development and demonstration)
-	if enable_userdata_survey_exit:
-		sys.exit(f'Exiting early.'
-			f'  enable_userdata_survey_exit: {enable_userdata_survey_exit}')
