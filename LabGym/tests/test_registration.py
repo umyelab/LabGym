@@ -6,6 +6,8 @@ import sys
 import time
 
 import pytest  # pytest: simple powerful testing with Python
+
+from LabGym import mywx  # on load, monkeypatch wx.App to be a singleton
 import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
 
 from LabGym import registration
@@ -15,8 +17,7 @@ testdir = Path(__file__[:-3])  # dir containing support files for unit tests
 assert testdir.is_dir()
 
 
-# @pytest.fixture(scope="module")  # invoke once in the test module
-@pytest.fixture()
+@pytest.fixture(scope="module")  # invoke once in the test module
 def wx_app():
 	# setup logic
 	app = wx.App()
@@ -29,6 +30,9 @@ def wx_app():
 	# is complete.
 	wx.CallAfter(app.ExitMainLoop)
 	app.MainLoop()  # Ensure app processes pending events before exit.
+
+	del app
+	wx.App._instance = None
 
 
 def test_dummy():
