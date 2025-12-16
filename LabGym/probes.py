@@ -10,6 +10,7 @@ from __future__ import annotations
 # Standard library imports.
 # import getpass
 import logging
+import os
 import platform
 
 # Log the load of this module (by the module loader, on first import).
@@ -31,6 +32,7 @@ import packaging  # Core utilities for Python packages
 from LabGym import __version__ as version
 from LabGym import central_logging, registration
 from LabGym import config
+from LabGym import userdata_survey
 
 
 def probes() -> None:
@@ -45,6 +47,16 @@ def probes() -> None:
 	_config = config.get_config()
 	anonymous: bool = _config['anonymous']
 	registration_enable: bool = _config['enable']['registration']
+	detectors_dir = _config['detectors']
+	models_dir = _config['models']
+	del _config
+
+	# Check for user data in deprecated LabGym/detectors and LabGym/models
+	userdata_survey.survey(
+		labgym_dir=os.path.dirname(__file__),
+		detectors_dir=detectors_dir,
+		models_dir=models_dir,
+		)
 
 	# Check for cacert trouble which might be a fouled installation.
 	probe_url_to_verify_cacert()

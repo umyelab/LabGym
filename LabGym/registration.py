@@ -79,17 +79,17 @@ import uuid
 from zoneinfo import ZoneInfo
 
 # Related third party imports.
-if sys.platform == 'darwin':  # macOS
-	# AppKit is from package pyobjc-framework-Cocoa, "Wrappers for the
-	# Cocoa frameworks on macOS".
-	from AppKit import NSApp, NSApplication
-import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
+# import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
 import yaml  # PyYAML, YAML parser and emitter for Python
 
 # Local application/library specific imports.
 from LabGym import __version__ as version
 from LabGym import central_logging
 from LabGym import config
+from LabGym import mywx
+import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
+
+# import patch_wx, wx  # wxPython, with wx.App patched to be a strict singleton
 
 
 logger = logging.getLogger(__name__)
@@ -247,33 +247,6 @@ class RegFormDialog(wx.Dialog):
 			result = {}
 		return result
 
-	def bring_to_foreground(self) -> None:
-		"""Bring the window to the foreground.
-
-		We want the form window displayed to the user.
-
-		On macOS 12.7, with app started from terminal, I'm seeing:
-		*   the registration dialog is displayed, but doesn't have focus
-			and is under the windows of the active app (terminology?),
-			potentially hidden completely.
-		*   a bouncing python rocketship icon in the tray.  The bouncing
-			stops when you mouseover the icon.  Also some other actions
-			can stop the bouncing or just pause the bouncing... weird.
-
-		I wasn't able to resolve this on macOS using the wx.Dialog
-		object's Raise, SetFocus, and Restore methods.
-		Instead, ...
-			"Calling NSApp().activateIgnoringOtherApps_(True) via
-			AppKit: This macOS workaround uses the AppKit module to
-			explicitly activate the application, ignoring other running
-			applications.  This is typically done after your wxPython
-			application has started and its main window is shown."
-		"""
-
-		if sys.platform == 'darwin':  # macOS
-			NSApplication.sharedApplication()
-			NSApp().activateIgnoringOtherApps_(True)
-
 
 def _get_reginfo_from_form() -> dict | None:
 	"""Display a reg form, get user input, and return reginfo.
@@ -304,7 +277,7 @@ def _get_reginfo_from_form() -> dict | None:
 
 	with RegFormDialog(None) as dlg:
 		logger.debug('%s -- %s', 'Milestone ShowModal', 'calling...')
-		dlg.bring_to_foreground()
+		# mywx.bring_wxapp_to_foreground()
 		if dlg.ShowModal() == wx.ID_OK:
 			logger.debug('%s -- %s', 'Milestone ShowModal', 'returned')
 			logger.debug('User pressed [Register]')

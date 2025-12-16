@@ -1,0 +1,8 @@
+Run all testfiles
+    pytest
+
+Run a specific testfile
+    pytest test_userdata_survey.py
+
+Run a specific testfunction in a testfile
+    pytest test_userdata_survey.py::test_survey_case4

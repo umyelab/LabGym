@@ -39,6 +39,9 @@ def test_main(monkeypatch):
 	monkeypatch.setattr(__main__.probes, 'probes', lambda: None)
 	monkeypatch.setattr(__main__.gui_main, 'main_window', lambda: None)
 
+	monkeypatch.setattr(__main__.wx, 'GetApp', lambda: None)
+	monkeypatch.setattr(__main__.wx, 'App', lambda: None)
+
 	# Act
 	__main__.main()
 
@@ -62,6 +65,9 @@ def test_main_current_labgym(monkeypatch):
 	monkeypatch.setattr(__main__.probes, 'probes', lambda: None)
 	monkeypatch.setattr(__main__.gui_main, 'main_window', lambda: None)
 
+	monkeypatch.setattr(__main__.wx, 'GetApp', lambda: None)
+	monkeypatch.setattr(__main__.wx, 'App', lambda: None)
+
 	# Act
 	__main__.main()
 
@@ -84,6 +90,9 @@ def test_main_stale_labgym(monkeypatch):
 
 	monkeypatch.setattr(__main__.probes, 'probes', lambda: None)
 	monkeypatch.setattr(__main__.gui_main, 'main_window', lambda: None)
+
+	monkeypatch.setattr(__main__.wx, 'GetApp', lambda: None)
+	monkeypatch.setattr(__main__.wx, 'App', lambda: None)
 
 	# Act
 	__main__.main()

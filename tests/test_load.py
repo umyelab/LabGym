@@ -37,7 +37,8 @@ def test_import_LabGym_package():
 	# Prepare a list of all submodule py-files in LabGym dir, but not subdirs.
 	pyfiles = glob.glob(os.path.join(os.path.dirname(LabGym.__file__), '*.py'))
 	pyfiles.sort()  # result from glob.glob() isn't sorted
-	submodules.extend([os.path.basename(f).rstrip('.py') for f in pyfiles])
+	submodules.extend([os.path.basename(f).removesuffix('.py')
+		for f in pyfiles])
 	logging.debug('%s:\n%s', 'Milepost 0, submodules',
 		textwrap.indent(pprint.pformat(submodules), '  '))
 

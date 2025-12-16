@@ -33,9 +33,11 @@ from LabGym import mylogging
 # Collect logrecords and defer handling until logging is configured.
 mylogging.defer()
 
-# Log the loading of this module (by the module loader, on first import).
+# Log the load of this module (by the module loader, on first import).
+# Intentionally positioning these statements before other imports, against the
+# guidance of PEP 8, to log the load before other imports log messages.
 logger = logging.getLogger(__name__)
-logger.debug('loading %s', __file__)
+logger.debug('%s', f'loading {__name__}')
 
 # Configure logging based on configfile, then handle collected logrecords.
 mylogging.configure()
@@ -43,12 +45,14 @@ mylogging.configure()
 # Related third party imports.
 from packaging import version  # Core utilities for Python packages
 import requests  # Python HTTP for Humans.
+from LabGym import mywx  # on load, monkeypatch wx.App to be a strict-singleton
+import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
 
 # Local application/library specific imports.
 # pylint: disable=ungrouped-imports
 # pylint: disable-next=unused-import
 from LabGym import mypkg_resources  # replace deprecated pkg_resources
-from LabGym import __version__, gui_main, mywx, probes
+from LabGym import __version__, gui_main, probes
 
 
 logger.debug('%s: %r', '(__name__, __package__)', (__name__, __package__))
@@ -82,7 +86,9 @@ def main() -> None:
 
 	# Create a single persistent, wx.App instance, as it may be
 	# needed for probe dialogs prior to calling gui_main.main_window.
-	mywx.App()
+	assert wx.GetApp() is None
+	wx.App()
+	mywx.bring_wxapp_to_foreground()
 
 	# Perform some pre-op sanity checks and probes of outside resources.
 	probes.probes()

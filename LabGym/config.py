@@ -64,6 +64,9 @@ defaults = {
 	'enable': {
 		'central_logger': True,  # to disable central logger, user must opt out
 		'registration': True,  # to disable registration, user must opt out
+
+		# for now, user has to opt in for assessing locations of userdata
+		'assess_userdata_folders': False,
 		},
 
 	'anonymous': False,
