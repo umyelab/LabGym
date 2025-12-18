@@ -7,19 +7,35 @@ import pytest
 from LabGym import mylogging
 
 
-# basicConfig here isn't effective, maybe pytest has already configured logging?
-# instead, use the root logger's setLevel method
 rootlogger = logging.getLogger()
-def rootlogger_reset():
-	rootlogger.setLevel(logging.DEBUG)
+
+
+@pytest.fixture
+def logging_reset(scope='module'):  # invoke once in the test module
+	# Clear rootlogger's, level.
+	original_level = rootlogger.level
+	rootlogger.setLevel(logging.NOTSET)
+
+	# Clear handlers.  Otherwise, the original handlers are exposed and
+	# modifiable by the test functions.
+	original_handlers = rootlogger.handlers
 	rootlogger.handlers = []
+
+	yield
+
+	# Restore rootlogger's level.
+	rootlogger.setLevel(original_level)
+
+	# Restore rootlogger's handlers.
+	rootlogger.handlers = []
+	for h in original_handlers:
+		rootlogger.addHandler(h)
 
 
 # success cases
-def test_success(monkeypatch):
+def test_success(monkeypatch, logging_reset):
 	# Arrange
-	rootlogger_reset()
-	assert rootlogger.level == logging.DEBUG
+	rootlogger.setLevel(logging.DEBUG)
 	_config = {
 		'logging_configfiles':
 			[Path(mylogging.__file__).parent.joinpath('logging.yaml')],
@@ -37,10 +53,9 @@ def test_success(monkeypatch):
 
 
 # Bad logging_level produces a warning message.
-def test_bad_logging_level(monkeypatch):
+def test_bad_logging_level(monkeypatch, logging_reset):
 	# Arrange
-	rootlogger_reset()
-	assert rootlogger.level == logging.DEBUG
+	rootlogger.setLevel(logging.DEBUG)
 	_config = {
 		'logging_configfiles':
 			[Path(mylogging.__file__).parent.joinpath('logging.yaml')],
@@ -59,10 +74,9 @@ def test_bad_logging_level(monkeypatch):
 
 
 # Bad specific logging_configfile produces a warning message.
-def test_bad_specific_logging_configfile(monkeypatch):
+def test_bad_specific_logging_configfile(monkeypatch, logging_reset):
 	# Arrange
-	rootlogger_reset()
-	assert rootlogger.level == logging.DEBUG
+	rootlogger.setLevel(logging.DEBUG)
 	_config = {
 		'logging_configfiles': [],
 		'logging_configfile': Path('/bravo/charlie.yaml'),
