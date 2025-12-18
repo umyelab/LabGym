@@ -42,7 +42,7 @@ logger.debug('importing %s done', '.gui_categorizer')
 from .gui_detector import PanelLv2_GenerateImages,PanelLv2_TrainDetectors,PanelLv2_TestDetectors
 from .gui_preprocessor import PanelLv2_ProcessVideos,PanelLv2_DrawMarkers
 from .gui_analyzer import PanelLv2_AnalyzeBehaviors,PanelLv2_MineResults,PanelLv2_PlotBehaviors,PanelLv2_CalculateDistances
-
+from LabGym import selftest
 
 
 
@@ -376,6 +376,8 @@ class MainFrame(wx.Frame):
 		if sys.platform.startswith("win"):
 			set_frame_icon(self, context='small', size=16)  # Override with small icon for title bar
 
+		self.init_menubar()
+
 		# Create the aui_manager to manage this frame/window.
 		self.aui_manager = wx.aui.AuiManager()
 		self.aui_manager.SetManagedWindow(self)
@@ -414,6 +416,117 @@ class MainFrame(wx.Frame):
 		else:
 			# Allow other tabs to be closed normally
 			event.Skip()
+
+	def init_menubar(self):
+		"""Add the Application Menu.
+
+		On macOs,
+		Change the Application Menu (aka traditional menu bar)
+		from (a)
+			Python
+				(None)
+		to (b)
+			Python
+				Services >
+				----
+				Hide LabGym
+				Hide Others
+				Show All
+				----
+				Quit LabGym
+			Window
+				Minimize
+				Zoom
+				Tile Window to Left of Screen
+				Replace Tiled Window
+				----
+				Bring All to Front
+				----
+				LabGym v2.9.6
+		to (c)
+			Python
+				Services >
+				----
+				Hide LabGym
+				Hide Others
+				Show All
+				----
+				Quit LabGym
+			File
+				(None)
+			Window
+				Minimize
+				Zoom
+				Tile Window to Left of Screen
+				Replace Tiled Window
+				----
+				Bring All to Front
+				----
+				LabGym v2.9.6
+			Help
+				(search)
+
+
+		In wxPython for macOS, the menu bar behaves differently than on Windows or Linux to align with Apple's Human Interface Guidelines (HIG). On macOS, the menu bar is global and always appears at the top of the screen rather than attached to individual windows.
+
+Application Menu Management: wxPython automatically moves certain menu items to the standard macOS "Application" menu (the menu labeled with your app's name). Standard IDs like wx.ID_ABOUT, wx.ID_EXIT (mapped to Quit), and wx.ID_PREFERENCES are automatically relocated there.
+
+Set the App Name: To change the name displayed in the Application menu from "Python" to your app's name, you must bundle your script into a .app package using tools like Py2app or Briefcase
+		"""
+
+		# 1. Create a MenuBar
+		menubar = wx.MenuBar()
+
+		# 2. Create individual Menus (the drop downs)
+		# file_menu = wx.Menu()
+		# help_menu = wx.Menu()
+		misc_menu = wx.Menu()
+
+		# 3. Add MenuItems to the Menus
+		# Assign unique IDs (wx.ID_EXIT is a standard ID)
+		# quit_item = file_menu.Append(
+		#     wx.ID_EXIT, '&Quit\tCtrl+Q', 'Exit application')
+		# about_item = help_menu.Append(
+		#     wx.ID_ABOUT, '&About', 'About this program')
+		selftest_item = misc_menu.Append(
+			wx.ID_ANY, '&Selftest', 'Perform a selftest')
+
+		# 4. Attach Menus to the MenuBar
+		# menubar.Append(file_menu, '&File')
+		# menubar.Append(help_menu, '&Help')
+		#
+		# but on macOS, some standard IDs are repositioned per HIG.
+		# *  the About (wx.ID_ABOUT) is relocated under the
+		#    left-most menu ("Python")
+		# *  the Quit (wx.EXIT) is relocated under the left-most menu
+		#    ("Python")
+		menubar.Append(misc_menu, '&Misc')
+
+		# 5. Attach the MenuBar to the Frame
+		self.SetMenuBar(menubar)
+
+		# 6. Bind events to the Frame
+		# self.Bind(wx.EVT_MENU, self.on_quit, quit_item)
+		# self.Bind(wx.EVT_MENU, self.on_about, about_item)
+		self.Bind(wx.EVT_MENU, self.on_selftest, selftest_item)
+
+	# def on_quit(self, event):
+	#     self.Close(True)
+
+	# def on_about(self, event):
+	#     wx.MessageBox("A simple wxPython menu example", "About Me", wx.OK | wx.ICON_INFORMATION)
+
+	def on_selftest(self, event):
+		# lock out other GUI events until selftest is complete?
+		# run selftest in a different context to avoid wx.App trouble?
+		# start dev work by pytest on tests/test_dummy.py
+
+		# This is problematic because wx.App is supposed to be singleton.
+		# selftest.run_selftests()
+
+		# This for now, until selftest.run_selftests_isolated() is
+		# implemented.
+		selftest.run_selftests_help()
 
 
 def main_window():

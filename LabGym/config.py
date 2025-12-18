@@ -70,6 +70,7 @@ defaults = {
 		},
 
 	'anonymous': False,
+	'selftest': False,
 
 	'detectors': str(Path(__file__).parent.joinpath('detectors')),
 	'models': str(Path(__file__).parent.joinpath('models')),

@@ -53,6 +53,7 @@ dependencies=[
     'ninja',
     'six',
     'pyobjc-framework-Cocoa;platform_system=="Darwin"',
+    'pytest',
 ]
 requires-python='>=3.9,<3.11'
 readme='README.md'

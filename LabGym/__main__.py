@@ -24,6 +24,7 @@ Email: bingye@umich.edu
 # Standard library imports.
 import logging
 from pathlib import Path
+import sys
 
 # block begin
 # These statements are intentionally positioned before this module's
@@ -56,6 +57,7 @@ import wx  # wxPython, Cross platform GUI toolkit for Python, "Phoenix" version
 # pylint: disable-next=unused-import
 from LabGym import mypkg_resources  # replace deprecated pkg_resources
 from LabGym import __version__, gui_main, probes
+from LabGym import config, selftest
 
 
 logger.debug('%s: %r', '(__name__, __package__)', (__name__, __package__))
@@ -63,6 +65,17 @@ logger.debug('%s: %r', '(__name__, __package__)', (__name__, __package__))
 
 def main() -> None:
 	"""Perform some pre-op probing, then display the main window."""
+
+	# Get all of the values needed from config.get_config().
+	flag_selftest: bool = config.get_config()['selftest']
+
+	if flag_selftest:
+		logger.info('%s -- %s', 'run_selftests()', 'calling...')
+		result = selftest.run_selftests()
+		logger.info('%s -- %s', 'run_selftests()', f'returned {result!r}')
+		logger.info('%s -- %s', f'sys.exit({result!r})', 'calling...')
+		sys.exit(result)
+
 
 	try:
 
