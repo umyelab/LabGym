@@ -73,18 +73,7 @@ def run_selftests():
 	logger.info('%s', "Running self-tests...")
 
 	opts = [
-		'--capture=no',  # disables capturing of stdout and stderr
-		# Note: without this, it seems like subsequent logging output is
-		# still being captured, at least with the pytest that I'm using.
-		#
-		# Note 2025-12-17: ...which is surprising.
-		# I expected this: "After Execution: The capture generally
-		# persists until the pytest.main() function returns.
-		# The standard sys.stderr stream is restored after the pytest
-		# session finishes its execution."
-		# This seems like a pytest bug.  But so far, unable to reproduce
-		# in a simple-test-case.  Shrug.
-
+		# '--capture=no',  # disables capturing of stdout and stderr
 		'--log-cli-level=DEBUG',  # sets log level
 		'-v',  # enables verbose output
 		]
@@ -102,9 +91,22 @@ def run_selftests():
 	# test identifiers, that is, test-modules, test-module-test-functions
 	tests = [
 		# 'LabGym.tests.test_dummy_module',
-		'LabGym.tests.test_mypkg_resources::test_dummy',
+		# 'LabGym.tests.test_mypkg_resources::test_dummy',
+
 		'LabGym.tests',
+
 	]
+
+	# Use --pyargs to ensure that pytest is running the tests from the
+	# installed location on your PYTHONPATH, not from a local source
+	# checkout directory, which can sometimes lead to conflicts.
+	# https://www.google.com/search?q=in+pytest+what+does+--pyargs+do
+	# "In pytest, the --pyargs option makes it interpret command-line
+	# arguments as Python package names rather than file system paths.
+	# Mechanism: When you use --pyargs <package_name>, pytest imports
+	# the specified Python package/module to determine its filesystem
+	# location and then collects and runs tests from that physical
+	# location.
 
 	for test in tests:
 		# replace
