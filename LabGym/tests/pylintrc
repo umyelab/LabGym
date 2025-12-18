@@ -434,11 +434,33 @@ disable=raw-checker-failed,
         locally-disabled,
         file-ignored,
         suppressed-message,
-        useless-suppression,
+        # useless-suppression,
         deprecated-pragma,
         use-symbolic-message-instead,
         use-implicit-booleaness-not-comparison-to-string,
-        use-implicit-booleaness-not-comparison-to-zero
+        use-implicit-booleaness-not-comparison-to-zero,
+
+        # For example,
+        #   C0301: Line too long (232/100) (line-too-long)
+        line-too-long, 
+
+        # For example,
+        #   C0413: Import "import wx" should be placed at the top of the module (wrong-import-position)
+        wrong-import-position, 
+
+        # For example,
+        #   W0311: Bad indentation. Found 2 spaces, expected 8 (bad-indentation)
+        bad-indentation,
+
+        # For example,
+        #   C0103: Class name "PanelLv1_AnalysisModule" doesn't conform to PascalCase naming style (invalid-name)
+        #   C0103: Constant name "development_mode" doesn't conform to UPPER_CASE naming style (invalid-name)
+        #   C0103: Argument name "ID_colors" doesn't conform to snake_case naming style (invalid-name)
+        #   C0103: Attribute name "ID_colors" doesn't conform to snake_case naming style (invalid-name)
+        #   C0103: Function name "_myLogRecord" doesn't conform to snake_case naming style (invalid-name)
+        #   C0103: Method name "GetInputValues" doesn't conform to snake_case naming style (invalid-name)
+        #   C0103: Variable name "currentSet" doesn't conform to snake_case naming style (invalid-name)
+        invalid-name,
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option

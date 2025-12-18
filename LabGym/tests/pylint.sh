@@ -35,28 +35,11 @@ IS_VENV || { ERROR "Expected a venv..."; exit 1; }
 
 OUTDIR=tmp.pylint
 
-# OPTS="--rcfile pylintrc"
-OPTS="--rcfile pylintrc --enable=useless-suppression"
+OPTS="--rcfile pylintrc"
 
-# Examples of line-too-long, wrong-import-position, bad-indentation.
-#   C0301: Line too long (232/100) (line-too-long)
-#   C0413: Import "import wx" should be placed at the top of the module (wrong-import-position)
-#   W0311: Bad indentation. Found 2 spaces, expected 8 (bad-indentation)
-#
-# Disable line-too-long, wrong-import-position, bad-indentation.
-OPTS="$OPTS${OPTS:+ }--disable=C0301,C0413,W0311"
-
-# Examples of invalid-name.
-#   C0103: Class name "PanelLv1_AnalysisModule" doesn't conform to PascalCase naming style (invalid-name)
-#   C0103: Constant name "development_mode" doesn't conform to UPPER_CASE naming style (invalid-name)
-#   C0103: Argument name "ID_colors" doesn't conform to snake_case naming style (invalid-name)
-#   C0103: Attribute name "ID_colors" doesn't conform to snake_case naming style (invalid-name)
-#   C0103: Function name "_myLogRecord" doesn't conform to snake_case naming style (invalid-name)
-#   C0103: Method name "GetInputValues" doesn't conform to snake_case naming style (invalid-name)
-#   C0103: Variable name "currentSet" doesn't conform to snake_case naming style (invalid-name)
-#
-# Disable invalid-name.
-OPTS="$OPTS${OPTS:+ }--disable=invalid-name"
+# # Disable invalid-name.
+# OPTS="$OPTS${OPTS:+ }--disable=invalid-name"
+# --disable=invalid-name is now represented in pylintrc, so removed here.
 
 setopt SH_WORD_SPLIT 2> /dev/null
 
