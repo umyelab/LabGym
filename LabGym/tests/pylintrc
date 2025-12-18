@@ -104,10 +104,6 @@ recursive=no
 # source root.
 source-roots=
 
-# When enabled, pylint would attempt to guess common misconfiguration and emit
-# user-friendly hints instead of false-positive error messages.
-suggestion-mode=yes
-
 # Allow loading of arbitrary C extensions. Extensions are imported into the
 # active Python interpreter and may run arbitrary code.
 unsafe-load-any-extension=no
@@ -234,6 +230,11 @@ name-group=
 # not require a docstring.
 no-docstring-rgx=^_
 
+# Regular expression matching correct parameter specification variable names.
+# If left empty, parameter specification variable names will be checked with
+# the set naming style.
+#paramspec-rgx=
+
 # List of decorators that produce properties, such as abc.abstractproperty. Add
 # to this list to register other decorators that produce valid properties.
 # These decorators are taken in consideration only for invalid-name.
@@ -246,6 +247,10 @@ property-classes=abc.abstractproperty
 # Regular expression matching correct type variable names. If left empty, type
 # variable names will be checked with the set naming style.
 #typevar-rgx=
+
+# Regular expression matching correct type variable tuple names. If left empty,
+# type variable tuple names will be checked with the set naming style.
+#typevartuple-rgx=
 
 # Naming style matching correct variable names.
 variable-naming-style=snake_case
@@ -344,7 +349,9 @@ indent-after-paren=4
 # tab).
 indent-string='    '
 
-# Maximum number of characters on a single line.
+# Maximum number of characters on a single line. Pylint's default of 100 is
+# based on PEP 8's guidance that teams may choose line lengths up to 99
+# characters.
 max-line-length=100
 
 # Maximum number of lines in a module.
@@ -442,11 +449,11 @@ disable=raw-checker-failed,
 
         # For example,
         #   C0301: Line too long (232/100) (line-too-long)
-        line-too-long, 
+        line-too-long,
 
         # For example,
         #   C0413: Import "import wx" should be placed at the top of the module (wrong-import-position)
-        wrong-import-position, 
+        wrong-import-position,
 
         # For example,
         #   W0311: Bad indentation. Found 2 spaces, expected 8 (bad-indentation)
@@ -477,6 +484,9 @@ timeout-methods=requests.api.delete,requests.api.get,requests.api.head,requests.
 
 
 [MISCELLANEOUS]
+
+# Whether or not to search for fixme's in docstrings.
+check-fixme-in-docstring=no
 
 # List of note tags to take in consideration, separated by a comma.
 notes=FIXME,
@@ -593,7 +603,7 @@ contextmanager-decorators=contextlib.contextmanager
 # List of members which are set dynamically and missed by pylint inference
 # system, and so shouldn't trigger E1101 when accessed. Python regular
 # expressions are accepted.
-generated-members=cv2,wx
+generated-members = cv2, wx
 
 # Tells whether to warn about missing members when the owner of the attribute
 # is inferred to be None.
