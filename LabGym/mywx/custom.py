@@ -120,6 +120,7 @@ class OK_Dialog(wx.Dialog):
 		self.Bind(wx.EVT_BUTTON, self.on_ok, id=wx.ID_OK)
 
 	def on_ok(self, event):
+		"""End the modal state of this dialog object."""
 		self.EndModal(wx.ID_OK)
 
 
@@ -136,4 +137,5 @@ class OK_Cancel_Dialog(OK_Dialog):
 		self.Bind(wx.EVT_BUTTON, self.on_cancel, id=wx.ID_CANCEL)
 
 	def on_cancel(self, event):
+		"""End the modal state of this dialog object."""
 		self.EndModal(wx.ID_CANCEL)
