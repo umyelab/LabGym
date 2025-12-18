@@ -68,38 +68,65 @@ def run_selftests_help():
 def run_selftests():
 	"""Run pytest ..."""
 
+	exit_codes = []
+
 	logger.info('%s', "Running self-tests...")
 
 	opts = [
-		# '-s',  # disables capturing of stdout and stderr
+		'--capture=no',  # disables capturing of stdout and stderr
+		# Note: without this, it seems like subsequent logging output is
+		# still being captured, at least with the pytest that I'm using.
+		#
+		# Note 2025-12-17: ...which is surprising.
+		# I expected this: "After Execution: The capture generally
+		# persists until the pytest.main() function returns.
+		# The standard sys.stderr stream is restored after the pytest
+		# session finishes its execution."
+		# This seems like a pytest bug.  But so far, unable to reproduce
+		# in a simple-test-case.  Shrug.
+
 		'--log-cli-level=DEBUG',  # sets log level
 		'-v',  # enables verbose output
 		]
 
 	# __file__,  # tells pytest to only run tests in this file
 	exit_code = pytest.main([*opts, __file__])
+	exit_codes.append(exit_code)
 
 	if exit_code == 0:
-		logger.info("All tests passed!")
+		logger.info(f'pytest ... {__file__!r}: all passed')
 	else:
-		logger.info(f"Tests failed with exit code: {exit_code}")
+		logger.info(f'pytest ... {__file__!r} failed with exit code: {exit_code!r}')
 
 	# pytest targets individually
 	# test identifiers, that is, test-modules, test-module-test-functions
 	tests = [
 		# 'LabGym.tests.test_dummy_module',
-		# 'LabGym.tests.test_dummy_module::test_bravo',
+		'LabGym.tests.test_mypkg_resources::test_dummy',
 		'LabGym.tests',
 	]
 
 	for test in tests:
 		# replace
 		logger.info(f'Testing {test}')
-		result = pytest.main([*opts, '--pyargs', test])
-		if result == 0:
-			logger.info(f'pytest {test}: all passed')
+
+		args = [*opts, '--pyargs', test]
+		logger.info('%s -- %s', f'pytest.main({args!r})', 'Calling...')
+		exit_code = pytest.main(args)
+		exit_codes.append(exit_code)
+
+		if exit_code == 0:
+			logger.info(f'pytest ... {test!r}: all passed')
 		else:
-			logger.info(f'pytest {test} failed with exit code: {result}')
+			logger.info(f'pytest ... {test!r} failed with exit code: {exit_code!r}')
+
+	logger.info('%s: %r', 'exit_codes', exit_codes)
+	if all(item == 0 for item in exit_codes):
+		result = 0
+	else:
+		result = 1  # this folds a lot of different results into 1 :-/
+
+	return result
 
 
 def test_dummy():

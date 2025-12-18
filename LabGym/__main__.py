@@ -73,7 +73,7 @@ def main() -> None:
 		logger.info('%s -- %s', 'run_selftests()', 'calling...')
 		result = selftest.run_selftests()
 		logger.info('%s -- %s', 'run_selftests()', f'returned {result!r}')
-		logger.info('%s -- %s', f'sys.exit({result!r})', 'calling...')'
+		logger.info('%s -- %s', f'sys.exit({result!r})', 'calling...')
 		sys.exit(result)
 
 
