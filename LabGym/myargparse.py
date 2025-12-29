@@ -101,6 +101,8 @@ def parse_args() -> ResultType:
 								where LEVEL is a term recognized by the
 								logging system, like DEBUG, INFO,
 								WARNING, or ERROR.
+		  --selftest            Run selftest, then exit instead of
+								proceeding to normal LabGym operation.
 		  -v, --verbose         Equivalent to --logging_level DEBUG.
 		  --version             Show the LabGym version and exit.
 		""")
@@ -158,6 +160,10 @@ def parse_args() -> ResultType:
 
 		elif arg in ['--debug', '-v', '--verbose']:
 			result['logging_level'] = 'DEBUG'
+			args = args[1:]  # shift 1
+
+		elif arg in ['--selftest']:
+			result['selftest'] = True
 			args = args[1:]  # shift 1
 
 		# standard options
