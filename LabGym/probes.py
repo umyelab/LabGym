@@ -29,7 +29,7 @@ import requests  # Python HTTP for Humans.
 import packaging  # Core utilities for Python packages
 
 # Local application/library specific imports.
-from LabGym import __version__ as version
+from LabGym import __version__, pkghash
 from LabGym import central_logging, registration
 from LabGym import config
 from LabGym import userdata_survey
@@ -113,7 +113,7 @@ def probes() -> None:
 		# then expire or void the "skip-henceforth" behavior.
 		skip_pass_void = (reginfo is not None
 			and reginfo.get('name') == 'skip'
-			and packaging.version.parse(version)
+			and packaging.version.parse(__version__)
 				!= packaging.version.parse(reginfo.get('version'))
 			)
 
@@ -171,6 +171,8 @@ def get_context(anonymous: bool=False) -> dict:
 	except Exception:
 		reginfo_uuid = None
 
+	version_with_hash = pkghash.make_version(__version__)
+
 	result = {
 		'schema': 'context 2025-08-10',
 
@@ -180,7 +182,7 @@ def get_context(anonymous: bool=False) -> dict:
 		'python_version': platform.python_version(),
 
 		# LabGym sw
-		'version': version,  # LabGym version
+		'version': version_with_hash,  # LabGym version
 
 		# User info
 		# 'username': getpass.getuser(),

@@ -34,7 +34,7 @@ import wx.aui
 import wx.lib.agw.hyperlink as hl
 
 # Local application/library specific imports.
-from LabGym import __version__
+from LabGym import __version__, pkghash
 from .gui_utils import add_or_select_notebook_page
 logger.debug('importing %s ...', '.gui_categorizer')
 from .gui_categorizer import PanelLv2_GenerateExamples,PanelLv2_TrainCategorizers,PanelLv2_SortBehaviors,PanelLv2_TestCategorizers
@@ -367,7 +367,8 @@ class MainFrame(wx.Frame):
 	"""Main frame and its notebook."""
 
 	def __init__(self):
-		super().__init__(None, title=f'LabGym v{__version__}')
+		version_with_hash = pkghash.make_version(__version__)
+		super().__init__(None, title=f'LabGym v{version_with_hash}')
 
 		self.SetSize((1000, 600))
 
