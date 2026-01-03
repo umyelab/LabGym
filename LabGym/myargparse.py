@@ -176,7 +176,7 @@ def parse_args() -> ResultType:
 
 		elif arg in ['--version']:
 			# Print version msg to stdout and exit 0.
-			version_with_hash = pkghash.make_version(__version__)
+			version_with_hash = pkghash.labgym_version_with_hash()
 			print(f'version: {version_with_hash}')
 			sys.exit()
 

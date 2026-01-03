@@ -367,7 +367,7 @@ class MainFrame(wx.Frame):
 	"""Main frame and its notebook."""
 
 	def __init__(self):
-		version_with_hash = pkghash.make_version(__version__)
+		version_with_hash = pkghash.labgym_version_with_hash()
 		super().__init__(None, title=f'LabGym v{version_with_hash}')
 
 		self.SetSize((1000, 600))

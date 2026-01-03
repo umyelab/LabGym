@@ -1,0 +1,5 @@
+known_versions = [
+    # d41d... is the md5hash of zero bytes, so only matches no-content.
+    '2.9.6 (d41d8cd98f00b204e9800998ecf8427e)',
+    '2.9.6 (dfe2c280cb0038f808f13eb2cde9adb0)',
+]
