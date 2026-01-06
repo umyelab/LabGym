@@ -44,7 +44,4 @@ loggers:
     urllib3.connectionpool:
         level: INFO
 
-    LabGym.pkghash.hash:
-        level: INFO
-
 disable_existing_loggers: false

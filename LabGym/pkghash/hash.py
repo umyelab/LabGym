@@ -12,9 +12,13 @@ from __future__ import annotations
 
 # Standard library imports.
 import hashlib
+import itertools
 import logging
 import os
 from pathlib import Path
+import re
+import sys
+import time
 
 # Related third party imports.
 # None
@@ -73,7 +77,7 @@ def _walk_and_hash(folder: Path) -> str:
 	os.chdir(folder)
 
 	for root, dirs, files in os.walk('.'):
-		# walk "sorted"
+		# walk in "sorted" order
 		dirs.sort()
 		files.sort()
 
@@ -110,17 +114,55 @@ def _add_file_to_hash(hasher, file_path: str) -> None:
 	Hash is sensitive to
 		filename case -- foo.py is different from Foo.py
 		file rename -- foo.py is different from goo.py
+
+	*   replace leading tabs with 4-spaces,
+		replace trailing \r\n with \n
+		Why?  To normalize the content, as developers might run a genuine,
+		but smudge-filtered copy.
 	"""
 
 	filename = Path(file_path).as_posix()  # forward slash, even on Windows
-	logger.debug('%s: %r', 'filename', filename)
 
 	hasher.update(filename.encode('utf-8'))
 
 	try:
-		with open(file_path, 'rb') as f:
-			# Read file in 8KB chunks to handle large files efficiently
-			while chunk := f.read(8192):
-				hasher.update(chunk)
+		# with open(file_path, 'rb') as f:
+		#     # Read file in 8KB chunks to handle large files efficiently
+		#     while chunk := f.read(8192):
+		#         hasher.update(chunk)
+
+		with open(file_path, 'r') as f:
+			# Read file in 200-line chunks to handle large files efficiently
+			for chunk in _myreadlines(f):
+				for i, line in enumerate(chunk):
+					line = _expand(line)  # expand leading tabs to 4 spaces
+					# replace trailing space, incl LF or CRLF, with LF
+					line = line.rstrip() + '\n'
+					chunk[i] = line
+
+				hasher.update(''.join(chunk).encode('utf-8'))
+
 	except (OSError, IOError) as e:
 		logger.warning(f'Trouble...{e}')
+
+	logger.debug('%s: %r', 'filename, hasher.hexdigest()',
+		(filename, hasher.hexdigest()))
+
+
+def _myreadlines(f, n=200):
+	"""Read n lines from f, and yield a list of the n strings."""
+	while True:
+		nline_chunk = list(itertools.islice(f, n))
+		if not nline_chunk:
+			 break
+		yield nline_chunk
+
+
+def _expand(line, n=4):
+	"""Expand leading tabs to n spaces."""
+	match = re.match(r'^(\t+)', line)
+	if match:
+		leading_tabs = match.group(0)
+		spaces = ' ' * len(leading_tabs) * n
+		return spaces + line[len(leading_tabs):]
+	return line

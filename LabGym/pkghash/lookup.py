@@ -14,16 +14,16 @@ To reduce confusion, these terms may be used to improve clarity.
 
 Examples
 	pkghash.labgym_version_with_hash()
-	returns a str like '2.9.6+be19',
+	returns a str like '2.9.6 (be19)',
 	or returns '2.9.6' if the version+hashval is in known_versions.
 
 	pkghash.labgym_version_with_hash(maxlen=6)
-	returns a str like '2.9.6+be19e5',
+	returns a str like '2.9.6 (be19e5)',
 	or returns '2.9.6' if the version+hashval is in known_versions.
 
 	pkghash.labgym_version_with_hash(maxlen=None,
 		suppress_if_known=False)
-	returns a str like '2.9.6+be19e53c16ff24a33c48b517d870147b'
+	returns a str like '2.9.6 (be19e53c16ff24a33c48b517d870147b)'
 	even if version+hashval is in known_versions.
 
 Why?  Isn't LabGym.__version__ sufficiently identifying?
@@ -31,10 +31,9 @@ The purpose of this "enhanced" version-string is to make obvious
 when the user or developer is running customized/modified LabGym.
 
 This helps to
-1.  make developer usage scrubbable from LabGym from overall usage
-	stats.
-2.  avoid developer-investigation effort for behavior of a
-	customized LabGym.
+1.  make developer usage scrubbable from overall LabGym usage stats.
+2.  avoid developer-investigation-effort for behavior in a customized
+	LabGym.
 """
 
 # Allow use of newer syntax Python 3.10 type hints in Python 3.9.
@@ -96,16 +95,16 @@ def labgym_version_with_hash(
 
 	hashval: str = get_hashval(labgym_package_folder)
 
-	known_enhanced_versions = _get_known_versions()
+	version_with_longhash = f'{version} ({hashval})'
+	logger.debug('%s: %r', 'version_with_longhash', version_with_longhash)
 
-	if (f'{version} ({hashval})' in known_enhanced_versions
-			and suppress_if_known == True):
-		result = version  # without hashval
-
+	if (suppress_if_known == True
+		and version_with_longhash in _get_known_versions()):
+			result = version  # without hashval
 	elif maxlen is not None:
 		result = f'{version} ({hashval[:maxlen]})'
 	else:
-		result = f'{version} ({hashval})'
+		result = version_with_longhash
 
 	logger.debug('%s: %r', 'result', result)
 	return result
