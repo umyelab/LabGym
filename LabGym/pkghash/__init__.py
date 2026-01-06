@@ -29,13 +29,13 @@ Notes
 	update versions.toml with the reference version+hashval.
 
 	1.  run
-			LabGym --debug --version
+			LabGym --debug
 		which reports like
 			...
-			DEBUG:LabGym.pkghash.lookup:version_with_longhash: '2.9.7 (a48c52287fc078897a30f19b05f1c12a)'
-			DEBUG:LabGym.pkghash.lookup:known_versions: ['2.9.6 (d41d8cd98f00b204e9800998ecf8427e)']
-			DEBUG:LabGym.pkghash.lookup:result: '2.9.7 (a48c)'
-			version: 2.9.7 (a48c)
+			DEBUG:lookup:version_with_longhash: '2.9.7 (a48c52287fc078897a30f19b05f1c12a)'
+			DEBUG:lookup:known_versions: ['2.9.6 (d41d8cd98f00b204e9800998ecf8427e)']
+			DEBUG:lookup:result: '2.9.7 (a48c)'
+			...
 
 	2.  update versions.toml from old, like
 			known_versions = [
