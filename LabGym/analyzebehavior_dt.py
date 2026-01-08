@@ -681,11 +681,12 @@ class AnalyzeAnimalDetector():
 						self.track_animal_interact(frame_count_analyze+1-batch_size+batch_count,all_contours,other_contours,all_centers,all_heights,inners=all_inners,other_inners=other_inners,blobs=all_blobs)
 
 
-	def acquire_information(self,batch_size=1,background_free=True,black_background=True):
+	def acquire_information(self,batch_size=1,background_free=True,black_background=True,color_costar=False):
 
 		# batch_size: for batch inferencing by the Detector
 		# background_free: whether to include background in animations
 		# black_background: whether to set background black
+		# color_costar: in 'interactive advanced' mode, whether to make the supporting roles RGB scale in animations
 
 		print('Acquiring information in each frame...')
 		self.log.append('Acquiring information in each frame...')
@@ -732,7 +733,7 @@ class AnalyzeAnimalDetector():
 				if batch_count==batch_size:
 					batch_count=0
 					if self.behavior_mode==2:
-						self.detect_track_interact(batch,batch_size,frame_count_analyze,background_free=background_free,black_background=black_background)
+						self.detect_track_interact(batch,batch_size,frame_count_analyze,background_free=background_free,black_background=black_background,color_costar=color_costar)
 					else:
 						self.detect_track_individuals(batch,batch_size,frame_count_analyze,background_free=background_free,black_background=black_background,animation=animation)
 					batch=[]
@@ -1919,11 +1920,12 @@ class AnalyzeAnimalDetector():
 		print('Behavior example generation completed!')
 
 
-	def generate_data_interact_advance(self,background_free=True,black_background=True,skip_redundant=1):
+	def generate_data_interact_advance(self,background_free=True,black_background=True,skip_redundant=1,color_costar=False):
 
 		# background_free: whether to include background in animations
 		# black_background: whether to set background black
 		# skip_redundant: the interval (in frames) of two consecutively generated behavior example pairs
+		# color_costar: in 'interactive advanced' mode, whether to make the supporting roles RGB scale in animations
 
 		print('Generating behavior examples...')
 		print(datetime.datetime.now())
@@ -2077,7 +2079,10 @@ class AnalyzeAnimalDetector():
 							if background_free:
 								blob=frame*cv2.cvtColor(all_masks[i],cv2.COLOR_GRAY2BGR)
 								if other_mask is not None:
-									other_blob=cv2.cvtColor(cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)*other_mask,cv2.COLOR_GRAY2BGR)
+									if color_costar:
+										other_blob=frame*cv2.cvtColor(other_mask,cv2.COLOR_GRAY2BGR)
+									else:
+										other_blob=cv2.cvtColor(cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)*other_mask,cv2.COLOR_GRAY2BGR)
 									blob=cv2.add(blob,other_blob)
 								if black_background is False:
 									if other_mask is not None:
