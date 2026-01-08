@@ -57,17 +57,6 @@ environment](./setup.md) set up properly. Then, follow these instructions.
 4. Update the changelog in `docs/changelog.md`. After updating the changelog, 
    run `nox -s docs` to ensure that the docs are built properly.
 
-?. Ensure the working dir is "clean", in that there are no uncommitted 
-   py-file changes, because py-file content impacts hash.
-
-   Compute the hash for the LabGym package, and store it in 
-   LabGym/pkghash/versions.toml.  
-   (See instructions in the docstring in LabGym/pkghash/__init__.py.)
-
-   Commit
-   `$ git add LabGym/pkghash/versions.toml`
-   `$ git commit -m "Add reference version+hashval to versions.toml."`  
-
 5. Create a tag for the new version.
 
    Note that the Git tag DOES contain the leading "v". For example, if the new 
