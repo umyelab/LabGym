@@ -1265,7 +1265,12 @@ class Categorizers():
 				else:
 					black_code=1
 
-				parameters={'classnames':list(self.classnames),'dim_tconv':int(dim),'channel':int(channel),'time_step':int(time_step),'network':1,'level_tconv':int(level),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code),'black_background':int(black_code),'behavior_kind':int(behavior_mode),'social_distance':int(social_distance)}
+				if color_costar:
+					color_code=0
+				else:
+					color_code=1
+
+				parameters={'classnames':list(self.classnames),'dim_tconv':int(dim),'channel':int(channel),'time_step':int(time_step),'network':1,'level_tconv':int(level),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code),'black_background':int(black_code),'behavior_kind':int(behavior_mode),'social_distance':int(social_distance),'color_code':int(color_code)}
 				pd_parameters=pd.DataFrame.from_dict(parameters)
 				pd_parameters.to_csv(os.path.join(model_path,'model_parameters.txt'),index=False)
 
@@ -1462,7 +1467,12 @@ class Categorizers():
 				else:
 					black_code=1
 
-				parameters={'classnames':list(self.classnames),'dim_tconv':int(dim_tconv),'dim_conv':int(dim_conv),'channel':int(channel),'time_step':int(time_step),'network':2,'level_tconv':int(level_tconv),'level_conv':int(level_conv),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code),'black_background':int(black_code),'behavior_kind':int(behavior_mode),'social_distance':int(social_distance)}
+				if color_costar:
+					color_code=0
+				else:
+					color_code=1
+
+				parameters={'classnames':list(self.classnames),'dim_tconv':int(dim_tconv),'dim_conv':int(dim_conv),'channel':int(channel),'time_step':int(time_step),'network':2,'level_tconv':int(level_tconv),'level_conv':int(level_conv),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code),'black_background':int(black_code),'behavior_kind':int(behavior_mode),'social_distance':int(social_distance),'color_code':int(color_code)}
 				pd_parameters=pd.DataFrame.from_dict(parameters)
 				pd_parameters.to_csv(os.path.join(model_path,'model_parameters.txt'),index=False)
 
