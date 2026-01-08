@@ -171,8 +171,7 @@ def get_context(anonymous: bool=False) -> dict:
 	except Exception:
 		reginfo_uuid = None
 
-	version_with_hash = pkghash.labgym_version_with_hash(
-		maxlen=None, suppress_if_known=False)
+	version_with_hash = pkghash.labgym_version_with_hash()
 
 	result = {
 		'schema': 'context 2025-08-10',

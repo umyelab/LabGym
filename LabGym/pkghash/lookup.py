@@ -4,7 +4,7 @@ Provide functions to support hash-included version reporting for the
 LabGym package.
 
 Public Functions
-	labgym_version_with_hash -- Return a hash-included version string
+	labgym_version_with_hash -- Return a hash-embellished version string
 		for LabGym.
 
 The term "hash" is commonly used both as verb and as noun.
@@ -14,26 +14,11 @@ To reduce confusion, these terms may be used to improve clarity.
 
 Examples
 	pkghash.labgym_version_with_hash()
-	returns a str like '2.9.6 (be19)',
-	or returns '2.9.6' if the version+hashval is in known_versions.
-
-	pkghash.labgym_version_with_hash(maxlen=6)
-	returns a str like '2.9.6 (be19e5)',
-	or returns '2.9.6' if the version+hashval is in known_versions.
-
-	pkghash.labgym_version_with_hash(maxlen=None,
-		suppress_if_known=False)
 	returns a str like '2.9.6 (be19e53c16ff24a33c48b517d870147b)'
-	even if version+hashval is in known_versions.
 
 Why?  Isn't LabGym.__version__ sufficiently identifying?
-The purpose of this "enhanced" version-string is to make obvious
-when the user or developer is running customized/modified LabGym.
-
-This helps to
-1.  make developer usage scrubbable from overall LabGym usage stats.
-2.  avoid developer-investigation-effort for behavior in a customized
-	LabGym.
+The purpose of this "enhanced" version-string is to make it possible
+to discern when the user or developer is running customized/modified LabGym.
 """
 
 # Allow use of newer syntax Python 3.10 type hints in Python 3.9.
@@ -61,50 +46,14 @@ logger = logging.getLogger(__name__)
 
 labgym_package_folder = str(Path(LabGym.__file__).parent)
 version = LabGym.__version__
-versions_file = Path(__file__).parent / 'versions.toml'
 
 
-def _get_known_versions() -> List[str]:
-	"""Read list of known version+hash strings from toml-file, and return it."""
-
-	try:
-		with open(versions_file, 'rb') as f:
-			known_versions = tomllib.load(f).get('known_versions')
-		assert isinstance(known_versions, list)
-	except Exception as e:
-		# an unreadable toml-file produces an empty list
-		logger.warning(f'Trouble reading {versions_file}.  {e}')
-		known_versions = []
-
-	logger.debug('%s: %r', 'known_versions', known_versions)
-
-	return known_versions
-
-
-def labgym_version_with_hash(
-		maxlen=4,
-		suppress_if_known=True,
-		) -> str:
-	"""Return a hash-included version string for LabGym.
-
-	If this LabGym package's version_with_hash package matches a
-	reference value stored in versions.toml, then this LabGym is judged
-	genuine/unmodified, so the hashval suffix is suppressed (unless
-	suppress_if_known is True).
-	"""
+def labgym_version_with_hash() -> str:
+	"""Return a hash-embellished version string for LabGym."""
 
 	hashval: str = get_hashval(labgym_package_folder)
 
 	version_with_longhash = f'{version} ({hashval})'
 	logger.debug('%s: %r', 'version_with_longhash', version_with_longhash)
 
-	if (suppress_if_known == True
-		and version_with_longhash in _get_known_versions()):
-			result = version  # without hashval
-	elif maxlen is not None:
-		result = f'{version} ({hashval[:maxlen]})'
-	else:
-		result = version_with_longhash
-
-	logger.debug('%s: %r', 'result', result)
-	return result
+	return version_with_longhash

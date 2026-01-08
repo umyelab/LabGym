@@ -18,7 +18,6 @@ formatters:
         datefmt: "%Y-%m-%d %H:%M:%S"
 
         # format: "%(asctime)s\t%(levelname)s\t[%(thread)d:%(name)s:%(module)s:%(lineno)d]\t%(message)s"
-        # format: "%(asctime)s\t%(levelname)s\t[%(name)s:%(module)s:%(lineno)d]\t%(message)s"
         format: "%(asctime)s\t%(levelname)s\t[%(module)s:%(lineno)d]\t%(message)s"
 
     mycompactformat:
