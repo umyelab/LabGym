@@ -1359,12 +1359,16 @@ class PanelLv2_PlotBehaviors(wx.Panel):
 		dialog=wx.FileDialog(self,'Select the all_events.xlsx file.','',wildcard='all_events file (*.xlsx)|*.xlsx',style=wx.FD_OPEN)
 		if dialog.ShowModal()==wx.ID_OK:
 			all_events_file=Path(dialog.GetPath())
-			self.names_and_colors={}
+			names_and_colors={}
 			self.events_probability,self.time_points,behavior_names=parse_all_events_file(all_events_file)
 			colors=[('#ffffff',str(hex_code)) for hex_code in mpl.colors.cnames.values()]
 			for color,behavior in zip(colors,behavior_names):
-				self.names_and_colors[behavior]=color
+				names_and_colors[behavior]=color
 			self.text_inputfile.SetLabel(f'all_events.xlsx path: {all_events_file}')
+			if self.names_and_colors is None:
+				self.names_and_colors=names_and_colors
+		else:
+			self.names_and_colors=None
 		dialog.Destroy()
 
 
