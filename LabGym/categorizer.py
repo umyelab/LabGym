@@ -1974,6 +1974,14 @@ class Categorizers():
 			print('The behavior mode of the Categorizer: Interactive basic.')
 		elif behavior_mode==2:
 			print('The behavior mode of the Categorizer: Interactive advanced (Social distance '+str(parameters['social_distance'][0])+').')
+			if 'color_code' in list(parameters.keys()):
+				color_code=int(parameters['color_code'][0])
+				if color_code==0:
+					print('The Categorizer recognizes RGB scale main character and RGB scale  supporting characters.')
+				else:
+					print('The Categorizer recognizes RGB scale main character and grayscale supporting characters.')
+			else:
+				print('The Categorizer recognizes RGB scale main character and grayscale supporting characters.')
 		else:
 			print('The behavior mode of the Categorizer: Static images (non-interactive).')
 		network=int(parameters['network'][0])
