@@ -680,7 +680,7 @@ class PanelLv2_GenerateExamples(wx.Panel):
 							elif self.behavior_mode==1:
 								AAD.generate_data_interact_basic(background_free=self.background_free,black_background=self.black_background,skip_redundant=self.skip_redundant)
 							else:
-								AAD.generate_data_interact_advance(background_free=self.background_free,black_background=self.black_background,skip_redundant=self.skip_redundant)
+								AAD.generate_data_interact_advance(background_free=self.background_free,black_background=self.black_background,skip_redundant=self.skip_redundant,color_costar=self.color_costar)
 
 
 
