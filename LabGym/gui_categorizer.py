@@ -91,6 +91,7 @@ class PanelLv2_GenerateExamples(wx.Panel):
 		self.background_free=True # whether to include background in animations
 		self.black_background=True # whether to set background black
 		self.social_distance=0 # a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
+		self.color_costar=False # in 'interactive advanced' mode, whether to make the supporting roles RGB scale in animations
 
 		self.display_window()
 
@@ -222,6 +223,12 @@ class PanelLv2_GenerateExamples(wx.Panel):
 				else:
 					self.social_distance=0
 				dialog1.Destroy()
+				dialog1=wx.MessageDialog(self,'Make both main and supporting characters RGB scale?\nSelect "No" if dont know what it is.','(Optional) RGB supporting characters?',wx.YES_NO|wx.ICON_QUESTION)
+				if dialog1.ShowModal()==wx.ID_YES:
+					self.color_costar=True
+				else:
+					self.color_costar=False
+				dialog3.Destroy()
 				self.text_detection.SetLabel('Only Detector-based detection method is available for the selected behavior mode.')
 			else:
 				self.behavior_mode=3
