@@ -27,7 +27,7 @@ from typing import Dict, List, Union
 # (none)
 
 # Local application/library specific imports.
-from LabGym import __version__ as version
+from LabGym import __version__, pkghash
 
 
 # result is a dict with keys that are string, and vals that are
@@ -176,7 +176,8 @@ def parse_args() -> ResultType:
 
 		elif arg in ['--version']:
 			# Print version msg to stdout and exit 0.
-			print(f'version: {version}')
+			version_with_hash = pkghash.labgym_version_with_hash()
+			print(f'version: {version_with_hash}')
 			sys.exit()
 
 		elif arg == '--':

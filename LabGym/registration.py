@@ -83,7 +83,7 @@ from zoneinfo import ZoneInfo
 import yaml  # PyYAML, YAML parser and emitter for Python
 
 # Local application/library specific imports.
-from LabGym import __version__ as version
+from LabGym import __version__
 from LabGym import central_logging
 from LabGym import config
 from LabGym import mywx
@@ -338,7 +338,7 @@ def register(central_logger=None) -> None:
 
 		'platform': platform.platform(),
 		'node': platform.node(),
-		'version': version,  # LabGym version
+		'version': __version__,  # LabGym version
 		})
 
 	try:

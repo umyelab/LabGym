@@ -5,7 +5,7 @@ import sys
 import pytest
 
 from LabGym import myargparse
-from LabGym import __version__ as version
+from LabGym import __version__
 from .exitstatus import exitstatus
 
 
@@ -89,13 +89,17 @@ def test_parse_args_version(monkeypatch, capsys):
 	# Arrange
 	monkeypatch.setattr(sys, 'argv',
 		['cmd', '--version'])
+	hashval = '4cf004ad24fce8272bfda213219707d5'
+	version_with_hash = f'{__version__} ({hashval})'
+	monkeypatch.setattr(myargparse.pkghash, 'labgym_version_with_hash',
+		lambda: version_with_hash)
 
 	# Act, and assert raises(SystemExit)
 	with pytest.raises(SystemExit) as e:
 		result = myargparse.parse_args()
 
 	# Assert
-	assert capsys.readouterr().out == f'version: {version}\n'
+	assert capsys.readouterr().out == f'version: {version_with_hash}\n'
 	assert exitstatus(e.value) == 0
 
 
