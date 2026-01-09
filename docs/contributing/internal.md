@@ -57,7 +57,20 @@ environment](./setup.md) set up properly. Then, follow these instructions.
 4. Update the changelog in `docs/changelog.md`. After updating the changelog, 
    run `nox -s docs` to ensure that the docs are built properly.
 
-5. Create a tag for the new version.
+5. Commit changes.
+
+   Commit like
+   ```console
+   $ git add <args>
+   $ git commit -m "Bump version to 2.4.0 and update changelog"
+   ```
+   Note it's important to commit before tagging, because a git tag is a
+   fixed pointer to a specific commit in history.  It you run 
+   "git tag v2.4.0" without first commiting changes, then the tag will
+   point to the previous commit; it will refer to the state of the repo
+   before bumping the version and updating the changelog.
+   
+6. Create a tag for the new version.
 
    Note that the Git tag DOES contain the leading "v". For example, if the new 
    version is `2.4.0`, then run:
@@ -66,17 +79,17 @@ environment](./setup.md) set up properly. Then, follow these instructions.
    $ git tag v2.4.0
    ```
 
-6. Push the branch and the new tag to GitHub.
+7. Push the branch and the new tag to GitHub.
    
    ```console
    $ git push -u origin release-v2.4.0
    $ git push origin v2.4.0
    ```
 
-7. Open a Pull Request for the new release branch, then wait for the test suite
+8. Open a Pull Request for the new release branch, then wait for the test suite
    to pass. Do not merge the PR yet.
 
-8. Go to the LabGym homepage, then click "Releases", then click "Draft a new
+9. Go to the LabGym homepage, then click "Releases", then click "Draft a new
    release". 
 
    Under "Choose a tag", select the tag that you pushed. Then, click
@@ -87,7 +100,7 @@ environment](./setup.md) set up properly. Then, follow these instructions.
    Package Index (PyPI). For more information, see [CI/CD
    Pipeline](#ci-cd-pipeline).
 
-9. After verifying that the deployment is successful, merge the release PR
+10. After verifying that the deployment is successful, merge the release PR
    into `master`.
 
 ## CI/CD Pipeline
