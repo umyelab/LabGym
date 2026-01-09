@@ -11,6 +11,7 @@ Public Functions
 from __future__ import annotations
 
 # Standard library imports.
+from contextlib import contextmanager
 import hashlib
 import itertools
 import logging
@@ -30,6 +31,19 @@ import time
 logger = logging.getLogger(__name__)
 
 _cached_hashvals = {}
+
+
+# from contextlib import chdir  # available in Python 3.11+
+# To support earlier Python, implement chdir
+@contextmanager
+def chdir(path):
+	"""Temporarily chdir."""
+	old_cwd = os.getcwd()
+	try:
+		os.chdir(path)
+		yield
+	finally:
+		os.chdir(old_cwd)  # restore
 
 
 def get_hashval(folder: str) -> str:
@@ -74,34 +88,34 @@ def _walk_and_hash(folder: Path) -> str:
 	"""
 
 	hasher = hashlib.md5()
-	os.chdir(folder)
 
-	for root, dirs, files in os.walk('.'):
-		# walk in "sorted" order
-		dirs.sort()
-		files.sort()
+	with chdir(folder):
+		for root, dirs, files in os.walk('.'):
+			# walk in "sorted" order
+			dirs.sort()
+			files.sort()
 
-		# Skip dirs that don't have __init__.py.
-		if '__init__.py' not in files:
-			# this is not a "traditional" package dir...
-			# skip further descent
-			dirs.clear()
-			# skip processing files in this dir
-			continue
-
-		# Skip top-level dirs detectron2, detectors, models.
-		if root == '.':
-			for name in ['detectron2', 'detectors', 'models']:
-				if name in dirs:
-					dirs.remove(name)
-
-		for file in files:
-			# Skip non-py-files.
-			if not file.endswith('.py'):
+			# Skip dirs that don't have __init__.py.
+			if '__init__.py' not in files:
+				# this is not a "traditional" package dir...
+				# skip further descent
+				dirs.clear()
+				# skip processing files in this dir
 				continue
 
-			file_path = os.path.join(root, file)
-			_add_file_to_hash(hasher, file_path)
+			# Skip top-level dirs detectron2, detectors, models.
+			if root == '.':
+				for name in ['detectron2', 'detectors', 'models']:
+					if name in dirs:
+						dirs.remove(name)
+
+			for file in files:
+				# Skip non-py-files.
+				if not file.endswith('.py'):
+					continue
+
+				file_path = os.path.join(root, file)
+				_add_file_to_hash(hasher, file_path)
 
 	hashval = hasher.hexdigest()
 	logger.debug('%s: %r', 'hashval', hashval)
