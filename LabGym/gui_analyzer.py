@@ -131,6 +131,7 @@ class PanelLv2_AnalyzeBehaviors(wx.Panel):
 		self.black_background=True # whether to set background black
 		self.normalize_distance=True # whether to normalize the distance (in pixel) to the animal contour area
 		self.social_distance=0 # a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
+		self.color_costar=False # in 'interactive advanced' mode, whether to make the supporting roles RGB scale in animations
 		self.specific_behaviors={} # sex or identity-specific behaviors
 		self.correct_ID=False # whether to use sex or identity-specific behaviors to guide ID correction when ID switching is likely to happen
 
@@ -400,6 +401,12 @@ class PanelLv2_AnalyzeBehaviors(wx.Panel):
 					self.social_distance=int(parameters['social_distance'][0])
 					if self.social_distance==0:
 						self.social_distance=float('inf')
+					if 'color_code' in parameters:
+						color_code=int(parameters['color_code'][0])
+						if color_code==0:
+							self.color_costar=True
+						else:
+							self.color_costar=False
 					self.text_detection.SetLabel('Only Detector-based detection method is available for the selected Categorizer.')
 				if self.behavior_mode==3:
 					self.text_detection.SetLabel('Only Detector-based detection method is available for the selected Categorizer.')
@@ -1034,7 +1041,7 @@ class PanelLv2_AnalyzeBehaviors(wx.Panel):
 						if self.behavior_mode==1:
 							AAD.acquire_information_interact_basic(batch_size=self.detector_batch,background_free=self.background_free,black_background=self.black_background)
 						else:
-							AAD.acquire_information(batch_size=self.detector_batch,background_free=self.background_free,black_background=self.black_background)
+							AAD.acquire_information(batch_size=self.detector_batch,background_free=self.background_free,black_background=self.black_background,color_costar=self.color_costar)
 						if self.behavior_mode!=1:
 							AAD.craft_data()
 						if self.path_to_categorizer is not None:
@@ -1352,12 +1359,16 @@ class PanelLv2_PlotBehaviors(wx.Panel):
 		dialog=wx.FileDialog(self,'Select the all_events.xlsx file.','',wildcard='all_events file (*.xlsx)|*.xlsx',style=wx.FD_OPEN)
 		if dialog.ShowModal()==wx.ID_OK:
 			all_events_file=Path(dialog.GetPath())
-			self.names_and_colors={}
+			names_and_colors={}
 			self.events_probability,self.time_points,behavior_names=parse_all_events_file(all_events_file)
 			colors=[('#ffffff',str(hex_code)) for hex_code in mpl.colors.cnames.values()]
 			for color,behavior in zip(colors,behavior_names):
-				self.names_and_colors[behavior]=color
+				names_and_colors[behavior]=color
 			self.text_inputfile.SetLabel(f'all_events.xlsx path: {all_events_file}')
+			if self.names_and_colors is None:
+				self.names_and_colors=names_and_colors
+		else:
+			self.names_and_colors=None
 		dialog.Destroy()
 
 
