@@ -1193,7 +1193,7 @@ class Categorizers():
 				self.train_pattern_recognizer_onfly(out_folder,model_path,out_path=out_path,dim=dim,channel=channel,time_step=time_step,level=level,include_bodyparts=include_bodyparts,std=std,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode,social_distance=social_distance)
 
 
-	def train_animation_analyzer(self,data_path,model_path,out_path=None,dim=64,channel=1,time_step=15,level=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,black_background=True,behavior_mode=0,social_distance=0,out_folder=None):
+	def train_animation_analyzer(self,data_path,model_path,out_path=None,dim=64,channel=1,time_step=15,level=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,black_background=True,behavior_mode=0,social_distance=0,color_costar=False,out_folder=None):
 
 		# data_path: the folder that stores all the prepared training examples
 		# model_path: the path to the trained Animation Analyzer
@@ -1210,6 +1210,7 @@ class Categorizers():
 		# black_background: whether to set background
 		# behavior_mode:  0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
 		# social_distance: a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
+		# color_costar: in 'interactive advanced' mode, whether to make the supporting roles RGB scale in animations
 		# out_folder: if not None, will output all the augmented data to this folder
 
 		filters=8
@@ -1264,7 +1265,12 @@ class Categorizers():
 				else:
 					black_code=1
 
-				parameters={'classnames':list(self.classnames),'dim_tconv':int(dim),'channel':int(channel),'time_step':int(time_step),'network':1,'level_tconv':int(level),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code),'black_background':int(black_code),'behavior_kind':int(behavior_mode),'social_distance':int(social_distance)}
+				if color_costar:
+					color_code=0
+				else:
+					color_code=1
+
+				parameters={'classnames':list(self.classnames),'dim_tconv':int(dim),'channel':int(channel),'time_step':int(time_step),'network':1,'level_tconv':int(level),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code),'black_background':int(black_code),'behavior_kind':int(behavior_mode),'social_distance':int(social_distance),'color_code':int(color_code)}
 				pd_parameters=pd.DataFrame.from_dict(parameters)
 				pd_parameters.to_csv(os.path.join(model_path,'model_parameters.txt'),index=False)
 
@@ -1394,7 +1400,7 @@ class Categorizers():
 				self.train_animation_analyzer_onfly(out_folder,model_path,out_path=out_path,dim=dim,channel=channel,time_step=time_step,level=level,include_bodyparts=include_bodyparts,std=std,background_free=background_free,black_background=black_background,behavior_mode=behavior_mode,social_distance=social_distance)
 
 
-	def train_combnet(self,data_path,model_path,out_path=None,dim_tconv=32,dim_conv=64,channel=1,time_step=15,level_tconv=1,level_conv=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,black_background=True,behavior_mode=0,social_distance=0,out_folder=None):
+	def train_combnet(self,data_path,model_path,out_path=None,dim_tconv=32,dim_conv=64,channel=1,time_step=15,level_tconv=1,level_conv=2,aug_methods=[],augvalid=True,include_bodyparts=True,std=0,background_free=True,black_background=True,behavior_mode=0,social_distance=0,color_costar=False,out_folder=None):
 
 		# data_path: the folder that stores all the prepared training examples
 		# model_path: the path to the trained Categorizer
@@ -1413,6 +1419,7 @@ class Categorizers():
 		# black_background: whether to set background black
 		# behavior_mode:  0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
 		# social_distance: a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
+		# color_costar: in 'interactive advanced' mode, whether to make the supporting roles RGB scale in animations
 		# out_folder: if not None, will output all the augmented data to this folder
 
 		print('Training Categorizer with both Animation Analyzer and Pattern Recognizer using the behavior examples in: '+str(data_path))
@@ -1460,7 +1467,12 @@ class Categorizers():
 				else:
 					black_code=1
 
-				parameters={'classnames':list(self.classnames),'dim_tconv':int(dim_tconv),'dim_conv':int(dim_conv),'channel':int(channel),'time_step':int(time_step),'network':2,'level_tconv':int(level_tconv),'level_conv':int(level_conv),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code),'black_background':int(black_code),'behavior_kind':int(behavior_mode),'social_distance':int(social_distance)}
+				if color_costar:
+					color_code=0
+				else:
+					color_code=1
+
+				parameters={'classnames':list(self.classnames),'dim_tconv':int(dim_tconv),'dim_conv':int(dim_conv),'channel':int(channel),'time_step':int(time_step),'network':2,'level_tconv':int(level_tconv),'level_conv':int(level_conv),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code),'black_background':int(black_code),'behavior_kind':int(behavior_mode),'social_distance':int(social_distance),'color_code':int(color_code)}
 				pd_parameters=pd.DataFrame.from_dict(parameters)
 				pd_parameters.to_csv(os.path.join(model_path,'model_parameters.txt'),index=False)
 
@@ -1705,7 +1717,7 @@ class Categorizers():
 			print('No train / validation folder!')
 
 
-	def train_animation_analyzer_onfly(self,data_path,model_path,out_path=None,dim=32,channel=1,time_step=15,level=2,include_bodyparts=True,std=0,background_free=True,black_background=True,behavior_mode=0,social_distance=0):
+	def train_animation_analyzer_onfly(self,data_path,model_path,out_path=None,dim=32,channel=1,time_step=15,level=2,include_bodyparts=True,std=0,background_free=True,black_background=True,behavior_mode=0,social_distance=0,color_costar=False):
 
 		# data_path: the folder that stores all the prepared training examples
 		# model_path: the path to the trained Animation Analyzer
@@ -1720,6 +1732,7 @@ class Categorizers():
 		# black_background: whether to set background
 		# behavior_mode:  0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
 		# social_distance: a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
+		# color_costar: in 'interactive advanced' mode, whether to make the supporting roles RGB scale in animations
 
 		filters=8
 
@@ -1765,7 +1778,12 @@ class Categorizers():
 			else:
 				black_code=1
 
-			parameters={'classnames':list(train_data.classmapping.keys()),'dim_tconv':int(dim),'channel':int(channel),'time_step':int(time_step),'network':1,'level_tconv':int(level),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code),'black_background':int(black_code),'behavior_kind':int(behavior_mode),'social_distance':int(social_distance)}
+			if color_costar:
+				color_code=0
+			else:
+				color_code=1
+
+			parameters={'classnames':list(train_data.classmapping.keys()),'dim_tconv':int(dim),'channel':int(channel),'time_step':int(time_step),'network':1,'level_tconv':int(level),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code),'black_background':int(black_code),'behavior_kind':int(behavior_mode),'social_distance':int(social_distance),'color_code':int(color_code)}
 			pd_parameters=pd.DataFrame.from_dict(parameters)
 			pd_parameters.to_csv(os.path.join(model_path,'model_parameters.txt'),index=False)
 
@@ -1815,7 +1833,7 @@ class Categorizers():
 			print('No train / validation folder!')
 
 
-	def train_combnet_onfly(self,data_path,model_path,out_path=None,dim_tconv=32,dim_conv=64,channel=1,time_step=15,level_tconv=1,level_conv=2,include_bodyparts=True,std=0,background_free=True,black_background=True,behavior_mode=0,social_distance=0):
+	def train_combnet_onfly(self,data_path,model_path,out_path=None,dim_tconv=32,dim_conv=64,channel=1,time_step=15,level_tconv=1,level_conv=2,include_bodyparts=True,std=0,background_free=True,black_background=True,behavior_mode=0,social_distance=0,color_costar=False):
 
 		# data_path: the folder that stores all the prepared training examples
 		# model_path: the path to the trained Animation Analyzer
@@ -1832,6 +1850,7 @@ class Categorizers():
 		# black_background: whether to set background
 		# behavior_mode:  0--non-interactive, 1--interactive basic, 2--interactive advanced, 3--static images
 		# social_distance: a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
+		# color_costar: in 'interactive advanced' mode, whether to make the supporting roles RGB scale in animations
 
 		print('Training Categorizer with both Animation Analyzer and Pattern Recognizer using the behavior examples in: '+str(data_path))
 		self.log.append('Training Categorizer with both Animation Analyzer and Pattern Recognizer using the behavior examples in: '+str(data_path))
@@ -1870,7 +1889,12 @@ class Categorizers():
 			else:
 				black_code=1
 
-			parameters={'classnames':list(train_data.classmapping.keys()),'dim_tconv':int(dim_tconv),'dim_conv':int(dim_conv),'channel':int(channel),'time_step':int(time_step),'network':2,'level_tconv':int(level_tconv),'level_conv':int(level_conv),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code),'black_background':int(black_code),'behavior_kind':int(behavior_mode),'social_distance':int(social_distance)}
+			if color_costar:
+				color_code=0
+			else:
+				color_code=1
+
+			parameters={'classnames':list(train_data.classmapping.keys()),'dim_tconv':int(dim_tconv),'dim_conv':int(dim_conv),'channel':int(channel),'time_step':int(time_step),'network':2,'level_tconv':int(level_tconv),'level_conv':int(level_conv),'inner_code':int(inner_code),'std':int(std),'background_free':int(background_code),'black_background':int(black_code),'behavior_kind':int(behavior_mode),'social_distance':int(social_distance),'color_code':int(color_code)}
 			pd_parameters=pd.DataFrame.from_dict(parameters)
 			pd_parameters.to_csv(os.path.join(model_path,'model_parameters.txt'),index=False)
 
@@ -1950,6 +1974,14 @@ class Categorizers():
 			print('The behavior mode of the Categorizer: Interactive basic.')
 		elif behavior_mode==2:
 			print('The behavior mode of the Categorizer: Interactive advanced (Social distance '+str(parameters['social_distance'][0])+').')
+			if 'color_code' in list(parameters.keys()):
+				color_code=int(parameters['color_code'][0])
+				if color_code==0:
+					print('The Categorizer recognizes RGB scale main character and RGB scale  supporting characters.')
+				else:
+					print('The Categorizer recognizes RGB scale main character and grayscale supporting characters.')
+			else:
+				print('The Categorizer recognizes RGB scale main character and grayscale supporting characters.')
 		else:
 			print('The behavior mode of the Categorizer: Static images (non-interactive).')
 		network=int(parameters['network'][0])

@@ -91,6 +91,7 @@ class PanelLv2_GenerateExamples(wx.Panel):
 		self.background_free=True # whether to include background in animations
 		self.black_background=True # whether to set background black
 		self.social_distance=0 # a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
+		self.color_costar=False # in 'interactive advanced' mode, whether to make the supporting roles RGB scale in animations
 
 		self.display_window()
 
@@ -221,6 +222,12 @@ class PanelLv2_GenerateExamples(wx.Panel):
 					self.social_distance=int(dialog1.GetValue())
 				else:
 					self.social_distance=0
+				dialog1.Destroy()
+				dialog1=wx.MessageDialog(self,'Make both main and supporting characters RGB scale?\nSelect "No" if dont know what it is.','(Optional) RGB supporting characters?',wx.YES_NO|wx.ICON_QUESTION)
+				if dialog1.ShowModal()==wx.ID_YES:
+					self.color_costar=True
+				else:
+					self.color_costar=False
 				dialog1.Destroy()
 				self.text_detection.SetLabel('Only Detector-based detection method is available for the selected behavior mode.')
 			else:
@@ -673,7 +680,7 @@ class PanelLv2_GenerateExamples(wx.Panel):
 							elif self.behavior_mode==1:
 								AAD.generate_data_interact_basic(background_free=self.background_free,black_background=self.black_background,skip_redundant=self.skip_redundant)
 							else:
-								AAD.generate_data_interact_advance(background_free=self.background_free,black_background=self.black_background,skip_redundant=self.skip_redundant)
+								AAD.generate_data_interact_advance(background_free=self.background_free,black_background=self.black_background,skip_redundant=self.skip_redundant,color_costar=self.color_costar)
 
 
 
@@ -1094,6 +1101,7 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 		self.background_free=True # whether to include background in animations
 		self.black_background=True # whether to set background black
 		self.social_distance=0 # a threshold (folds of size of a single animal) on whether to include individuals that are not main character in behavior examples
+		self.color_costar=False # in 'interactive advanced' mode, whether to make the supporting roles RGB scale in animations
 		self.out_folder=None # if not None, the folder stores the augmented examples
 		self.training_onfly=False # whether to train a Categorizer using behavior examples that are already augmented previously
 
@@ -1263,6 +1271,12 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 					self.social_distance=int(dialog1.GetValue())
 				else:
 					self.social_distance=0
+				dialog1.Destroy()
+				dialog1=wx.MessageDialog(self,'Make both main and supporting characters RGB scale?\nSelect "No" if dont know what it is.','(Optional) RGB supporting characters?',wx.YES_NO|wx.ICON_QUESTION)
+				if dialog1.ShowModal()==wx.ID_YES:
+					self.color_costar=True
+				else:
+					self.color_costar=False
 				dialog1.Destroy()
 			else:
 				self.behavior_mode=3
@@ -1557,7 +1571,8 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 				CA=Categorizers()
 				if self.animation_analyzer is False:
 					if self.behavior_mode>=3:
-						self.length=self.std=0
+						self.length=0
+						self.std=0
 						self.include_bodyparts=False
 					else:
 						self.channel=3
@@ -1569,9 +1584,9 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 					if self.behavior_mode==2:
 						self.channel=3
 					if self.training_onfly:
-						CA.train_combnet_onfly(self.data_path,self.path_to_categorizer,out_path=self.out_path,dim_tconv=self.dim_tconv,dim_conv=self.dim_conv,channel=self.channel,time_step=self.length,level_tconv=self.level_tconv,level_conv=self.level_conv,include_bodyparts=self.include_bodyparts,std=self.std,background_free=self.background_free,black_background=self.black_background,behavior_mode=self.behavior_mode,social_distance=self.social_distance)
+						CA.train_combnet_onfly(self.data_path,self.path_to_categorizer,out_path=self.out_path,dim_tconv=self.dim_tconv,dim_conv=self.dim_conv,channel=self.channel,time_step=self.length,level_tconv=self.level_tconv,level_conv=self.level_conv,include_bodyparts=self.include_bodyparts,std=self.std,background_free=self.background_free,black_background=self.black_background,behavior_mode=self.behavior_mode,social_distance=self.social_distance,color_costar=self.color_costar)
 					else:
-						CA.train_combnet(self.data_path,self.path_to_categorizer,out_path=self.out_path,dim_tconv=self.dim_tconv,dim_conv=self.dim_conv,channel=self.channel,time_step=self.length,level_tconv=self.level_tconv,level_conv=self.level_conv,aug_methods=self.aug_methods,augvalid=self.augvalid,include_bodyparts=self.include_bodyparts,std=self.std,background_free=self.background_free,black_background=self.black_background,behavior_mode=self.behavior_mode,social_distance=self.social_distance,out_folder=self.out_folder)
+						CA.train_combnet(self.data_path,self.path_to_categorizer,out_path=self.out_path,dim_tconv=self.dim_tconv,dim_conv=self.dim_conv,channel=self.channel,time_step=self.length,level_tconv=self.level_tconv,level_conv=self.level_conv,aug_methods=self.aug_methods,augvalid=self.augvalid,include_bodyparts=self.include_bodyparts,std=self.std,background_free=self.background_free,black_background=self.black_background,behavior_mode=self.behavior_mode,social_distance=self.social_distance,color_costar=self.color_costar,out_folder=self.out_folder)
 
 
 
