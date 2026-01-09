@@ -145,7 +145,7 @@ def _add_file_to_hash(hasher, file_path: str) -> None:
 		#     while chunk := f.read(8192):
 		#         hasher.update(chunk)
 
-		with open(file_path, 'r') as f:
+		with open(file_path, 'r', encoding='utf-8') as f:
 			# Read file in 200-line chunks to handle large files efficiently
 			for chunk in _myreadlines(f):
 				for i, line in enumerate(chunk):
