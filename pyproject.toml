@@ -7,8 +7,8 @@ name='LabGym'
 description='Quantify user-defined behaviors.'
 authors=[
     {name='Yujia Hu',email='yujiahu415@gmail.com'},
-    {name='Rohan Satapathy',email='rohansat@umich.edu'},
     {name='John Ruckstuhl',email='john.ruckstuhl@gmail.com'},
+    {name='Rohan Satapathy',email='rohansat@umich.edu'},
     {name='M. Victor Struman',email='strmark@umich.edu'},
     {name='Kelly Goss',email='khgoss@umich.edu'},
     {name='Isabelle Baker',email='ibaker@umich.edu'},
