@@ -1554,7 +1554,6 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 				dialog1=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
 				if dialog1.ShowModal()==wx.ID_OK:
 					self.path_to_categorizer=dialog1.GetPath()
-					self.text_selectcategorizer.SetLabel('The path to export the Categorizer: '+self.path_to_categorizer+'.')
 				dialog1.Destroy()
 			dialog.Destroy()
 
