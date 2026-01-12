@@ -127,6 +127,7 @@ class Detector():
 			f.write(cfg.dump())
 
 		print('Detector training completed!')
+		print('Trained Detector saved in: '+str(path_to_detector))
 
 
 	def test(self,path_to_annotation,path_to_testingimages,path_to_detector,output_path):
