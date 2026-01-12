@@ -66,7 +66,7 @@ class InitialPanel(wx.Panel):
 		boxsizer.Add(self.text_welcome,0,wx.LEFT|wx.RIGHT|wx.EXPAND,5)
 		boxsizer.Add(0,60,0)
 		self.text_developers=wx.StaticText(panel,
-			label='Created by Yujia Hu and Bing Ye\n\nLife Sciences Institute, University of Michigan\n\n\n\nContributor list:\n\nJie Zhou, Rohan Satapathy, John Ruckstuhl, Brendon O. Waston, Carrie R. Ferrario,\n\nKelly Goss, Isabelle Baker, M. Victor Struman, Bobby Tomlinson',style=wx.ALIGN_CENTER|wx.ST_ELLIPSIZE_END)
+			label='Created by Yujia Hu and Bing Ye\n\nLife Sciences Institute, University of Michigan\n\n\n\nContributor list:\n\nJie Zhou, John Ruckstuhl, Rohan Satapathy, Brendon O. Waston, Carrie R. Ferrario,\n\nKelly Goss, Isabelle Baker, M. Victor Struman, Bobby Tomlinson',style=wx.ALIGN_CENTER|wx.ST_ELLIPSIZE_END)
 		boxsizer.Add(self.text_developers,0,wx.LEFT|wx.RIGHT|wx.EXPAND,5)
 		boxsizer.Add(0,60,0)
 

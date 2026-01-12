@@ -1549,6 +1549,14 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 
 		else:
 
+			dialog=wx.MessageDialog(self,'Export the trained Categorizer to a folder?','Export trained Categorizer?',wx.YES_NO|wx.ICON_QUESTION)
+			if dialog.ShowModal()==wx.ID_YES:
+				dialog1=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
+				if dialog1.ShowModal()==wx.ID_OK:
+					self.path_to_categorizer=dialog1.GetPath()
+				dialog1.Destroy()
+			dialog.Destroy()
+
 			do_nothing=False
 
 			stop=False
