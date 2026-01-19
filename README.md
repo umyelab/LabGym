@@ -68,7 +68,11 @@ An introduction video for a high-level understanding of what LabGym can do and h
 
 <p>&nbsp;</p>
 
-We have been making a series of tutorial videos to explain every function in LabGym. They are coming soon!
+[A series of tutorial videos](https://www.youtube.com/playlist?list=PLq_Poe3wppDKkrPdxPkU3TUflBHayevL_) focused on details of each module/function in LabGym (more to come!)
+
+<p>&nbsp;</p>
+
+We have also lauched our [LabGym website](https://www.labgym.org/).
 
 <p>&nbsp;</p>
 
