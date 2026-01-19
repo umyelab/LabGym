@@ -1,5 +1,15 @@
 # Changelog
 
+## v3.0.0
+### What's Changed
+* Implemented environment-aware feature so that LabGym is fully ready to analyze animal-environment interactions when landmarks are absent. LabGym allows users to draw their own digital landmarks as they wish in videos and LabGym will integrate them into the behavior identification.
+* Provided users with an option to export a trained Detector or Categorizer to a destinated folder, so that users can still train a LabGym model even if they don't have administrative privilege to modify the folder where LabGym is installed.
+* Changed the GUI from individual-window-based to tab-based.
+* Included an icon for the GUI.
+* Other groundwork for preparing an alternative installation path (through .exe or .app)
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v2.9.6...v3.0.0>
+
 ## v2.9.6
 ### What's Changed
 * Fixed issue in installation on Linux.
