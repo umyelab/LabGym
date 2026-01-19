@@ -363,7 +363,7 @@ class PanelLv2_TrainDetectors(wx.Panel):
 			if dialog.ShowModal()==wx.ID_YES:
 				dialog1=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
 				if dialog1.ShowModal()==wx.ID_OK:
-					self.path_to_detector=dialog1.GetPath()
+					self.detector_path=dialog1.GetPath()
 				dialog1.Destroy()
 			dialog.Destroy()
 
