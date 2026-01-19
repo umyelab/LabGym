@@ -1553,11 +1553,9 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 			if dialog.ShowModal()==wx.ID_YES:
 				dialog1=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
 				if dialog1.ShowModal()==wx.ID_OK:
-					self.path_to_categorizer=dialog1.GetPath()
+					self.model_path=dialog1.GetPath()
 				dialog1.Destroy()
 			dialog.Destroy()
-
-			do_nothing=False
 
 			stop=False
 			while stop is False:
