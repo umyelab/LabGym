@@ -5,7 +5,6 @@
    After following these instructions, you should have the following
    installed:
       - Git
-      - A C/C++ Compiler
       - Python 3.10
       - CUDA 11.8 (if using GPU)
       - cuDNN (if using GPU)
@@ -35,7 +34,7 @@
 4. Create a [GitHub account](https://github.com/join), then clone the 
    repository.
 
-   If you are a member of the Ye Lab, please send a Slack message to Henry Hu 
+   If you are a member of the Ye Lab, please send an email to Yujia Hu (yujiahu415@gmail.com) 
    to add you to the "umyelab" organization on GitHub. This will give you 
    access to make changes directly to the LabGym repository. Once you have 
    access, navigate to the directory where you store your code on your local 
@@ -99,76 +98,6 @@
    ````{tab} CPU Only
    ```console
    $ python -m pip install --index-url https://download.pytorch.org/whl/cpu torch==2.0.1 torchvision==0.15.2
-   ```
-   ````
-
-5. Install Detectron2.
-
-   ````{tab} macOS/Linux
-   ```console
-   $ python -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
-   ```
-   ````
-
-   ````{tab} Windows
-   On Windows, you will need to configure your Detectron2 installation for
-   GPU use.
-
-   First, download the Detectron2 code using the following command.
-
-   ```pwsh-session
-   > git clone https://github.com/facebookresearch/detectron2.git
-   ```
-
-   The code will now be present in a `detectron2` subfolder within the
-   LabGym folder.
-
-   If you're using a GPU, open the `setup.py` file inside the `detectron2` 
-   folder using your text editor (e.g. VS Code) and make the following change.
-
-   Old version:
-   ```{code} python
-   :number-lines: 72
-
-   if not is_rocm_pytorch:
-       define_macros += [("WITH_CUDA", None)]
-       extra_compile_args["nvcc"] = [
-           "-O3",
-           "-DCUDA_HAS_FP16=1",
-           "-D__CUDA_NO_HALF_OPERATORS__",
-           "-D__CUDA_NO_HALF_CONVERSIONS__",
-           "-D__CUDA_NO_HALF2_OPERATORS__",
-       ]
-   else:
-       define_macros += [("WITH_HIP", None)]
-       extra_compile_args["nvcc"] = []
-   ```
-   New version:
-   ```{code} python
-   :number-lines: 72
-
-   if not is_rocm_pytorch:
-       define_macros += [("WITH_CUDA", None)]
-       extra_compile_args["nvcc"] = [
-           "-O3",
-           "-DCUDA_HAS_FP16=1",
-           "-D__CUDA_NO_HALF_OPERATORS__",
-           "-D__CUDA_NO_HALF_CONVERSIONS__",
-           "-D__CUDA_NO_HALF2_OPERATORS__",
-           "-DWITH_CUDA",
-       ]
-   else:
-       define_macros += [("WITH_HIP", None)]
-       extra_compile_args["nvcc"] = []
-   ```
-   Save the `setup.py` file, then exit your text editor.
-
-   Finally, reopen your terminal, `cd` to the main LabGym folder, then install 
-   Detectron2.
-   
-   ```pwsh-session
-   > set CUDA_HOME=%CUDA_HOME_V11_8%
-   > python -m pip install -e detectron2
    ```
    ````
 
