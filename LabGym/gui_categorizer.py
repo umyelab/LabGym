@@ -1557,6 +1557,8 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 				dialog1.Destroy()
 			dialog.Destroy()
 
+			do_nothing=False
+
 			stop=False
 			while stop is False:
 				dialog=wx.TextEntryDialog(self,'Enter a name for the Categorizer to train','Categorizer name')
