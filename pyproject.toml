@@ -86,7 +86,7 @@ path='LabGym/__init__.py'
 
 [tool.pdm.build]
 includes = [
-    "LabGym/assets/icons/"
+    "LabGym/"
 ]
 
 [tool.pdm.dev-dependencies]
