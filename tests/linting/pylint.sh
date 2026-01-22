@@ -10,7 +10,7 @@
 
 source INIT.sh
 
-PYFILES=$(echo ../*.py ../mywx/*.py)
+PYFILES=$(echo ../../LabGym/*.py ../../LabGym/mywx/*.py)
 
 OP=pylint  # default OP
 while [ $# -gt 0 ]; do
