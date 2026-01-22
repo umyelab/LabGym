@@ -52,7 +52,7 @@ def tests(session:nox.Session):
 
 	# package and test dependencies
 	session.install("-e", ".")
-	session.install("pytest, coverage")
+	session.install("pytest", "coverage")
 
 
 	session.run("pytest", "-q")
