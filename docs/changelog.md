@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.0.1
+### What's Changed
+* Fixed a bug in installation.
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v3.0.0...v3.0.1>
+
 ## v3.0.0
 ### What's Changed
 * Implemented environment-aware feature so that LabGym is fully ready to analyze animal-environment interactions when landmarks are absent. LabGym allows users to draw their own digital landmarks as they wish in videos and LabGym will integrate them into the behavior identification.
