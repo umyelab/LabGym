@@ -10,7 +10,7 @@ IS_VENV () { [ -n "$VIRTUAL_ENV+1" ]; }  # works in sh, bash, and zsh
 
 AWK () { awk "$@"; }
     
-PYFILES=$(cd .. && echo *.py)
+PYFILES=$(cd ../../LabGym && echo *.py)
 # printf "%s: %s\n" "\$PYFILES" "$PYFILES"
 
 return
