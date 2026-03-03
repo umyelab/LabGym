@@ -70,12 +70,8 @@ class InitialPanel(wx.Panel):
 		boxsizer.Add(self.text_developers,0,wx.LEFT|wx.RIGHT|wx.EXPAND,5)
 		boxsizer.Add(0,60,0)
 
-		links=wx.BoxSizer(wx.HORIZONTAL)
-		homepage=hl.HyperLinkCtrl(panel,0,'Home Page',URL='https://github.com/umyelab/LabGym')
-		userguide=hl.HyperLinkCtrl(panel,0,'Extended Guide',URL='https://github.com/yujiahu415/LabGym/blob/master/LabGym_extended_user_guide.pdf')
-		links.Add(homepage,0,wx.LEFT|wx.EXPAND,10)
-		links.Add(userguide,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
-		boxsizer.Add(links,0,wx.ALIGN_CENTER,50)
+		homepage=hl.HyperLinkCtrl(panel,0,'Home Page',URL='https://www.labgym.org')
+		boxsizer.Add(homepage,0,wx.ALIGN_CENTER,50)
 		boxsizer.Add(0,50,0)
 
 		module_modules=wx.BoxSizer(wx.HORIZONTAL)
