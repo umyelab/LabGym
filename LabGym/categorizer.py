@@ -2094,3 +2094,91 @@ class Categorizers():
 				pd.DataFrame(report).transpose().to_excel(os.path.join(result_path,'testing_reports.xlsx'),float_format='%.2f')
 
 			print('Testing completed!')
+
+	def generate_probability_matrix(self, path_to_video, path_to_model, output_folder, batch_size=32):
+		"""
+		Frame-level probability matrix (T x K) using the trained Categorizer.
+
+		Row: frame
+		Column: behavior class (order from model_parameters.txt)
+		Cell: softmax probability
+
+		Saves:
+		  - probability_matrix.npy
+		  - probability_matrix.csv
+		  - probability_heatmap.png
+		"""
+
+		os.makedirs(output_folder, exist_ok=True)
+
+		# --- Load model ---
+		model = load_model(path_to_model)
+
+		# --- Load parameters (LabGym format) ---
+		param_path = os.path.join(os.path.dirname(path_to_model), "model_parameters.txt")
+		params = pd.read_csv(param_path)
+
+		classnames = params["classnames"].dropna().astype(str).tolist()
+		dim_conv = int(params["dim_conv"].iloc[0])
+		channel = int(params["channel"].iloc[0])
+		K = len(classnames)
+
+		# --- Read frames ---
+		capture = cv2.VideoCapture(path_to_video)
+		frames = []
+
+		while True:
+			ret, frame = capture.read()
+			if frame is None:
+				break
+
+			if channel == 1:
+				frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+			frame = cv2.resize(frame, (dim_conv, dim_conv), interpolation=cv2.INTER_AREA)
+			frame = frame.astype("float32") / 255.0
+
+			if channel == 1:
+				frame = np.expand_dims(frame, axis=-1)
+
+			frames.append(frame)
+
+		capture.release()
+
+		X = np.asarray(frames, dtype=np.float32)
+		T = X.shape[0]
+
+		if T == 0:
+			raise ValueError(f"No frames read from video: {path_to_video}")
+
+		# --- Predict probabilities ---
+		P = model.predict(X, batch_size=batch_size, verbose=1)
+
+		# Binary-sigmoid
+		if P.ndim == 2 and P.shape[1] == 1 and K == 2:
+			p1 = P[:, 0]
+			P = np.stack([1.0 - p1, p1], axis=1)
+
+		if P.shape != (T, K):
+			raise ValueError(f"Probability matrix shape mismatch: got {P.shape}, expected {(T, K)}")
+
+		# --- Save outputs ---
+		np.save(os.path.join(output_folder, "probability_matrix.npy"), P)
+
+		df = pd.DataFrame(P, columns=classnames)
+		df.insert(0, "frame", np.arange(T))
+		df.to_csv(os.path.join(output_folder, "probability_matrix.csv"), index=False)
+
+		# --- Heatmap ---
+		plt.figure(figsize=(12, 4))
+		plt.imshow(np.nan_to_num(P, nan=0.0).T, aspect="auto", interpolation="nearest")
+		plt.colorbar(label="Probability")
+		plt.yticks(range(K), classnames)
+		plt.xlabel("Frame")
+		plt.ylabel("Behavior")
+		plt.title("Frame-Level Behavior Probability Heatmap")
+		plt.tight_layout()
+		plt.savefig(os.path.join(output_folder, "probability_heatmap.png"), dpi=200)
+		plt.close()
+
+		return P
