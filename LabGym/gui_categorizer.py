@@ -36,6 +36,7 @@ import numpy as np
 import wx
 import wx.richtext
 import wx.lib.buttons as wxbuttons
+import wx.grid
 
 # Local application/library specific imports.
 logger.debug('importing %s ...', '.analyzebehavior')
@@ -2112,7 +2113,12 @@ class PanelLv2_TestCategorizers(wx.Panel):
 			wx.MessageBox('No Categorizer selected / path to ground-truth behavior examples.','Error',wx.OK|wx.ICON_ERROR)
 		else:
 			CA=Categorizers()
-			CA.test_categorizer(self.file_path,self.path_to_categorizer,result_path=self.out_path)
+			report, cm = CA.test_categorizer(self.file_path,self.path_to_categorizer,result_path=self.out_path)
+			classnames = [k for k in report.keys() if k not in ['accuracy', 'macro avg', 'weighted avg']]
+
+			dialog = AutomatedDiagnosticsDialog(self, report, cm, classnames)
+			dialog.ShowModal()
+			dialog.Destroy()
 
 
 	def remove_categorizer(self,event):
@@ -2134,3 +2140,79 @@ class PanelLv2_TestCategorizers(wx.Panel):
 				shutil.rmtree(os.path.join(self.model_path,categorizer))
 			dialog1.Destroy()
 		dialog.Destroy()
+
+class AutomatedDiagnosticsDialog(wx.Dialog):
+	def __init__(self, parent, report, cm, classnames):
+		super().__init__(parent, title="Automated Diagnostics - Test Results", size=(800, 600), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+		
+		self.report = report
+		self.cm = cm
+		self.classnames = classnames
+		
+		self.init_ui()
+
+	def init_ui(self):
+		sizer = wx.BoxSizer(wx.VERTICAL)
+
+		cm_label = wx.StaticText(self, label="Confusion Matrix:")
+		font = cm_label.GetFont()
+		font.SetWeight(wx.FONTWEIGHT_BOLD)
+		cm_label.SetFont(font)
+		sizer.Add(cm_label, 0, wx.ALL, 10)
+
+		num_classes = len(self.classnames)
+		self.cm_grid = wx.grid.Grid(self)
+		self.cm_grid.CreateGrid(num_classes, num_classes)
+
+		for i, name in enumerate(self.classnames):
+			self.cm_grid.SetRowLabelValue(i, name)
+			self.cm_grid.SetColLabelValue(i, name)
+
+		for i in range(num_classes):
+			for j in range(num_classes):
+				val = str(self.cm[i][j])
+				self.cm_grid.SetCellValue(i, j, val)
+				self.cm_grid.SetReadOnly(i, j, True)
+				self.cm_grid.SetCellAlignment(i, j, wx.ALIGN_CENTER, wx.ALIGN_CENTER)
+
+		self.cm_grid.AutoSize()
+		sizer.Add(self.cm_grid, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
+
+		perf_label = wx.StaticText(self, label="Per-Class Performance (Highlighting Precision < 60%):")
+		perf_label.SetFont(font)
+		sizer.Add(perf_label, 0, wx.ALL, 10)
+
+		self.list_ctrl = wx.ListCtrl(self, style=wx.LC_REPORT | wx.BORDER_SUNKEN)
+		self.list_ctrl.InsertColumn(0, "Behavior", width=150)
+		self.list_ctrl.InsertColumn(1, "Precision", width=100)
+		self.list_ctrl.InsertColumn(2, "Recall", width=100)
+		self.list_ctrl.InsertColumn(3, "F1-Score", width=100)
+		self.list_ctrl.InsertColumn(4, "Support", width=100)
+
+		index = 0
+		for name in self.classnames:
+			if name in self.report:
+				metrics = self.report[name]
+				self.list_ctrl.InsertItem(index, name)
+				
+				precision = metrics.get('precision', 0)
+				self.list_ctrl.SetItem(index, 1, f"{precision:.2f}")
+				self.list_ctrl.SetItem(index, 2, f"{metrics.get('recall', 0):.2f}")
+				self.list_ctrl.SetItem(index, 3, f"{metrics.get('f1-score', 0):.2f}")
+				self.list_ctrl.SetItem(index, 4, str(metrics.get('support', 0)))
+
+				if precision < 0.60:
+					self.list_ctrl.SetItemBackgroundColour(index, wx.Colour(255, 200, 200))
+
+				index += 1
+
+		sizer.Add(self.list_ctrl, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
+
+		btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
+		close_btn = wx.Button(self, wx.ID_CLOSE, "Close")
+		close_btn.Bind(wx.EVT_BUTTON, lambda evt: self.EndModal(wx.ID_CANCEL))
+		btn_sizer.Add(close_btn, 0, wx.ALL, 10)
+		sizer.Add(btn_sizer, 0, wx.ALIGN_RIGHT)
+
+		self.SetSizer(sizer)
+		self.Layout()
