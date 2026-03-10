@@ -33,7 +33,7 @@ import pandas as pd
 from scipy import ndimage
 from skimage import exposure,transform
 from skimage.transform import AffineTransform
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelBinarizer
 import tensorflow as tf
@@ -2086,14 +2086,24 @@ class Categorizers():
 				predictions=[round(i[0]) for i in predictions]
 				print(classification_report(labels,predictions,target_names=classnames))
 				report=classification_report(labels,predictions,target_names=classnames,output_dict=True)
+				# ADDED: Calculate binary confusion matrix
+				cm=confusion_matrix(labels,predictions)
 			else:
 				print(classification_report(labels,predictions.argmax(axis=1),target_names=classnames))
 				report=classification_report(labels,predictions.argmax(axis=1),target_names=classnames,output_dict=True)
+				# ADDED: Calculate multi-class confusion matrix
+				cm=confusion_matrix(labels,predictions.argmax(axis=1))
 
 			if result_path is not None:
 				pd.DataFrame(report).transpose().to_excel(os.path.join(result_path,'testing_reports.xlsx'),float_format='%.2f')
+				# ADDED: Save the confusion matrix to a CSV as a backup/reference
+				pd.DataFrame(cm, index=classnames, columns=classnames).to_csv(os.path.join(result_path,'confusion_matrix.csv'))
 
 			print('Testing completed!')
+			
+			# ADDED: Return the data so the GUI can catch it!
+			return report, cm
+
 
 	def generate_probability_matrix(self, path_to_video, path_to_model, output_folder, batch_size=32):
 		"""
