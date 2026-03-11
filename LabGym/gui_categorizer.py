@@ -21,6 +21,9 @@ Email: bingye@umich.edu
 import json
 import logging
 import os
+import sys
+import subprocess
+
 # from pathlib import Path
 import shutil
 
@@ -1090,10 +1093,6 @@ class PanelLv3_SortExamplesCSV(wx.Panel):
 
 class PanelLv2_TrainCategorizers(wx.Panel):
 
-	'''
-	The 'Train Categorizers' functional unit
-	'''
-
 	def __init__(self, parent):
 
 		super().__init__(parent)
@@ -1984,14 +1983,13 @@ class PanelLv2_TestCategorizers(wx.Panel):
 		super().__init__(parent)
 		self.notebook = parent
 
-		# Get all of the values needed from config.get_config().
 		self.config = config.get_config('models')
 
-		self.file_path=None # the folder that stores the ground-truth examples (each subfolder is a behavior category)
-		self.model_path = self.config['models']  # the 'LabGym/models' folder, which stores all the trained Categorizers
+		self.file_path=None
+		self.model_path = self.config['models']
 		logger.debug('%s: %r', 'self.model_path', self.model_path)
-		self.path_to_categorizer=None # path to the Categorizer
-		self.out_path=None # for storing the testing reports
+		self.path_to_categorizer=None
+		self.out_path=None
 
 		self.display_window()
 
@@ -2073,10 +2071,10 @@ class PanelLv2_TestCategorizers(wx.Panel):
 				dialog1=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
 				if dialog1.ShowModal()==wx.ID_OK:
 					self.path_to_categorizer=dialog1.GetPath()
+					self.text_selectcategorizer.SetLabel('The path to the Categorizer to test is: '+self.path_to_categorizer+'.')
 				else:
 					self.path_to_categorizer=None
 				dialog1.Destroy()
-				self.text_selectcategorizer.SetLabel('The path to the Categorizer to test is: '+self.path_to_categorizer+'.')
 			else:
 				self.path_to_categorizer=os.path.join(self.model_path,categorizer)
 				self.text_selectcategorizer.SetLabel('Categorizer to test: '+categorizer+'.')
@@ -2113,10 +2111,11 @@ class PanelLv2_TestCategorizers(wx.Panel):
 			wx.MessageBox('No Categorizer selected / path to ground-truth behavior examples.','Error',wx.OK|wx.ICON_ERROR)
 		else:
 			CA=Categorizers()
-			report, cm = CA.test_categorizer(self.file_path,self.path_to_categorizer,result_path=self.out_path)
+			
+			report, cm, example_map = CA.test_categorizer(self.file_path,self.path_to_categorizer,result_path=self.out_path)
 			classnames = [k for k in report.keys() if k not in ['accuracy', 'macro avg', 'weighted avg']]
 
-			dialog = AutomatedDiagnosticsDialog(self, report, cm, classnames)
+			dialog = AutomatedDiagnosticsDialog(self, report, cm, classnames, example_map)
 			dialog.ShowModal()
 			dialog.Destroy()
 
@@ -2142,13 +2141,14 @@ class PanelLv2_TestCategorizers(wx.Panel):
 		dialog.Destroy()
 
 class AutomatedDiagnosticsDialog(wx.Dialog):
-	def __init__(self, parent, report, cm, classnames):
+	def __init__(self, parent, report, cm, classnames, example_map):
 		super().__init__(parent, title="Automated Diagnostics - Test Results", size=(800, 600), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
 		
 		self.report = report
 		self.cm = cm
 		self.classnames = classnames
-
+		self.example_map = example_map
+		
 		self.cm_normalized = self.calculate_normalized_cm(cm)
 		self.is_normalized = False
 		
@@ -2184,6 +2184,8 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 		num_classes = len(self.classnames)
 		self.cm_grid = wx.grid.Grid(self)
 		self.cm_grid.CreateGrid(num_classes, num_classes)
+
+		self.cm_grid.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK, self.on_cell_click)
 
 		for i, name in enumerate(self.classnames):
 			self.cm_grid.SetRowLabelValue(i, name)
@@ -2240,7 +2242,6 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 	def update_grid_data(self):
 		cm_rows = len(self.cm)
 		cm_cols = len(self.cm[0]) if cm_rows > 0 else 0
-
 		data_to_use = self.cm_normalized if self.is_normalized else self.cm
 
 		for i in range(len(self.classnames)):
@@ -2264,3 +2265,65 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 			self.toggle_btn.SetLabel("Show Normalized (%)")
 		
 		self.update_grid_data()
+
+	def on_cell_click(self, event):
+		row = event.GetRow()
+		col = event.GetCol()
+
+		if row < len(self.classnames) and col < len(self.classnames):
+			true_class = self.classnames[row]
+			pred_class = self.classnames[col]
+			
+			key = (true_class, pred_class)
+			examples = self.example_map.get(key, [])
+			
+			if not examples:
+				wx.MessageBox(f"No examples found for True='{true_class}' and Predicted='{pred_class}'.", "Info", wx.OK | wx.ICON_INFORMATION)
+			else:
+				viewer = ExampleViewerDialog(self, true_class, pred_class, examples)
+				viewer.ShowModal()
+				viewer.Destroy()
+				
+		event.Skip()
+
+class ExampleViewerDialog(wx.Dialog):
+	def __init__(self, parent, true_class, pred_class, examples):
+		title = f"Reviewing Examples: True '{true_class}' -> Predicted '{pred_class}'"
+		super().__init__(parent, title=title, size=(600, 400), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+		
+		self.examples = examples
+		self.init_ui()
+		
+	def init_ui(self):
+		sizer = wx.BoxSizer(wx.VERTICAL)
+		
+		info_label = wx.StaticText(self, label=f"Found {len(self.examples)} example(s). Double-click a file to open it:")
+		sizer.Add(info_label, 0, wx.ALL, 10)
+		
+		self.list_box = wx.ListBox(self, choices=self.examples, style=wx.LB_SINGLE | wx.LB_HSCROLL)
+		self.list_box.Bind(wx.EVT_LISTBOX_DCLICK, self.on_double_click)
+		sizer.Add(self.list_box, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 10)
+		
+		btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
+		close_btn = wx.Button(self, wx.ID_CLOSE, "Close")
+		close_btn.Bind(wx.EVT_BUTTON, lambda evt: self.EndModal(wx.ID_CANCEL))
+		btn_sizer.Add(close_btn, 0, wx.ALL, 10)
+		sizer.Add(btn_sizer, 0, wx.ALIGN_RIGHT)
+		
+		self.SetSizer(sizer)
+		self.Layout()
+		
+	def on_double_click(self, event):
+		selection = self.list_box.GetSelection()
+		if selection != wx.NOT_FOUND:
+			filepath = self.examples[selection]
+
+			try:
+				if sys.platform == "win32":
+					os.startfile(filepath)
+				elif sys.platform == "darwin":
+					subprocess.call(["open", filepath])
+				else:
+					subprocess.call(["xdg-open", filepath])
+			except Exception as e:
+				wx.MessageBox(f"Failed to open file:\n{e}", "Error", wx.OK | wx.ICON_ERROR)

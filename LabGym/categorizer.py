@@ -1951,6 +1951,7 @@ class Categorizers():
 		animations=deque()
 		pattern_images=deque()
 		labels=deque()
+		test_files=[]
 
 		parameters=pd.read_csv(os.path.join(model_path,'model_parameters.txt'))
 
@@ -2029,6 +2030,8 @@ class Categorizers():
 
 				for i in filenames:
 
+					test_files.append(os.path.join(groundtruth_path, behavior, i))
+
 					if network!=0:
 
 						path_to_animation=os.path.join(groundtruth_path,behavior,i)
@@ -2084,25 +2087,32 @@ class Categorizers():
 
 			if len(classnames)==2:
 				predictions=[round(i[0]) for i in predictions]
+				flat_predictions = predictions # Save flat predictions
 				print(classification_report(labels,predictions,target_names=classnames))
 				report=classification_report(labels,predictions,target_names=classnames,output_dict=True)
-				# ADDED: Calculate binary confusion matrix
 				cm=confusion_matrix(labels,predictions)
 			else:
-				print(classification_report(labels,predictions.argmax(axis=1),target_names=classnames))
-				report=classification_report(labels,predictions.argmax(axis=1),target_names=classnames,output_dict=True)
-				# ADDED: Calculate multi-class confusion matrix
-				cm=confusion_matrix(labels,predictions.argmax(axis=1))
+				flat_predictions = predictions.argmax(axis=1) # Save flat predictions
+				print(classification_report(labels,flat_predictions,target_names=classnames))
+				report=classification_report(labels,flat_predictions,target_names=classnames,output_dict=True)
+				cm=confusion_matrix(labels,flat_predictions)
 
 			if result_path is not None:
 				pd.DataFrame(report).transpose().to_excel(os.path.join(result_path,'testing_reports.xlsx'),float_format='%.2f')
-				# ADDED: Save the confusion matrix to a CSV as a backup/reference
 				pd.DataFrame(cm, index=classnames, columns=classnames).to_csv(os.path.join(result_path,'confusion_matrix.csv'))
+
+			# ADDED: Build a dictionary mapping (True Class, Predicted Class) -> [List of File Paths]
+			example_map = {}
+			for t_label_idx, p_label_idx, f_path in zip(labels, flat_predictions, test_files):
+				key = (classnames[t_label_idx], classnames[p_label_idx])
+				if key not in example_map:
+					example_map[key] = []
+				example_map[key].append(f_path)
 
 			print('Testing completed!')
 			
-			# ADDED: Return the data so the GUI can catch it!
-			return report, cm
+			# ADDED: Return example_map as the 3rd variable!
+			return report, cm, example_map
 
 
 	def generate_probability_matrix(self, path_to_video, path_to_model, output_folder, batch_size=32):
