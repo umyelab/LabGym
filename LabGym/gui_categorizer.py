@@ -2168,9 +2168,17 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 			self.cm_grid.SetRowLabelValue(i, name)
 			self.cm_grid.SetColLabelValue(i, name)
 
+		cm_rows = len(self.cm)
+		cm_cols = len(self.cm[0]) if cm_rows > 0 else 0
+
 		for i in range(num_classes):
 			for j in range(num_classes):
-				val = str(self.cm[i][j])
+
+				if i < cm_rows and j < cm_cols:
+					val = str(self.cm[i][j])
+				else:
+					val = "0"
+				
 				self.cm_grid.SetCellValue(i, j, val)
 				self.cm_grid.SetReadOnly(i, j, True)
 				self.cm_grid.SetCellAlignment(i, j, wx.ALIGN_CENTER, wx.ALIGN_CENTER)
@@ -2194,12 +2202,16 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 			if name in self.report:
 				metrics = self.report[name]
 				self.list_ctrl.InsertItem(index, name)
+
+				precision = float(metrics.get('precision', 0.0))
+				recall = float(metrics.get('recall', 0.0))
+				f1 = float(metrics.get('f1-score', 0.0))
+				support = float(metrics.get('support', 0.0))
 				
-				precision = metrics.get('precision', 0)
 				self.list_ctrl.SetItem(index, 1, f"{precision:.2f}")
-				self.list_ctrl.SetItem(index, 2, f"{metrics.get('recall', 0):.2f}")
-				self.list_ctrl.SetItem(index, 3, f"{metrics.get('f1-score', 0):.2f}")
-				self.list_ctrl.SetItem(index, 4, str(metrics.get('support', 0)))
+				self.list_ctrl.SetItem(index, 2, f"{recall:.2f}")
+				self.list_ctrl.SetItem(index, 3, f"{f1:.2f}")
+				self.list_ctrl.SetItem(index, 4, str(support))
 
 				if precision < 0.60:
 					self.list_ctrl.SetItemBackgroundColour(index, wx.Colour(255, 200, 200))
