@@ -2148,17 +2148,38 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 		self.report = report
 		self.cm = cm
 		self.classnames = classnames
+
+		self.cm_normalized = self.calculate_normalized_cm(cm)
+		self.is_normalized = False
 		
 		self.init_ui()
+
+	def calculate_normalized_cm(self, cm):
+		norm_cm = []
+		for row in cm:
+			row_sum = sum(row)
+			if row_sum > 0:
+				norm_cm.append([round((val / row_sum) * 100, 1) for val in row])
+			else:
+				norm_cm.append([0.0 for _ in row])
+		return norm_cm
 
 	def init_ui(self):
 		sizer = wx.BoxSizer(wx.VERTICAL)
 
+		cm_header_sizer = wx.BoxSizer(wx.HORIZONTAL)
+		
 		cm_label = wx.StaticText(self, label="Confusion Matrix:")
 		font = cm_label.GetFont()
 		font.SetWeight(wx.FONTWEIGHT_BOLD)
 		cm_label.SetFont(font)
-		sizer.Add(cm_label, 0, wx.ALL, 10)
+		cm_header_sizer.Add(cm_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 10)
+
+		self.toggle_btn = wx.ToggleButton(self, label="Show Normalized (%)")
+		self.toggle_btn.Bind(wx.EVT_TOGGLEBUTTON, self.on_toggle_cm)
+		cm_header_sizer.Add(self.toggle_btn, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)
+
+		sizer.Add(cm_header_sizer, 0, wx.EXPAND)
 
 		num_classes = len(self.classnames)
 		self.cm_grid = wx.grid.Grid(self)
@@ -2168,20 +2189,7 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 			self.cm_grid.SetRowLabelValue(i, name)
 			self.cm_grid.SetColLabelValue(i, name)
 
-		cm_rows = len(self.cm)
-		cm_cols = len(self.cm[0]) if cm_rows > 0 else 0
-
-		for i in range(num_classes):
-			for j in range(num_classes):
-
-				if i < cm_rows and j < cm_cols:
-					val = str(self.cm[i][j])
-				else:
-					val = "0"
-				
-				self.cm_grid.SetCellValue(i, j, val)
-				self.cm_grid.SetReadOnly(i, j, True)
-				self.cm_grid.SetCellAlignment(i, j, wx.ALIGN_CENTER, wx.ALIGN_CENTER)
+		self.update_grid_data()
 
 		self.cm_grid.AutoSize()
 		sizer.Add(self.cm_grid, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
@@ -2228,3 +2236,31 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 
 		self.SetSizer(sizer)
 		self.Layout()
+
+	def update_grid_data(self):
+		cm_rows = len(self.cm)
+		cm_cols = len(self.cm[0]) if cm_rows > 0 else 0
+
+		data_to_use = self.cm_normalized if self.is_normalized else self.cm
+
+		for i in range(len(self.classnames)):
+			for j in range(len(self.classnames)):
+				if i < cm_rows and j < cm_cols:
+					val = f"{data_to_use[i][j]}%" if self.is_normalized else str(data_to_use[i][j])
+				else:
+					val = "0.0%" if self.is_normalized else "0"
+				
+				self.cm_grid.SetCellValue(i, j, val)
+				self.cm_grid.SetReadOnly(i, j, True)
+				self.cm_grid.SetCellAlignment(i, j, wx.ALIGN_CENTER, wx.ALIGN_CENTER)
+		
+		self.cm_grid.ForceRefresh()
+
+	def on_toggle_cm(self, event):
+		self.is_normalized = self.toggle_btn.GetValue()
+		if self.is_normalized:
+			self.toggle_btn.SetLabel("Show Raw Counts")
+		else:
+			self.toggle_btn.SetLabel("Show Normalized (%)")
+		
+		self.update_grid_data()
