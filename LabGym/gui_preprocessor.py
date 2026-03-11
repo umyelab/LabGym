@@ -32,6 +32,7 @@ import cv2
 import numpy as np
 from PIL import Image,ImageEnhance
 import wx
+import wx.lib.agw.hyperlink as hl
 
 # Local application/library specific imports.
 from .tools import preprocess_video
@@ -139,6 +140,13 @@ class PanelLv2_ProcessVideos(wx.Panel):
 		boxsizer.Add(0,5,0)
 		boxsizer.Add(button_preprocessvideos,0,wx.RIGHT|wx.ALIGN_RIGHT,90)
 		boxsizer.Add(0,10,0)
+
+		bottom_row = wx.BoxSizer(wx.HORIZONTAL)
+		link = hl.HyperLinkCtrl(panel, 0, 'Preprocessing Basics Tutorial Video', URL='https://youtu.be/51F-whqGIzU?si=IYMT3_etdnu46Zh3')
+		bottom_row.Add(link, 0, wx.LEFT, 10)
+		bottom_row.AddStretchSpacer()
+		boxsizer.Add(bottom_row, 0, wx.EXPAND)
+		boxsizer.Add(0, 10, 0)
 
 		panel.SetSizer(boxsizer)
 
