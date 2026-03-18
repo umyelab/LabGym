@@ -1098,6 +1098,7 @@ class AnalyzeAnimalDetector():
 		import numpy as np
 		import pandas as pd
 		import matplotlib.pyplot as plt
+		from matplotlib.colors import LogNorm
 
 		os.makedirs(self.results_path, exist_ok=True)
 
@@ -1121,7 +1122,8 @@ class AnalyzeAnimalDetector():
 				df.insert(0,'frame',np.arange(T))
 				df.to_csv(
 					os.path.join(self.results_path,f'{animal_name}_probability_matrix_ID{ID}.csv'),
-					index=False
+					index=False,
+					float_format='%.4f'
 				)
 
 				print('PM DEBUG DT: saved',os.path.join(self.results_path,f'{animal_name}_probability_matrix_ID{ID}.csv'))
@@ -1134,7 +1136,13 @@ class AnalyzeAnimalDetector():
 						P_plot=P_plot[::stride,:]
 
 					plt.figure(figsize=(12,4))
-					plt.imshow(np.nan_to_num(P_plot,nan=0.0).T,aspect='auto',interpolation='nearest')
+					
+					plt.imshow(
+    					np.nan_to_num(P_plot, nan=0.0).T,
+    					aspect='auto',
+    					cmap='magma',
+    					norm=LogNorm(vmin=1e-3, vmax=1)
+						)
 					plt.colorbar(label='Probability')
 					plt.yticks(range(len(behavior_names)),behavior_names)
 					plt.xlabel('Frame' if stride==1 else f'Frame (stride={stride})')
@@ -1146,7 +1154,7 @@ class AnalyzeAnimalDetector():
 						dpi=200
 					)
 					plt.close()
-					
+
 	def correct_identity(self,specific_behaviors):
 
 		# specific_behaviors: the sex / identity specific behaviors

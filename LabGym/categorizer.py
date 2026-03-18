@@ -2170,8 +2170,15 @@ class Categorizers():
 		df.to_csv(os.path.join(output_folder, "probability_matrix.csv"), index=False)
 
 		# --- Heatmap ---
+		from matplotlib.colors import LogNorm
+
 		plt.figure(figsize=(12, 4))
-		plt.imshow(np.nan_to_num(P, nan=0.0).T, aspect="auto", interpolation="nearest")
+		plt.imshow(
+    		np.nan_to_num(P_plot, nan=0.0).T,
+    		aspect='auto',
+    		cmap='magma',
+    		norm=LogNorm(vmin=1e-3, vmax=1)
+			)
 		plt.colorbar(label="Probability")
 		plt.yticks(range(K), classnames)
 		plt.xlabel("Frame")
