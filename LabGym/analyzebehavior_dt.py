@@ -1087,10 +1087,66 @@ class AnalyzeAnimalDetector():
 							continued_length=1
 						i+=1
 
+		self.export_probability_matrices_dt()
+
 		print('Behavioral categorization completed!')
 		self.log.append('Behavioral categorization completed!')
 
+	def export_probability_matrices_dt(self, make_heatmap=True, max_frames_for_heatmap=6000):
 
+		import os
+		import numpy as np
+		import pandas as pd
+		import matplotlib.pyplot as plt
+
+		os.makedirs(self.results_path, exist_ok=True)
+
+		for animal_name in self.animal_kinds:
+			behavior_names=list(self.all_behavior_parameters[animal_name].keys())
+			T=len(self.all_time)
+
+			for ID in self.event_probability[animal_name]:
+				P=np.zeros((T,len(behavior_names)),dtype=np.float32)
+
+				for k,behavior_name in enumerate(behavior_names):
+					probs=self.all_behavior_parameters[animal_name][behavior_name]['probability'][ID]
+					P[:,k]=np.array(probs,dtype=np.float32)
+
+				np.save(
+					os.path.join(self.results_path,f'{animal_name}_probability_matrix_ID{ID}.npy'),
+					P
+				)
+
+				df=pd.DataFrame(P,columns=behavior_names)
+				df.insert(0,'frame',np.arange(T))
+				df.to_csv(
+					os.path.join(self.results_path,f'{animal_name}_probability_matrix_ID{ID}.csv'),
+					index=False
+				)
+
+				print('PM DEBUG DT: saved',os.path.join(self.results_path,f'{animal_name}_probability_matrix_ID{ID}.csv'))
+
+				if make_heatmap:
+					P_plot=P
+					stride=1
+					if P_plot.shape[0]>max_frames_for_heatmap:
+						stride=int(np.ceil(P_plot.shape[0]/max_frames_for_heatmap))
+						P_plot=P_plot[::stride,:]
+
+					plt.figure(figsize=(12,4))
+					plt.imshow(np.nan_to_num(P_plot,nan=0.0).T,aspect='auto',interpolation='nearest')
+					plt.colorbar(label='Probability')
+					plt.yticks(range(len(behavior_names)),behavior_names)
+					plt.xlabel('Frame' if stride==1 else f'Frame (stride={stride})')
+					plt.ylabel('Behavior')
+					plt.title(f'Frame-Level Probability Matrix: {animal_name} ID {ID}')
+					plt.tight_layout()
+					plt.savefig(
+						os.path.join(self.results_path,f'{animal_name}_probability_heatmap_ID{ID}.png'),
+						dpi=200
+					)
+					plt.close()
+					
 	def correct_identity(self,specific_behaviors):
 
 		# specific_behaviors: the sex / identity specific behaviors

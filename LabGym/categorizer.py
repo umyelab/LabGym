@@ -2155,7 +2155,7 @@ class Categorizers():
 		P = model.predict(X, batch_size=batch_size, verbose=1)
 
 		# Binary-sigmoid
-		if P.ndim == 2 and P.shape[1] == 1 and K == 2:
+		if P.ndim== 2 and P.shape[1] == 1 and K == 2:
 			p1 = P[:, 0]
 			P = np.stack([1.0 - p1, p1], axis=1)
 

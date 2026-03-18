@@ -646,10 +646,54 @@ class AnalyzeAnimal():
 							self.event_probability[n][i-continued_length:i]=[['NA',-1]]*continued_length
 						continued_length=1
 					i+=1
+		
+		self.export_probability_matrices(make_heatmap=True)
 
 		print('Behavioral categorization completed!')
 		self.log.append('Behavioral categorization completed!')
 
+	def export_probability_matrices(self, make_heatmap=True, max_frames_for_heatmap=6000):
+
+		import os
+		import numpy as np
+		import pandas as pd
+		import matplotlib.pyplot as plt
+
+		os.makedirs(self.results_path, exist_ok=True)
+
+		behavior_names = list(self.all_behavior_parameters.keys())
+		T = len(self.all_time)
+
+		for ID in self.event_probability:
+			P = np.zeros((T, len(behavior_names)), dtype=np.float32)
+
+			for k, behavior_name in enumerate(behavior_names):
+				probs = self.all_behavior_parameters[behavior_name]['probability'][ID]
+				P[:, k] = np.array(probs, dtype=np.float32)
+
+			np.save(os.path.join(self.results_path, f'probability_matrix_ID{ID}.npy'), P)
+
+			df = pd.DataFrame(P, columns=behavior_names)
+			df.insert(0, 'frame', np.arange(T))
+			df.to_csv(os.path.join(self.results_path, f'probability_matrix_ID{ID}.csv'), index=False)
+
+			if make_heatmap:
+				P_plot = P
+				stride = 1
+				if P_plot.shape[0] > max_frames_for_heatmap:
+					stride = int(np.ceil(P_plot.shape[0] / max_frames_for_heatmap))
+					P_plot = P_plot[::stride, :]
+
+				plt.figure(figsize=(12, 4))
+				plt.imshow(np.nan_to_num(P_plot, nan=0.0).T, aspect='auto', interpolation='nearest')
+				plt.colorbar(label='Probability')
+				plt.yticks(range(len(behavior_names)), behavior_names)
+				plt.xlabel('Frame' if stride == 1 else f'Frame (stride={stride})')
+				plt.ylabel('Behavior')
+				plt.title(f'Frame-Level Probability Matrix (ID {ID})')
+				plt.tight_layout()
+				plt.savefig(os.path.join(self.results_path, f'probability_heatmap_ID{ID}.png'), dpi=200)
+				plt.close()
 
 	def annotate_video(self,ID_colors,behavior_to_include,show_legend=True,interact_all=False):
 
