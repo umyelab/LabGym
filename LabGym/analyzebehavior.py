@@ -53,6 +53,7 @@ from .tools import (
 	contour_frame,
 	generate_patternimage,
 	generate_patternimage_all,
+	plot_state_transition_map,
 	)
 logger.debug('importing tools (done)')
 
@@ -685,7 +686,7 @@ class AnalyzeAnimal():
 					stride = int(np.ceil(P_plot.shape[0] / max_frames_for_heatmap))
 					P_plot = P_plot[::stride, :]
 
-				plt.figure(figsize=(12, 4))
+				plt.figure(figsize=(30, 10), dpi = 200)
 				plt.imshow(
     				np.nan_to_num(P_plot, nan=0.0).T,
     				aspect='auto',
@@ -698,7 +699,7 @@ class AnalyzeAnimal():
 				plt.ylabel('Behavior')
 				plt.title(f'Frame-Level Probability Matrix (ID {ID})')
 				plt.tight_layout()
-				plt.savefig(os.path.join(self.results_path, f'probability_heatmap_ID{ID}.png'), dpi=200)
+				plt.savefig(os.path.join(self.results_path, f'probability_heatmap_ID{ID}.png'), dpi=300)
 				plt.close()
 
 	def annotate_video(self,ID_colors,behavior_to_include,show_legend=True,interact_all=False):
@@ -1176,6 +1177,21 @@ class AnalyzeAnimal():
 			events_df=pd.DataFrame(self.event_probability,index=self.all_time)
 			events_df.to_excel(os.path.join(self.results_path,'all_event_probability.xlsx'),float_format='%.2f',index_label='time/ID')
 
+			names_and_colors = {
+				behavior_name: self.all_behavior_parameters[behavior_name]['color']
+				for behavior_name in self.all_behavior_parameters
+				}
+
+			plot_state_transition_map(
+				self.results_path,
+				self.event_probability,
+				names_and_colors,
+				normalize=True,
+				collapse_repeats=True,
+				include_self=False,
+				min_count=1,
+				)
+			
 		all_parameters=[]
 
 		if self.categorize_behavior:

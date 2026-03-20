@@ -987,6 +987,229 @@ def plot_events(result_path,event_probability,time_points,names_and_colors,behav
 
 	print('The raster plot stored in: '+str(result_path))
 
+def plot_state_transition_map(
+    result_path,
+    event_probability,
+    names_and_colors,
+    normalize=True,
+    collapse_repeats=True,
+    include_self=False,
+    min_count=1,
+):
+	'''
+	Generate and save a state transition map from LabGym event_probability.
+
+	event_probability:
+		dict of ID -> list of [behavior_name, probability]
+	names_and_colors:
+		dict of behavior_name -> LabGym color definition
+	normalize:
+		if True, also save row-normalized transition probabilities
+	collapse_repeats:
+		if True, compress consecutive identical states so transitions are
+		state-to-state instead of frame-to-frame
+	include_self:
+		if False, ignore A->A transitions
+	min_count:
+		minimum raw count required before drawing an edge
+	'''
+
+	print('Exporting the state transition map for this analysis batch...')
+	print(datetime.datetime.now())
+
+	def _get_hex_color(color_info):
+		# LabGym color entries are usually like [gradient_start, '#RRGGBB']
+		# but keep this robust.
+		if isinstance(color_info, (list, tuple)):
+			for item in reversed(color_info):
+				if isinstance(item, str) and item.startswith('#') and len(item) == 7:
+					return item
+		if isinstance(color_info, str) and color_info.startswith('#') and len(color_info) == 7:
+			return color_info
+		return '#4C72B0'
+
+	# keep behavior order consistent with the model / UI order
+	behavior_names = list(names_and_colors.keys())
+	if len(behavior_names) == 0:
+		print('No behavior names found; state transition map skipped.')
+		return
+
+	name_to_idx = {name: idx for idx, name in enumerate(behavior_names)}
+	n_behaviors = len(behavior_names)
+
+	count_matrix = np.zeros((n_behaviors, n_behaviors), dtype=np.int32)
+
+	for animal_id in event_probability:
+
+		sequence = []
+
+		for event in event_probability[animal_id]:
+			behavior_name = event[0]
+
+			if behavior_name == 'NA':
+				continue
+			if behavior_name not in name_to_idx:
+				continue
+
+			sequence.append(behavior_name)
+
+		if len(sequence) < 2:
+			continue
+
+		if collapse_repeats:
+			compressed = [sequence[0]]
+			for state in sequence[1:]:
+				if state != compressed[-1]:
+					compressed.append(state)
+			sequence = compressed
+
+		if len(sequence) < 2:
+			continue
+
+		for i in range(len(sequence) - 1):
+			src = sequence[i]
+			dst = sequence[i + 1]
+
+			if (include_self is False) and (src == dst):
+				continue
+
+			count_matrix[name_to_idx[src], name_to_idx[dst]] += 1
+
+	count_df = pd.DataFrame(count_matrix, index=behavior_names, columns=behavior_names)
+	count_df.to_excel(
+		os.path.join(result_path, 'state_transition_counts.xlsx'),
+		index_label='from/to'
+	)
+
+	if normalize:
+		row_sums = count_matrix.sum(axis=1, keepdims=True).astype('float32')
+		prob_matrix = np.divide(
+			count_matrix.astype('float32'),
+			row_sums,
+			out=np.zeros_like(count_matrix, dtype='float32'),
+			where=row_sums != 0
+		)
+		prob_df = pd.DataFrame(prob_matrix, index=behavior_names, columns=behavior_names)
+		prob_df.to_excel(
+			os.path.join(result_path, 'state_transition_probabilities.xlsx'),
+			float_format='%.4f',
+			index_label='from/to'
+		)
+	else:
+		prob_matrix = count_matrix.astype('float32')
+
+	# ---------- draw map ----------
+	plt.style.use('classic')
+	fig, ax = plt.subplots(figsize=(8, 8))
+	ax.set_aspect('equal')
+	ax.axis('off')
+
+	radius = 1.0
+	angles = np.linspace(0, 2 * np.pi, n_behaviors, endpoint=False)
+	positions = {
+		name: (radius * np.cos(angle), radius * np.sin(angle))
+		for name, angle in zip(behavior_names, angles)
+	}
+
+	outgoing = count_matrix.sum(axis=1)
+	max_outgoing = max(outgoing.max(), 1)
+
+	# draw edges first
+	for i, src_name in enumerate(behavior_names):
+		for j, dst_name in enumerate(behavior_names):
+			value = count_matrix[i, j]
+
+			if value < min_count:
+				continue
+			if (include_self is False) and (i == j):
+				continue
+
+			x1, y1 = positions[src_name]
+			x2, y2 = positions[dst_name]
+
+			dx = x2 - x1
+			dy = y2 - y1
+			dist = math.sqrt(dx * dx + dy * dy)
+
+			if dist == 0:
+				continue
+
+			# shorten the arrow so it starts/ends near node borders
+			shrink = 0.16
+			x1s = x1 + dx * shrink
+			y1s = y1 + dy * shrink
+			x2s = x2 - dx * shrink
+			y2s = y2 - dy * shrink
+
+			line_width = 1.0 + 5.0 * (value / max(count_matrix.max(), 1))
+			alpha = 0.25 + 0.65 * (value / max(count_matrix.max(), 1))
+
+			ax.annotate(
+				'',
+				xy=(x2s, y2s),
+				xytext=(x1s, y1s),
+				arrowprops=dict(
+					arrowstyle='->',
+					lw=line_width,
+					alpha=alpha,
+					color='gray',
+					shrinkA=0,
+					shrinkB=0,
+					connectionstyle='arc3,rad=0.12'
+				)
+			)
+
+			# edge label
+			label_x = (x1s + x2s) / 2.0
+			label_y = (y1s + y2s) / 2.0
+			if normalize:
+				label_text = f'{prob_matrix[i, j]:.2f}'
+			else:
+				label_text = str(int(value))
+
+			ax.text(
+				label_x,
+				label_y,
+				label_text,
+				ha='center',
+				va='center',
+				fontsize=8,
+				bbox=dict(boxstyle='round,pad=0.15', fc='white', ec='none', alpha=0.7)
+			)
+
+	# draw nodes
+	for idx, behavior_name in enumerate(behavior_names):
+		x, y = positions[behavior_name]
+		node_size = 1200 + 2800 * (outgoing[idx] / max_outgoing)
+		node_color = _get_hex_color(names_and_colors[behavior_name])
+
+		ax.scatter(
+			[x], [y],
+			s=node_size,
+			c=[node_color],
+			edgecolors='black',
+			linewidths=1.2,
+			zorder=3
+		)
+
+		ax.text(
+			x, y,
+			behavior_name,
+			ha='center',
+			va='center',
+			fontsize=10,
+			color='black',
+			zorder=4
+		)
+
+	title_suffix = 'probabilities' if normalize else 'counts'
+	ax.set_title(f'State Transition Map ({title_suffix})', fontsize=14)
+
+	plt.tight_layout()
+	plt.savefig(os.path.join(result_path, 'state_transition_map.png'), dpi=300, bbox_inches='tight')
+	plt.close(fig)
+
+	print('State transition map exported!')
 
 def extract_frames(path_to_video,out_path,framewidth=None,start_t=0,duration=0,skip_redundant=1000):
 

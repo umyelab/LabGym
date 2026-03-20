@@ -48,6 +48,7 @@ from .tools import (
 	generate_patternimage,
 	generate_patternimage_all,
 	generate_patternimage_interact,
+	plot_state_transition_map,
 	)
 
 
@@ -1135,7 +1136,7 @@ class AnalyzeAnimalDetector():
 						stride=int(np.ceil(P_plot.shape[0]/max_frames_for_heatmap))
 						P_plot=P_plot[::stride,:]
 
-					plt.figure(figsize=(12,4))
+					plt.figure(figsize=(30, 10), dpi = 200)
 					
 					plt.imshow(
     					np.nan_to_num(P_plot, nan=0.0).T,
@@ -1151,7 +1152,7 @@ class AnalyzeAnimalDetector():
 					plt.tight_layout()
 					plt.savefig(
 						os.path.join(self.results_path,f'{animal_name}_probability_heatmap_ID{ID}.png'),
-						dpi=200
+						dpi=300
 					)
 					plt.close()
 
@@ -1695,6 +1696,26 @@ class AnalyzeAnimalDetector():
 				events_df=pd.DataFrame(self.event_probability[animal_name],index=self.all_time)
 				events_df.to_excel(os.path.join(self.results_path,animal_name+'_all_event_probability.xlsx'),float_format='%.2f',index_label='time/ID')
 
+			if self.categorize_behavior:
+
+				names_and_colors = {
+					behavior_name: self.all_behavior_parameters[animal_name][behavior_name]['color']
+					for behavior_name in self.all_behavior_parameters[animal_name]
+					}
+
+				animal_result_path = os.path.join(self.results_path, animal_name)
+				os.makedirs(animal_result_path, exist_ok=True)
+
+				plot_state_transition_map(
+					animal_result_path,
+					self.event_probability[animal_name],
+					names_and_colors,
+					normalize=True,
+					collapse_repeats=True,
+					include_self=False,
+					min_count=1,
+					)
+				
 			all_parameters=[]
 
 			if self.categorize_behavior:
