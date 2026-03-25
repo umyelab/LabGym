@@ -2166,40 +2166,50 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 
 	def init_ui(self):
 		sizer = wx.BoxSizer(wx.VERTICAL)
+		font = wx.Font(12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
 
-		cm_header_sizer = wx.BoxSizer(wx.HORIZONTAL)
-		
+		# Top header with label and toggle button
+		header_sizer = wx.BoxSizer(wx.HORIZONTAL)
 		cm_label = wx.StaticText(self, label="Confusion Matrix:")
-		font = cm_label.GetFont()
-		font.SetWeight(wx.FONTWEIGHT_BOLD)
 		cm_label.SetFont(font)
-		cm_header_sizer.Add(cm_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 10)
-
+		header_sizer.Add(cm_label, 1, wx.ALIGN_CENTER_VERTICAL)
+		
 		self.toggle_btn = wx.ToggleButton(self, label="Show Normalized (%)")
 		self.toggle_btn.Bind(wx.EVT_TOGGLEBUTTON, self.on_toggle_cm)
-		cm_header_sizer.Add(self.toggle_btn, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)
+		header_sizer.Add(self.toggle_btn, 0, wx.ALIGN_CENTER_VERTICAL)
+		
+		sizer.Add(header_sizer, 0, wx.EXPAND | wx.ALL, 10)
 
-		sizer.Add(cm_header_sizer, 0, wx.EXPAND)
-
-		num_classes = len(self.classnames)
+		# Grid setup
 		self.cm_grid = wx.grid.Grid(self)
-		self.cm_grid.CreateGrid(num_classes, num_classes)
-
-		self.cm_grid.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK, self.on_cell_click)
-
+		self.cm_grid.CreateGrid(len(self.classnames), len(self.classnames))
+		
 		for i, name in enumerate(self.classnames):
 			self.cm_grid.SetRowLabelValue(i, name)
 			self.cm_grid.SetColLabelValue(i, name)
 
+		self.cm_grid.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK, self.on_cell_click)
+		
 		self.update_grid_data()
 
 		self.cm_grid.AutoSize()
 		sizer.Add(self.cm_grid, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
 
-		perf_label = wx.StaticText(self, label="Per-Class Performance (Highlighting Precision < 60%):")
-		perf_label.SetFont(font)
-		sizer.Add(perf_label, 0, wx.ALL, 10)
+		# --- DROPDOWN HEADER FOR TABLE ---
+		table_header_sizer = wx.BoxSizer(wx.HORIZONTAL)
+		self.table_label = wx.StaticText(self, label="Highlight behaviors below 0.60: ")
+		self.table_label.SetFont(font)
+		
+		self.metric_choice = wx.Choice(self, choices=["F1-score", "Precision", "Recall"])
+		self.metric_choice.SetSelection(0) # Default to F1-score
+		self.metric_choice.Bind(wx.EVT_CHOICE, self.on_metric_change)
+		
+		table_header_sizer.Add(self.table_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 5)
+		table_header_sizer.Add(self.metric_choice, 0, wx.ALIGN_CENTER_VERTICAL)
+		
+		sizer.Add(table_header_sizer, 0, wx.ALL | wx.EXPAND, 10)
 
+		# --- TABLE SETUP ---
 		self.list_ctrl = wx.ListCtrl(self, style=wx.LC_REPORT | wx.BORDER_SUNKEN)
 		self.list_ctrl.InsertColumn(0, "Behavior", width=150)
 		self.list_ctrl.InsertColumn(1, "Precision", width=100)
@@ -2207,26 +2217,8 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 		self.list_ctrl.InsertColumn(3, "F1-Score", width=100)
 		self.list_ctrl.InsertColumn(4, "Support", width=100)
 
-		index = 0
-		for name in self.classnames:
-			if name in self.report:
-				metrics = self.report[name]
-				self.list_ctrl.InsertItem(index, name)
-
-				precision = float(metrics.get('precision', 0.0))
-				recall = float(metrics.get('recall', 0.0))
-				f1 = float(metrics.get('f1-score', 0.0))
-				support = float(metrics.get('support', 0.0))
-				
-				self.list_ctrl.SetItem(index, 1, f"{precision:.2f}")
-				self.list_ctrl.SetItem(index, 2, f"{recall:.2f}")
-				self.list_ctrl.SetItem(index, 3, f"{f1:.2f}")
-				self.list_ctrl.SetItem(index, 4, str(support))
-
-				if precision < 0.60:
-					self.list_ctrl.SetItemBackgroundColour(index, wx.Colour(255, 200, 200))
-
-				index += 1
+		# Populate the table the first time it opens
+		self.update_table_data()
 
 		sizer.Add(self.list_ctrl, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
 
@@ -2245,15 +2237,36 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 		data_to_use = self.cm_normalized if self.is_normalized else self.cm
 
 		for i in range(len(self.classnames)):
+			row_sum = sum(self.cm[i]) if i < cm_rows else 0
+			
 			for j in range(len(self.classnames)):
 				if i < cm_rows and j < cm_cols:
 					val = f"{data_to_use[i][j]}%" if self.is_normalized else str(data_to_use[i][j])
+					
+					# --- HEAT MAP LOGIC ---
+					if i != j and self.cm[i][j] > 0:
+						# Off-diagonal errors: scale dark to bright red based on error rate
+						err_pct = self.cm[i][j] / row_sum if row_sum > 0 else 0
+						intensity = min(1.0, err_pct / 0.5) 
+						r_val = int(40 + (215 * intensity))
+						bg_color = wx.Colour(r_val, 0, 0)
+					elif i == j and row_sum > 0:
+						# Diagonal correct predictions: scale dark to bright green
+						accuracy = self.cm[i][j] / row_sum if row_sum > 0 else 0
+						g_val = int(40 + (215 * accuracy))
+						bg_color = wx.Colour(0, g_val, 0)
+					else:
+						# Empty or zero cells
+						bg_color = wx.Colour(30, 30, 30)
 				else:
 					val = "0.0%" if self.is_normalized else "0"
+					bg_color = wx.Colour(30, 30, 30)
 				
 				self.cm_grid.SetCellValue(i, j, val)
 				self.cm_grid.SetReadOnly(i, j, True)
 				self.cm_grid.SetCellAlignment(i, j, wx.ALIGN_CENTER, wx.ALIGN_CENTER)
+				self.cm_grid.SetCellBackgroundColour(i, j, bg_color)
+				self.cm_grid.SetCellTextColour(i, j, wx.Colour(255, 255, 255))
 		
 		self.cm_grid.ForceRefresh()
 
@@ -2266,10 +2279,53 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 		
 		self.update_grid_data()
 
+	def on_metric_change(self, event):
+		self.update_table_data()
+
+	def update_table_data(self):
+		self.list_ctrl.DeleteAllItems()
+		
+		selection = self.metric_choice.GetStringSelection()
+		metric_key = 'f1-score'
+		if selection == "Precision":
+			metric_key = 'precision'
+		elif selection == "Recall":
+			metric_key = 'recall'
+
+		index = 0
+		for name in self.classnames:
+			if name in self.report and isinstance(self.report[name], dict):
+				metrics = self.report[name]
+				self.list_ctrl.InsertItem(index, name)
+
+				precision = float(metrics.get('precision', 0.0))
+				recall = float(metrics.get('recall', 0.0))
+				f1 = float(metrics.get('f1-score', 0.0))
+				support = float(metrics.get('support', 0.0))
+				
+				self.list_ctrl.SetItem(index, 1, f"{precision:.2f}")
+				self.list_ctrl.SetItem(index, 2, f"{recall:.2f}")
+				self.list_ctrl.SetItem(index, 3, f"{f1:.2f}")
+				self.list_ctrl.SetItem(index, 4, str(int(support)))
+
+				# Dynamic highlighting based on dropdown
+				val_to_check = float(metrics.get(metric_key, 0.0))
+				if val_to_check < 0.60:
+					self.list_ctrl.SetItemBackgroundColour(index, wx.Colour(150, 0, 0))
+				else:
+					self.list_ctrl.SetItemBackgroundColour(index, wx.Colour(30, 30, 30))
+				
+				self.list_ctrl.SetItemTextColour(index, wx.Colour(255, 255, 255))
+				index += 1
+
 	def on_cell_click(self, event):
 		row = event.GetRow()
 		col = event.GetCol()
-
+		
+		if row == -1 or col == -1:
+			event.Skip()
+			return
+		
 		if row < len(self.classnames) and col < len(self.classnames):
 			true_class = self.classnames[row]
 			pred_class = self.classnames[col]
@@ -2277,13 +2333,13 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 			key = (true_class, pred_class)
 			examples = self.example_map.get(key, [])
 			
-			if not examples:
-				wx.MessageBox(f"No examples found for True='{true_class}' and Predicted='{pred_class}'.", "Info", wx.OK | wx.ICON_INFORMATION)
-			else:
+			if examples:
 				viewer = ExampleViewerDialog(self, true_class, pred_class, examples)
 				viewer.ShowModal()
 				viewer.Destroy()
-				
+			else:
+				wx.MessageBox(f"No examples found for True: '{true_class}', Predicted: '{pred_class}'", "No Data", wx.OK | wx.ICON_INFORMATION)
+
 		event.Skip()
 
 class ExampleViewerDialog(wx.Dialog):
