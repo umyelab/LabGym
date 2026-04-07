@@ -40,7 +40,7 @@ from .analyzebehavior import AnalyzeAnimal
 from .analyzebehavior_dt import AnalyzeAnimalDetector
 from LabGym import config
 from .minedata import data_mining
-from .tools import plot_events, parse_all_events_file, calculate_distances
+from .tools import plot_events, parse_all_events_file, calculate_distances, plot_state_transition_map
 from .gui_utils import add_info_button, INFO_COLOUR_S3, INFO_COLOUR_S4
 
 
@@ -1550,3 +1550,303 @@ class PanelLv2_CalculateDistances(wx.Panel):
 				all_data=pd.concat(all_data,keys=names,names=['File name','ID/parameter'])
 				all_data.drop(all_data.columns[0],axis=1,inplace=True)
 				all_data.to_excel(os.path.join(self.out_path,'all_summary.xlsx'),float_format='%.2f')
+
+class PanelLv2_StateTransitionMap(wx.Panel):
+
+	'''
+	The 'State Transition Map' functional unit
+	'''
+
+	def __init__(self, parent):
+
+		super().__init__(parent)
+		self.notebook = parent
+
+		self.path_to_events=None
+		self.result_path=None
+		self.behavior_names=[]
+		self.behavior_to_exclude=[]
+
+		self.normalize=True
+		self.collapse_repeats=True
+		self.include_self=False
+		self.min_count=1
+
+		self.display_window()
+
+
+	def display_window(self):
+
+		panel=self
+		boxsizer=wx.BoxSizer(wx.VERTICAL)
+
+		module_input=wx.BoxSizer(wx.HORIZONTAL)
+		button_input=wx.Button(panel,label='Select an all_event_probability\nfile',size=(300,40))
+		button_input.Bind(wx.EVT_BUTTON,self.select_events_file)
+		wx.Button.SetToolTip(
+			button_input,
+			'Select an all_event_probability.xlsx file produced by LabGym analysis.'
+		)
+		self.text_input=wx.StaticText(
+			panel,
+			label='None.',
+			style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END
+		)
+		module_input.Add(button_input,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		module_input.Add(self.text_input,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(0,10,0)
+		boxsizer.Add(module_input,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(0,5,0)
+
+		module_output=wx.BoxSizer(wx.HORIZONTAL)
+		button_output=wx.Button(panel,label='Select a folder to store\nthe state map results',size=(300,40))
+		button_output.Bind(wx.EVT_BUTTON,self.select_outpath)
+		wx.Button.SetToolTip(
+			button_output,
+			'Select the folder where the transition count table, probability table, and map image will be saved.'
+		)
+		self.text_output=wx.StaticText(
+			panel,
+			label='None.',
+			style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END
+		)
+		module_output.Add(button_output,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		module_output.Add(self.text_output,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(module_output,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(0,5,0)
+
+		module_exclude=wx.BoxSizer(wx.HORIZONTAL)
+		button_exclude=wx.Button(panel,label='Select behaviors to exclude\nfrom the map',size=(300,40))
+		button_exclude.Bind(wx.EVT_BUTTON,self.select_exclusions)
+		wx.Button.SetToolTip(
+			button_exclude,
+			'Exclude behaviors such as "other", "unknown", or any catch-all label from the transition map.'
+		)
+		self.text_exclude=wx.StaticText(
+			panel,
+			label='Default: none.',
+			style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END
+		)
+		module_exclude.Add(button_exclude,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		module_exclude.Add(self.text_exclude,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(module_exclude,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(0,5,0)
+
+		module_options=wx.BoxSizer(wx.HORIZONTAL)
+		button_options=wx.Button(panel,label='Set transition map\noptions',size=(300,40))
+		button_options.Bind(wx.EVT_BUTTON,self.set_options)
+		wx.Button.SetToolTip(
+			button_options,
+			'Set whether to normalize rows, collapse repeated states, include self-transitions, and minimum edge count.'
+		)
+		self.text_options=wx.StaticText(
+			panel,
+			label='Defaults: normalized, collapse repeats, exclude self transitions, min count = 1.',
+			style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END
+		)
+		module_options.Add(button_options,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		module_options.Add(self.text_options,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(module_options,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(0,5,0)
+
+		button_generate=wx.Button(panel,label='Generate the state transition map',size=(300,40))
+		button_generate.Bind(wx.EVT_BUTTON,self.generate_map)
+		wx.Button.SetToolTip(
+			button_generate,
+			'Generate and save the state transition map and associated spreadsheets.'
+		)
+		boxsizer.Add(0,5,0)
+		boxsizer.Add(button_generate,0,wx.RIGHT|wx.ALIGN_RIGHT,90)
+		boxsizer.Add(0,10,0)
+
+		panel.SetSizer(boxsizer)
+
+		self.Centre()
+		self.Show(True)
+
+
+	def select_events_file(self,event):
+
+		wildcard='Excel files (*.xlsx;*.xls)|*.xlsx;*.xls'
+		dialog=wx.FileDialog(
+			self,
+			'Select all_event_probability.xlsx',
+			'',
+			'',
+			wildcard,
+			style=wx.FD_OPEN|wx.FD_FILE_MUST_EXIST
+		)
+
+		if dialog.ShowModal()==wx.ID_OK:
+			self.path_to_events=dialog.GetPath()
+			self.text_input.SetLabel('Selected: '+self.path_to_events+'.')
+
+			try:
+				_,_,behavior_names=parse_all_events_file(self.path_to_events)
+				self.behavior_names=behavior_names
+				self.behavior_to_exclude=[]
+				self.text_exclude.SetLabel('Default: none.')
+			except Exception as exc:
+				wx.MessageBox(
+					'Failed to parse the selected file:\n'+str(exc),
+					'Error',
+					wx.OK|wx.ICON_ERROR
+				)
+				self.path_to_events=None
+				self.behavior_names=[]
+
+		dialog.Destroy()
+
+
+	def select_outpath(self,event):
+
+		dialog=wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
+		if dialog.ShowModal()==wx.ID_OK:
+			self.result_path=dialog.GetPath()
+			self.text_output.SetLabel('Results will be in: '+self.result_path+'.')
+		dialog.Destroy()
+
+
+	def select_exclusions(self,event):
+
+		if self.path_to_events is None or len(self.behavior_names)==0:
+			wx.MessageBox(
+				'Please select an all_event_probability file first.',
+				'Error',
+				wx.OK|wx.ICON_ERROR
+			)
+			return
+
+		dialog=wx.MultiChoiceDialog(
+			self,
+			message='Select behaviors to exclude from the state transition map',
+			caption='Behaviors to exclude',
+			choices=self.behavior_names
+		)
+
+		if dialog.ShowModal()==wx.ID_OK:
+			self.behavior_to_exclude=[self.behavior_names[i] for i in dialog.GetSelections()]
+		else:
+			self.behavior_to_exclude=[]
+
+		if len(self.behavior_to_exclude)==0:
+			self.text_exclude.SetLabel('Default: none.')
+		else:
+			self.text_exclude.SetLabel('Excluded: '+str(self.behavior_to_exclude)+'.')
+
+		dialog.Destroy()
+
+
+	def set_options(self,event):
+
+		dialog=wx.MessageDialog(
+			self,
+			'Normalize transition rows?',
+			'Normalize?',
+			wx.YES_NO|wx.ICON_QUESTION
+		)
+		self.normalize=(dialog.ShowModal()==wx.ID_YES)
+		dialog.Destroy()
+
+		dialog=wx.MessageDialog(
+			self,
+			'Collapse repeated consecutive states?\n'
+			'Recommended: Yes, to summarize state-to-state transitions.',
+			'Collapse repeats?',
+			wx.YES_NO|wx.ICON_QUESTION
+		)
+		self.collapse_repeats=(dialog.ShowModal()==wx.ID_YES)
+		dialog.Destroy()
+
+		dialog=wx.MessageDialog(
+			self,
+			'Include self-transitions (A -> A)?',
+			'Include self transitions?',
+			wx.YES_NO|wx.ICON_QUESTION
+		)
+		self.include_self=(dialog.ShowModal()==wx.ID_YES)
+		dialog.Destroy()
+
+		dialog=wx.NumberEntryDialog(
+			self,
+			'Enter the minimum raw transition count required to draw an edge',
+			'Minimum edge count:',
+			'Minimum edge count',
+			1,1,1000000
+		)
+		if dialog.ShowModal()==wx.ID_OK:
+			self.min_count=int(dialog.GetValue())
+			if self.min_count<1:
+				self.min_count=1
+		dialog.Destroy()
+
+		self.text_options.SetLabel(
+			'Options: normalize='+str(self.normalize)
+			+', collapse repeats='+str(self.collapse_repeats)
+			+', include self='+str(self.include_self)
+			+', min count='+str(self.min_count)+'.'
+		)
+
+
+	def generate_map(self,event):
+
+		if self.path_to_events is None or self.result_path is None:
+			wx.MessageBox(
+				'Please select an input file and an output folder.',
+				'Error',
+				wx.OK|wx.ICON_ERROR
+			)
+			return
+
+		try:
+			event_probability,_,behavior_names=parse_all_events_file(self.path_to_events)
+
+			behavior_names=[b for b in behavior_names if b not in self.behavior_to_exclude]
+
+			if len(behavior_names)==0:
+				wx.MessageBox(
+					'No behaviors remain after exclusion.',
+					'Error',
+					wx.OK|wx.ICON_ERROR
+				)
+				return
+
+			filtered_event_probability={}
+			for animal_id in event_probability:
+				filtered_event_probability[animal_id]=[]
+				for behavior_name,probability in event_probability[animal_id]:
+					if behavior_name in self.behavior_to_exclude:
+						filtered_event_probability[animal_id].append(['NA',-1])
+					else:
+						filtered_event_probability[animal_id].append([behavior_name,probability])
+
+			names_and_colors={}
+			complete_colors=list(mpl.colors.cnames.values())
+			for i,behavior_name in enumerate(behavior_names):
+				if i<len(complete_colors):
+					names_and_colors[behavior_name]=['#ffffff',complete_colors[i]]
+				else:
+					names_and_colors[behavior_name]=['#ffffff','#ffffff']
+
+			plot_state_transition_map(
+				self.result_path,
+				filtered_event_probability,
+				names_and_colors,
+				normalize=self.normalize,
+				collapse_repeats=self.collapse_repeats,
+				include_self=self.include_self,
+				min_count=self.min_count,
+			)
+
+			wx.MessageBox(
+				'State transition map generated successfully.',
+				'Done',
+				wx.OK|wx.ICON_INFORMATION
+			)
+
+		except Exception as exc:
+			wx.MessageBox(
+				'Failed to generate state transition map:\n'+str(exc),
+				'Error',
+				wx.OK|wx.ICON_ERROR
+			)
