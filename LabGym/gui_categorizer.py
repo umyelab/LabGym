@@ -40,6 +40,7 @@ import wx
 import wx.richtext
 import wx.lib.buttons as wxbuttons
 import wx.grid
+import wx.html
 
 # Local application/library specific imports.
 logger.debug('importing %s ...', '.analyzebehavior')
@@ -2168,7 +2169,6 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 		sizer = wx.BoxSizer(wx.VERTICAL)
 		font = wx.Font(12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
 
-		# Top header with label and toggle button
 		header_sizer = wx.BoxSizer(wx.HORIZONTAL)
 		cm_label = wx.StaticText(self, label="Confusion Matrix:")
 		cm_label.SetFont(font)
@@ -2180,7 +2180,6 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 		
 		sizer.Add(header_sizer, 0, wx.EXPAND | wx.ALL, 10)
 
-		# Grid setup
 		self.cm_grid = wx.grid.Grid(self)
 		self.cm_grid.CreateGrid(len(self.classnames), len(self.classnames))
 		
@@ -2195,32 +2194,46 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 		self.cm_grid.AutoSize()
 		sizer.Add(self.cm_grid, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
 
-		# --- DROPDOWN HEADER FOR TABLE ---
+		bottom_dashboard_sizer = wx.BoxSizer(wx.HORIZONTAL)
+
+		nlp_sizer = wx.BoxSizer(wx.VERTICAL)
+		nlp_label = wx.StaticText(self, label="What is the Confusion Matrix telling us?")
+		nlp_label.SetFont(font)
+		nlp_sizer.Add(nlp_label, 0, wx.BOTTOM, 5)
+
+		self.nlp_html = wx.html.HtmlWindow(self, style=wx.html.HW_SCROLLBAR_AUTO | wx.BORDER_NONE)
+		html_content = self.generate_diagnostic_insights_html(top_n=3, support_threshold=50)
+		self.nlp_html.SetPage(html_content)
+		self.nlp_html.Bind(wx.html.EVT_HTML_LINK_CLICKED, self.on_insight_link_clicked)
+		
+		nlp_sizer.Add(self.nlp_html, 1, wx.EXPAND) 
+		bottom_dashboard_sizer.Add(nlp_sizer, 1, wx.EXPAND | wx.RIGHT, 10)
+
+		table_sizer = wx.BoxSizer(wx.VERTICAL)
+		
 		table_header_sizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.table_label = wx.StaticText(self, label="Highlight behaviors below 0.60: ")
 		self.table_label.SetFont(font)
-		
 		self.metric_choice = wx.Choice(self, choices=["F1-score", "Precision", "Recall"])
-		self.metric_choice.SetSelection(0) # Default to F1-score
+		self.metric_choice.SetSelection(0)
 		self.metric_choice.Bind(wx.EVT_CHOICE, self.on_metric_change)
 		
 		table_header_sizer.Add(self.table_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 5)
 		table_header_sizer.Add(self.metric_choice, 0, wx.ALIGN_CENTER_VERTICAL)
-		
-		sizer.Add(table_header_sizer, 0, wx.ALL | wx.EXPAND, 10)
+		table_sizer.Add(table_header_sizer, 0, wx.BOTTOM, 5)
 
-		# --- TABLE SETUP ---
 		self.list_ctrl = wx.ListCtrl(self, style=wx.LC_REPORT | wx.BORDER_SUNKEN)
-		self.list_ctrl.InsertColumn(0, "Behavior", width=150)
-		self.list_ctrl.InsertColumn(1, "Precision", width=100)
-		self.list_ctrl.InsertColumn(2, "Recall", width=100)
-		self.list_ctrl.InsertColumn(3, "F1-Score", width=100)
-		self.list_ctrl.InsertColumn(4, "Support", width=100)
-
-		# Populate the table the first time it opens
+		self.list_ctrl.InsertColumn(0, "Behavior", width=120)
+		self.list_ctrl.InsertColumn(1, "Precision", width=80)
+		self.list_ctrl.InsertColumn(2, "Recall", width=80)
+		self.list_ctrl.InsertColumn(3, "F1", width=80)
+		self.list_ctrl.InsertColumn(4, "Support", width=80)
 		self.update_table_data()
 
-		sizer.Add(self.list_ctrl, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
+		table_sizer.Add(self.list_ctrl, 1, wx.EXPAND)
+		bottom_dashboard_sizer.Add(table_sizer, 1, wx.EXPAND | wx.LEFT, 10)
+
+		sizer.Add(bottom_dashboard_sizer, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
 
 		btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
 		close_btn = wx.Button(self, wx.ID_CLOSE, "Close")
@@ -2243,20 +2256,16 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 				if i < cm_rows and j < cm_cols:
 					val = f"{data_to_use[i][j]}%" if self.is_normalized else str(data_to_use[i][j])
 					
-					# --- HEAT MAP LOGIC ---
 					if i != j and self.cm[i][j] > 0:
-						# Off-diagonal errors: scale dark to bright red based on error rate
 						err_pct = self.cm[i][j] / row_sum if row_sum > 0 else 0
 						intensity = min(1.0, err_pct / 0.5) 
 						r_val = int(40 + (215 * intensity))
 						bg_color = wx.Colour(r_val, 0, 0)
 					elif i == j and row_sum > 0:
-						# Diagonal correct predictions: scale dark to bright green
 						accuracy = self.cm[i][j] / row_sum if row_sum > 0 else 0
 						g_val = int(40 + (215 * accuracy))
 						bg_color = wx.Colour(0, g_val, 0)
 					else:
-						# Empty or zero cells
 						bg_color = wx.Colour(30, 30, 30)
 				else:
 					val = "0.0%" if self.is_normalized else "0"
@@ -2278,6 +2287,22 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 			self.toggle_btn.SetLabel("Show Normalized (%)")
 		
 		self.update_grid_data()
+
+	def on_insight_link_clicked(self, event):
+		"""Highlights the specific grid cell when a user clicks the diagnostic text."""
+		href = event.GetLinkInfo().GetHref()
+		
+		if href.startswith('cell:'):
+			coords = href.replace('cell:', '').split(',')
+			row, col = int(coords[0]), int(coords[1])
+
+			self.update_grid_data()
+
+			self.cm_grid.SetCellBackgroundColour(row, col, wx.Colour(255, 203, 5))
+			self.cm_grid.SetCellTextColour(row, col, wx.Colour(0, 0, 0))
+			self.cm_grid.ForceRefresh()
+
+			self.cm_grid.MakeCellVisible(row, col)
 
 	def on_metric_change(self, event):
 		self.update_table_data()
@@ -2308,7 +2333,6 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 				self.list_ctrl.SetItem(index, 3, f"{f1:.2f}")
 				self.list_ctrl.SetItem(index, 4, str(int(support)))
 
-				# Dynamic highlighting based on dropdown
 				val_to_check = float(metrics.get(metric_key, 0.0))
 				if val_to_check < 0.60:
 					self.list_ctrl.SetItemBackgroundColour(index, wx.Colour(150, 0, 0))
@@ -2317,6 +2341,60 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 				
 				self.list_ctrl.SetItemTextColour(index, wx.Colour(255, 255, 255))
 				index += 1
+
+	def generate_diagnostic_insights_html(self, top_n=3, support_threshold=50):
+		cm_rows = len(self.cm)
+		errors = []
+		perfect_classes = []
+
+		for i in range(cm_rows):
+			true_class = self.classnames[i]
+			support_true = self.report.get(true_class, {}).get('support', 0)
+			
+			if support_true == 0:
+				continue 
+
+			row_errors = sum(self.cm[i]) - self.cm[i][i]
+			if row_errors == 0:
+				perfect_classes.append(true_class)
+
+			for j in range(cm_rows):
+				if i != j and self.cm[i][j] > 0:
+					errors.append((self.cm[i][j], i, j))
+
+		errors.sort(reverse=True, key=lambda x: x[0])
+
+		html = "<body bgcolor='#141414' text='#F8FAFC' style='font-family: Arial; font-size: 14px;'>"
+		
+		if not errors:
+			html += "<h3 style='color: #4ADE80;'>Everything looks great!</h3><p>No major confusions detected.</p>"
+		else:
+			html += "<h3 style='color: #FFCB05; margin-bottom: 10px; margin-top: 0;'>Here is where the Categorizer is struggling:</h3>"
+			
+			for count, i, j in errors[:top_n]:
+				true_class = self.classnames[i]
+				pred_class = self.classnames[j]
+				support_true = self.report.get(true_class, {}).get('support', 0)
+				support_pred = self.report.get(pred_class, {}).get('support', 0)
+
+				link = f"<a href='cell:{i},{j}' style='color: #60A5FA; text-decoration: none;'><b>{true_class} &#8594; {pred_class}</b></a>"
+				
+				html += "<div style='background-color: #1e1e1e; border-left: 4px solid #FFCB05; padding: 10px; margin-bottom: 12px; border-radius: 4px;'>"
+				
+				if support_true >= support_threshold and support_pred >= support_threshold:
+					html += f"<p style='margin: 0;'>{link} ({count} errors)<br><br><span style='color: #94a3b8;'><b>Diagnosis:</b> Both behaviors have robust training data. Because the AI is still confusing them, they might be visually redundant. Consider merging these labels.</span></p>"
+				else:
+					lowest_class = true_class if support_true < support_pred else pred_class
+					html += f"<p style='margin: 0;'>{link} ({count} errors)<br><br><span style='color: #94a3b8;'><b>Diagnosis:</b> The model hasn't seen enough of <i>{lowest_class}</i> to learn it well. Adding more video examples should help clear this up.</span></p>"
+				
+				html += "</div>"
+
+		if perfect_classes:
+			html += "<br><h3 style='color: #4ADE80; margin-bottom: 5px;'>What's working perfectly:</h3>"
+			html += "<p style='margin-top: 0;'>Zero confusions predicting: <b>" + ", ".join(perfect_classes) + "</b></p>"
+
+		html += "</body>"
+		return html
 
 	def on_cell_click(self, event):
 		row = event.GetRow()
