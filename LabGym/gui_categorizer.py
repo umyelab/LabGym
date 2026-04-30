@@ -2191,22 +2191,41 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 		
 		self.update_grid_data()
 
+		self.cm_grid.SetRowLabelSize(wx.grid.GRID_AUTOSIZE)
+		self.cm_grid.SetColLabelSize(wx.grid.GRID_AUTOSIZE)
+
 		self.cm_grid.AutoSize()
 		sizer.Add(self.cm_grid, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
 
 		bottom_dashboard_sizer = wx.BoxSizer(wx.HORIZONTAL)
 
 		nlp_sizer = wx.BoxSizer(wx.VERTICAL)
-		nlp_label = wx.StaticText(self, label="What is the Confusion Matrix telling us?")
-		nlp_label.SetFont(font)
-		nlp_sizer.Add(nlp_label, 0, wx.BOTTOM, 5)
+
+		self.synopsis_label = wx.StaticText(self, label="Analyzing model performance...")
+		self.synopsis_label.SetFont(font)
+		nlp_sizer.Add(self.synopsis_label, 0, wx.BOTTOM | wx.ALL, 5)
+
+		btn_row_sizer = wx.BoxSizer(wx.HORIZONTAL)
+		self.btn_major = wx.Button(self, label="🔴 Major Confusions")
+		self.btn_minor = wx.Button(self, label="🟡 Minor Confusions")
+		self.btn_successes = wx.Button(self, label="🟢 Successes")
+		self.btn_help = wx.Button(self, label="🔵 What is this?")
+
+		self.btn_major.Bind(wx.EVT_BUTTON, self.show_major_confusions_view)
+		self.btn_minor.Bind(wx.EVT_BUTTON, self.show_minor_confusions_view)
+		self.btn_successes.Bind(wx.EVT_BUTTON, self.show_successes_view)
+		self.btn_help.Bind(wx.EVT_BUTTON, self.show_help_view)
+
+		btn_row_sizer.Add(self.btn_major, 0, wx.RIGHT, 5)
+		btn_row_sizer.Add(self.btn_minor, 0, wx.RIGHT, 5)
+		btn_row_sizer.Add(self.btn_successes, 0, wx.RIGHT, 5)
+		btn_row_sizer.Add(self.btn_help, 0, 0, 0)
+		nlp_sizer.Add(btn_row_sizer, 0, wx.BOTTOM | wx.LEFT, 5)
 
 		self.nlp_html = wx.html.HtmlWindow(self, style=wx.html.HW_SCROLLBAR_AUTO | wx.BORDER_NONE)
-		html_content = self.generate_diagnostic_insights_html(top_n=3, support_threshold=50)
-		self.nlp_html.SetPage(html_content)
 		self.nlp_html.Bind(wx.html.EVT_HTML_LINK_CLICKED, self.on_insight_link_clicked)
 		
-		nlp_sizer.Add(self.nlp_html, 1, wx.EXPAND) 
+		nlp_sizer.Add(self.nlp_html, 1, wx.EXPAND | wx.ALL, 5) 
 		bottom_dashboard_sizer.Add(nlp_sizer, 1, wx.EXPAND | wx.RIGHT, 10)
 
 		table_sizer = wx.BoxSizer(wx.VERTICAL)
@@ -2241,6 +2260,9 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 		btn_sizer.Add(close_btn, 0, wx.ALL, 10)
 		sizer.Add(btn_sizer, 0, wx.ALIGN_RIGHT)
 
+		self.analyze_confusion_data()
+		self.show_major_confusions_view(None)
+		
 		self.SetSizer(sizer)
 		self.Layout()
 
@@ -2289,20 +2311,217 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 		self.update_grid_data()
 
 	def on_insight_link_clicked(self, event):
-		"""Highlights the specific grid cell when a user clicks the diagnostic text."""
+		"""Highlights the specific grid cell or row when a user clicks the diagnostic text."""
 		href = event.GetLinkInfo().GetHref()
+		
+		self.update_grid_data()
 		
 		if href.startswith('cell:'):
 			coords = href.replace('cell:', '').split(',')
 			row, col = int(coords[0]), int(coords[1])
-
-			self.update_grid_data()
-
 			self.cm_grid.SetCellBackgroundColour(row, col, wx.Colour(255, 203, 5))
 			self.cm_grid.SetCellTextColour(row, col, wx.Colour(0, 0, 0))
-			self.cm_grid.ForceRefresh()
-
 			self.cm_grid.MakeCellVisible(row, col)
+
+		elif href.startswith('row:'):
+			row = int(href.replace('row:', ''))
+			self.cm_grid.MakeCellVisible(row, row)
+			
+			self.cm_grid.SetCellBackgroundColour(row, row, wx.Colour(0, 255, 255))
+			self.cm_grid.SetCellTextColour(row, row, wx.Colour(0, 0, 0))
+			
+			cm_rows = len(self.cm)
+			confusions = []
+			for j in range(cm_rows):
+				if row != j and self.cm[row][j] > 0:
+					confusions.append((self.cm[row][j], j))
+			
+			confusions.sort(reverse=True, key=lambda x: x[0])
+			for err_val, col in confusions[:3]:
+				self.cm_grid.SetCellBackgroundColour(row, col, wx.Colour(255, 203, 5))
+				self.cm_grid.SetCellTextColour(row, col, wx.Colour(0, 0, 0))
+
+		self.cm_grid.ForceRefresh()
+		self.cm_grid.ClearSelection()
+
+	def analyze_confusion_data(self):
+		"""Runs once to pre-calculate errors and successes using proportional math."""
+		cm_rows = len(self.cm)
+		self.nlp_major = []
+		self.nlp_minor = []
+		self.nlp_success = []
+		self.nlp_meaningless = []
+
+		total_support = sum(self.report.get(self.classnames[i], {}).get('support', 0) for i in range(cm_rows))
+		
+		for i in range(cm_rows):
+			true_class = self.classnames[i]
+			metrics = self.report.get(true_class, {})
+			support = float(metrics.get('support', 0))
+			f1_score = float(metrics.get('f1-score', 0.0))
+			
+			if support == 0:
+				continue 
+
+			min_support_threshold = max(20, total_support * 0.01)
+			if support < min_support_threshold:
+				self.nlp_meaningless.append(true_class)
+				continue
+
+			if f1_score >= 0.85:
+				self.nlp_success.append({
+					'index': i,
+					'class': true_class,
+					'f1': f1_score,
+					'support': support
+				})
+				continue
+
+			found_major_confusion = False
+			for j in range(cm_rows):
+				if i != j and self.cm[i][j] > 0:
+					error_count = self.cm[i][j]
+					error_proportion = error_count / support
+					
+					if error_proportion >= 0.10:
+						self.nlp_major.append((error_count, i, j, error_proportion))
+						found_major_confusion = True
+
+			if not found_major_confusion:
+				row_errors = sum(self.cm[i]) - self.cm[i][i]
+				pct_errors = (row_errors / support) * 100 if support > 0 else 0
+
+				specific_confusions = []
+				for j in range(cm_rows):
+					if i != j and self.cm[i][j] > 0:
+						specific_confusions.append((self.cm[i][j], self.classnames[j]))
+				
+				specific_confusions.sort(reverse=True, key=lambda x: x[0])
+				top_specifics = specific_confusions[:3]
+
+				self.nlp_minor.append({
+					'index': i,
+					'class': true_class,
+					'support': support,
+					'total_errors': row_errors,
+					'pct_errors': pct_errors,
+					'top_confusions': top_specifics
+				})
+
+		self.nlp_major.sort(reverse=True, key=lambda x: x[0])
+
+		major_count = len(self.nlp_major)
+		if major_count == 0:
+			self.synopsis_label.SetLabel("No major systematic confusions detected. Model looks great!")
+		else:
+			self.synopsis_label.SetLabel(f"{major_count} major systematic confusions detected. See Confusions for analysis.")
+
+
+	def show_major_confusions_view(self, event=None):
+		html = "<body bgcolor='#141414' text='#F8FAFC' style='font-family: Arial; font-size: 14px;'>"
+		
+		if not self.nlp_major:
+			html += "<h3 style='color: #4ADE80;'>Everything looks great!</h3><p>No major systematic confusions detected.</p>"
+		else:
+			html += "<h3 style='color: #FFCB05; margin-bottom: 10px; margin-top: 0;'>Major Systematic Confusions:</h3>"
+			for count, i, j, prop in self.nlp_major[:5]: 
+				true_class = self.classnames[i]
+				pred_class = self.classnames[j]
+				support_true = self.report.get(true_class, {}).get('support', 0)
+				support_pred = self.report.get(pred_class, {}).get('support', 0)
+				prop_pct = round(prop * 100, 1)
+
+				link = f"<a href='cell:{i},{j}' style='color: #60A5FA; text-decoration: none;'><b>{true_class} &#8594; {pred_class}</b></a>"
+				html += "<div style='background-color: #1e1e1e; border-left: 4px solid #FFCB05; padding: 10px; margin-bottom: 12px; border-radius: 4px;'>"
+				
+				error_txt = f"<span style='color: #F87171;'>{count} errors, {prop_pct}% of {true_class} data</span>"
+				
+				if support_true >= 50 and support_pred >= 50:
+					html += f"<p style='margin: 0;'>{link} ({error_txt})<br><br><span style='color: #94a3b8;'><b>Diagnosis:</b> Both behaviors have robust training data. Because the Categorizer systematically confuses them, they might be visually redundant. Consider merging these labels.</span></p>"
+				else:
+					lowest_class = true_class if support_true < support_pred else pred_class
+					html += f"<p style='margin: 0;'>{link} ({error_txt})<br><br><span style='color: #94a3b8;'><b>Diagnosis:</b> The Categorizer hasn't seen enough of <i>{lowest_class}</i> to learn it well. Adding more video examples should help clear this up.</span></p>"
+				html += "</div>"
+		
+		html += "</body>"
+		self.nlp_html.SetPage(html)
+
+	def show_minor_confusions_view(self, event=None):
+		html = "<body bgcolor='#141414' text='#F8FAFC' style='font-family: Arial; font-size: 14px;'>"
+		
+		if not self.nlp_minor:
+			html += "<h3 style='color: #4ADE80;'>Everything looks great!</h3><p>No dispersed minor confusions detected.</p>"
+		else:
+			html += "<h3 style='color: #F87171; margin-bottom: 10px; margin-top: 0;'>Dispersed / Minor Confusions:</h3>"
+			html += "<p style='margin-top: 0;'>The Categorizer struggles with these behaviors, but the mistakes are scattered across many categories rather than just one. This usually indicates weak feature extraction signals, highly variable subject movement, or simply, too few video examples.</p>"
+
+			for mc in self.nlp_minor:
+				c_idx = mc['index']
+				c_name = mc['class']
+				supp = int(mc['support'])
+				errs = mc['total_errors']
+				pct = round(mc['pct_errors'], 1)
+				
+				warning = " ⚠️ (Low Support)" if supp < 100 else ""
+				link = f"<a href='row:{c_idx}' style='color: #60A5FA; text-decoration: none;'><b>{c_name}</b></a>"
+
+				html += f"<div style='background-color: #1e1e1e; border-left: 4px solid #F87171; padding: 10px; margin-bottom: 12px; border-radius: 4px;'>"
+				html += f"<p style='margin: 0;'>{link}<span style='color: #F87171;'>{warning}</span><br>"
+				html += f"<span style='color: #94a3b8; font-size: 13px;'>Support: <span style='color: #FFFFFF;'>{supp} examples</span> | Total Errors: <span style='color: #F87171;'>{errs} ({pct}% of data)</span></span></p>"
+
+				if mc['top_confusions']:
+					html += "<p style='margin-top: 8px; margin-bottom: 2px; font-size: 13px;'>Top confusions:</p><ul style='margin-top: 0; margin-bottom: 0; padding-left: 20px; font-size: 13px;'>"
+					for err_count, pred_class in mc['top_confusions']:
+						html += f"<li>To <b>{pred_class}</b>: {err_count} errors</li>"
+					html += "</ul>"
+				html += "</div>"
+		
+		html += "</body>"
+		self.nlp_html.SetPage(html)
+
+	def show_successes_view(self, event=None):
+		html = "<body bgcolor='#141414' text='#F8FAFC' style='font-family: Arial; font-size: 14px;'>"
+		if self.nlp_success:
+			html += "<h3 style='color: #4ADE80; margin-top: 5px;'>Performing Reliably (F1 ≥ 85%):</h3>"
+			html += "<p>The Categorizer is successfully and consistently predicting the following behaviors:</p>"
+			html += "<ul>"
+			for sc in self.nlp_success:
+				c_idx = sc['index']
+				c_name = sc['class']
+				f1_pct = round(sc['f1'] * 100, 1)
+				supp = int(sc['support'])
+				
+				link = f"<a href='row:{c_idx}' style='color: #60A5FA; text-decoration: none;'><b>{c_name}</b></a>"
+				html += f"<li style='margin-bottom: 6px;'>{link} <span style='color: #4ADE80;'>({f1_pct}% F1)</span> <span style='color: #FFFFFF; font-size: 12px;'>[{supp} examples]</span></li>"
+			html += "</ul>"
+		else:
+			html += "<h3 style='color: #FFCB05; margin-top: 5px;'>Keep Tuning!</h3>"
+			html += "<p>No behaviors have reached the 85% F1-score threshold. Check the Confusions tab to see where to improve the dataset.</p>"
+
+		if self.nlp_meaningless:
+			html += "<h3 style='color: #94a3b8; margin-top: 15px;'>Statistically Meaningless (Excluded):</h3>"
+			html += "<p style='margin-top: 0;'>The following classes have too few examples to accurately evaluate. They have been excluded from major error analysis:</p>"
+			html += "<ul style='color: #94a3b8;'>"
+			for mc in self.nlp_meaningless:
+				html += f"<li>{mc}</li>"
+			html += "</ul>"
+
+		html += "</body>"
+		self.nlp_html.SetPage(html)
+
+	def show_help_view(self, event=None):
+		"""Generates the HTML for the layman's explanation."""
+		html = """
+		<body bgcolor='#141414' text='#F8FAFC' style='font-family: Arial; font-size: 14px;'>
+			<h3 style='color: #60A5FA; margin-top: 5px;'>How to read this chart:</h3>
+			<p>A <b>Confusion Matrix</b> is just a simple table that shows where the Categorizer gets confused.</p>
+				<p><b>Rows (Left):</b> What the subject was <i>actually</i> doing (Ground Truth).</p>
+				<p><b>Columns (Top):</b> What the Categorizer <i>guessed</i> the subject was doing (Prediction).</p>
+			<p>If you look at the diagonal line going from top-left to bottom-right, those are the <b>correct guesses</b>. Any numbers sitting outside that diagonal line represent mistakes!</p>
+			<p>You can click on any cell in the matrix to view the video examples of where the Categorizer either correctly or incorrectly guessed the behavior!</p>
+		</body>
+		"""
+		self.nlp_html.SetPage(html)
 
 	def on_metric_change(self, event):
 		self.update_table_data()
@@ -2382,7 +2601,7 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 				html += "<div style='background-color: #1e1e1e; border-left: 4px solid #FFCB05; padding: 10px; margin-bottom: 12px; border-radius: 4px;'>"
 				
 				if support_true >= support_threshold and support_pred >= support_threshold:
-					html += f"<p style='margin: 0;'>{link} ({count} errors)<br><br><span style='color: #94a3b8;'><b>Diagnosis:</b> Both behaviors have robust training data. Because the AI is still confusing them, they might be visually redundant. Consider merging these labels.</span></p>"
+					html += f"<p style='margin: 0;'>{link} ({count} errors)<br><br><span style='color: #94a3b8;'><b>Diagnosis:</b> Both behaviors have robust training data. Because the Categorizer is still confusing them, they might be visually redundant. Consider merging these labels.</span></p>"
 				else:
 					lowest_class = true_class if support_true < support_pred else pred_class
 					html += f"<p style='margin: 0;'>{link} ({count} errors)<br><br><span style='color: #94a3b8;'><b>Diagnosis:</b> The model hasn't seen enough of <i>{lowest_class}</i> to learn it well. Adding more video examples should help clear this up.</span></p>"
@@ -2399,6 +2618,8 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 	def on_cell_click(self, event):
 		row = event.GetRow()
 		col = event.GetCol()
+		
+		self.cm_grid.ClearSelection()
 		
 		if row == -1 or col == -1:
 			event.Skip()
