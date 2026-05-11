@@ -2413,8 +2413,10 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 		major_count = len(self.nlp_major)
 		if major_count == 0:
 			self.synopsis_label.SetLabel("No major systematic confusions detected. Model looks great!")
+		elif major_count > 5:
+			self.synopsis_label.SetLabel(f"{major_count} major systematic confusions detected. Showing top 5 most severe.")
 		else:
-			self.synopsis_label.SetLabel(f"{major_count} major systematic confusions detected. See Confusions for analysis.")
+			self.synopsis_label.SetLabel(f"{major_count} major systematic confusions detected.")
 
 
 	def show_major_confusions_view(self, event=None):
