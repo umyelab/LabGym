@@ -185,113 +185,115 @@ class PanelLv1_TrainingModule(wx.Panel):
 		self.notebook = parent
 		self.display_window()
 
-
 	def display_window(self):
 
 		panel = self
-		boxsizer=wx.BoxSizer(wx.VERTICAL)
-		boxsizer.Add(0,60,0)
+		main_sizer = wx.BoxSizer(wx.VERTICAL)
+		main_sizer.Add(0, 50, 0)
+
+		columns_sizer = wx.BoxSizer(wx.HORIZONTAL)
+
+		header_font = wx.Font(14, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
+
+		detector_sizer = wx.BoxSizer(wx.VERTICAL)
+
+		text_detector = wx.StaticText(panel, label='Detector Pipeline')
+		text_detector.SetFont(header_font)
+		detector_sizer.Add(text_detector, 0, wx.ALIGN_CENTER | wx.BOTTOM, 25)
 
 		button_generateimages=wx.Button(panel,label='Generate Image Examples',size=(300,40))
 		button_generateimages.Bind(wx.EVT_BUTTON,self.generate_images)
 		wx.Button.SetToolTip(button_generateimages,'Extract frames from videos for annotating animals / objects in them so that they can be used to train a Detector to detect animals / objects of your interest. See Extended Guide for how to select images to annotate.')
-		boxsizer.Add(button_generateimages,0,wx.ALIGN_CENTER,10)
-		boxsizer.Add(0,5,0)
+		detector_sizer.Add(button_generateimages,0,wx.ALIGN_CENTER|wx.BOTTOM, 15)
 
-		link_annotate=create_hyperlink(panel,'\nAnnotate images with EZannot\n','https://github.com/yujiahu415/EZannot')
-		boxsizer.Add(link_annotate,0,wx.ALIGN_CENTER,10)
-		boxsizer.Add(0,5,0)
+		link_annotate=create_hyperlink(panel,'Annotate images with EZannot','https://github.com/yujiahu415/EZannot')
+		detector_sizer.Add(link_annotate,0,wx.ALIGN_CENTER|wx.BOTTOM, 15)
 
 		button_traindetectors=wx.Button(panel,label='Train Detectors',size=(300,40))
 		button_traindetectors.Bind(wx.EVT_BUTTON,self.train_detectors)
 		wx.Button.SetToolTip(button_traindetectors,'There are two detection methods in LabGym, the Detector-based method is more versatile (useful in any recording conditions and complex interactive behaviors) but slower than the other background subtraction-based method (requires static background and stable illumination in videos).')
-		boxsizer.Add(button_traindetectors,0,wx.ALIGN_CENTER,10)
-		boxsizer.Add(0,5,0)
+		detector_sizer.Add(button_traindetectors,0,wx.ALIGN_CENTER|wx.BOTTOM, 15)
 
 		button_testdetectors=wx.Button(panel,label='Test Detectors',size=(300,40))
 		button_testdetectors.Bind(wx.EVT_BUTTON,self.test_detectors)
 		wx.Button.SetToolTip(button_testdetectors,'Test trained Detectors on the annotated ground-truth image dataset (similar to the image dataset used for training a Detector).')
-		boxsizer.Add(button_testdetectors,0,wx.ALIGN_CENTER,10)
-		boxsizer.Add(0,50,0)
+		detector_sizer.Add(button_testdetectors,0,wx.ALIGN_CENTER|wx.BOTTOM, 15)
+
+
+		divider_line = wx.StaticLine(panel, style=wx.LI_VERTICAL)
+
+
+		categorizer_sizer = wx.BoxSizer(wx.VERTICAL)
+
+		text_categorizer = wx.StaticText(panel, label='Categorizer Pipeline')
+		text_categorizer.SetFont(header_font)
+		categorizer_sizer.Add(text_categorizer, 0, wx.ALIGN_CENTER | wx.BOTTOM, 25)
 
 		button_generatebehaviorexamples=wx.Button(panel,label='Generate Behavior Examples',size=(300,40))
 		button_generatebehaviorexamples.Bind(wx.EVT_BUTTON,self.generate_behaviorexamples)
 		wx.Button.SetToolTip(button_generatebehaviorexamples,'Generate behavior examples for sorting them so that they can be used to teach a Categorizer to recognize behaviors defined by you.')
-		boxsizer.Add(button_generatebehaviorexamples,0,wx.ALIGN_CENTER,10)
-		boxsizer.Add(0,5,0)
+		categorizer_sizer.Add(button_generatebehaviorexamples,0,wx.ALIGN_CENTER|wx.BOTTOM, 15)
 
 		button_sortbehaviorexamples=wx.Button(panel,label='Sort Behavior Examples',size=(300,40))
 		button_sortbehaviorexamples.Bind(wx.EVT_BUTTON,self.sort_behaviorexamples)
 		wx.Button.SetToolTip(button_sortbehaviorexamples,'Set shortcut keys for behavior categories to help sorting the behavior examples in an easier way. See Extended Guide for how to select and sort the behavior examples.')
-		boxsizer.Add(button_sortbehaviorexamples,0,wx.ALIGN_CENTER,10)
-		boxsizer.Add(0,5,0)
+		categorizer_sizer.Add(button_sortbehaviorexamples,0,wx.ALIGN_CENTER|wx.BOTTOM, 15)
 
 		button_traincategorizers=wx.Button(panel,label='Train Categorizers',size=(300,40))
 		button_traincategorizers.Bind(wx.EVT_BUTTON,self.train_categorizers)
 		wx.Button.SetToolTip(button_traincategorizers,'Customize a Categorizer and use the sorted behavior examples to train it so that it can recognize the behaviors of your interest during analysis.')
-		boxsizer.Add(button_traincategorizers,0,wx.ALIGN_CENTER,10)
-		boxsizer.Add(0,5,0)
+		categorizer_sizer.Add(button_traincategorizers,0,wx.ALIGN_CENTER|wx.BOTTOM, 15)
 
 		button_testcategorizers=wx.Button(panel,label='Test Categorizers',size=(300,40))
 		button_testcategorizers.Bind(wx.EVT_BUTTON,self.test_categorizers)
 		wx.Button.SetToolTip(button_testcategorizers,'Test trained Categorizers on the sorted ground-truth behavior examples (similar to the behavior examples used for training a Categorizer).')
-		boxsizer.Add(button_testcategorizers,0,wx.ALIGN_CENTER,10)
-		boxsizer.Add(0,50,0)
+		categorizer_sizer.Add(button_testcategorizers,0,wx.ALIGN_CENTER|wx.BOTTOM, 15)
 
-		panel.SetSizer(boxsizer)
+		columns_sizer.Add(detector_sizer, 1, wx.EXPAND | wx.RIGHT, 40)
+		columns_sizer.Add(divider_line, 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 20)
+		columns_sizer.Add(categorizer_sizer, 1, wx.EXPAND | wx.LEFT, 40)
+
+		main_sizer.Add(columns_sizer, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 50)
+
+		panel.SetSizer(main_sizer)
 
 		self.Centre()
 		self.Show(True)
 
-
 	def generate_images(self,event):
 		"""Open the Generate Image Examples panel."""
-
 		title = 'Generate Image Examples'
 		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_GenerateImages(self.notebook), title)
 
-
 	def train_detectors(self,event):
 		"""Open the Train Detectors panel."""
-
 		title = 'Train Detectors'
 		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_TrainDetectors(self.notebook), title)
 
-
 	def test_detectors(self,event):
 		"""Open the Test Detectors panel."""
-
 		title = 'Test Detectors'
 		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_TestDetectors(self.notebook), title)
 
-
 	def generate_behaviorexamples(self,event):
 		"""Open the Generate Behavior Examples panel."""
-
 		title = 'Generate Behavior Examples'
 		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_GenerateExamples(self.notebook), title)
 
-
 	def sort_behaviorexamples(self,event):
 		"""Open the Sort Behavior Examples panel."""
-
 		title = 'Sort Behavior Examples'
 		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_SortBehaviors(self.notebook), title)
 
-
 	def train_categorizers(self,event):
 		"""Open the Train Categorizers panel."""
-
 		title = 'Train Categorizers'
 		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_TrainCategorizers(self.notebook), title)
 
-
 	def test_categorizers(self,event):
 		"""Open the Test Categorizers panel."""
-
 		title = 'Test Categorizers'
 		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_TestCategorizers(self.notebook), title)
-
 
 
 class PanelLv1_AnalysisModule(wx.Panel):
@@ -378,7 +380,7 @@ class PanelLv1_AnalysisModule(wx.Panel):
 
 		title = 'Calculate Distances'
 		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_CalculateDistances(self.notebook), title)
-	
+
 	def state_transition_map(self,event):
 		"""Open the State Transition Map panel."""
 
