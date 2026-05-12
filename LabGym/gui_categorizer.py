@@ -2341,6 +2341,18 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 				self.cm_grid.SetCellBackgroundColour(row, col, wx.Colour(255, 203, 5))
 				self.cm_grid.SetCellTextColour(row, col, wx.Colour(0, 0, 0))
 
+		elif href.startswith('action:'):
+			parts = href.split(':')
+			action_type = parts[1]
+			classes = parts[2].split(',')
+			source_class = classes[0]
+			target_class = classes[1]
+			
+			if action_type == 'add_data':
+				wx.MessageBox("To solve poor generalization, close the Test Categorizer and use the 'Generate/Sort Behavior Examples' modules to add more diverse data to the Training Set.", "Manual Action Required", wx.OK | wx.ICON_INFORMATION)
+			else:
+				self.execute_differential_action(action_type, source_class, target_class)
+
 		self.cm_grid.ForceRefresh()
 		self.cm_grid.ClearSelection()
 
@@ -2439,7 +2451,13 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 				error_txt = f"<span style='color: #F87171;'>{count} errors, {prop_pct}% of {true_class} data</span>"
 				
 				if support_true >= 50 and support_pred >= 50:
-					html += f"<p style='margin: 0;'>{link} ({error_txt})<br><br><span style='color: #94a3b8;'><b>Diagnosis:</b> Both behaviors have robust training data. Because the Categorizer systematically confuses them, they might be visually redundant. Consider merging these labels.</span></p>"
+					html += f"<p style='margin: 0;'>{link} ({error_txt})</p>"
+					html += "<p style='margin-top: 5px; margin-bottom: 2px; color: #94a3b8;'><b>Differential Diagnosis:</b></p>"
+					html += "<ul style='margin-top: 0; color: #94a3b8; font-size: 12px;'>"
+					html += f"<li><b>Hypothesis 1 (Redundancy):</b> Behaviors are visually identical.<br>[ <a href='action:merge:{true_class},{pred_class}' style='color: #FFCB05; text-decoration: none;'><b>Clone Dataset & Merge Labels</b></a> ]</li>"
+					html += f"<li style='margin-top: 5px;'><b>Hypothesis 2 (Emergent):</b> A distinct third behavior is hidden here.<br>[ <a href='action:extract:{true_class},{pred_class}' style='color: #FFCB05; text-decoration: none;'><b>Clone Dataset & Extract New Label</b></a> ]</li>"
+					html += f"<li style='margin-top: 5px;'><b>Hypothesis 3 (Poor Generalization):</b> Test set has more variance than training.<br>[ <a href='action:add_data:{true_class},{pred_class}' style='color: #FFCB05; text-decoration: none;'><b>Action: Requires Manual Labeling</b></a> ]</li>"
+					html += "</ul>"
 				else:
 					lowest_class = true_class if support_true < support_pred else pred_class
 					html += f"<p style='margin: 0;'>{link} ({error_txt})<br><br><span style='color: #94a3b8;'><b>Diagnosis:</b> The Categorizer hasn't seen enough of <i>{lowest_class}</i> to learn it well. Adding more video examples should help clear this up.</span></p>"
@@ -2642,6 +2660,79 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 				wx.MessageBox(f"No examples found for True: '{true_class}', Predicted: '{pred_class}'", "No Data", wx.OK | wx.ICON_INFORMATION)
 
 		event.Skip()
+
+	def execute_differential_action(self, action_type, source_class, target_class):
+		"""Safely clones the dataset and applies the requested OS-level action."""
+		dlg = wx.TextEntryDialog(self, f"To preserve reproducibility, LabGym will clone the dataset before modifying it.\n\nEnter a name for the new dataset folder:", "Dataset Versioning", "dataset_v2")
+		if dlg.ShowModal() != wx.ID_OK:
+			dlg.Destroy()
+			return
+		new_dataset_name = dlg.GetValue()
+		dlg.Destroy()
+
+		if not new_dataset_name:
+			return
+		
+		source_files = []
+		for (t, p), files in self.example_map.items():
+			if t == source_class:
+				source_files.extend(files)
+
+		if not source_files:
+			wx.MessageBox(f"Could not locate the files for '{source_class}'.", "Error", wx.OK | wx.ICON_ERROR)
+			return
+
+		source_class_dir = os.path.dirname(source_files[0])
+		original_dataset_dir = os.path.dirname(source_class_dir)
+		parent_dir = os.path.dirname(original_dataset_dir)
+		
+		cloned_dataset_dir = os.path.join(parent_dir, new_dataset_name)
+
+		try:
+			total_size = sum(os.path.getsize(os.path.join(dirpath, f)) for dirpath, _, filenames in os.walk(original_dataset_dir) for f in filenames)
+			total_size_mb = total_size / (1024 * 1024)
+
+			total, used, free = shutil.disk_usage(parent_dir)
+			if total_size > free:
+				wx.MessageBox(f"Not enough disk space to clone dataset.\nRequired: {total_size_mb:.2f} MB\nAvailable: {free / (1024*1024):.2f} MB", "Disk Space Error", wx.OK | wx.ICON_ERROR)
+				return
+
+			wx.BeginBusyCursor()
+			shutil.copytree(original_dataset_dir, cloned_dataset_dir)
+
+			if action_type == 'merge':
+				cloned_source_dir = os.path.join(cloned_dataset_dir, source_class)
+				cloned_target_dir = os.path.join(cloned_dataset_dir, target_class)
+				
+				if not os.path.exists(cloned_target_dir):
+					os.makedirs(cloned_target_dir)
+					
+				for filename in os.listdir(cloned_source_dir):
+					shutil.move(os.path.join(cloned_source_dir, filename), os.path.join(cloned_target_dir, filename))
+				shutil.rmtree(cloned_source_dir)
+				
+				action_msg = f"Merged '{source_class}' into '{target_class}'."
+
+			elif action_type == 'extract':
+				cloned_source_dir = os.path.join(cloned_dataset_dir, source_class)
+				if sys.platform == "win32":
+					os.startfile(cloned_source_dir)
+				elif sys.platform == "darwin":
+					subprocess.call(["open", cloned_source_dir])
+				else:
+					subprocess.call(["xdg-open", cloned_source_dir])
+					
+				action_msg = f"Opened '{source_class}' folder for manual extraction of the emergent behavior."
+
+			wx.EndBusyCursor()
+			wx.MessageBox(f"Successfully cloned dataset to '{new_dataset_name}'.\n{action_msg}\n\nPlease point your Training Module to this new dataset for future iterations.", "Success", wx.OK | wx.ICON_INFORMATION)
+
+		except PermissionError:
+			wx.EndBusyCursor()
+			wx.MessageBox("LabGym does not have permission to write to this directory. Check your folder permissions or network drive status.", "Permission Error", wx.OK | wx.ICON_ERROR)
+		except Exception as e:
+			wx.EndBusyCursor()
+			wx.MessageBox(f"An OS error occurred:\n{e}", "System Error", wx.OK | wx.ICON_ERROR)
 
 class ExampleViewerDialog(wx.Dialog):
 	def __init__(self, parent, true_class, pred_class, examples):
