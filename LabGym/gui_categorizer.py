@@ -2713,6 +2713,13 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 				
 				action_msg = f"Merged '{source_class}' into '{target_class}'."
 
+				if sys.platform == "win32":
+					os.startfile(cloned_target_dir)
+				elif sys.platform == "darwin":
+					subprocess.call(["open", cloned_target_dir])
+				else:
+					subprocess.call(["xdg-open", cloned_target_dir])
+
 			elif action_type == 'extract':
 				cloned_source_dir = os.path.join(cloned_dataset_dir, source_class)
 				if sys.platform == "win32":
