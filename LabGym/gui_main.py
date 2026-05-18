@@ -358,6 +358,147 @@ class PanelLv1_AnalysisModule(wx.Panel):
 		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_CalculateDistances(self.notebook), title)
 
 
+class WorkflowMapPanel(wx.Panel):					# define a new panel class that inherits from wx.Panel
+	"""Displays the LabGym workflow map, scaled to fit the panel."""
+
+	def __init__(self, parent):
+		super().__init__(parent)					# run wx.Panel's own setup
+		self.SetBackgroundColour(wx.WHITE)			# make the panel background white
+		self.Bind(wx.EVT_PAINT, self.on_paint)		# call on_paint whenever wx needs to redraw this panel
+		self.Bind(wx.EVT_SIZE, self.on_size)		# call on_size whenever the panel is resized
+
+	def on_size(self, event):
+		self.Refresh()								# force a full redraw so the diagram rescales
+		event.Skip()								# let wx continue processing the resize event normally
+
+	def on_paint(self, event):
+		dc = wx.PaintDC(self)						# create a drawing context which is required in an EVT_PAINT handler
+		self._draw(dc)								# hand off to the main drawing method
+
+	def _draw(self, dc):
+		W, H = self.GetClientSize()					# get the panel's current width and height in pixels
+		if W < 10 or H < 10:						# skip drawing of the panel is too small to be useful
+			return
+		
+
+		VW = 1000									# virtual canvas width -> all coordinates below use this width
+		VH = 500									# virtual canvas height -> all coordinates below use this height
+		scale = min(W/VW, H/VH) * 0.95				# fit the canvas into the panel while leaving a 5% margin
+		ox = (W - VW * scale)/2						# horizontal offset to center the diagram
+		oy = (H - VH * scale)/2						# vertical offset to center the diagram
+
+
+		def px(v): return int(ox + v * scale)		# convert a virtual x-coordinate to a real screen pixel 
+		def py(v): return int(oy + v * scale)		# convert a virtual y-coordinate to a real screen pixel 
+		def ps(v): return max(1, int(v * scale))	# convert a virtual size/thickness to pixels (min of 1)
+
+
+		box_pen = wx.Pen(wx.Colour(90, 90, 90), ps(1))		# dark gray outline, 1px scaled
+		box_brush = wx.Brush(wx.Colour(245, 245, 245))		# very light gray fill for boxes
+		arr_pen = wx.Pen(wx.Colour(80, 80, 80), ps(2))		# slightly darker gray for arrows, 2px scaled
+		arr_brush = wx.Brush(wx.Colour(80, 80, 80))			# same dark gray used to fill arrowheads
+		font = wx.Font(max(7, ps(10)), wx.FONTFAMILY_DEFAULT,	# bold font for the title and at least 8pt
+				 wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
+		bold_font = wx.Font(max(8, ps(12)), wx.FONTFAMILY_DEFAULT,
+		                    wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
+		
+
+		# draws a rounded rectangle box with one or more lines of centered text inside it
+		# cx, cy = center point   bw, bh = width and height   lines = list of text strings
+		def draw_box(cx, cy, bw, bh, lines):
+			dc.SetPen(box_pen)								# use the gray outline
+			dc.SetBrush(box_brush)							# use the light gray fill
+			dc.DrawRoundedRectangle(px(cx - bw/2), py(cy - bh/2),		# top-left corner of the box
+						   ps(bw), ps(bh), ps(5))						# box width, height, corner radius
+			dc.SetFont(font)
+			dc.SetTextForeground(wx.BLACK)
+			lh = dc.GetCharHeight()							# height of one line of the text in the current font
+			top = py(cy - bh/2) + (ps(bh) - lh * len(lines)) // 2		# y position that vertically centers all lines
+			for i, line in enumerate(lines):				# loop over each text line
+				lw, _ = dc.GetTextExtent(line)				# measure how wide this line of text is
+				dc.DrawText(line, px(cx) - lw // 2, top + i *lh)	# draw it horizontally centered
+
+
+		# draws a horizontal right-pointing arrow from (x1, y1) to (x2, y2)
+		def h_arr(x1, y1, x2, y2):
+			dc.SetPen(arr_pen)
+			dc.SetBrush(arr_brush)
+			dc.DrawLine(px(x1), py(y1), px(x2), py(y2))               # draw the shaft of the arrow
+			ah, al = ps(5), ps(9)                                       # ah = arrowhead half-height, al = arrowhead length
+			dc.DrawPolygon([(px(x2),    py(y2)),                       # tip of the arrowhead (rightmost point)
+							(px(x2)-al, py(y2)-ah),                    # top-left corner of arrowhead triangle
+							(px(x2)-al, py(y2)+ah)])                   # bottom-left corner of arrowhead triangle
+			
+		# draws a vertical downward-pointing arrow from (x1,y1) to (x2,y2)
+		def v_arr_dn(x1, y1, x2, y2):
+			dc.SetPen(arr_pen)
+			dc.SetBrush(arr_brush)
+			dc.DrawLine(px(x1), py(y1), px(x2), py(y2))               # shaft
+			ah, al = ps(5), ps(9)
+			dc.DrawPolygon([(px(x2),    py(y2)),                       # tip (bottom point)
+                            (px(x2)-ah, py(y2)-al),                    # top-left of triangle
+                            (px(x2)+ah, py(y2)-al)])                   # top-right of triangle
+
+        # draws a vertical upward-pointing arrow from (x1,y1) to (x2,y2)
+		def v_arr_up(x1, y1, x2, y2):
+			dc.SetPen(arr_pen)
+			dc.SetBrush(arr_brush)
+			dc.DrawLine(px(x1), py(y1), px(x2), py(y2))               # shaft
+			ah, al = ps(5), ps(9)
+			dc.DrawPolygon([(px(x2),    py(y2)),                       # tip (top point)
+                            (px(x2)-ah, py(y2)+al),                    # bottom-left of triangle
+                            (px(x2)+ah, py(y2)+al)])                   # bottom-right of triangle
+
+		
+		# draw the title centered at the top of the virtual canvas
+		dc.SetFont(bold_font)
+		dc.SetTextForeground(wx.BLACK)
+		title = 'LabGym Workflow Map'
+		tw, _ = dc.GetTextExtent(title)                                 # measure the title width so we can centre it
+		dc.DrawText(title, px(500) - tw // 2, py(20))                  # draw at virtual x=500 (horizontal centre), y=20
+
+		# main row from left to right
+		h_arr(120, 260, 165, 260)   # Collect Footage to Preprocessing
+		h_arr(275, 260, 335, 260)   # Preprocessing to Tracking
+		h_arr(445, 260, 495, 260)   # Tracking to Generate & Sort
+		h_arr(645, 260, 705, 260)   # Generate & Sort to Train Categorizer
+		h_arr(835, 260, 885, 260)   # Train Categorizer to Analyze Behaviors
+
+		# vertical branches off the Tracking box
+		v_arr_up(390, 235, 390, 135)  # Tracking ↑ Detector (top edge of Tracking → bottom edge of Detector)
+		v_arr_dn(390, 285, 390, 370)  # Tracking ↓ Background Subtraction (bottom edge → top edge)
+
+        # top branch — left to right
+		h_arr(465, 110, 500, 110)   # Detector to Generate Images
+		h_arr(630, 110, 680, 110)   # Generate Images to Roboflow / EZannot
+		h_arr(810, 110, 875, 110)   # Roboflow / EZannot to Train Detector
+
+        # bottom offshoot from Train Categorizer
+		v_arr_dn(770, 285, 770, 375)  # Train Categorizer ↓ Test Categorizer
+
+
+		# boxes — drawn after arrows
+        # each call is: centre_x, centre_y, width, height, [lines of text]
+
+        # main row
+		draw_box( 65,  260, 110, 50, ['Collect', 'Footage'])
+		draw_box(220,  260, 110, 50, ['Preprocessing'])
+		draw_box(390,  260, 110, 50, ['"Tracking"'])
+		draw_box(570,  260, 150, 70, ['Generate &', 'Sort Behavior', 'Examples'])  # taller box to fit 3 lines
+		draw_box(770,  260, 130, 50, ['Train', 'Categorizer'])
+		draw_box(940,  260, 110, 50, ['Analyze', 'Behaviors'])
+
+        # top branch
+		draw_box(390,  110, 150, 50, ['Detector', '(dynamic background)'])
+		draw_box(565,  110, 130, 50, ['Generate', 'Images'])
+		draw_box(745,  110, 130, 50, ['Roboflow /', 'EZannot'])
+		draw_box(930,  110, 110, 50, ['Train', 'Detector'])
+
+        # bottom
+		draw_box(390,  400, 150, 60, ['Background', 'Subtraction', '(static background)'])  # taller box to fit 3 lines
+		draw_box(770,  400, 130, 50, ['Test', 'Categorizer'])
+
+
 
 class MainFrame(wx.Frame):
 	"""Main frame and its notebook."""
@@ -390,6 +531,8 @@ class MainFrame(wx.Frame):
 		panel = InitialPanel(self.notebook)
 		title = 'Home'
 		self.notebook.AddPage(panel, title, select=True)
+		workflow_panel = WorkflowMapPanel(self.notebook)
+		self.notebook.AddPage(workflow_panel, 'Workflow Map', select=False)
 
 		# Bind the close event to prevent Home tab from being closed
 		self.notebook.Bind(wx.aui.EVT_AUINOTEBOOK_PAGE_CLOSE, self.on_page_close)
@@ -407,7 +550,7 @@ class MainFrame(wx.Frame):
 	def on_page_close(self, event):
 		"""Handle page close events to prevent Home tab from being closed."""
 		# Prevent the Home tab (index 0) from being closed
-		if event.GetSelection() == 0:
+		if event.GetSelection() in (0, 1):
 			event.Veto()
 		else:
 			# Allow other tabs to be closed normally
