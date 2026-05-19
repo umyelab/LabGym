@@ -376,127 +376,147 @@ class WorkflowMapPanel(wx.Panel):					# define a new panel class that inherits f
 		self._draw(dc)								# hand off to the main drawing method
 
 	def _draw(self, dc):
-		W, H = self.GetClientSize()					# get the panel's current width and height in pixels
-		if W < 10 or H < 10:						# skip drawing of the panel is too small to be useful
+		import math								# needed for diagonal arrow angle calculations
+		W, H = self.GetClientSize()				# get the panel's current width and height in pixels
+		if W < 10 or H < 10:					# skip drawing if the panel is too small to be useful
 			return
-		
 
-		VW = 1000									# virtual canvas width -> all coordinates below use this width
-		VH = 500									# virtual canvas height -> all coordinates below use this height
-		scale = min(W/VW, H/VH) * 0.95				# fit the canvas into the panel while leaving a 5% margin
-		ox = (W - VW * scale)/2						# horizontal offset to center the diagram
-		oy = (H - VH * scale)/2						# vertical offset to center the diagram
+		VW, VH = 1780, 540						# virtual canvas size — all coordinates below use this space
+		scale = min(W / VW, H / VH) * 0.95		# fit the canvas into the panel while leaving a 5% margin
+		ox = (W - VW * scale) / 2				# horizontal offset to centre the diagram
+		oy = (H - VH * scale) / 2				# vertical offset to centre the diagram
 
+		def px(v): return int(ox + v * scale)	# convert a virtual x-coordinate to a real screen pixel
+		def py(v): return int(oy + v * scale)	# convert a virtual y-coordinate to a real screen pixel
+		def ps(v): return max(1, int(v * scale))# convert a virtual size/thickness to pixels (minimum 1)
 
-		def px(v): return int(ox + v * scale)		# convert a virtual x-coordinate to a real screen pixel 
-		def py(v): return int(oy + v * scale)		# convert a virtual y-coordinate to a real screen pixel 
-		def ps(v): return max(1, int(v * scale))	# convert a virtual size/thickness to pixels (min of 1)
+		box_pen   = wx.Pen(wx.Colour(90, 90, 90), ps(1))		# dark grey outline for boxes, 1px scaled
+		box_brush = wx.Brush(wx.Colour(245, 245, 245))			# very light grey fill for boxes
+		arr_pen   = wx.Pen(wx.Colour(80, 80, 80), ps(2))		# darker grey for arrow shafts, 2px scaled
+		arr_brush = wx.Brush(wx.Colour(80, 80, 80))				# same dark grey fills the arrowhead triangles
+		dash_pen  = wx.Pen(wx.Colour(100, 150, 210), ps(2),
+		                   wx.PENSTYLE_SHORT_DASH)				# blue dashed pen for the vertical separator lines
+		font      = wx.Font(max(11, ps(16)), wx.FONTFAMILY_DEFAULT,
+		                    wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)	# body text font, scales with window size
+		bold_font = wx.Font(max(16, ps(26)), wx.FONTFAMILY_DEFAULT,
+		                    wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)	# bold font used for the title
 
-
-		box_pen = wx.Pen(wx.Colour(90, 90, 90), ps(1))		# dark gray outline, 1px scaled
-		box_brush = wx.Brush(wx.Colour(245, 245, 245))		# very light gray fill for boxes
-		arr_pen = wx.Pen(wx.Colour(80, 80, 80), ps(2))		# slightly darker gray for arrows, 2px scaled
-		arr_brush = wx.Brush(wx.Colour(80, 80, 80))			# same dark gray used to fill arrowheads
-		font = wx.Font(max(9, ps(13)), wx.FONTFAMILY_DEFAULT,	# bold font for the title and at least 8pt
-				 wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
-		bold_font = wx.Font(max(10, ps(15)), wx.FONTFAMILY_DEFAULT,
-		                    wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
-		
-
-		# draws a rounded rectangle box with one or more lines of centered text inside it
-		# cx, cy = center point   bw, bh = width and height   lines = list of text strings
 		def draw_box(cx, cy, bw, bh, lines):
-			dc.SetPen(box_pen)								# use the gray outline
-			dc.SetBrush(box_brush)							# use the light gray fill
-			dc.DrawRoundedRectangle(px(cx - bw/2), py(cy - bh/2),		# top-left corner of the box
-						   ps(bw), ps(bh), ps(5))						# box width, height, corner radius
+			dc.SetPen(box_pen)
+			dc.SetBrush(box_brush)
+			dc.DrawRoundedRectangle(px(cx - bw/2), py(cy - bh/2),
+			                        ps(bw), ps(bh), ps(5))
 			dc.SetFont(font)
 			dc.SetTextForeground(wx.BLACK)
-			lh = dc.GetCharHeight()							# height of one line of the text in the current font
-			top = py(cy - bh/2) + (ps(bh) - lh * len(lines)) // 2		# y position that vertically centers all lines
-			for i, line in enumerate(lines):				# loop over each text line
-				lw, _ = dc.GetTextExtent(line)				# measure how wide this line of text is
-				dc.DrawText(line, px(cx) - lw // 2, top + i *lh)	# draw it horizontally centered
+			lh = dc.GetCharHeight()
+			top = py(cy - bh/2) + (ps(bh) - lh * len(lines)) // 2
+			for i, line in enumerate(lines):
+				lw, _ = dc.GetTextExtent(line)
+				dc.DrawText(line, px(cx) - lw // 2, top + i * lh)
 
-
-		# draws a horizontal right-pointing arrow from (x1, y1) to (x2, y2)
 		def h_arr(x1, y1, x2, y2):
 			dc.SetPen(arr_pen)
 			dc.SetBrush(arr_brush)
-			dc.DrawLine(px(x1), py(y1), px(x2), py(y2))               # draw the shaft of the arrow
-			ah, al = ps(5), ps(9)                                       # ah = arrowhead half-height, al = arrowhead length
-			dc.DrawPolygon([(px(x2),    py(y2)),                       # tip of the arrowhead (rightmost point)
-							(px(x2)-al, py(y2)-ah),                    # top-left corner of arrowhead triangle
-							(px(x2)-al, py(y2)+ah)])                   # bottom-left corner of arrowhead triangle
-			
-		# draws a vertical downward-pointing arrow from (x1,y1) to (x2,y2)
-		def v_arr_dn(x1, y1, x2, y2):
+			dc.DrawLine(px(x1), py(y1), px(x2), py(y2))
+			ah, al = ps(5), ps(9)
+			dc.DrawPolygon([(px(x2),    py(y2)),
+			                (px(x2)-al, py(y2)-ah),
+			                (px(x2)-al, py(y2)+ah)])
+
+		def v_line(x, y1, y2):
+			dc.SetPen(arr_pen)
+			dc.SetBrush(wx.TRANSPARENT_BRUSH)
+			dc.DrawLine(px(x), py(y1), px(x), py(y2))
+
+		def diag_arr(x1, y1, x2, y2, lines=()):
 			dc.SetPen(arr_pen)
 			dc.SetBrush(arr_brush)
-			dc.DrawLine(px(x1), py(y1), px(x2), py(y2))               # shaft
+			dc.DrawLine(px(x1), py(y1), px(x2), py(y2))
+			dx_v, dy_v = x2 - x1, y2 - y1
+			length = math.hypot(dx_v, dy_v)
+			ux, uy = dx_v / length, dy_v / length
 			ah, al = ps(5), ps(9)
-			dc.DrawPolygon([(px(x2),    py(y2)),                       # tip (bottom point)
-                            (px(x2)-ah, py(y2)-al),                    # top-left of triangle
-                            (px(x2)+ah, py(y2)-al)])                   # top-right of triangle
+			tip_x, tip_y = px(x2), py(y2)
+			lft_x = int(tip_x - al * ux + ah * (-uy))
+			lft_y = int(tip_y - al * uy + ah * ux)
+			rgt_x = int(tip_x - al * ux - ah * (-uy))
+			rgt_y = int(tip_y - al * uy - ah * ux)
+			dc.DrawPolygon([(tip_x, tip_y), (lft_x, lft_y), (rgt_x, rgt_y)])
+			if lines:
+				# draw horizontal label lines offset perpendicular to the arrow shaft (left side)
+				perp_x, perp_y = uy, -ux			# 90 degrees left of arrow direction in screen coords
+				offset = ps(35)						# pixels to push text away from the shaft
+				cx_label = px((x1 + x2) / 2) + int(perp_x * offset)
+				cy_label = py((y1 + y2) / 2) + int(perp_y * offset)
+				dc.SetFont(font)
+				dc.SetTextForeground(wx.BLACK)
+				lh = dc.GetCharHeight()
+				top = cy_label - (lh * len(lines)) // 2
+				for i, line in enumerate(lines):
+					lw, _ = dc.GetTextExtent(line)
+					dc.DrawText(line, cx_label - lw // 2, top + i * lh)
 
-        # draws a vertical upward-pointing arrow from (x1,y1) to (x2,y2)
-		def v_arr_up(x1, y1, x2, y2):
-			dc.SetPen(arr_pen)
-			dc.SetBrush(arr_brush)
-			dc.DrawLine(px(x1), py(y1), px(x2), py(y2))               # shaft
-			ah, al = ps(5), ps(9)
-			dc.DrawPolygon([(px(x2),    py(y2)),                       # tip (top point)
-                            (px(x2)-ah, py(y2)+al),                    # bottom-left of triangle
-                            (px(x2)+ah, py(y2)+al)])                   # bottom-right of triangle
 
-		
-		# draw the title centered at the top of the virtual canvas
+		# DASHED SEPARATOR LINES (drawn first — arrows and boxes appear on top)
+		dc.SetPen(dash_pen)
+		dc.SetBrush(wx.TRANSPARENT_BRUSH)
+		dc.DrawLine(px(270),  py(30), px(270),  py(510))	# first separator: between Preprocessing and Tracking
+		dc.DrawLine(px(1121), py(30), px(1121), py(510))	# second separator: centred in the 25-unit gap between Train Detector right (1108) and Generate and sort left (1134)
+
+		# TITLE
 		dc.SetFont(bold_font)
 		dc.SetTextForeground(wx.BLACK)
 		title = 'LabGym Workflow Map'
-		tw, _ = dc.GetTextExtent(title)                                 # measure the title width so we can centre it
-		dc.DrawText(title, px(500) - tw // 2, py(20))                  # draw at virtual x=500 (horizontal centre), y=20
-
-		# main row from left to right
-		h_arr(120, 260, 155, 260)   # Collect Footage to Preprocessing
-		h_arr(285, 260, 335, 260)   # Preprocessing to Tracking
-		h_arr(445, 260, 495, 260)   # Tracking to Generate & Sort
-		h_arr(645, 260, 705, 260)   # Generate & Sort to Train Categorizer
-		h_arr(835, 260, 885, 260)   # Train Categorizer to Analyze Behaviors
-
-		# vertical branches off the Tracking box
-		v_arr_up(390, 235, 390, 135)  # Tracking ↑ Detector (top edge of Tracking → bottom edge of Detector)
-		v_arr_dn(390, 285, 390, 363)  # Tracking ↓ Background Subtraction (bottom edge → top edge)
-
-        # top branch — left to right
-		h_arr(465, 110, 500, 110)   # Detector to Generate Images
-		h_arr(630, 110, 680, 110)   # Generate Images to Roboflow / EZannot
-		h_arr(810, 110, 875, 110)   # Roboflow / EZannot to Train Detector
-
-        # bottom offshoot from Train Categorizer
-		v_arr_dn(770, 285, 770, 375)  # Train Categorizer ↓ Test Categorizer
+		tw, _ = dc.GetTextExtent(title)
+		dc.DrawText(title, px(890) - tw // 2, py(10))		# centred at virtual x=890 (midpoint of VW=1780)
 
 
-		# boxes — drawn after arrows
-        # each call is: centre_x, centre_y, width, height, [lines of text]
+		# ARROWS
+		# All horizontal connecting arrows have a shaft length of 25 units
 
-        # main row
-		draw_box(65, 260, 110, 50, ['Collect', 'Footage'])
-		draw_box(220, 260, 130, 50, ['Preprocessing'])
-		draw_box(390, 260, 110, 50, ['"Tracking"'])
-		draw_box(570, 260, 150, 70, ['Generate &', 'Sort Behavior', 'Examples'])  # taller box to fit 3 lines
-		draw_box(770, 260, 130, 50, ['Train', 'Categorizer'])
-		draw_box(940, 260, 110, 50, ['Analyze', 'Behaviors'])
+		# main row — left to right
+		h_arr( 103, 290,  128, 290)		# Collect Footage -> Preprocessing
+		h_arr( 258, 290,  283, 290)		# Preprocessing -> Tracking (crosses first separator)
+		h_arr(1109, 290, 1134, 290)		# Train Detector right -> Generate and sort left (crosses second separator at 1121)
+		h_arr(1290, 290, 1315, 290)		# Generate and sort -> Train Categorizer
+		h_arr(1445, 290, 1470, 290)		# Train Categorizer -> Test Categorizer
+		h_arr(1600, 290, 1625, 290)		# Test Categorizer -> Analyze Behaviors
 
-        # top branch
-		draw_box(390, 110, 150, 50, ['Detector', '(dynamic background)'])
-		draw_box(565, 110, 130, 50, ['Generate', 'Images'])
-		draw_box(745, 110, 130, 50, ['Roboflow /', 'EZannot'])
-		draw_box(930, 110, 110, 50, ['Train', 'Detector'])
+		# diagonal arrows — symmetric ~37° angles up and down from Tracking
+		diag_arr(448, 256, 556, 180, ['Dynamic', 'Background'])	# Tracking top-right -> Detector bottom-left
+		diag_arr(448, 324, 556, 399, ['Static', 'Background'])	# Tracking bottom-right -> Background Subtraction top-left
 
-        # bottom
-		draw_box(390, 400, 150, 75, ['Background', 'Subtraction', '(static background)'])  # taller box to fit 3 lines
-		draw_box(770, 400, 130, 50, ['Test', 'Categorizer'])
+		# top branch
+		h_arr(666, 155, 691, 155)		# Detector -> Generate Images  (25 units)
+		v_line(811, 130, 183)			# fork stick at Generate Images right edge
+		h_arr(811, 130, 836, 130)		# upper fork -> Roboflow       (25 units)
+		h_arr(811, 183, 836, 183)		# lower fork -> EZannot         (25 units)
+		h_arr(946, 130, 968, 130)		# Roboflow -> convergence stick
+		h_arr(946, 183, 968, 183)		# EZannot  -> convergence stick
+		v_line(968, 130, 183)			# convergence stick before Train Detector
+		h_arr(968, 155, 993, 155)		# convergence -> Train Detector (25 units)
+
+
+		# BOXES
+
+		# main row
+		draw_box(  55, 290,  95,  62, ['Collect', 'Footage'])
+		draw_box( 193, 290, 130,  60, ['Preprocessing'])
+		draw_box( 366, 290, 165,  68, ['Tracking /', 'Animal Detection'])
+		draw_box(1212, 290, 155,  90, ['Generate and', 'sort behavior', 'examples'])
+		draw_box(1380, 290, 130,  62, ['Train', 'Categorizer'])
+		draw_box(1535, 290, 130,  62, ['Test', 'Categorizer'])
+		draw_box(1675, 290, 100,  62, ['Analyze', 'Behaviors'])
+
+		# top branch
+		draw_box( 611, 155, 110,  62, ['Detector'])
+		draw_box( 751, 155, 120,  62, ['Generate', 'Images'])
+		draw_box( 891, 130, 110,  50, ['Roboflow'])		# upper of the stacked pair
+		draw_box( 891, 183, 110,  50, ['EZannot'])		# lower of the stacked pair
+		draw_box(1051, 155, 115,  62, ['Train', 'Detector'])
+
+		# bottom branch
+		draw_box( 631, 427, 150,  68, ['Background', 'Subtraction'])
 
 
 
