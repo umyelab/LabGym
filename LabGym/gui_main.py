@@ -397,9 +397,9 @@ class WorkflowMapPanel(wx.Panel):					# define a new panel class that inherits f
 		box_brush = wx.Brush(wx.Colour(245, 245, 245))		# very light gray fill for boxes
 		arr_pen = wx.Pen(wx.Colour(80, 80, 80), ps(2))		# slightly darker gray for arrows, 2px scaled
 		arr_brush = wx.Brush(wx.Colour(80, 80, 80))			# same dark gray used to fill arrowheads
-		font = wx.Font(max(7, ps(10)), wx.FONTFAMILY_DEFAULT,	# bold font for the title and at least 8pt
+		font = wx.Font(max(9, ps(13)), wx.FONTFAMILY_DEFAULT,	# bold font for the title and at least 8pt
 				 wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
-		bold_font = wx.Font(max(8, ps(12)), wx.FONTFAMILY_DEFAULT,
+		bold_font = wx.Font(max(10, ps(15)), wx.FONTFAMILY_DEFAULT,
 		                    wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
 		
 
@@ -458,15 +458,15 @@ class WorkflowMapPanel(wx.Panel):					# define a new panel class that inherits f
 		dc.DrawText(title, px(500) - tw // 2, py(20))                  # draw at virtual x=500 (horizontal centre), y=20
 
 		# main row from left to right
-		h_arr(120, 260, 165, 260)   # Collect Footage to Preprocessing
-		h_arr(275, 260, 335, 260)   # Preprocessing to Tracking
+		h_arr(120, 260, 155, 260)   # Collect Footage to Preprocessing
+		h_arr(285, 260, 335, 260)   # Preprocessing to Tracking
 		h_arr(445, 260, 495, 260)   # Tracking to Generate & Sort
 		h_arr(645, 260, 705, 260)   # Generate & Sort to Train Categorizer
 		h_arr(835, 260, 885, 260)   # Train Categorizer to Analyze Behaviors
 
 		# vertical branches off the Tracking box
 		v_arr_up(390, 235, 390, 135)  # Tracking ↑ Detector (top edge of Tracking → bottom edge of Detector)
-		v_arr_dn(390, 285, 390, 370)  # Tracking ↓ Background Subtraction (bottom edge → top edge)
+		v_arr_dn(390, 285, 390, 363)  # Tracking ↓ Background Subtraction (bottom edge → top edge)
 
         # top branch — left to right
 		h_arr(465, 110, 500, 110)   # Detector to Generate Images
@@ -481,22 +481,22 @@ class WorkflowMapPanel(wx.Panel):					# define a new panel class that inherits f
         # each call is: centre_x, centre_y, width, height, [lines of text]
 
         # main row
-		draw_box( 65,  260, 110, 50, ['Collect', 'Footage'])
-		draw_box(220,  260, 110, 50, ['Preprocessing'])
-		draw_box(390,  260, 110, 50, ['"Tracking"'])
-		draw_box(570,  260, 150, 70, ['Generate &', 'Sort Behavior', 'Examples'])  # taller box to fit 3 lines
-		draw_box(770,  260, 130, 50, ['Train', 'Categorizer'])
-		draw_box(940,  260, 110, 50, ['Analyze', 'Behaviors'])
+		draw_box(65, 260, 110, 50, ['Collect', 'Footage'])
+		draw_box(220, 260, 130, 50, ['Preprocessing'])
+		draw_box(390, 260, 110, 50, ['"Tracking"'])
+		draw_box(570, 260, 150, 70, ['Generate &', 'Sort Behavior', 'Examples'])  # taller box to fit 3 lines
+		draw_box(770, 260, 130, 50, ['Train', 'Categorizer'])
+		draw_box(940, 260, 110, 50, ['Analyze', 'Behaviors'])
 
         # top branch
-		draw_box(390,  110, 150, 50, ['Detector', '(dynamic background)'])
-		draw_box(565,  110, 130, 50, ['Generate', 'Images'])
-		draw_box(745,  110, 130, 50, ['Roboflow /', 'EZannot'])
-		draw_box(930,  110, 110, 50, ['Train', 'Detector'])
+		draw_box(390, 110, 150, 50, ['Detector', '(dynamic background)'])
+		draw_box(565, 110, 130, 50, ['Generate', 'Images'])
+		draw_box(745, 110, 130, 50, ['Roboflow /', 'EZannot'])
+		draw_box(930, 110, 110, 50, ['Train', 'Detector'])
 
         # bottom
-		draw_box(390,  400, 150, 60, ['Background', 'Subtraction', '(static background)'])  # taller box to fit 3 lines
-		draw_box(770,  400, 130, 50, ['Test', 'Categorizer'])
+		draw_box(390, 400, 150, 75, ['Background', 'Subtraction', '(static background)'])  # taller box to fit 3 lines
+		draw_box(770, 400, 130, 50, ['Test', 'Categorizer'])
 
 
 
