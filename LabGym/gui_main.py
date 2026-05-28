@@ -358,33 +358,34 @@ class PanelLv1_AnalysisModule(wx.Panel):
 		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_CalculateDistances(self.notebook), title)
 
 
-class WorkflowMapPanel(wx.Panel):					# define a new panel class that inherits from wx.Panel
-	"""Displays the LabGym workflow map, scaled to fit the panel."""
+class WorkflowMapPanel(wx.ScrolledWindow):			# scrollable panel — diagram is fixed-size, scrollbars appear if window is smaller
+	"""Displays the LabGym workflow map at a fixed pixel canvas sized to the default LabGym window."""
+
+	CANVAS_W = 1000								# matches LabGym's default window width (set in MainFrame.__init__)
+	CANVAS_H = 560								# default window height (600) minus ~40px for the notebook tab bar
 
 	def __init__(self, parent):
-		super().__init__(parent)					# run wx.Panel's own setup
+		super().__init__(parent)					# run wx.ScrolledWindow's own setup
 		self.SetBackgroundColour(wx.WHITE)			# make the panel background white
+		self.SetScrollRate(10, 10)					# scroll 10 pixels per step when dragging the scrollbar
+		self.SetVirtualSize(self.CANVAS_W, self.CANVAS_H)	# tell wx the total scrollable area
 		self.Bind(wx.EVT_PAINT, self.on_paint)		# call on_paint whenever wx needs to redraw this panel
-		self.Bind(wx.EVT_SIZE, self.on_size)		# call on_size whenever the panel is resized
-
-	def on_size(self, event):
-		self.Refresh()								# force a full redraw so the diagram rescales
-		event.Skip()								# let wx continue processing the resize event normally
 
 	def on_paint(self, event):
 		dc = wx.PaintDC(self)						# create a drawing context which is required in an EVT_PAINT handler
+		dc.SetBackground(wx.Brush(wx.WHITE))		# set white background for the clear
+		dc.Clear()									# erase the physical visible area before adjusting for scroll
+		self.PrepareDC(dc)							# shift the DC origin to account for the current scroll position
 		self._draw(dc)								# hand off to the main drawing method
 
 	def _draw(self, dc):
 		import math								# needed for diagonal arrow angle calculations
-		W, H = self.GetClientSize()				# get the panel's current width and height in pixels
-		if W < 10 or H < 10:					# skip drawing if the panel is too small to be useful
-			return
+		W, H = self.CANVAS_W, self.CANVAS_H		# fixed canvas dimensions — diagram never rescales
 
-		VW, VH = 1780, 540						# virtual canvas size — all coordinates below use this space
-		scale = min(W / VW, H / VH) * 0.95		# fit the canvas into the panel while leaving a 5% margin
-		ox = (W - VW * scale) / 2				# horizontal offset to centre the diagram
-		oy = (H - VH * scale) / 2				# vertical offset to centre the diagram
+		VW, VH = 1780, 540						# virtual coordinate space — all positions below use this grid
+		scale = min(W / VW, H / VH) * 0.95		# compute scale so the diagram fills the canvas with a 5% margin
+		ox = (W - VW * scale) / 2				# horizontal offset to centre the diagram on the canvas
+		oy = (H - VH * scale) / 2				# vertical offset to centre the diagram on the canvas
 
 		def px(v): return int(ox + v * scale)	# convert a virtual x-coordinate to a real screen pixel
 		def py(v): return int(oy + v * scale)	# convert a virtual y-coordinate to a real screen pixel
@@ -445,7 +446,7 @@ class WorkflowMapPanel(wx.Panel):					# define a new panel class that inherits f
 			if lines:
 				# draw horizontal label lines offset perpendicular to the arrow shaft (left side)
 				perp_x, perp_y = uy, -ux			# 90 degrees left of arrow direction in screen coords
-				offset = ps(35)						# pixels to push text away from the shaft
+				offset = ps(50)						# pixels to push text away from the shaft
 				cx_label = px((x1 + x2) / 2) + int(perp_x * offset)
 				cy_label = py((y1 + y2) / 2) + int(perp_y * offset)
 				dc.SetFont(font)
@@ -460,8 +461,8 @@ class WorkflowMapPanel(wx.Panel):					# define a new panel class that inherits f
 		# DASHED SEPARATOR LINES (drawn first — arrows and boxes appear on top)
 		dc.SetPen(dash_pen)
 		dc.SetBrush(wx.TRANSPARENT_BRUSH)
-		dc.DrawLine(px(270),  py(30), px(270),  py(510))	# first separator: between Preprocessing and Tracking
-		dc.DrawLine(px(1121), py(30), px(1121), py(510))	# second separator: centred in the 25-unit gap between Train Detector right (1108) and Generate and sort left (1134)
+		dc.DrawLine(px(290),  py(30), px(290),  py(510))	# first separator: between Preprocessing and Tracking
+		dc.DrawLine(px(1141), py(30), px(1141), py(510))	# second separator: centred in the 25-unit gap between Train Detector right and Generate and sort left
 
 		# TITLE
 		dc.SetFont(bold_font)
@@ -476,47 +477,48 @@ class WorkflowMapPanel(wx.Panel):					# define a new panel class that inherits f
 
 		# main row — left to right
 		h_arr( 103, 290,  128, 290)		# Collect Footage -> Preprocessing
-		h_arr( 258, 290,  283, 290)		# Preprocessing -> Tracking (crosses first separator)
-		h_arr(1109, 290, 1134, 290)		# Train Detector right -> Generate and sort left (crosses second separator at 1121)
-		h_arr(1290, 290, 1315, 290)		# Generate and sort -> Train Categorizer
-		h_arr(1445, 290, 1470, 290)		# Train Categorizer -> Test Categorizer
-		h_arr(1600, 290, 1625, 290)		# Test Categorizer -> Analyze Behaviors
+		h_arr( 278, 290,  303, 290)		# Preprocessing -> Tracking (crosses first separator)
+		h_arr(1129, 290, 1154, 290)		# Train Detector right -> Generate and sort left (crosses second separator at 1141)
+		h_arr(1310, 290, 1335, 290)		# Generate and sort -> Train Categorizer
+		h_arr(1465, 290, 1490, 290)		# Train Categorizer -> Test Categorizer
+		h_arr(1620, 290, 1645, 290)		# Test Categorizer -> Analyze Behaviors
 
 		# diagonal arrows — symmetric ~37° angles up and down from Tracking
-		diag_arr(448, 256, 556, 180, ['Dynamic', 'Background'])	# Tracking top-right -> Detector bottom-left
-		diag_arr(448, 324, 556, 399, ['Static', 'Background'])	# Tracking bottom-right -> Background Subtraction top-left
+		diag_arr(468, 256, 576, 180, ['Dynamic', 'Background'])	# Tracking top-right -> Detector bottom-left
+		diag_arr(468, 324, 576, 399, ['Static', 'Background'])	# Tracking bottom-right -> Background Subtraction top-left
 
 		# top branch
-		h_arr(666, 155, 691, 155)		# Detector -> Generate Images  (25 units)
-		v_line(811, 130, 183)			# fork stick at Generate Images right edge
-		h_arr(811, 130, 836, 130)		# upper fork -> Roboflow       (25 units)
-		h_arr(811, 183, 836, 183)		# lower fork -> EZannot         (25 units)
-		h_arr(946, 130, 968, 130)		# Roboflow -> convergence stick
-		h_arr(946, 183, 968, 183)		# EZannot  -> convergence stick
-		v_line(968, 130, 183)			# convergence stick before Train Detector
-		h_arr(968, 155, 993, 155)		# convergence -> Train Detector (25 units)
+		h_arr(686, 155, 711, 155)		# Detector -> Generate Images  (25 units)
+		v_line(831, 130, 183)			# fork stick at Generate Images right edge
+		h_arr(831, 130, 856, 130)		# upper fork -> Roboflow       (25 units)
+		h_arr(831, 183, 856, 183)		# lower fork -> EZannot         (25 units)
+		h_arr(966, 130, 988, 130)		# Roboflow -> convergence stick
+		h_arr(966, 183, 988, 183)		# EZannot  -> convergence stick
+		v_line(988, 130, 183)			# convergence stick before Train Detector
+		h_arr(988, 155, 1013, 155)		# convergence -> Train Detector (25 units)
 
 
 		# BOXES
 
 		# main row
 		draw_box(  55, 290,  95,  62, ['Collect', 'Footage'])
-		draw_box( 193, 290, 130,  60, ['Preprocessing'])
-		draw_box( 366, 290, 165,  68, ['Tracking /', 'Animal Detection'])
-		draw_box(1212, 290, 155,  90, ['Generate and', 'sort behavior', 'examples'])
-		draw_box(1380, 290, 130,  62, ['Train', 'Categorizer'])
-		draw_box(1535, 290, 130,  62, ['Test', 'Categorizer'])
-		draw_box(1675, 290, 100,  62, ['Analyze', 'Behaviors'])
+		draw_box( 203, 290, 150,  60, ['Preprocessing'])
+		draw_box( 386, 290, 165,  68, ['Tracking /', 'Animal Detection'])
+		draw_box(1232, 290, 155,  90, ['Generate and', 'sort behavior', 'examples'])
+		draw_box(1400, 290, 130,  62, ['Train', 'Categorizer'])
+		draw_box(1555, 290, 130,  62, ['Test', 'Categorizer'])
+		draw_box(1695, 290, 100,  62, ['Analyze', 'Behaviors'])
 
 		# top branch
-		draw_box( 611, 155, 110,  62, ['Detector'])
-		draw_box( 751, 155, 120,  62, ['Generate', 'Images'])
-		draw_box( 891, 130, 110,  50, ['Roboflow'])		# upper of the stacked pair
-		draw_box( 891, 183, 110,  50, ['EZannot'])		# lower of the stacked pair
-		draw_box(1051, 155, 115,  62, ['Train', 'Detector'])
+		draw_box( 631, 155, 110,  62, ['Detector'])
+		draw_box( 771, 155, 120,  62, ['Generate', 'Images'])
+		draw_box( 911, 130, 110,  50, ['Roboflow'])		# upper of the stacked pair
+		draw_box( 911, 183, 110,  50, ['EZannot'])		# lower of the stacked pair
+		draw_box(1071, 155, 115,  62, ['Train', 'Detector'])
 
 		# bottom branch
-		draw_box( 631, 427, 150,  68, ['Background', 'Subtraction'])
+		draw_box( 651, 427, 150,  68, ['Background', 'Subtraction'])
+
 
 
 
