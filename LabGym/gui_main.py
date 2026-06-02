@@ -382,7 +382,7 @@ class WorkflowMapPanel(wx.ScrolledWindow):			# scrollable panel — diagram is f
 		import math								# needed for diagonal arrow angle calculations
 		W, H = self.CANVAS_W, self.CANVAS_H		# fixed canvas dimensions — diagram never rescales
 
-		VW, VH = 1780, 540						# virtual coordinate space — all positions below use this grid
+		VW, VH = 1780, 700						# virtual coordinate space — taller canvas for vertical layout
 		scale = min(W / VW, H / VH) * 0.95		# compute scale so the diagram fills the canvas with a 5% margin
 		ox = (W - VW * scale) / 2				# horizontal offset to centre the diagram on the canvas
 		oy = (H - VH * scale) / 2				# vertical offset to centre the diagram on the canvas
@@ -392,17 +392,19 @@ class WorkflowMapPanel(wx.ScrolledWindow):			# scrollable panel — diagram is f
 		def ps(v): return max(1, int(v * scale))# convert a virtual size/thickness to pixels (minimum 1)
 
 		# Section fill and ink (border + arrow) colors
-		s1_fill = wx.Colour(255, 210, 210)		# super light red  — section 1 (Collect, Preprocessing)
-		s1_ink  = wx.Colour(160, 55, 55)		# darker red       — borders and arrows in section 1
-		s2_fill = wx.Colour(210, 228, 255)		# super light blue — section 2 (Tracking and top/bottom branches)
-		s2_ink  = wx.Colour(55, 95, 165)		# darker blue      — borders and arrows in section 2
-		s3_fill = wx.Colour(255, 228, 195)		# super light orange — section 3 (Categorizer pipeline)
-		s3_ink  = wx.Colour(175, 100, 20)		# darker orange    — borders and arrows in section 3
+		s1_fill = wx.Colour(255, 210, 210)		# super light red    — section 1
+		s1_ink  = wx.Colour(160, 55, 55)		# darker red         — section 1 borders and arrows
+		s2_fill = wx.Colour(210, 228, 255)		# super light blue   — section 2
+		s2_ink  = wx.Colour(55, 95, 165)		# darker blue        — section 2 borders and arrows
+		s3_fill = wx.Colour(255, 228, 195)		# super light orange — section 3
+		s3_ink  = wx.Colour(175, 100, 20)		# darker orange      — section 3 borders and arrows
 
 		font      = wx.Font(max(11, ps(16)), wx.FONTFAMILY_DEFAULT,
 		                    wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)	# body text font, scales with window size
 		bold_font = wx.Font(max(16, ps(26)), wx.FONTFAMILY_DEFAULT,
-		                    wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)	# bold font used for the title
+		                    wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)	# large bold font for the main title
+		head_font = wx.Font(max(14, ps(22)), wx.FONTFAMILY_DEFAULT,
+		                    wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)	# smaller bold font for section headings
 
 		def draw_box(cx, cy, bw, bh, lines, fill, ink):
 			dc.SetPen(wx.Pen(ink, ps(1)))
@@ -417,19 +419,14 @@ class WorkflowMapPanel(wx.ScrolledWindow):			# scrollable panel — diagram is f
 				lw, _ = dc.GetTextExtent(line)
 				dc.DrawText(line, px(cx) - lw // 2, top + i * lh)
 
-		def h_arr(x1, y1, x2, y2, ink):
+		def v_arr(x, y1, y2, ink):				# vertical downward arrow with filled arrowhead
 			dc.SetPen(wx.Pen(ink, ps(2)))
 			dc.SetBrush(wx.Brush(ink))
-			dc.DrawLine(px(x1), py(y1), px(x2), py(y2))
-			ah, al = ps(5), ps(9)
-			dc.DrawPolygon([(px(x2),    py(y2)),
-			                (px(x2)-al, py(y2)-ah),
-			                (px(x2)-al, py(y2)+ah)])
-
-		def v_line(x, y1, y2, ink):
-			dc.SetPen(wx.Pen(ink, ps(2)))
-			dc.SetBrush(wx.TRANSPARENT_BRUSH)
 			dc.DrawLine(px(x), py(y1), px(x), py(y2))
+			ah, al = ps(5), ps(9)
+			dc.DrawPolygon([(px(x),    py(y2)),
+			                (px(x)-ah, py(y2)-al),
+			                (px(x)+ah, py(y2)-al)])
 
 		def diag_arr(x1, y1, x2, y2, ink, lines=()):
 			dc.SetPen(wx.Pen(ink, ps(2)))
@@ -446,8 +443,9 @@ class WorkflowMapPanel(wx.ScrolledWindow):			# scrollable panel — diagram is f
 			rgt_y = int(tip_y - al * uy - ah * ux)
 			dc.DrawPolygon([(tip_x, tip_y), (lft_x, lft_y), (rgt_x, rgt_y)])
 			if lines:
-				# draw horizontal label lines offset perpendicular to the arrow shaft (left side)
 				perp_x, perp_y = uy, -ux			# 90 degrees left of arrow direction in screen coords
+				if perp_y > 0:						# if that points downward, flip so label is always above the arrow
+					perp_x, perp_y = -perp_x, -perp_y
 				offset = ps(50)						# pixels to push text away from the shaft
 				cx_label = px((x1 + x2) / 2) + int(perp_x * offset)
 				cy_label = py((y1 + y2) / 2) + int(perp_y * offset)
@@ -459,61 +457,75 @@ class WorkflowMapPanel(wx.ScrolledWindow):			# scrollable panel — diagram is f
 					lw, _ = dc.GetTextExtent(line)
 					dc.DrawText(line, cx_label - lw // 2, top + i * lh)
 
+		def big_arr(x1, x2, cy):				# large grey section-transition arrow pointing right
+			sh   = ps(8)						# shaft half-height (thinner than before)
+			hw   = ps(16)						# arrowhead half-width
+			neck = px(x2) - ps(26)				# x-pixel where the arrowhead begins
+			dc.SetPen(wx.Pen(wx.Colour(130, 130, 130), ps(1)))
+			dc.SetBrush(wx.Brush(wx.Colour(175, 175, 175)))
+			dc.DrawPolygon([
+				(px(x1), py(cy) - sh),
+				(neck,   py(cy) - sh),
+				(neck,   py(cy) - hw),
+				(px(x2), py(cy)),
+				(neck,   py(cy) + hw),
+				(neck,   py(cy) + sh),
+				(px(x1), py(cy) + sh),
+			])
 
-		# TITLE
+
+		# MAIN TITLE
 		dc.SetFont(bold_font)
 		dc.SetTextForeground(wx.BLACK)
-		title = 'LabGym Workflow Map'
-		tw, _ = dc.GetTextExtent(title)
-		dc.DrawText(title, px(890) - tw // 2, py(10))		# centred at virtual x=890 (midpoint of VW=1780)
+		tw, _ = dc.GetTextExtent('LabGym Workflow Map')
+		dc.DrawText('LabGym Workflow Map', px(890) - tw // 2, py(65) // 3)
+
+		# SECTION HEADINGS
+		dc.SetFont(head_font)
+		dc.SetTextForeground(wx.BLACK)
+		for label, cx in [('1. Video Prep', 155), ('2. Tracking', 755), ('3. Classification', 1560)]:
+			tw, _ = dc.GetTextExtent(label)
+			dc.DrawText(label, px(cx) - tw // 2, py(65))
 
 
-		# ARROWS
-		# All horizontal connecting arrows have a shaft length of 25 units
+		# ── Section 1: Video Prep ──────────────────────────────────────────────
+		v_arr(155, 185, 229, s1_ink)						# Collect Footage -> Preprocessing
+		big_arr(380, 555, 65)								# section 1 -> section 2 transition (centred in gap, at subtitle height)
 
-		# main row — left to right
-		h_arr( 103, 290,  128, 290, s1_ink)	# Collect Footage -> Preprocessing
-		h_arr( 278, 290,  303, 290, s1_ink)	# Preprocessing -> Tracking
-		h_arr(1129, 290, 1154, 290, s2_ink)	# Train Detector right -> Generate and sort left
-		h_arr(1310, 290, 1335, 290, s3_ink)	# Generate and sort -> Train Categorizer
-		h_arr(1465, 290, 1490, 290, s3_ink)	# Train Categorizer -> Test Categorizer
-		h_arr(1620, 290, 1645, 290, s3_ink)	# Test Categorizer -> Analyze Behaviors
+		# ── Section 2: Tracking ───────────────────────────────────────────────
+		diag_arr(715, 182, 495, 246, s2_ink, ['Static', 'Background'])		# Tracking -> Background Subtraction
+		diag_arr(795, 182, 1035, 249, s2_ink, ['Dynamic', 'Background'])	# Tracking -> Detector
+		v_arr(1035, 311, 349, s2_ink)						# Detector -> Generate Images
+		v_arr(1018, 411, 449, s2_ink)						# Generate Images -> Roboflow OR EZannot (left fork)
+		v_arr(1052, 411, 449, s2_ink)						# Generate Images -> Roboflow OR EZannot (right fork)
+		v_arr(1035, 511, 549, s2_ink)						# Roboflow OR EZannot -> Train Detector
+		big_arr(1045, 1220, 65)								# section 2 -> section 3 transition (centred in gap, at subtitle height)
 
-		# diagonal arrows — symmetric ~37° angles up and down from Tracking
-		diag_arr(468, 256, 576, 180, s2_ink, ['Dynamic', 'Background'])	# Tracking top-right -> Detector
-		diag_arr(468, 324, 576, 399, s2_ink, ['Static', 'Background'])		# Tracking bottom-right -> Background Subtraction
-
-		# top branch
-		h_arr(686, 155, 711, 155, s2_ink)		# Detector -> Generate Images  (25 units)
-		v_line(831, 130, 183, s2_ink)			# fork stick at Generate Images right edge
-		h_arr(831, 130, 856, 130, s2_ink)		# upper fork -> Roboflow       (25 units)
-		h_arr(831, 183, 856, 183, s2_ink)		# lower fork -> EZannot         (25 units)
-		h_arr(966, 130, 988, 130, s2_ink)		# Roboflow -> convergence stick
-		h_arr(966, 183, 988, 183, s2_ink)		# EZannot  -> convergence stick
-		v_line(988, 130, 183, s2_ink)			# convergence stick before Train Detector
-		h_arr(988, 155, 1013, 155, s2_ink)		# convergence -> Train Detector (25 units)
+		# ── Section 3: Classification ─────────────────────────────────────────
+		v_arr(1560, 209, 247, s3_ink)						# Generate and sort -> Train Categorizer
+		v_arr(1560, 309, 347, s3_ink)						# Train Categorizer -> Test Categorizer
+		v_arr(1560, 409, 447, s3_ink)						# Test Categorizer -> Analyze Behaviors
 
 
 		# BOXES
 
-		# main row
-		draw_box(  55, 290,  95,  62, ['Collect', 'Footage'],                        s1_fill, s1_ink)
-		draw_box( 203, 290, 150,  60, ['Preprocessing'],                              s1_fill, s1_ink)
-		draw_box( 386, 290, 165,  68, ['Tracking /', 'Animal Detection'],             s2_fill, s2_ink)
-		draw_box(1232, 290, 155,  90, ['Generate and', 'sort behavior', 'examples'], s3_fill, s3_ink)
-		draw_box(1400, 290, 130,  62, ['Train', 'Categorizer'],                      s3_fill, s3_ink)
-		draw_box(1555, 290, 130,  62, ['Test', 'Categorizer'],                       s3_fill, s3_ink)
-		draw_box(1695, 290, 100,  62, ['Analyze', 'Behaviors'],                      s3_fill, s3_ink)
+		# section 1
+		draw_box( 155, 154, 130,  62, ['Collect', 'Footage'],                        s1_fill, s1_ink)
+		draw_box( 155, 259, 150,  60, ['Preprocessing'],                              s1_fill, s1_ink)
 
-		# top branch — all section 2
-		draw_box( 631, 155, 110,  62, ['Detector'],                                  s2_fill, s2_ink)
-		draw_box( 771, 155, 120,  62, ['Generate', 'Images'],                        s2_fill, s2_ink)
-		draw_box( 911, 130, 110,  50, ['Roboflow'],                                  s2_fill, s2_ink)	# upper of the stacked pair
-		draw_box( 911, 183, 110,  50, ['EZannot'],                                   s2_fill, s2_ink)	# lower of the stacked pair
-		draw_box(1071, 155, 115,  62, ['Train', 'Detector'],                         s2_fill, s2_ink)
+		# section 2
+		draw_box( 755, 148, 175,  68, ['Tracking /', 'Animal Detection'],             s2_fill, s2_ink)
+		draw_box( 495, 280, 150,  68, ['Background', 'Subtraction'],                 s2_fill, s2_ink)
+		draw_box(1035, 280, 110,  62, ['Detector'],                                  s2_fill, s2_ink)
+		draw_box(1035, 380, 120,  62, ['Generate', 'Images'],                        s2_fill, s2_ink)
+		draw_box(1035, 480, 175,  62, ['Roboflow OR', 'EZannot'],                    s2_fill, s2_ink)
+		draw_box(1035, 580, 115,  62, ['Train', 'Detector'],                         s2_fill, s2_ink)
 
-		# bottom branch — section 2
-		draw_box( 651, 427, 150,  68, ['Background', 'Subtraction'],                 s2_fill, s2_ink)
+		# section 3
+		draw_box(1560, 164, 155,  90, ['Generate and', 'sort behavior', 'examples'], s3_fill, s3_ink)
+		draw_box(1560, 278, 130,  62, ['Train', 'Categorizer'],                      s3_fill, s3_ink)
+		draw_box(1560, 378, 130,  62, ['Test', 'Categorizer'],                       s3_fill, s3_ink)
+		draw_box(1560, 478, 100,  62, ['Analyze', 'Behaviors'],                      s3_fill, s3_ink)
 
 
 
