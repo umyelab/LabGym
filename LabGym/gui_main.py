@@ -382,9 +382,9 @@ class WorkflowMapPanel(wx.ScrolledWindow):			# scrollable panel — diagram is f
 		import math								# needed for diagonal arrow angle calculations
 		W, H = self.CANVAS_W, self.CANVAS_H		# fixed canvas dimensions — diagram never rescales
 
-		VW, VH = 1780, 700						# virtual coordinate space — taller canvas for vertical layout
+		VW, VH = 1700, 660						# virtual coordinate space — sized to match actual content bounds
 		scale = min(W / VW, H / VH) * 0.95		# compute scale so the diagram fills the canvas with a 5% margin
-		ox = (W - VW * scale) / 2				# horizontal offset to centre the diagram on the canvas
+		ox = W / 2 - 762 * scale				# offset so the content midpoint (x≈90–1433, cx≈762) lands at the canvas centre
 		oy = (H - VH * scale) / 2				# vertical offset to centre the diagram on the canvas
 
 		def px(v): return int(ox + v * scale)	# convert a virtual x-coordinate to a real screen pixel
@@ -399,11 +399,11 @@ class WorkflowMapPanel(wx.ScrolledWindow):			# scrollable panel — diagram is f
 		s3_fill = wx.Colour(255, 228, 195)		# super light orange — section 3
 		s3_ink  = wx.Colour(175, 100, 20)		# darker orange      — section 3 borders and arrows
 
-		font      = wx.Font(max(11, ps(16)), wx.FONTFAMILY_DEFAULT,
+		font      = wx.Font(max(12, ps(16)), wx.FONTFAMILY_DEFAULT,
 		                    wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)	# body text font, scales with window size
-		bold_font = wx.Font(max(16, ps(26)), wx.FONTFAMILY_DEFAULT,
+		bold_font = wx.Font(max(18, ps(26)), wx.FONTFAMILY_DEFAULT,
 		                    wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)	# large bold font for the main title
-		head_font = wx.Font(max(14, ps(22)), wx.FONTFAMILY_DEFAULT,
+		head_font = wx.Font(max(15, ps(22)), wx.FONTFAMILY_DEFAULT,
 		                    wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)	# smaller bold font for section headings
 
 		def draw_box(cx, cy, bw, bh, lines, fill, ink):
@@ -478,12 +478,12 @@ class WorkflowMapPanel(wx.ScrolledWindow):			# scrollable panel — diagram is f
 		dc.SetFont(bold_font)
 		dc.SetTextForeground(wx.BLACK)
 		tw, _ = dc.GetTextExtent('LabGym Workflow Map')
-		dc.DrawText('LabGym Workflow Map', px(890) - tw // 2, py(65) // 3)
+		dc.DrawText('LabGym Workflow Map', (W - tw) // 2, py(65) // 3)
 
 		# SECTION HEADINGS
 		dc.SetFont(head_font)
 		dc.SetTextForeground(wx.BLACK)
-		for label, cx in [('1. Video Prep', 155), ('2. Tracking', 755), ('3. Classification', 1560)]:
+		for label, cx in [('1. Video Prep', 155), ('2. Tracking', 755), ('3. Classification', 1355)]:
 			tw, _ = dc.GetTextExtent(label)
 			dc.DrawText(label, px(cx) - tw // 2, py(65))
 
@@ -499,12 +499,12 @@ class WorkflowMapPanel(wx.ScrolledWindow):			# scrollable panel — diagram is f
 		v_arr(1018, 411, 449, s2_ink)						# Generate Images -> Roboflow OR EZannot (left fork)
 		v_arr(1052, 411, 449, s2_ink)						# Generate Images -> Roboflow OR EZannot (right fork)
 		v_arr(1035, 511, 549, s2_ink)						# Roboflow OR EZannot -> Train Detector
-		big_arr(1045, 1220, 65)								# section 2 -> section 3 transition (centred in gap, at subtitle height)
+		big_arr(967, 1142, 65)									# section 2 -> section 3 transition (centred in gap, at subtitle height)
 
 		# ── Section 3: Classification ─────────────────────────────────────────
-		v_arr(1560, 209, 247, s3_ink)						# Generate and sort -> Train Categorizer
-		v_arr(1560, 309, 347, s3_ink)						# Train Categorizer -> Test Categorizer
-		v_arr(1560, 409, 447, s3_ink)						# Test Categorizer -> Analyze Behaviors
+		v_arr(1355, 209, 247, s3_ink)						# Generate and sort -> Train Categorizer
+		v_arr(1355, 309, 347, s3_ink)						# Train Categorizer -> Test Categorizer
+		v_arr(1355, 409, 447, s3_ink)						# Test Categorizer -> Analyze Behaviors
 
 
 		# BOXES
@@ -522,10 +522,10 @@ class WorkflowMapPanel(wx.ScrolledWindow):			# scrollable panel — diagram is f
 		draw_box(1035, 580, 115,  62, ['Train', 'Detector'],                         s2_fill, s2_ink)
 
 		# section 3
-		draw_box(1560, 164, 155,  90, ['Generate and', 'sort behavior', 'examples'], s3_fill, s3_ink)
-		draw_box(1560, 278, 130,  62, ['Train', 'Categorizer'],                      s3_fill, s3_ink)
-		draw_box(1560, 378, 130,  62, ['Test', 'Categorizer'],                       s3_fill, s3_ink)
-		draw_box(1560, 478, 100,  62, ['Analyze', 'Behaviors'],                      s3_fill, s3_ink)
+		draw_box(1355, 164, 155,  90, ['Generate and', 'sort behavior', 'examples'], s3_fill, s3_ink)
+		draw_box(1355, 278, 130,  62, ['Train', 'Categorizer'],                      s3_fill, s3_ink)
+		draw_box(1355, 378, 130,  62, ['Test', 'Categorizer'],                       s3_fill, s3_ink)
+		draw_box(1355, 478, 100,  62, ['Analyze', 'Behaviors'],                      s3_fill, s3_ink)
 
 
 
