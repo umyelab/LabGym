@@ -21,6 +21,40 @@ Email: bingye@umich.edu
 This module provides additional utility functions for the LabGym GUI. Currently, it contains a function to add a new page or select existing page if it already exists.
 '''
 
+import wx
+import wx.lib.buttons as wxbuttons
+
+# Section colour constants — match the workflow-map fill colours
+INFO_COLOUR_S1   = wx.Colour(255, 210, 210)  # light red    — 1. Video Prep
+INFO_COLOUR_S2   = wx.Colour(210, 228, 255)  # light blue   — 2. Tracking
+INFO_COLOUR_S3   = wx.Colour(255, 228, 195)  # light orange — 3. Classification
+INFO_COLOUR_GREY = wx.Colour(220, 220, 220)  # light grey   — Post-classification
+
+
+def add_info_button(panel, boxsizer, colour):
+	"""Insert a coloured 'i' button at the top-right of a panel's vertical sizer.
+
+	Clicking the button switches the main notebook to the Workflow Map tab (index 1).
+	Use one of INFO_COLOUR_S1/S2/S3/GREY as the colour argument.
+	"""
+	bar = wx.BoxSizer(wx.HORIZONTAL)
+	bar.AddStretchSpacer()
+	btn = wxbuttons.GenButton(panel, label='i', size=(28, 28))
+	btn.SetBackgroundColour(colour)
+	btn.SetForegroundColour(wx.Colour(60, 60, 60))
+	btn.SetFont(wx.Font(13, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_ITALIC, wx.FONTWEIGHT_BOLD))
+	btn.SetToolTip('View Workflow Map')
+	bar.Add(btn, 0, wx.RIGHT | wx.TOP, 6)
+	boxsizer.Add(bar, 0, wx.EXPAND)
+
+	def _go_to_workflow(evt):
+		frame = wx.GetTopLevelParent(panel)
+		if hasattr(frame, 'notebook'):
+			frame.notebook.SetSelection(1)
+
+	btn.Bind(wx.EVT_BUTTON, _go_to_workflow)
+
+
 def add_or_select_notebook_page(notebook, panel_factory, title):
 	"""Helper function to add a new page or select existing page if it already exists.
 

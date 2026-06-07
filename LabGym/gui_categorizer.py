@@ -45,7 +45,7 @@ logger.debug('importing %s done', '.analyzebehavior_dt')
 from .categorizer import Categorizers
 from LabGym import config
 from .tools import sort_examples_from_csv
-from .gui_utils import add_or_select_notebook_page
+from .gui_utils import add_or_select_notebook_page, add_info_button, INFO_COLOUR_S3
 
 
 class PanelLv2_GenerateExamples(wx.Panel):
@@ -100,6 +100,7 @@ class PanelLv2_GenerateExamples(wx.Panel):
 
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
+		add_info_button(self, boxsizer, INFO_COLOUR_S3)
 
 		module_specifymode=wx.BoxSizer(wx.HORIZONTAL)
 		button_specifymode=wx.Button(panel,label='Specify the mode of behavior\nexamples to generate',size=(300,40))
@@ -701,6 +702,7 @@ class PanelLv2_SortBehaviors(wx.Panel):
 
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
+		add_info_button(self, boxsizer, INFO_COLOUR_S3)
 		boxsizer.Add(0,40,0)
 
 		button_sortexamples=wx.Button(panel,label='Sort Examples (LabGym UI)',size=(300,40))
@@ -756,6 +758,7 @@ class PanelLv3_SortExamples(wx.Panel):
 
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
+		add_info_button(self, boxsizer, INFO_COLOUR_S3)
 
 		module_inputfolder=wx.BoxSizer(wx.HORIZONTAL)
 		button_inputfolder=wx.Button(panel,label='Select the folder that stores\nunsorted behavior examples',size=(300,40))
@@ -1001,6 +1004,7 @@ class PanelLv3_SortExamplesCSV(wx.Panel):
 
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
+		add_info_button(self, boxsizer, INFO_COLOUR_S3)
 
 		module_inputexamples=wx.BoxSizer(wx.HORIZONTAL)
 		button_inputexamples=wx.Button(panel,label='Select the folder that stores\nthe unsorted behavior examples',size=(300,40))
@@ -1112,6 +1116,7 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
+		add_info_button(self, boxsizer, INFO_COLOUR_S3)
 
 		module_inputexamples=wx.BoxSizer(wx.HORIZONTAL)
 		button_inputexamples=wx.Button(panel,label='Select the folder that stores\nthe sorted behavior examples',size=(300,40))
@@ -1625,6 +1630,7 @@ class PanelLv2_TestCategorizers(wx.Panel):
 
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
+		add_info_button(self, boxsizer, INFO_COLOUR_S3)
 
 		module_selectcategorizer=wx.BoxSizer(wx.HORIZONTAL)
 		button_selectcategorizer=wx.Button(panel,label='Select a Categorizer\nto test',size=(300,40))

@@ -37,6 +37,7 @@ import wx
 from LabGym import config
 from .detector import Detector
 from .tools import extract_frames
+from .gui_utils import add_info_button, INFO_COLOUR_S2
 
 
 class PanelLv2_GenerateImages(wx.Panel):
@@ -62,6 +63,7 @@ class PanelLv2_GenerateImages(wx.Panel):
 
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
+		add_info_button(self, boxsizer, INFO_COLOUR_S2)
 
 		module_inputvideos=wx.BoxSizer(wx.HORIZONTAL)
 		button_inputvideos=wx.Button(panel,label='Select the video(s) to generate\nimage examples',size=(300,40))
@@ -253,6 +255,7 @@ class PanelLv2_TrainDetectors(wx.Panel):
 
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
+		add_info_button(self, boxsizer, INFO_COLOUR_S2)
 
 		module_selectimages=wx.BoxSizer(wx.HORIZONTAL)
 		button_selectimages=wx.Button(panel,label='Select the folder containing\nall the training images',size=(300,40))
@@ -419,6 +422,7 @@ class PanelLv2_TestDetectors(wx.Panel):
 
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
+		add_info_button(self, boxsizer, INFO_COLOUR_S2)
 
 		module_selectdetector=wx.BoxSizer(wx.HORIZONTAL)
 		button_selectdetector=wx.Button(panel,label='Select a Detector\nto test',size=(300,40))

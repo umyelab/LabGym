@@ -36,6 +36,7 @@ import wx.lib.agw.hyperlink as hl
 
 # Local application/library specific imports.
 from .tools import preprocess_video
+from .gui_utils import add_info_button, INFO_COLOUR_S1
 
 
 class PanelLv2_ProcessVideos(wx.Panel):
@@ -72,6 +73,7 @@ class PanelLv2_ProcessVideos(wx.Panel):
 
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
+		add_info_button(self, boxsizer, INFO_COLOUR_S1)
 
 		module_inputvideos=wx.BoxSizer(wx.HORIZONTAL)
 		button_inputvideos=wx.Button(panel,label='Select the video(s)\nfor preprocessing',size=(300,40))
@@ -450,6 +452,7 @@ class PanelLv2_DrawMarkers(wx.Panel):
 
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
+		add_info_button(self, boxsizer, INFO_COLOUR_S1)
 
 		module_inputvideos=wx.BoxSizer(wx.HORIZONTAL)
 		button_inputvideos=wx.Button(panel,label='Select the video(s)\nfor marker drawing',size=(300,40))
