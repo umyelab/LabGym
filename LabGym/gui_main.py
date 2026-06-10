@@ -406,18 +406,26 @@ class WorkflowMapPanel(wx.ScrolledWindow):			# scrollable panel — diagram is f
 		head_font = wx.Font(max(15, ps(22)), wx.FONTFAMILY_DEFAULT,
 		                    wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)	# smaller bold font for section headings
 
-		def draw_box(cx, cy, bw, bh, lines, fill, ink):
-			dc.SetPen(wx.Pen(ink, ps(1)))
-			dc.SetBrush(wx.Brush(fill))
-			dc.DrawRoundedRectangle(px(cx - bw/2), py(cy - bh/2),
-			                        ps(bw), ps(bh), ps(5))
+		dc.SetFont(font)
+		lh = dc.GetCharHeight()			# single-line height in pixels
+		MX = ps(14)						# horizontal margin each side in pixels
+		MY = ps(8)						# vertical margin each side in pixels
+		def hbh(n): return (lh * n + 2 * MY) / 2 / scale  # virtual half-box-height for n lines of text
+
+		def draw_box(cx, cy, lines, fill, ink):
 			dc.SetFont(font)
 			dc.SetTextForeground(wx.BLACK)
-			lh = dc.GetCharHeight()
-			top = py(cy - bh/2) + (ps(bh) - lh * len(lines)) // 2
-			for i, line in enumerate(lines):
-				lw, _ = dc.GetTextExtent(line)
-				dc.DrawText(line, px(cx) - lw // 2, top + i * lh)
+			line_widths = [dc.GetTextExtent(l)[0] for l in lines]
+			box_w = max(line_widths) + 2 * MX
+			box_h = lh * len(lines) + 2 * MY
+			bx = px(cx) - box_w // 2
+			by = py(cy) - box_h // 2
+			dc.SetPen(wx.Pen(ink, ps(1)))
+			dc.SetBrush(wx.Brush(fill))
+			dc.DrawRoundedRectangle(bx, by, box_w, box_h, ps(5))
+			ty = by + MY
+			for i, (line, lw) in enumerate(zip(lines, line_widths)):
+				dc.DrawText(line, px(cx) - lw // 2, ty + i * lh)
 
 		def v_arr(x, y1, y2, ink):				# vertical downward arrow with filled arrowhead
 			dc.SetPen(wx.Pen(ink, ps(2)))
@@ -489,43 +497,43 @@ class WorkflowMapPanel(wx.ScrolledWindow):			# scrollable panel — diagram is f
 
 
 		# ── Section 1: Video Prep ──────────────────────────────────────────────
-		v_arr(155, 185, 229, s1_ink)						# Collect Footage -> Preprocessing
+		v_arr(155, 154 + hbh(2), 259 - hbh(2), s1_ink)		# Collect Footage -> Preprocessing
 		big_arr(380, 555, 65)								# section 1 -> section 2 transition (centred in gap, at subtitle height)
 
 		# ── Section 2: Tracking ───────────────────────────────────────────────
-		diag_arr(715, 182, 495, 246, s2_ink, ['Static', 'Background'])		# Tracking -> Background Subtraction
-		diag_arr(795, 182, 1035, 249, s2_ink, ['Dynamic', 'Background'])	# Tracking -> Detector
-		v_arr(1035, 311, 349, s2_ink)						# Detector -> Generate Images
-		v_arr(1018, 411, 449, s2_ink)						# Generate Images -> Roboflow OR EZannot (left fork)
-		v_arr(1052, 411, 449, s2_ink)						# Generate Images -> Roboflow OR EZannot (right fork)
-		v_arr(1035, 511, 549, s2_ink)						# Roboflow OR EZannot -> Train Detector
+		diag_arr(715, 148 + hbh(2), 495, 280 - hbh(2), s2_ink, ['Static', 'Background'])	# Tracking -> Background Subtraction
+		diag_arr(795, 148 + hbh(2), 1035, 280 - hbh(1), s2_ink, ['Dynamic', 'Background'])	# Tracking -> Detector
+		v_arr(1035, 280 + hbh(1), 380 - hbh(2), s2_ink)		# Detector -> Generate Images
+		v_arr(1018, 380 + hbh(2), 480 - hbh(2), s2_ink)		# Generate Images -> Roboflow OR EZannot (left fork)
+		v_arr(1052, 380 + hbh(2), 480 - hbh(2), s2_ink)		# Generate Images -> Roboflow OR EZannot (right fork)
+		v_arr(1035, 480 + hbh(2), 580 - hbh(2), s2_ink)		# Roboflow OR EZannot -> Train Detector
 		big_arr(967, 1142, 65)									# section 2 -> section 3 transition (centred in gap, at subtitle height)
 
 		# ── Section 3: Classification ─────────────────────────────────────────
-		v_arr(1355, 209, 247, s3_ink)						# Generate and sort -> Train Categorizer
-		v_arr(1355, 309, 347, s3_ink)						# Train Categorizer -> Test Categorizer
-		v_arr(1355, 409, 447, s3_ink)						# Test Categorizer -> Analyze Behaviors
+		v_arr(1355, 164 + hbh(3), 278 - hbh(2), s3_ink)		# Generate and sort -> Train Categorizer
+		v_arr(1355, 278 + hbh(2), 378 - hbh(2), s3_ink)		# Train Categorizer -> Test Categorizer
+		v_arr(1355, 378 + hbh(2), 478 - hbh(2), s3_ink)		# Test Categorizer -> Analyze Behaviors
 
 
 		# BOXES
 
 		# section 1
-		draw_box( 155, 154, 130,  62, ['Collect', 'Footage'],                        s1_fill, s1_ink)
-		draw_box( 155, 259, 150,  60, ['Preprocessing'],                              s1_fill, s1_ink)
+		draw_box( 155, 154, ['Collect', 'Footage'],                        s1_fill, s1_ink)
+		draw_box( 155, 259, ['Preprocessing', '(Optional)'],                s1_fill, s1_ink)
 
 		# section 2
-		draw_box( 755, 148, 175,  68, ['Tracking /', 'Animal Detection'],             s2_fill, s2_ink)
-		draw_box( 495, 280, 150,  68, ['Background', 'Subtraction'],                 s2_fill, s2_ink)
-		draw_box(1035, 280, 110,  62, ['Detector'],                                  s2_fill, s2_ink)
-		draw_box(1035, 380, 120,  62, ['Generate', 'Images'],                        s2_fill, s2_ink)
-		draw_box(1035, 480, 175,  62, ['Roboflow OR', 'EZannot'],                    s2_fill, s2_ink)
-		draw_box(1035, 580, 115,  62, ['Train', 'Detector'],                         s2_fill, s2_ink)
+		draw_box( 755, 148, ['Tracking /', 'Animal Detection'],             s2_fill, s2_ink)
+		draw_box( 495, 280, ['Background', 'Subtraction'],                 s2_fill, s2_ink)
+		draw_box(1035, 280, ['Detector'],                                  s2_fill, s2_ink)
+		draw_box(1035, 380, ['Generate', 'Images'],                        s2_fill, s2_ink)
+		draw_box(1035, 480, ['Roboflow OR', 'EZannot'],                    s2_fill, s2_ink)
+		draw_box(1035, 580, ['Train', 'Detector'],                         s2_fill, s2_ink)
 
 		# section 3
-		draw_box(1355, 164, 155,  90, ['Generate and', 'sort behavior', 'examples'], s3_fill, s3_ink)
-		draw_box(1355, 278, 130,  62, ['Train', 'Categorizer'],                      s3_fill, s3_ink)
-		draw_box(1355, 378, 130,  62, ['Test', 'Categorizer'],                       s3_fill, s3_ink)
-		draw_box(1355, 478, 100,  62, ['Analyze', 'Behaviors'],                      s3_fill, s3_ink)
+		draw_box(1355, 164, ['Generate and', 'sort behavior', 'examples'], s3_fill, s3_ink)
+		draw_box(1355, 278, ['Train', 'Categorizer'],                      s3_fill, s3_ink)
+		draw_box(1355, 378, ['Test', 'Categorizer'],                       s3_fill, s3_ink)
+		draw_box(1355, 478, ['Analyze', 'Behaviors'],                      s3_fill, s3_ink)
 
 
 
