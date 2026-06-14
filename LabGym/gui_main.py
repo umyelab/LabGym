@@ -31,7 +31,9 @@ logger.debug('loading %s', __file__)
 # Related third party imports.
 import wx
 import wx.aui
+import wx.html
 import wx.lib.agw.hyperlink as hl
+import webbrowser
 
 # Local application/library specific imports.
 from LabGym import __version__
@@ -358,6 +360,176 @@ class PanelLv1_AnalysisModule(wx.Panel):
 		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_CalculateDistances(self.notebook), title)
 
 
+# Popup content for each clickable workflow-map box: (section_title, box_title, description, guide_sections)
+_BOX_POPUP = {
+	'collect_footage': (
+		'Video Prep',
+		'Collect Footage',
+		'This is the video collection stage. Before LabGym can track animals or classify behaviors, you need videos that clearly capture the animals and the behaviors of interest. Good video quality, appropriate lighting, and consistent recording conditions will make downstream tracking and classification much more accurate.',
+		'Part 2, Part 3.5',
+	),
+	'preprocessing': (
+		'Video Prep',
+		'Preprocessing (Optional)',
+		'This step involves modifying videos before analysis if needed. Examples include cropping, trimming, stabilizing recordings, adjusting contrast, or adding spatial markers. LabGym also includes tools that can help prepare videos for later analysis.',
+		'Part 4.5, Part 4.6, Section l',
+	),
+	'tracking': (
+		'Tracking',
+		'Tracking / Animal Detection',
+		'This is where LabGym finds and follows animals across video frames. Every animal receives an identity and location over time, creating the movement information needed for behavior classification later. LabGym can use either background subtraction or a trained detector depending on video complexity.',
+		'Part 3.1, Part 4.1, Section ll',
+	),
+	'bg_sub': (
+		'Tracking',
+		'Background Subtraction',
+		'For videos with stable lighting and a fixed background, LabGym automatically estimates the background and removes it. This leaves only the moving animal(s), making tracking faster and more reliable.',
+		'Part 3.1, Part 4.1, section lll A',
+	),
+	'detector': (
+		'Tracking',
+		'Detector',
+		'When backgrounds are complicated, lighting changes, or animals frequently overlap, LabGym can use a trained object detector instead of simple background subtraction. The detector learns what the target animal looks like and identifies it directly in each frame.',
+		'Part 3.1, Part 4.1, Section ll',
+	),
+	'generate_images': (
+		'Tracking',
+		'Generate Images',
+		"LabGym extracts representative frames from your videos that will be used to train a detector. These images become the dataset that you'll later annotate with animal locations.",
+		'Section ll A',
+	),
+	'roboflow': (
+		'Tracking',
+		'Roboflow OR EZannot',
+		'These tools are used to annotate the generated images. You draw boxes around animals and label them so the detector can learn what the target animal looks like.',
+		'Section ll B',
+	),
+	'train_detector': (
+		'Tracking',
+		'Train Detector',
+		'LabGym uses the annotated images to train an object detection model. The resulting detector can then automatically locate animals in new videos.',
+		'Section ll C, section ll D',
+	),
+	'generate_examples': (
+		'Classification',
+		'Generate and sort behavior examples',
+		'LabGym tracks animals and automatically generates behavior examples. Each example contains both an animation and a "pattern image" that summarizes the animal\'s movement through time. Users then sort these examples into behavior categories such as grooming, rearing, or locomotion.',
+		'Section lll A, section lll B',
+	),
+	'train_categorizer': (
+		'Classification',
+		'Train Categorizer',
+		'The categorized behavior examples are used to train LabGym\'s "Categorizer," the deep-learning model that identifies behaviors. It learns from both the raw animations and the movement-pattern images.',
+		'Section lll C',
+	),
+	'test_categorizer': (
+		'Classification',
+		'Test Categorizer',
+		'After training, LabGym evaluates how accurately the categorizer identifies behaviors it has not seen before. This helps determine whether more training examples are needed.',
+		'Part 4.3, Section lll D',
+	),
+	'analyze_behaviors': (
+		'Classification',
+		'Analyze Behaviors',
+		'The trained categorizer is applied to experimental videos. LabGym classifies behaviors frame-by-frame and records when each behavior occurs. It also generates quantitative measurements such as duration, frequency, and movement metrics.',
+		'Part 4.4, Section lV',
+	),
+	'mine_results': (
+		'Post Classification Analysis',
+		'Mine Results',
+		'LabGym exports spreadsheets and structured behavioral data that can be explored statistically. Users can compare groups, quantify treatment effects, or examine temporal patterns in behavior.',
+		'Section lV B',
+	),
+	'generate_plot': (
+		'Post Classification Analysis',
+		'Generate Behavior Plot',
+		'LabGym can visualize behavior occurrence over time using raster plots and other summaries. These plots help users quickly identify patterns, transitions, and temporal organization of behaviors.',
+		'Section lV C',
+	),
+	'calc_distances': (
+		'Post Classification Analysis',
+		'Calculate Distances',
+		'Using tracking information, LabGym computes movement-based measurements such as distance traveled, speed, and location-related metrics. These can be analyzed alongside behavior classifications.',
+		'Part 4.4, Section lV',
+	),
+}
+
+
+class BoxInfoPopup(wx.Frame):
+	"""Info popup shown when clicking a workflow-map box. Closes on focus loss."""
+
+	_URL = 'http://labgym.org/guides/practical-guide'
+
+	def __init__(self, parent, section, title, description, guide, fill, ink):
+		super().__init__(None, style=wx.FRAME_NO_TASKBAR | wx.STAY_ON_TOP | wx.NO_BORDER)
+		self.SetBackgroundColour(ink)  # ink peeks through as the border
+
+		panel = wx.Panel(self)
+		panel.SetBackgroundColour(fill)
+
+		html_win = wx.html.HtmlWindow(panel, size=(440, 100), style=wx.html.HW_NO_SELECTION)
+		html_win.SetBackgroundColour(fill)
+		html_win.SetBorders(0)
+		html_win.SetPage(self._make_html(section, title, description, guide, fill))
+		html_win.Bind(wx.html.EVT_HTML_LINK_CLICKED, self._on_link)
+
+		content_h = html_win.GetInternalRepresentation().GetHeight()
+		html_win.SetMinSize((440, content_h + 4))
+
+		inner = wx.BoxSizer(wx.VERTICAL)
+		inner.Add(html_win, 0, wx.ALL, 20)
+		panel.SetSizer(inner)
+		panel.Fit()
+
+		outer = wx.BoxSizer(wx.VERTICAL)
+		outer.Add(panel, 1, wx.ALL | wx.EXPAND, 3)  # 3px gap exposes ink-coloured frame background as border
+		self.SetSizer(outer)
+		self.Fit()
+
+		dw, dh = wx.DisplaySize()
+		pw, ph = self.GetSize()
+		self.SetPosition(((dw - pw) // 2, (dh - ph) // 2))
+
+		self._ready = False
+		self.Bind(wx.EVT_ACTIVATE, self._on_activate)
+		wx.CallLater(150, self._set_ready)
+
+	def _set_ready(self):
+		self._ready = True
+
+	def _on_activate(self, evt):
+		if self._ready and not evt.GetActive():
+			wx.CallAfter(self.Close)
+		evt.Skip()
+
+	def _on_link(self, evt):
+		webbrowser.open(self._URL)
+
+	def _make_html(self, section, title, description, guide, fill):
+		import html as _h
+		bg = '#{:02X}{:02X}{:02X}'.format(fill.Red(), fill.Green(), fill.Blue())
+		return (
+			'<html><body bgcolor="{bg}">'
+			'<center>'
+			'<font size="+1"><b>{section}<br>{title}</b></font>'
+			'<br><br>'
+			'{desc}'
+			'<br><br>'
+			'Learn more in the following '
+			'<a href="{url}">LabGym Practical Guide</a>'
+			' sections: {guide}'
+			'</center>'
+			'</body></html>'
+		).format(
+			bg=bg,
+			section=_h.escape(section),
+			title=_h.escape(title),
+			desc=_h.escape(description, quote=False),
+			url=self._URL,
+			guide=_h.escape(guide, quote=False),
+		)
+
+
 class WorkflowMapPanel(wx.ScrolledWindow):			# scrollable panel — diagram is fixed-size, scrollbars appear if window is smaller
 	"""Displays the LabGym workflow map at a fixed pixel canvas sized to the default LabGym window."""
 
@@ -369,7 +541,9 @@ class WorkflowMapPanel(wx.ScrolledWindow):			# scrollable panel — diagram is f
 		self.SetBackgroundColour(wx.WHITE)			# make the panel background white
 		self.SetScrollRate(10, 10)					# scroll 10 pixels per step when dragging the scrollbar
 		self.SetVirtualSize(self.CANVAS_W, self.CANVAS_H)	# tell wx the total scrollable area
+		self._clickable_boxes = []				# list of (bx, by, bw, bh, fill, ink, popup_data) populated each paint
 		self.Bind(wx.EVT_PAINT, self.on_paint)		# call on_paint whenever wx needs to redraw this panel
+		self.Bind(wx.EVT_LEFT_DOWN, self._on_box_click)	# show info popup when user clicks a box
 
 	def on_paint(self, event):
 		dc = wx.PaintDC(self)						# create a drawing context which is required in an EVT_PAINT handler
@@ -380,6 +554,7 @@ class WorkflowMapPanel(wx.ScrolledWindow):			# scrollable panel — diagram is f
 
 	def _draw(self, dc):
 		import math								# needed for diagonal arrow angle calculations
+		self._clickable_boxes = []				# reset on every repaint so rects stay in sync with current scale/offset
 		W, H = self.CANVAS_W, self.CANVAS_H		# fixed canvas dimensions — diagram never rescales
 
 		VW, VH = 2200, 660						# virtual coordinate space — sized to match actual content bounds
@@ -414,7 +589,7 @@ class WorkflowMapPanel(wx.ScrolledWindow):			# scrollable panel — diagram is f
 		MY = ps(8)						# vertical margin each side in pixels
 		def hbh(n): return (lh * n + 2 * MY) / 2 / scale  # virtual half-box-height for n lines of text
 
-		def draw_box(cx, cy, lines, fill, ink):
+		def draw_box(cx, cy, lines, fill, ink, key=None):
 			dc.SetFont(font)
 			dc.SetTextForeground(wx.BLACK)
 			line_widths = [dc.GetTextExtent(l)[0] for l in lines]
@@ -428,6 +603,8 @@ class WorkflowMapPanel(wx.ScrolledWindow):			# scrollable panel — diagram is f
 			ty = by + MY
 			for i, (line, lw) in enumerate(zip(lines, line_widths)):
 				dc.DrawText(line, px(cx) - lw // 2, ty + i * lh)
+			if key is not None:
+				self._clickable_boxes.append((bx, by, box_w, box_h, fill, ink, _BOX_POPUP[key]))
 
 		def v_arr(x, y1, y2, ink):				# vertical downward arrow with filled arrowhead
 			dc.SetPen(wx.Pen(ink, ps(2)))
@@ -525,27 +702,27 @@ class WorkflowMapPanel(wx.ScrolledWindow):			# scrollable panel — diagram is f
 		# BOXES
 
 		# section 1
-		draw_box( 155, 154, ['Collect', 'Footage'],                        s1_fill, s1_ink)
-		draw_box( 155, 259, ['Preprocessing', '(Optional)'],                s1_fill, s1_ink)
+		draw_box( 155, 154, ['Collect', 'Footage'],                        s1_fill, s1_ink, 'collect_footage')
+		draw_box( 155, 259, ['Preprocessing', '(Optional)'],                s1_fill, s1_ink, 'preprocessing')
 
 		# section 2
-		draw_box( 755, 148, ['Tracking /', 'Animal Detection'],             s2_fill, s2_ink)
-		draw_box( 540, 280, ['Background', 'Subtraction'],                 s2_fill, s2_ink)
-		draw_box( 950, 280, ['Detector'],                                  s2_fill, s2_ink)
-		draw_box( 950, 380, ['Generate', 'Images'],                        s2_fill, s2_ink)
-		draw_box( 950, 480, ['Roboflow OR', 'EZannot'],                    s2_fill, s2_ink)
-		draw_box( 950, 580, ['Train', 'Detector'],                         s2_fill, s2_ink)
+		draw_box( 755, 148, ['Tracking /', 'Animal Detection'],             s2_fill, s2_ink, 'tracking')
+		draw_box( 540, 280, ['Background', 'Subtraction'],                 s2_fill, s2_ink, 'bg_sub')
+		draw_box( 950, 280, ['Detector'],                                  s2_fill, s2_ink, 'detector')
+		draw_box( 950, 380, ['Generate', 'Images'],                        s2_fill, s2_ink, 'generate_images')
+		draw_box( 950, 480, ['Roboflow OR', 'EZannot'],                    s2_fill, s2_ink, 'roboflow')
+		draw_box( 950, 580, ['Train', 'Detector'],                         s2_fill, s2_ink, 'train_detector')
 
 		# section 3
-		draw_box(1355, 164, ['Generate and', 'sort behavior', 'examples'], s3_fill, s3_ink)
-		draw_box(1355, 278, ['Train', 'Categorizer'],                      s3_fill, s3_ink)
-		draw_box(1355, 378, ['Test', 'Categorizer'],                       s3_fill, s3_ink)
-		draw_box(1355, 478, ['Analyze', 'Behaviors'],                      s3_fill, s3_ink)
+		draw_box(1355, 164, ['Generate and', 'Sort Behavior', 'Examples'], s3_fill, s3_ink, 'generate_examples')
+		draw_box(1355, 278, ['Train', 'Categorizer'],                      s3_fill, s3_ink, 'train_categorizer')
+		draw_box(1355, 378, ['Test', 'Categorizer'],                       s3_fill, s3_ink, 'test_categorizer')
+		draw_box(1355, 478, ['Analyze', 'Behaviors'],                      s3_fill, s3_ink, 'analyze_behaviors')
 
 		# section 4
-		draw_box(1955, 195, ['Mine', 'Results'],           s4_fill, s4_ink)
-		draw_box(1955, 295, ['Generate', 'Behavior Plot'], s4_fill, s4_ink)
-		draw_box(1955, 395, ['Calculate', 'Distances'],    s4_fill, s4_ink)
+		draw_box(1955, 195, ['Mine', 'Results'],           s4_fill, s4_ink, 'mine_results')
+		draw_box(1955, 295, ['Generate', 'Behavior Plot'], s4_fill, s4_ink, 'generate_plot')
+		draw_box(1955, 395, ['Calculate', 'Distances'],    s4_fill, s4_ink, 'calc_distances')
 
 		# AND/OR labels between section 4 boxes (drawn last so they sit on top)
 		dc.SetFont(font)
@@ -554,7 +731,16 @@ class WorkflowMapPanel(wx.ScrolledWindow):			# scrollable panel — diagram is f
 			tw, th = dc.GetTextExtent('AND/OR')
 			dc.DrawText('AND/OR', px(1955) - tw // 2, py(cy_ao) - th // 2)
 
-
+	def _on_box_click(self, evt):
+		pos = evt.GetPosition()
+		lx, ly = self.CalcUnscrolledPosition(pos.x, pos.y)
+		for bx, by, bw, bh, fill, ink, data in self._clickable_boxes:
+			if bx <= lx < bx + bw and by <= ly < by + bh:
+				section, title, desc, guide = data
+				popup = BoxInfoPopup(self, section, title, desc, guide, fill, ink)
+				popup.Show()
+				return
+		evt.Skip()
 
 
 class MainFrame(wx.Frame):
