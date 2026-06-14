@@ -27,8 +27,9 @@ import wx.lib.buttons as wxbuttons
 # Section colour constants — match the workflow-map fill colours
 INFO_COLOUR_S1   = wx.Colour(255, 210, 210)  # light red    — 1. Video Prep
 INFO_COLOUR_S2   = wx.Colour(210, 228, 255)  # light blue   — 2. Tracking
-INFO_COLOUR_S3   = wx.Colour(255, 228, 195)  # light orange — 3. Classification
-INFO_COLOUR_GREY = wx.Colour(220, 220, 220)  # light grey   — Post-classification
+INFO_COLOUR_S3   = wx.Colour(255, 228, 195)  # light orange  — 3. Classification
+INFO_COLOUR_S4   = wx.Colour(235, 215, 255)  # light lavender — 4. Post-Classification Analysis
+INFO_COLOUR_GREY = wx.Colour(220, 220, 220)  # light grey    — fallback
 
 
 def add_info_button(panel, boxsizer, colour):

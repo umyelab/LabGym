@@ -361,7 +361,7 @@ class PanelLv1_AnalysisModule(wx.Panel):
 class WorkflowMapPanel(wx.ScrolledWindow):			# scrollable panel — diagram is fixed-size, scrollbars appear if window is smaller
 	"""Displays the LabGym workflow map at a fixed pixel canvas sized to the default LabGym window."""
 
-	CANVAS_W = 1000								# matches LabGym's default window width (set in MainFrame.__init__)
+	CANVAS_W = 1100								# matches LabGym's default window width (set in MainFrame.__init__)
 	CANVAS_H = 560								# default window height (600) minus ~40px for the notebook tab bar
 
 	def __init__(self, parent):
@@ -382,9 +382,9 @@ class WorkflowMapPanel(wx.ScrolledWindow):			# scrollable panel — diagram is f
 		import math								# needed for diagonal arrow angle calculations
 		W, H = self.CANVAS_W, self.CANVAS_H		# fixed canvas dimensions — diagram never rescales
 
-		VW, VH = 1700, 660						# virtual coordinate space — sized to match actual content bounds
+		VW, VH = 2200, 660						# virtual coordinate space — sized to match actual content bounds
 		scale = min(W / VW, H / VH) * 0.95		# compute scale so the diagram fills the canvas with a 5% margin
-		ox = W / 2 - 762 * scale				# offset so the content midpoint (x≈90–1433, cx≈762) lands at the canvas centre
+		ox = W / 2 - 1060 * scale				# offset so the 4-section content midpoint (x≈65–2055, cx≈1060) lands at the canvas centre
 		oy = (H - VH * scale) / 2				# vertical offset to centre the diagram on the canvas
 
 		def px(v): return int(ox + v * scale)	# convert a virtual x-coordinate to a real screen pixel
@@ -398,6 +398,8 @@ class WorkflowMapPanel(wx.ScrolledWindow):			# scrollable panel — diagram is f
 		s2_ink  = wx.Colour(55, 95, 165)		# darker blue        — section 2 borders and arrows
 		s3_fill = wx.Colour(255, 228, 195)		# super light orange — section 3
 		s3_ink  = wx.Colour(175, 100, 20)		# darker orange      — section 3 borders and arrows
+		s4_fill = wx.Colour(235, 215, 255)		# light lavender     — section 4
+		s4_ink  = wx.Colour(120, 60, 180)		# deeper purple      — section 4 borders
 
 		font      = wx.Font(max(12, ps(16)), wx.FONTFAMILY_DEFAULT,
 		                    wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)	# body text font, scales with window size
@@ -436,7 +438,7 @@ class WorkflowMapPanel(wx.ScrolledWindow):			# scrollable panel — diagram is f
 			                (px(x)-ah, py(y2)-al),
 			                (px(x)+ah, py(y2)-al)])
 
-		def diag_arr(x1, y1, x2, y2, ink, lines=()):
+		def diag_arr(x1, y1, x2, y2, ink, lines=(), label_dx=0, label_dy=0):
 			dc.SetPen(wx.Pen(ink, ps(2)))
 			dc.SetBrush(wx.Brush(ink))
 			dc.DrawLine(px(x1), py(y1), px(x2), py(y2))
@@ -454,9 +456,9 @@ class WorkflowMapPanel(wx.ScrolledWindow):			# scrollable panel — diagram is f
 				perp_x, perp_y = uy, -ux			# 90 degrees left of arrow direction in screen coords
 				if perp_y > 0:						# if that points downward, flip so label is always above the arrow
 					perp_x, perp_y = -perp_x, -perp_y
-				offset = ps(50)						# pixels to push text away from the shaft
-				cx_label = px((x1 + x2) / 2) + int(perp_x * offset)
-				cy_label = py((y1 + y2) / 2) + int(perp_y * offset)
+				offset = ps(80)						# pixels to push text away from the shaft
+				cx_label = px((x1 + x2) / 2) + int(perp_x * offset) + label_dx
+				cy_label = py((y1 + y2) / 2) + int(perp_y * offset) + label_dy
 				dc.SetFont(font)
 				dc.SetTextForeground(wx.BLACK)
 				lh = dc.GetCharHeight()
@@ -494,6 +496,10 @@ class WorkflowMapPanel(wx.ScrolledWindow):			# scrollable panel — diagram is f
 		for label, cx in [('1. Video Prep', 155), ('2. Tracking', 755), ('3. Classification', 1355)]:
 			tw, _ = dc.GetTextExtent(label)
 			dc.DrawText(label, px(cx) - tw // 2, py(65))
+		lh_head = dc.GetCharHeight()
+		for i, line in enumerate(['4. Post Classification', 'Analysis']):
+			tw, _ = dc.GetTextExtent(line)
+			dc.DrawText(line, px(1955) - tw // 2, py(65) + i * lh_head)
 
 
 		# ── Section 1: Video Prep ──────────────────────────────────────────────
@@ -501,18 +507,19 @@ class WorkflowMapPanel(wx.ScrolledWindow):			# scrollable panel — diagram is f
 		big_arr(380, 555, 65)								# section 1 -> section 2 transition (centred in gap, at subtitle height)
 
 		# ── Section 2: Tracking ───────────────────────────────────────────────
-		diag_arr(715, 148 + hbh(2), 495, 280 - hbh(2), s2_ink, ['Static', 'Background'])	# Tracking -> Background Subtraction
-		diag_arr(795, 148 + hbh(2), 1035, 280 - hbh(1), s2_ink, ['Dynamic', 'Background'])	# Tracking -> Detector
-		v_arr(1035, 280 + hbh(1), 380 - hbh(2), s2_ink)		# Detector -> Generate Images
-		v_arr(1018, 380 + hbh(2), 480 - hbh(2), s2_ink)		# Generate Images -> Roboflow OR EZannot (left fork)
-		v_arr(1052, 380 + hbh(2), 480 - hbh(2), s2_ink)		# Generate Images -> Roboflow OR EZannot (right fork)
-		v_arr(1035, 480 + hbh(2), 580 - hbh(2), s2_ink)		# Roboflow OR EZannot -> Train Detector
+		diag_arr(715, 148 + hbh(2), 540, 280 - hbh(2), s2_ink, ['Static', 'Background'],  label_dx=-ps(30), label_dy=ps(38))	# Tracking -> Background Subtraction (steeper angle)
+		diag_arr(795, 148 + hbh(2), 950, 280 - hbh(1), s2_ink, ['Dynamic', 'Background'], label_dx= ps(30), label_dy=ps(25))	# Tracking -> Detector (steeper angle)
+		v_arr(950, 280 + hbh(1), 380 - hbh(2), s2_ink)			# Detector -> Generate Images
+		v_arr(933, 380 + hbh(2), 480 - hbh(2), s2_ink)			# Generate Images -> Roboflow OR EZannot (left fork)
+		v_arr(967, 380 + hbh(2), 480 - hbh(2), s2_ink)			# Generate Images -> Roboflow OR EZannot (right fork)
+		v_arr(950, 480 + hbh(2), 580 - hbh(2), s2_ink)			# Roboflow OR EZannot -> Train Detector
 		big_arr(967, 1142, 65)									# section 2 -> section 3 transition (centred in gap, at subtitle height)
 
 		# ── Section 3: Classification ─────────────────────────────────────────
 		v_arr(1355, 164 + hbh(3), 278 - hbh(2), s3_ink)		# Generate and sort -> Train Categorizer
 		v_arr(1355, 278 + hbh(2), 378 - hbh(2), s3_ink)		# Train Categorizer -> Test Categorizer
 		v_arr(1355, 378 + hbh(2), 478 - hbh(2), s3_ink)		# Test Categorizer -> Analyze Behaviors
+		big_arr(1567, 1742, 65)									# section 3 -> section 4 transition (centred in gap, at subtitle height)
 
 
 		# BOXES
@@ -523,17 +530,29 @@ class WorkflowMapPanel(wx.ScrolledWindow):			# scrollable panel — diagram is f
 
 		# section 2
 		draw_box( 755, 148, ['Tracking /', 'Animal Detection'],             s2_fill, s2_ink)
-		draw_box( 495, 280, ['Background', 'Subtraction'],                 s2_fill, s2_ink)
-		draw_box(1035, 280, ['Detector'],                                  s2_fill, s2_ink)
-		draw_box(1035, 380, ['Generate', 'Images'],                        s2_fill, s2_ink)
-		draw_box(1035, 480, ['Roboflow OR', 'EZannot'],                    s2_fill, s2_ink)
-		draw_box(1035, 580, ['Train', 'Detector'],                         s2_fill, s2_ink)
+		draw_box( 540, 280, ['Background', 'Subtraction'],                 s2_fill, s2_ink)
+		draw_box( 950, 280, ['Detector'],                                  s2_fill, s2_ink)
+		draw_box( 950, 380, ['Generate', 'Images'],                        s2_fill, s2_ink)
+		draw_box( 950, 480, ['Roboflow OR', 'EZannot'],                    s2_fill, s2_ink)
+		draw_box( 950, 580, ['Train', 'Detector'],                         s2_fill, s2_ink)
 
 		# section 3
 		draw_box(1355, 164, ['Generate and', 'sort behavior', 'examples'], s3_fill, s3_ink)
 		draw_box(1355, 278, ['Train', 'Categorizer'],                      s3_fill, s3_ink)
 		draw_box(1355, 378, ['Test', 'Categorizer'],                       s3_fill, s3_ink)
 		draw_box(1355, 478, ['Analyze', 'Behaviors'],                      s3_fill, s3_ink)
+
+		# section 4
+		draw_box(1955, 195, ['Mine', 'Results'],           s4_fill, s4_ink)
+		draw_box(1955, 295, ['Generate', 'Behavior Plot'], s4_fill, s4_ink)
+		draw_box(1955, 395, ['Calculate', 'Distances'],    s4_fill, s4_ink)
+
+		# AND/OR labels between section 4 boxes (drawn last so they sit on top)
+		dc.SetFont(font)
+		dc.SetTextForeground(wx.BLACK)
+		for cy_ao in [245, 345]:
+			tw, th = dc.GetTextExtent('AND/OR')
+			dc.DrawText('AND/OR', px(1955) - tw // 2, py(cy_ao) - th // 2)
 
 
 
