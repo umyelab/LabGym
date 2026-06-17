@@ -384,7 +384,7 @@ _BOX_POPUP = {
 		'Tracking',
 		'Background Subtraction',
 		'For videos with stable lighting and a fixed background, LabGym automatically estimates the background and removes it. This leaves only the moving animal(s), making tracking faster and more reliable.',
-		'Part 3.1, Part 4.1, section lll A',
+		'Part 3.1, Part 4.1, Section lll A',
 	),
 	'detector': (
 		'Tracking',
@@ -408,13 +408,13 @@ _BOX_POPUP = {
 		'Tracking',
 		'Train Detector',
 		'LabGym uses the annotated images to train an object detection model. The resulting detector can then automatically locate animals in new videos.',
-		'Section ll C, section ll D',
+		'Section ll C, Section ll D',
 	),
 	'generate_examples': (
 		'Classification',
 		'Generate and sort behavior examples',
 		'LabGym tracks animals and automatically generates behavior examples. Each example contains both an animation and a "pattern image" that summarizes the animal\'s movement through time. Users then sort these examples into behavior categories such as grooming, rearing, or locomotion.',
-		'Section lll A, section lll B',
+		'Section lll A, Section lll B',
 	),
 	'train_categorizer': (
 		'Classification',
@@ -454,23 +454,53 @@ _BOX_POPUP = {
 	),
 }
 
+# Practical-guide page numbers keyed by reference text (lowercase for case-insensitive lookup)
+_GUIDE_PAGES = {
+	'part 2':        4,
+	'part 3.1':      5,
+	'part 3.5':      6,
+	'part 4.1':      7,
+	'part 4.3':      8,
+	'part 4.4':      8,
+	'part 4.5':      9,
+	'part 4.6':      9,
+	'section l':    14,
+	'section ll':   16,
+	'section ll a': 16,
+	'section ll b': 18,
+	'section ll c': 21,
+	'section ll d': 23,
+	'section lll a': 26,
+	'section lll b': 31,
+	'section lll c': 33,
+	'section lll d': 37,
+	'section lv':   38,
+	'section lv b': 44,
+	'section lv c': 44,
+}
+
 
 class BoxInfoPopup(wx.Frame):
 	"""Info popup shown when clicking a workflow-map box. Closes on focus loss."""
-
-	_URL = 'http://labgym.org/guides/practical-guide'
 
 	def __init__(self, parent, section, title, description, guide, fill, ink):
 		super().__init__(None, style=wx.FRAME_NO_TASKBAR | wx.STAY_ON_TOP | wx.NO_BORDER)
 		self.SetBackgroundColour(ink)  # ink peeks through as the border
 
+		# Blend fill 50% toward white for a softer popup background
+		pf = wx.Colour(
+			fill.Red()   + (255 - fill.Red())   // 2,
+			fill.Green() + (255 - fill.Green()) // 2,
+			fill.Blue()  + (255 - fill.Blue())  // 2,
+		)
+
 		panel = wx.Panel(self)
-		panel.SetBackgroundColour(fill)
+		panel.SetBackgroundColour(pf)
 
 		html_win = wx.html.HtmlWindow(panel, size=(440, 100), style=wx.html.HW_NO_SELECTION)
-		html_win.SetBackgroundColour(fill)
+		html_win.SetBackgroundColour(pf)
 		html_win.SetBorders(0)
-		html_win.SetPage(self._make_html(section, title, description, guide, fill))
+		html_win.SetPage(self._make_html(section, title, description, guide, pf))
 		html_win.Bind(wx.html.EVT_HTML_LINK_CLICKED, self._on_link)
 
 		content_h = html_win.GetInternalRepresentation().GetHeight()
@@ -486,9 +516,11 @@ class BoxInfoPopup(wx.Frame):
 		self.SetSizer(outer)
 		self.Fit()
 
-		dw, dh = wx.DisplaySize()
+		frame = wx.GetTopLevelParent(parent)
+		fx, fy = frame.GetPosition()
+		fw, fh = frame.GetSize()
 		pw, ph = self.GetSize()
-		self.SetPosition(((dw - pw) // 2, (dh - ph) // 2))
+		self.SetPosition((fx + (fw - pw) // 2, fy + (fh - ph) // 2))
 
 		self._ready = False
 		self.Bind(wx.EVT_ACTIVATE, self._on_activate)
@@ -503,21 +535,28 @@ class BoxInfoPopup(wx.Frame):
 		evt.Skip()
 
 	def _on_link(self, evt):
-		webbrowser.open(self._URL)
+		webbrowser.open(evt.GetLinkInfo().GetHref())
 
 	def _make_html(self, section, title, description, guide, fill):
 		import html as _h
 		bg = '#{:02X}{:02X}{:02X}'.format(fill.Red(), fill.Green(), fill.Blue())
+		base = 'https://www.labgym.org/guides/practical-guide#page-'
+		refs = []
+		for ref in (r.strip() for r in guide.split(',')):
+			page = _GUIDE_PAGES.get(ref.lower())
+			refs.append(
+				'<a href="{}{}">{}</a>'.format(base, page, _h.escape(ref)) if page
+				else _h.escape(ref)
+			)
+		guide_html = ', '.join(refs)
 		return (
 			'<html><body bgcolor="{bg}">'
 			'<center>'
-			'<font size="+1"><b>{section}<br>{title}</b></font>'
+			'<font size="+1"><b>{section}</b><br>{title}</font>'
 			'<br><br>'
 			'{desc}'
 			'<br><br>'
-			'Learn more in the following '
-			'<a href="{url}">LabGym Practical Guide</a>'
-			' sections: {guide}'
+			'Learn more in the following LabGym Practical Guide sections: {guide}'
 			'</center>'
 			'</body></html>'
 		).format(
@@ -525,8 +564,7 @@ class BoxInfoPopup(wx.Frame):
 			section=_h.escape(section),
 			title=_h.escape(title),
 			desc=_h.escape(description, quote=False),
-			url=self._URL,
-			guide=_h.escape(guide, quote=False),
+			guide=guide_html,
 		)
 
 
