@@ -2143,7 +2143,7 @@ class PanelLv2_TestCategorizers(wx.Panel):
 
 class AutomatedDiagnosticsDialog(wx.Dialog):
 	def __init__(self, parent, report, cm, classnames, example_map):
-		super().__init__(parent, title="Automated Diagnostics - Test Results", size=(800, 600), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+		super().__init__(parent, title="Automated Diagnostics - Test Results", size=(1000, 800), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER | wx.MAXIMIZE_BOX)
 		
 		self.report = report
 		self.cm = cm
@@ -2154,6 +2154,8 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 		self.is_normalized = False
 		
 		self.init_ui()
+		
+		self.Maximize(True)
 
 	def calculate_normalized_cm(self, cm):
 		norm_cm = []
@@ -2194,6 +2196,9 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 		self.cm_grid.SetRowLabelSize(wx.grid.GRID_AUTOSIZE)
 		self.cm_grid.SetColLabelSize(wx.grid.GRID_AUTOSIZE)
 
+		self.cm_grid.DisableDragRowSize()
+		self.cm_grid.DisableDragColSize()
+
 		self.cm_grid.AutoSize()
 		sizer.Add(self.cm_grid, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
 
@@ -2220,7 +2225,25 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 		btn_row_sizer.Add(self.btn_minor, 0, wx.RIGHT, 5)
 		btn_row_sizer.Add(self.btn_successes, 0, wx.RIGHT, 5)
 		btn_row_sizer.Add(self.btn_help, 0, 0, 0)
+
+		self.btn_triage = wx.Button(self, label="📝 Build Triage Plan")
+		self.btn_triage.Bind(wx.EVT_BUTTON, self.on_build_triage)
+		self.btn_triage.SetForegroundColour(wx.Colour(255, 203, 5))
+		btn_row_sizer.Add(self.btn_triage, 0, wx.LEFT, 15)
+
 		nlp_sizer.Add(btn_row_sizer, 0, wx.BOTTOM | wx.LEFT, 5)
+
+		sort_sizer = wx.BoxSizer(wx.HORIZONTAL)
+		self.sort_label = wx.StaticText(self, label="Rank Insights By: ")
+		sort_sizer.Add(self.sort_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 5)
+		
+		self.sort_dropdown = wx.Choice(self, choices=["Instances", "Proportion"])
+		self.sort_dropdown.SetSelection(0)
+		self.sort_dropdown.Bind(wx.EVT_CHOICE, self.on_sort_changed)
+		sort_sizer.Add(self.sort_dropdown, 0, wx.ALIGN_CENTER_VERTICAL)
+		
+		nlp_sizer.Add(sort_sizer, 0, wx.BOTTOM | wx.LEFT, 5)
+
 
 		self.nlp_html = wx.html.HtmlWindow(self, style=wx.html.HW_SCROLLBAR_AUTO | wx.BORDER_NONE)
 		self.nlp_html.Bind(wx.html.EVT_HTML_LINK_CLICKED, self.on_insight_link_clicked)
@@ -2261,10 +2284,44 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 		sizer.Add(btn_sizer, 0, wx.ALIGN_RIGHT)
 
 		self.analyze_confusion_data()
-		self.show_major_confusions_view(None)
+		self.show_help_view(None)
 		
 		self.SetSizer(sizer)
 		self.Layout()
+
+	def on_build_triage(self, event):
+		"""Gathers all confusions and launches the Triage Builder."""
+		all_confusions = []
+		
+		# Grab Major Confusions
+		for count, i, j, prop in self.nlp_major:
+			item = f"{self.classnames[i]} -> {self.classnames[j]} ({count} errors)"
+			if item not in all_confusions:
+				all_confusions.append(item)
+				
+		# Grab Minor Confusions
+		for mc in self.nlp_minor:
+			for err_count, pred_class in mc['top_confusions']:
+				item = f"{mc['class']} -> {pred_class} ({err_count} errors)"
+				if item not in all_confusions:
+					all_confusions.append(item)
+					
+		if not all_confusions:
+			wx.MessageBox("No confusions detected to triage!", "All Clear", wx.OK | wx.ICON_INFORMATION)
+			return
+			
+		dialog = TriageBuilderDialog(self, all_confusions, self.example_map, self.report, self.cm, self.classnames)
+		dialog.ShowModal()
+		dialog.Destroy()
+
+	def on_sort_changed(self, event):
+		"""Re-sorts the NLP data and refreshes the views when the dropdown changes."""
+		self.analyze_confusion_data()
+		
+		if getattr(self, 'current_view', 'major') == 'minor':
+			self.show_minor_confusions_view(None)
+		else:
+			self.show_major_confusions_view(None)
 
 	def update_grid_data(self):
 		cm_rows = len(self.cm)
@@ -2420,7 +2477,16 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 					'top_confusions': top_specifics
 				})
 
-		self.nlp_major.sort(reverse=True, key=lambda x: x[0])
+
+		sort_mode = self.sort_dropdown.GetStringSelection()
+		
+		if sort_mode == "Proportion":
+			self.nlp_major.sort(reverse=True, key=lambda x: x[3])
+			self.nlp_minor.sort(reverse=True, key=lambda x: x['pct_errors'])
+		else:
+			self.nlp_major.sort(reverse=True, key=lambda x: x[0])
+			self.nlp_minor.sort(reverse=True, key=lambda x: x['total_errors'])
+
 
 		major_count = len(self.nlp_major)
 		if major_count == 0:
@@ -2432,6 +2498,11 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 
 
 	def show_major_confusions_view(self, event=None):
+		self.current_view = 'major'
+		self.sort_label.Show(True)
+		self.sort_dropdown.Show(True)
+		self.Layout()
+		
 		html = "<body bgcolor='#141414' text='#F8FAFC' style='font-family: Arial; font-size: 14px;'>"
 		
 		if not self.nlp_major:
@@ -2467,7 +2538,13 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 		self.nlp_html.SetPage(html)
 
 	def show_minor_confusions_view(self, event=None):
+		self.current_view = 'minor'
+		self.sort_label.Show(True)
+		self.sort_dropdown.Show(True)
+		self.Layout()
+		
 		html = "<body bgcolor='#141414' text='#F8FAFC' style='font-family: Arial; font-size: 14px;'>"
+
 		
 		if not self.nlp_minor:
 			html += "<h3 style='color: #4ADE80;'>Everything looks great!</h3><p>No dispersed minor confusions detected.</p>"
@@ -2500,7 +2577,13 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 		self.nlp_html.SetPage(html)
 
 	def show_successes_view(self, event=None):
+		self.current_view = 'successes'
+		self.sort_label.Show(False)
+		self.sort_dropdown.Show(False)
+		self.Layout()
+		
 		html = "<body bgcolor='#141414' text='#F8FAFC' style='font-family: Arial; font-size: 14px;'>"
+
 		if self.nlp_success:
 			html += "<h3 style='color: #4ADE80; margin-top: 5px;'>Performing Reliably (F1 ≥ 85%):</h3>"
 			html += "<p>The Categorizer is successfully and consistently predicting the following behaviors:</p>"
@@ -2531,6 +2614,11 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 
 	def show_help_view(self, event=None):
 		"""Generates the HTML for the layman's explanation."""
+		self.current_view = 'help'
+		self.sort_label.Show(False)
+		self.sort_dropdown.Show(False)
+		self.Layout()
+		
 		html = """
 		<body bgcolor='#141414' text='#F8FAFC' style='font-family: Arial; font-size: 14px;'>
 			<h3 style='color: #60A5FA; margin-top: 5px;'>How to read this chart:</h3>
@@ -2642,7 +2730,6 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 		self.cm_grid.ClearSelection()
 		
 		if row == -1 or col == -1:
-			event.Skip()
 			return
 		
 		if row < len(self.classnames) and col < len(self.classnames):
@@ -2658,8 +2745,8 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 				viewer.Destroy()
 			else:
 				wx.MessageBox(f"No examples found for True: '{true_class}', Predicted: '{pred_class}'", "No Data", wx.OK | wx.ICON_INFORMATION)
+				
 
-		event.Skip()
 
 	def execute_differential_action(self, action_type, source_class, target_class):
 		"""Safely clones the dataset and applies the requested OS-level action."""
@@ -2782,3 +2869,471 @@ class ExampleViewerDialog(wx.Dialog):
 					subprocess.call(["xdg-open", filepath])
 			except Exception as e:
 				wx.MessageBox(f"Failed to open file:\n{e}", "Error", wx.OK | wx.ICON_ERROR)
+
+
+class TriageBuilderDialog(wx.Dialog):
+	def __init__(self, parent, confusions_list, example_map, report, cm, classnames):
+		super().__init__(parent, title="Triage Action Plan Builder", size=(900, 600), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
+		self.confusions_list = confusions_list
+		self.example_map = example_map
+		
+		# ---> NEW: Store the variables so the PDF generator can use them <---
+		self.report = report
+		self.cm = cm
+		self.classnames = classnames
+		
+		self.init_ui()
+		
+	def init_ui(self):
+		main_sizer = wx.BoxSizer(wx.VERTICAL)
+		
+		# --- TITLE HEADER ---
+		title_lbl = wx.StaticText(self, label="Assign confusions to a root-cause hypothesis to generate your action plan.")
+		title_font = wx.Font(13, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
+		title_lbl.SetFont(title_font)
+		title_lbl.SetForegroundColour(wx.Colour(255, 203, 5)) # Maize for primary branding
+		main_sizer.Add(title_lbl, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 15)
+		
+		# Layout: 3 Columns
+		columns_sizer = wx.BoxSizer(wx.HORIZONTAL)
+		
+		# --- LEFT COLUMN: Unassigned ---
+		left_sizer = wx.BoxSizer(wx.VERTICAL)
+		lbl_unassigned = wx.StaticText(self, label="📥 Unassigned Confusions:")
+		lbl_unassigned.SetFont(wx.Font(12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
+		left_sizer.Add(lbl_unassigned, 0, wx.BOTTOM, 8)
+		
+		self.lb_unassigned = wx.ListBox(self, choices=self.confusions_list, style=wx.LB_EXTENDED)
+		self.lb_unassigned.SetFont(wx.Font(11, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL))
+		left_sizer.Add(self.lb_unassigned, 1, wx.EXPAND)
+		columns_sizer.Add(left_sizer, 4, wx.EXPAND | wx.ALL, 10)
+		
+		# --- MIDDLE COLUMN: Transfer Buttons ---
+		# Fixed sizes prevent the awkward stretching seen in the screenshot
+		mid_sizer = wx.BoxSizer(wx.VERTICAL)
+		mid_sizer.AddStretchSpacer()
+		
+		btn_h1 = wx.Button(self, label="Hypothesis 1 (Merge) ➔", size=(190, 40))
+		btn_h1.Bind(wx.EVT_BUTTON, lambda evt: self.move_items(self.lb_unassigned, self.lb_h1))
+		mid_sizer.Add(btn_h1, 0, wx.BOTTOM | wx.ALIGN_CENTER_HORIZONTAL, 15)
+		
+		btn_h2 = wx.Button(self, label="Hypothesis 2 (Extract) ➔", size=(190, 40))
+		btn_h2.Bind(wx.EVT_BUTTON, self.on_move_h2)
+		mid_sizer.Add(btn_h2, 0, wx.BOTTOM | wx.ALIGN_CENTER_HORIZONTAL, 15)
+		
+		btn_h3 = wx.Button(self, label="Hypothesis 3 (Add Data) ➔", size=(190, 40))
+		btn_h3.Bind(wx.EVT_BUTTON, lambda evt: self.move_items(self.lb_unassigned, self.lb_h3))
+		mid_sizer.Add(btn_h3, 0, wx.BOTTOM | wx.ALIGN_CENTER_HORIZONTAL, 15)
+		
+		btn_return = wx.Button(self, label="⬅ Return Selected", size=(190, 40))
+		btn_return.Bind(wx.EVT_BUTTON, self.on_return_items)
+		mid_sizer.Add(btn_return, 0, wx.TOP | wx.ALIGN_CENTER_HORIZONTAL, 40)
+		
+		mid_sizer.AddStretchSpacer()
+		columns_sizer.Add(mid_sizer, 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 10)
+		
+		# --- RIGHT COLUMN: The Buckets ---
+		right_sizer = wx.BoxSizer(wx.VERTICAL)
+		
+		lbl_h1 = wx.StaticText(self, label="🔗 H1: Redundant (Auto-Merged):")
+		lbl_h1.SetFont(wx.Font(11, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
+		lbl_h1.SetForegroundColour(wx.Colour(100, 200, 100)) # Soft Green
+		right_sizer.Add(lbl_h1, 0, wx.BOTTOM, 4)
+		self.lb_h1 = wx.ListBox(self, style=wx.LB_EXTENDED)
+		right_sizer.Add(self.lb_h1, 1, wx.EXPAND | wx.BOTTOM, 10)
+		
+		lbl_h2 = wx.StaticText(self, label="✂️ H2: Emergent (Manual Extraction):")
+		lbl_h2.SetFont(wx.Font(11, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
+		lbl_h2.SetForegroundColour(wx.Colour(100, 150, 255)) # Soft Blue
+		right_sizer.Add(lbl_h2, 0, wx.BOTTOM, 4)
+		self.lb_h2 = wx.ListBox(self, style=wx.LB_EXTENDED)
+		right_sizer.Add(self.lb_h2, 1, wx.EXPAND | wx.BOTTOM, 10)
+		
+		lbl_h3 = wx.StaticText(self, label="📊 H3: Poor Generalization (Needs Data):")
+		lbl_h3.SetFont(wx.Font(11, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
+		lbl_h3.SetForegroundColour(wx.Colour(255, 150, 100)) # Soft Orange
+		right_sizer.Add(lbl_h3, 0, wx.BOTTOM, 4)
+		self.lb_h3 = wx.ListBox(self, style=wx.LB_EXTENDED)
+		right_sizer.Add(self.lb_h3, 1, wx.EXPAND)
+		
+		columns_sizer.Add(right_sizer, 5, wx.EXPAND | wx.ALL, 10) 
+		
+		main_sizer.Add(columns_sizer, 1, wx.EXPAND)
+		
+		# --- FOOTER ---
+		footer_sizer = wx.BoxSizer(wx.HORIZONTAL)
+		btn_finish = wx.Button(self, label="Finish and Generate Report", size=(220, 40))
+		btn_finish.SetFont(wx.Font(12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
+		btn_finish.SetForegroundColour(wx.Colour(100, 200, 100))
+		btn_finish.Bind(wx.EVT_BUTTON, self.on_finish)
+		footer_sizer.Add(btn_finish, 0, wx.ALL, 10)
+		
+		btn_cancel = wx.Button(self, wx.ID_CANCEL, "Cancel", size=(100, 40))
+		footer_sizer.Add(btn_cancel, 0, wx.ALL | wx.ALIGN_CENTER_VERTICAL, 10)
+		
+		main_sizer.Add(footer_sizer, 0, wx.ALIGN_RIGHT)
+		self.SetSizer(main_sizer)
+		self.Layout()
+		
+	def move_items(self, source_lb, target_lb, append_text=""):
+		selections = source_lb.GetSelections()
+		if not selections:
+			return
+		
+		for idx in reversed(selections):
+			item_text = source_lb.GetString(idx)
+			target_lb.Append(f"{item_text} {append_text}")
+			source_lb.Delete(idx)
+			
+	def on_move_h2(self, event):
+		if not self.lb_unassigned.GetSelections():
+			return
+			
+		dlg = wx.TextEntryDialog(self, "What is the name of this new emergent behavior?", "Define Emergent Class")
+		if dlg.ShowModal() == wx.ID_OK:
+			new_name = dlg.GetValue().strip()
+			if new_name:
+				self.move_items(self.lb_unassigned, self.lb_h2, f"[NEW: {new_name}]")
+		dlg.Destroy()
+		
+	def on_return_items(self, event):
+		"""Returns selected items from any right-side bucket back to unassigned."""
+		for lb in [self.lb_h1, self.lb_h2, self.lb_h3]:
+			selections = lb.GetSelections()
+			for idx in reversed(selections):
+				text = lb.GetString(idx)
+				if "[NEW:" in text:
+					text = text.split(" [NEW:")[0]
+				self.lb_unassigned.Append(text)
+				lb.Delete(idx)
+
+	def on_finish(self, event):
+		# 1. Ask for the new versioned dataset name
+		dlg = wx.TextEntryDialog(self, "Enter a name for the new versioned dataset folder:", "Dataset Versioning", "dataset_v2")
+		if dlg.ShowModal() != wx.ID_OK:
+			dlg.Destroy()
+			return
+		new_dataset_name = dlg.GetValue().strip()
+		dlg.Destroy()
+		
+		if not new_dataset_name:
+			return
+
+		# 2. Deduce the base directory path from the example map
+		sample_file = None
+		for files in self.example_map.values():
+			if files:
+				sample_file = files[0]
+				break
+		
+		if not sample_file:
+			wx.MessageBox("Could not locate source files to clone.", "Error", wx.OK | wx.ICON_ERROR)
+			return
+			
+		original_dataset_dir = os.path.dirname(os.path.dirname(sample_file))
+		parent_dir = os.path.dirname(original_dataset_dir)
+		cloned_dataset_dir = os.path.join(parent_dir, new_dataset_name)
+
+		# 3. Check Disk Space & Clone
+		try:
+			total_size = sum(os.path.getsize(os.path.join(dirpath, f)) for dirpath, _, filenames in os.walk(original_dataset_dir) for f in filenames)
+			total_size_mb = total_size / (1024 * 1024)
+
+			total, used, free = shutil.disk_usage(parent_dir)
+			if total_size > free:
+				wx.MessageBox(f"Not enough disk space to clone dataset.\nRequired: {total_size_mb:.2f} MB\nAvailable: {free / (1024*1024):.2f} MB", "Disk Space Error", wx.OK | wx.ICON_ERROR)
+				return
+
+			wx.BeginBusyCursor() 
+			shutil.copytree(original_dataset_dir, cloned_dataset_dir)
+
+			# 4. Perform the OS-level H1 Merges inside the cloned directory
+			for i in range(self.lb_h1.GetCount()):
+				text = self.lb_h1.GetString(i)
+				source_class = text.split(" -> ")[0].strip()
+				target_class = text.split(" -> ")[1].split(" (")[0].strip()
+
+				cloned_source_dir = os.path.join(cloned_dataset_dir, source_class)
+				cloned_target_dir = os.path.join(cloned_dataset_dir, target_class)
+				
+				if os.path.exists(cloned_source_dir):
+					if not os.path.exists(cloned_target_dir):
+						os.makedirs(cloned_target_dir)
+						
+					for filename in os.listdir(cloned_source_dir):
+						shutil.move(os.path.join(cloned_source_dir, filename), os.path.join(cloned_target_dir, filename))
+					shutil.rmtree(cloned_source_dir)
+
+			# 5. Establish the Consistent Export Directory Structure
+			export_dir = os.path.join(cloned_dataset_dir, "LabGym_Diagnostics")
+			os.makedirs(export_dir, exist_ok=True)
+			pdf_path = os.path.join(export_dir, "Triage_Action_Plan.pdf")
+
+			# ---> NEW: H3 Random Sampling Execution <---
+			if self.lb_h3.GetCount() > 0:
+				import random
+				h3_ref_dir = os.path.join(export_dir, "H3_Variance_References")
+				os.makedirs(h3_ref_dir, exist_ok=True)
+				
+				for i in range(self.lb_h3.GetCount()):
+					text = self.lb_h3.GetString(i)
+					source_class = text.split(" -> ")[0].strip()
+					target_class = text.split(" -> ")[1].split(" (")[0].strip()
+					
+					key = (source_class, target_class)
+					examples = self.example_map.get(key, [])
+					
+					if examples:
+						# Grab 3 random samples (or fewer if there aren't 3 available)
+						samples = random.sample(examples, min(3, len(examples)))
+						for idx, avi_path in enumerate(samples):
+							if os.path.exists(avi_path):
+								# Clean strings for safe OS filenames
+								safe_source = source_class.replace(" ", "_")
+								safe_target = target_class.replace(" ", "_")
+								
+								# Copy the .avi video
+								new_avi_name = f"{safe_source}_to_{safe_target}_sample{idx+1}.avi"
+								shutil.copy2(avi_path, os.path.join(h3_ref_dir, new_avi_name))
+								
+								# Copy the corresponding .jpg pattern image
+								jpg_path = avi_path.replace(".avi", ".jpg")
+								if os.path.exists(jpg_path):
+									new_jpg_name = f"{safe_source}_to_{safe_target}_sample{idx+1}.jpg"
+									shutil.copy2(jpg_path, os.path.join(h3_ref_dir, new_jpg_name))
+
+			# 6. Generate the PDF Report
+			self.generate_pdf_report(pdf_path, new_dataset_name)
+
+			wx.EndBusyCursor()
+			
+			# ---> REORDERED: Show the message box BEFORE opening Finder <---
+			wx.MessageBox(f"Successfully cloned dataset and executed Triage Plan!\n\nYour new dataset and PDF Action Plan are located at:\n{export_dir}", "Triage Complete", wx.OK | wx.ICON_INFORMATION)
+			
+			# Close the Triage Builder Dialog
+			self.EndModal(wx.ID_OK)
+			
+			# 7. Instantly open the new Diagnostics folder (now guaranteed to stay on top)
+			if sys.platform == "win32":
+				os.startfile(export_dir)
+			elif sys.platform == "darwin":
+				subprocess.call(["open", export_dir])
+			else:
+				subprocess.call(["xdg-open", export_dir])
+
+		except PermissionError:
+			wx.EndBusyCursor()
+			wx.MessageBox("LabGym does not have permission to write to this directory. Check your folder permissions.", "Permission Error", wx.OK | wx.ICON_ERROR)
+		except Exception as e:
+			wx.EndBusyCursor()
+			wx.MessageBox(f"An OS error occurred during triage execution:\n{e}", "System Error", wx.OK | wx.ICON_ERROR)
+
+	def generate_pdf_report(self, filepath, dataset_name):
+			"""Generates a styled, professional PDF report with simplified layman descriptions and addressed highlights."""
+			try:
+				from reportlab.lib.pagesizes import letter
+				from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle
+				from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+				from reportlab.lib.colors import HexColor, Color
+				from reportlab.lib import colors
+				from reportlab.lib.units import inch
+				import datetime
+				import os
+			except ImportError:
+				wx.MessageBox("ReportLab is required to generate PDFs. Please run 'pip install reportlab'.", "Missing Dependency", wx.OK | wx.ICON_WARNING)
+				return
+
+			doc = SimpleDocTemplate(filepath, pagesize=letter, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=18)
+			styles = getSampleStyleSheet()
+			
+			# --- Typography ---
+			title_style = ParagraphStyle('Title', parent=styles['Heading1'], fontName='Helvetica-Bold', fontSize=16, textColor=HexColor("#00274C"), spaceAfter=16)
+			h2_style = ParagraphStyle('H2', parent=styles['Heading2'], fontName='Helvetica-Bold', fontSize=12, textColor=HexColor("#333333"), spaceBefore=16, spaceAfter=8)
+			body_style = ParagraphStyle('Body', parent=styles['Normal'], fontName='Helvetica', fontSize=10, leading=14, textColor=HexColor("#1A1A1A"))
+			action_style = ParagraphStyle('Action', parent=styles['Normal'], fontName='Helvetica-Bold', fontSize=10, textColor=HexColor("#D82C20"), spaceAfter=12)
+			item_style = ParagraphStyle('Item', parent=styles['Normal'], fontName='Helvetica', fontSize=10, leading=14, leftIndent=20, spaceAfter=6)
+			caption_style = ParagraphStyle('Caption', parent=styles['Normal'], fontName='Helvetica-Oblique', fontSize=8, textColor=HexColor("#666666"), leftIndent=20, spaceBefore=4, spaceAfter=16)
+
+			Story = []
+			
+			# --- Header & Global Metrics ---
+			accuracy = self.report.get('accuracy', 0.0)
+			macro_f1 = self.report.get('macro avg', {}).get('f1-score', 0.0)
+			
+			Story.append(Paragraph(f"LabGym Scientific Triage Action Plan", title_style))
+			Story.append(Paragraph(f"<b>Dataset Target:</b> {dataset_name}", body_style))
+			Story.append(Paragraph(f"<b>Date Generated:</b> {datetime.datetime.now().strftime('%Y-%m-%d %H:%M')}", body_style))
+			Story.append(Paragraph(f"<b>Overall Accuracy:</b> {accuracy*100:.1f}% | <b>Macro F1-Score:</b> {macro_f1*100:.1f}%", body_style))
+			Story.append(Spacer(1, 15))
+
+			# --- Embedded Confusion Matrix Table ---
+			Story.append(Paragraph("Confusion Matrix Overview", h2_style))
+			Story.append(Paragraph("Cells highlighted with a thick gold border indicate confusions that were addressed in this triage session.", caption_style))
+			
+			headers = ["True \\ Pred"] + [str(idx + 1) for idx in range(len(self.classnames))]
+			cm_data = [headers]
+			
+			for i in range(len(self.classnames)):
+				row_data = [f"{i + 1}. {self.classnames[i]}"]
+				for j in range(len(self.classnames)):
+					row_data.append(str(self.cm[i][j]))
+				cm_data.append(row_data)
+
+			t_style = TableStyle([
+				('BACKGROUND', (0,0), (-1,0), HexColor("#00274C")), 
+				('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
+				('ALIGN', (0,0), (-1,-1), 'CENTER'),
+				('ALIGN', (0,1), (0,-1), 'LEFT'),
+				('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+				('FONTSIZE', (0,0), (-1,-1), 7),
+				('BOTTOMPADDING', (0,0), (-1,0), 6),
+				('BACKGROUND', (0,1), (0,-1), HexColor("#f0f0f0")), 
+				('FONTNAME', (0,1), (0,-1), 'Helvetica-Bold'),
+				('GRID', (0,0), (-1,-1), 0.5, colors.grey),
+			])
+			
+			for i in range(len(self.classnames)):
+				row_sum = sum(self.cm[i])
+				for j in range(len(self.classnames)):
+					val = self.cm[i][j]
+					if val > 0:
+						if i == j:
+							intensity = min(1.0, val / row_sum) if row_sum > 0 else 0
+							bg_color = Color(0, 0.8, 0, alpha=0.1 + (0.4 * intensity))
+						else:
+							pct = val / row_sum if row_sum > 0 else 0
+							intensity = min(1.0, pct / 0.5)
+							bg_color = Color(0.9, 0, 0, alpha=0.1 + (0.5 * intensity))
+						t_style.add('BACKGROUND', (j+1, i+1), (j+1, i+1), bg_color)
+
+			# ---> HIGHLIGHT ADDRESSED CONFUSIONS <---
+			addressed_pairs = []
+			for lb in [self.lb_h1, self.lb_h2, self.lb_h3]:
+				for idx in range(lb.GetCount()):
+					item_text = lb.GetString(idx)
+					clean_text = item_text.split(" [NEW:")[0]
+					source_class = clean_text.split(" -> ")[0].strip()
+					target_class = clean_text.split(" -> ")[1].split(" (")[0].strip()
+					addressed_pairs.append((source_class, target_class))
+
+			for src, tgt in addressed_pairs:
+				if src in self.classnames and tgt in self.classnames:
+					i = self.classnames.index(src)
+					j = self.classnames.index(tgt)
+					# Draw a thick 2-point Maize border around the addressed cell
+					t_style.add('BOX', (j+1, i+1), (j+1, i+1), 2, HexColor("#FFCB05"))
+			# ----------------------------------------
+
+			first_col_width = 1.5 * inch
+			remaining_width = 5.0 * inch
+			data_col_width = remaining_width / len(self.classnames)
+			
+			col_widths = [first_col_width] + [data_col_width] * len(self.classnames)
+			
+			cm_table = Table(cm_data, colWidths=col_widths)
+			cm_table.setStyle(t_style)
+			Story.append(cm_table)
+			Story.append(Spacer(1, 15))
+
+			# --- Hypothesis 1 (Merge) ---
+			Story.append(Paragraph("Hypothesis 1: Redundant Behaviors", h2_style))
+			Story.append(Paragraph("These behaviors look identical to the software. LabGym has automatically combined them into a single category for this dataset. No further action is required.", body_style))
+			Story.append(Spacer(1, 5))
+			
+			if self.lb_h1.GetCount() == 0:
+				Story.append(Paragraph("<i>None selected.</i>", item_style))
+			for i in range(self.lb_h1.GetCount()):
+				Story.append(Paragraph(f"• {self.lb_h1.GetString(i)}", item_style))
+			Story.append(Spacer(1, 10))
+
+			# --- Hypothesis 2 (Emergent) ---
+			Story.append(Paragraph("Hypothesis 2: Emergent Behaviors", h2_style))
+			Story.append(Paragraph("The software is confusing these behaviors because there is likely a third, completely different behavior happening that it hasn't been taught yet.", body_style))
+			Story.append(Paragraph("ACTION REQUIRED: Go to the video folders and manually move the mixed-up videos into the new folder you just named.", action_style))
+			
+			if self.lb_h2.GetCount() == 0:
+				Story.append(Paragraph("<i>None selected.</i>", item_style))
+			else:
+				for i in range(self.lb_h2.GetCount()):
+					item_text = self.lb_h2.GetString(i)
+					Story.append(Paragraph(f"• {item_text}", item_style))
+					
+					source_class = item_text.split(" -> ")[0].strip()
+					target_class = item_text.split(" -> ")[1].split(" (")[0].strip()
+					key = (source_class, target_class)
+					examples = self.example_map.get(key, [])
+					
+					if examples:
+						avi_path = examples[0]
+						jpg_path = avi_path.replace(".avi", ".jpg")
+						file_name = os.path.basename(avi_path)
+						
+						if os.path.exists(jpg_path):
+							img = Image(jpg_path)
+							img.drawWidth = 2 * inch
+							img.drawHeight = 2 * inch
+							Story.append(img)
+						Story.append(Paragraph(f"Reference file: {file_name}", caption_style))
+
+			# --- Hypothesis 3 (Generalization) ---
+			Story.append(Paragraph("Hypothesis 3: Poor Generalization", h2_style))
+			Story.append(Paragraph("The software is failing here because it hasn't seen enough different examples of this behavior.", body_style))
+			Story.append(Paragraph("ACTION REQUIRED: Go back to the 'Generate/Sort Behavior Examples' tool and add more videos of these specific behaviors in different environments or angles.", action_style))
+			
+			if self.lb_h3.GetCount() == 0:
+				Story.append(Paragraph("<i>None selected.</i>", item_style))
+			else:
+				export_dir = os.path.dirname(filepath)
+				h3_ref_dir = os.path.join(export_dir, "H3_Variance_References")
+				
+				for i in range(self.lb_h3.GetCount()):
+					item_text = self.lb_h3.GetString(i)
+					Story.append(Paragraph(f"• {item_text}", item_style))
+					
+					source_class = item_text.split(" -> ")[0].strip()
+					target_class = item_text.split(" -> ")[1].split(" (")[0].strip()
+					safe_source = source_class.replace(" ", "_")
+					safe_target = target_class.replace(" ", "_")
+					
+					for idx in range(3):
+						jpg_name = f"{safe_source}_to_{safe_target}_sample{idx+1}.jpg"
+						avi_name = f"{safe_source}_to_{safe_target}_sample{idx+1}.avi"
+						jpg_path = os.path.join(h3_ref_dir, jpg_name)
+						
+						if os.path.exists(jpg_path):
+							img = Image(jpg_path)
+							img.drawWidth = 2 * inch
+							img.drawHeight = 2 * inch
+							Story.append(img)
+							Story.append(Paragraph(f"Reference file: H3_Variance_References/{avi_name}", caption_style))
+
+			# --- True Positive Baselines (Diagonal) ---
+			Story.append(Paragraph("Baseline References (True Positives)", h2_style))
+			Story.append(Paragraph("Below are representative examples of correctly classified behaviors. Use these as a visual baseline for what the model currently considers an 'ideal' representation of the class.", body_style))
+			
+			has_baselines = False
+			for i in range(len(self.classnames)):
+				cls_name = self.classnames[i]
+				if self.cm[i][i] > 0:
+					key = (cls_name, cls_name)
+					examples = self.example_map.get(key, [])
+					
+					if examples:
+						has_baselines = True
+						Story.append(Paragraph(f"• {cls_name}", item_style))
+						
+						avi_path = examples[0]
+						jpg_path = avi_path.replace(".avi", ".jpg")
+						file_name = os.path.basename(avi_path)
+						
+						if os.path.exists(jpg_path):
+							img = Image(jpg_path)
+							img.drawWidth = 2 * inch
+							img.drawHeight = 2 * inch
+							Story.append(img)
+						Story.append(Paragraph(f"Reference file: {file_name}", caption_style))
+						
+			if not has_baselines:
+				Story.append(Paragraph("<i>No correct classifications available to generate baselines.</i>", item_style))
+
+			doc.build(Story)
