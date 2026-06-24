@@ -2078,21 +2078,25 @@ class Categorizers():
 
 			model=load_model(model_path)
 
+			from keras.models import Model
+			multi_model = Model(inputs=model.inputs, outputs=[model.layers[-2].output, model.output])
+
 			if network==0:
-				predictions=model.predict(pattern_images,batch_size=32)
+				embeddings, predictions = multi_model.predict(pattern_images,batch_size=32)
 			elif network==1:
-				predictions=model.predict(animations,batch_size=32)
+				embeddings, predictions = multi_model.predict(animations,batch_size=32)
 			else:
-				predictions=model.predict([animations,pattern_images],batch_size=32)
+				embeddings, predictions = multi_model.predict([animations,pattern_images],batch_size=32)
+
 
 			if len(classnames)==2:
 				predictions=[round(i[0]) for i in predictions]
-				flat_predictions = predictions # Save flat predictions
+				flat_predictions = predictions
 				print(classification_report(labels,predictions,target_names=classnames))
 				report=classification_report(labels,predictions,target_names=classnames,output_dict=True)
 				cm=confusion_matrix(labels,predictions)
 			else:
-				flat_predictions = predictions.argmax(axis=1) # Save flat predictions
+				flat_predictions = predictions.argmax(axis=1)
 				print(classification_report(labels,flat_predictions,target_names=classnames))
 				report=classification_report(labels,flat_predictions,target_names=classnames,output_dict=True)
 				cm=confusion_matrix(labels,flat_predictions)
@@ -2101,18 +2105,18 @@ class Categorizers():
 				pd.DataFrame(report).transpose().to_excel(os.path.join(result_path,'testing_reports.xlsx'),float_format='%.2f')
 				pd.DataFrame(cm, index=classnames, columns=classnames).to_csv(os.path.join(result_path,'confusion_matrix.csv'))
 
-			# ADDED: Build a dictionary mapping (True Class, Predicted Class) -> [List of File Paths]
 			example_map = {}
-			for t_label_idx, p_label_idx, f_path in zip(labels, flat_predictions, test_files):
+			embedding_map = {}
+			for t_label_idx, p_label_idx, f_path, emb in zip(labels, flat_predictions, test_files, embeddings):
 				key = (classnames[t_label_idx], classnames[p_label_idx])
 				if key not in example_map:
 					example_map[key] = []
 				example_map[key].append(f_path)
-
+				embedding_map[f_path] = emb
+			
 			print('Testing completed!')
 			
-			# ADDED: Return example_map as the 3rd variable!
-			return report, cm, example_map
+			return report, cm, example_map, embedding_map
 
 
 	def generate_probability_matrix(self, path_to_video, path_to_model, output_folder, batch_size=32):

@@ -2113,10 +2113,10 @@ class PanelLv2_TestCategorizers(wx.Panel):
 		else:
 			CA=Categorizers()
 			
-			report, cm, example_map = CA.test_categorizer(self.file_path,self.path_to_categorizer,result_path=self.out_path)
+			report, cm, example_map, embedding_map = CA.test_categorizer(self.file_path,self.path_to_categorizer,result_path=self.out_path)
 			classnames = [k for k in report.keys() if k not in ['accuracy', 'macro avg', 'weighted avg']]
 
-			dialog = AutomatedDiagnosticsDialog(self, report, cm, classnames, example_map)
+			dialog = AutomatedDiagnosticsDialog(self, report, cm, classnames, example_map, embedding_map)
 			dialog.ShowModal()
 			dialog.Destroy()
 
@@ -2142,13 +2142,14 @@ class PanelLv2_TestCategorizers(wx.Panel):
 		dialog.Destroy()
 
 class AutomatedDiagnosticsDialog(wx.Dialog):
-	def __init__(self, parent, report, cm, classnames, example_map):
+	def __init__(self, parent, report, cm, classnames, example_map, embedding_map):
 		super().__init__(parent, title="Automated Diagnostics - Test Results", size=(1000, 800), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER | wx.MAXIMIZE_BOX)
 		
 		self.report = report
 		self.cm = cm
 		self.classnames = classnames
 		self.example_map = example_map
+		self.embedding_map = embedding_map
 		
 		self.cm_normalized = self.calculate_normalized_cm(cm)
 		self.is_normalized = False
@@ -2293,13 +2294,11 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 		"""Gathers all confusions and launches the Triage Builder."""
 		all_confusions = []
 		
-		# Grab Major Confusions
 		for count, i, j, prop in self.nlp_major:
 			item = f"{self.classnames[i]} -> {self.classnames[j]} ({count} errors)"
 			if item not in all_confusions:
 				all_confusions.append(item)
 				
-		# Grab Minor Confusions
 		for mc in self.nlp_minor:
 			for err_count, pred_class in mc['top_confusions']:
 				item = f"{mc['class']} -> {pred_class} ({err_count} errors)"
@@ -2310,7 +2309,7 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 			wx.MessageBox("No confusions detected to triage!", "All Clear", wx.OK | wx.ICON_INFORMATION)
 			return
 			
-		dialog = TriageBuilderDialog(self, all_confusions, self.example_map, self.report, self.cm, self.classnames)
+		dialog = TriageBuilderDialog(self, all_confusions, self.example_map, self.report, self.cm, self.classnames, self.embedding_map)
 		dialog.ShowModal()
 		dialog.Destroy()
 
@@ -2872,32 +2871,59 @@ class ExampleViewerDialog(wx.Dialog):
 
 
 class TriageBuilderDialog(wx.Dialog):
-	def __init__(self, parent, confusions_list, example_map, report, cm, classnames):
+	def __init__(self, parent, confusions_list, example_map, report, cm, classnames, embedding_map):
 		super().__init__(parent, title="Triage Action Plan Builder", size=(900, 600), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
 		self.confusions_list = confusions_list
 		self.example_map = example_map
+		self.embedding_map = embedding_map
 		
-		# ---> NEW: Store the variables so the PDF generator can use them <---
 		self.report = report
 		self.cm = cm
 		self.classnames = classnames
 		
 		self.init_ui()
+
+	def get_centroid(self, file_list):
+		"""Calculates the mathematical centroid of a cluster of videos and returns the most representative file."""
+		if not file_list:
+			return None
+		if len(file_list) == 1:
+			return file_list[0]
+			
+		import numpy as np
+
+		embs = [self.embedding_map[f] for f in file_list]
+
+		mean_emb = np.mean(embs, axis=0)
+		mean_norm = np.linalg.norm(mean_emb)
+		if mean_norm == 0:
+			return file_list[0]
+			
+		best_sim = -2.0
+		centroid_file = file_list[0]
+		
+		for f, emb in zip(file_list, embs):
+			emb_norm = np.linalg.norm(emb)
+			if emb_norm == 0: continue
+			
+			sim = np.dot(emb, mean_emb) / (emb_norm * mean_norm)
+			if sim > best_sim:
+				best_sim = sim
+				centroid_file = f
+				
+		return centroid_file
 		
 	def init_ui(self):
 		main_sizer = wx.BoxSizer(wx.VERTICAL)
 		
-		# --- TITLE HEADER ---
 		title_lbl = wx.StaticText(self, label="Assign confusions to a root-cause hypothesis to generate your action plan.")
 		title_font = wx.Font(13, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
 		title_lbl.SetFont(title_font)
-		title_lbl.SetForegroundColour(wx.Colour(255, 203, 5)) # Maize for primary branding
+		title_lbl.SetForegroundColour(wx.Colour(255, 203, 5))
 		main_sizer.Add(title_lbl, 0, wx.ALL | wx.ALIGN_CENTER_HORIZONTAL, 15)
 		
-		# Layout: 3 Columns
 		columns_sizer = wx.BoxSizer(wx.HORIZONTAL)
 		
-		# --- LEFT COLUMN: Unassigned ---
 		left_sizer = wx.BoxSizer(wx.VERTICAL)
 		lbl_unassigned = wx.StaticText(self, label="📥 Unassigned Confusions:")
 		lbl_unassigned.SetFont(wx.Font(12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
@@ -2908,8 +2934,6 @@ class TriageBuilderDialog(wx.Dialog):
 		left_sizer.Add(self.lb_unassigned, 1, wx.EXPAND)
 		columns_sizer.Add(left_sizer, 4, wx.EXPAND | wx.ALL, 10)
 		
-		# --- MIDDLE COLUMN: Transfer Buttons ---
-		# Fixed sizes prevent the awkward stretching seen in the screenshot
 		mid_sizer = wx.BoxSizer(wx.VERTICAL)
 		mid_sizer.AddStretchSpacer()
 		
@@ -2932,26 +2956,25 @@ class TriageBuilderDialog(wx.Dialog):
 		mid_sizer.AddStretchSpacer()
 		columns_sizer.Add(mid_sizer, 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 10)
 		
-		# --- RIGHT COLUMN: The Buckets ---
 		right_sizer = wx.BoxSizer(wx.VERTICAL)
 		
 		lbl_h1 = wx.StaticText(self, label="🔗 H1: Redundant (Auto-Merged):")
 		lbl_h1.SetFont(wx.Font(11, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
-		lbl_h1.SetForegroundColour(wx.Colour(100, 200, 100)) # Soft Green
+		lbl_h1.SetForegroundColour(wx.Colour(100, 200, 100))
 		right_sizer.Add(lbl_h1, 0, wx.BOTTOM, 4)
 		self.lb_h1 = wx.ListBox(self, style=wx.LB_EXTENDED)
 		right_sizer.Add(self.lb_h1, 1, wx.EXPAND | wx.BOTTOM, 10)
 		
 		lbl_h2 = wx.StaticText(self, label="✂️ H2: Emergent (Manual Extraction):")
 		lbl_h2.SetFont(wx.Font(11, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
-		lbl_h2.SetForegroundColour(wx.Colour(100, 150, 255)) # Soft Blue
+		lbl_h2.SetForegroundColour(wx.Colour(100, 150, 255))
 		right_sizer.Add(lbl_h2, 0, wx.BOTTOM, 4)
 		self.lb_h2 = wx.ListBox(self, style=wx.LB_EXTENDED)
 		right_sizer.Add(self.lb_h2, 1, wx.EXPAND | wx.BOTTOM, 10)
 		
 		lbl_h3 = wx.StaticText(self, label="📊 H3: Poor Generalization (Needs Data):")
 		lbl_h3.SetFont(wx.Font(11, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
-		lbl_h3.SetForegroundColour(wx.Colour(255, 150, 100)) # Soft Orange
+		lbl_h3.SetForegroundColour(wx.Colour(255, 150, 100))
 		right_sizer.Add(lbl_h3, 0, wx.BOTTOM, 4)
 		self.lb_h3 = wx.ListBox(self, style=wx.LB_EXTENDED)
 		right_sizer.Add(self.lb_h3, 1, wx.EXPAND)
@@ -2960,7 +2983,6 @@ class TriageBuilderDialog(wx.Dialog):
 		
 		main_sizer.Add(columns_sizer, 1, wx.EXPAND)
 		
-		# --- FOOTER ---
 		footer_sizer = wx.BoxSizer(wx.HORIZONTAL)
 		btn_finish = wx.Button(self, label="Finish and Generate Report", size=(220, 40))
 		btn_finish.SetFont(wx.Font(12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
@@ -3008,7 +3030,6 @@ class TriageBuilderDialog(wx.Dialog):
 				lb.Delete(idx)
 
 	def on_finish(self, event):
-		# 1. Ask for the new versioned dataset name
 		dlg = wx.TextEntryDialog(self, "Enter a name for the new versioned dataset folder:", "Dataset Versioning", "dataset_v2")
 		if dlg.ShowModal() != wx.ID_OK:
 			dlg.Destroy()
@@ -3019,7 +3040,6 @@ class TriageBuilderDialog(wx.Dialog):
 		if not new_dataset_name:
 			return
 
-		# 2. Deduce the base directory path from the example map
 		sample_file = None
 		for files in self.example_map.values():
 			if files:
@@ -3034,7 +3054,6 @@ class TriageBuilderDialog(wx.Dialog):
 		parent_dir = os.path.dirname(original_dataset_dir)
 		cloned_dataset_dir = os.path.join(parent_dir, new_dataset_name)
 
-		# 3. Check Disk Space & Clone
 		try:
 			total_size = sum(os.path.getsize(os.path.join(dirpath, f)) for dirpath, _, filenames in os.walk(original_dataset_dir) for f in filenames)
 			total_size_mb = total_size / (1024 * 1024)
@@ -3047,7 +3066,6 @@ class TriageBuilderDialog(wx.Dialog):
 			wx.BeginBusyCursor() 
 			shutil.copytree(original_dataset_dir, cloned_dataset_dir)
 
-			# 4. Perform the OS-level H1 Merges inside the cloned directory
 			for i in range(self.lb_h1.GetCount()):
 				text = self.lb_h1.GetString(i)
 				source_class = text.split(" -> ")[0].strip()
@@ -3064,12 +3082,10 @@ class TriageBuilderDialog(wx.Dialog):
 						shutil.move(os.path.join(cloned_source_dir, filename), os.path.join(cloned_target_dir, filename))
 					shutil.rmtree(cloned_source_dir)
 
-			# 5. Establish the Consistent Export Directory Structure
 			export_dir = os.path.join(cloned_dataset_dir, "LabGym_Diagnostics")
 			os.makedirs(export_dir, exist_ok=True)
 			pdf_path = os.path.join(export_dir, "Triage_Action_Plan.pdf")
 
-			# ---> NEW: H3 Random Sampling Execution <---
 			if self.lb_h3.GetCount() > 0:
 				import random
 				h3_ref_dir = os.path.join(export_dir, "H3_Variance_References")
@@ -3084,36 +3100,28 @@ class TriageBuilderDialog(wx.Dialog):
 					examples = self.example_map.get(key, [])
 					
 					if examples:
-						# Grab 3 random samples (or fewer if there aren't 3 available)
 						samples = random.sample(examples, min(3, len(examples)))
 						for idx, avi_path in enumerate(samples):
 							if os.path.exists(avi_path):
-								# Clean strings for safe OS filenames
 								safe_source = source_class.replace(" ", "_")
 								safe_target = target_class.replace(" ", "_")
 								
-								# Copy the .avi video
 								new_avi_name = f"{safe_source}_to_{safe_target}_sample{idx+1}.avi"
 								shutil.copy2(avi_path, os.path.join(h3_ref_dir, new_avi_name))
 								
-								# Copy the corresponding .jpg pattern image
 								jpg_path = avi_path.replace(".avi", ".jpg")
 								if os.path.exists(jpg_path):
 									new_jpg_name = f"{safe_source}_to_{safe_target}_sample{idx+1}.jpg"
 									shutil.copy2(jpg_path, os.path.join(h3_ref_dir, new_jpg_name))
 
-			# 6. Generate the PDF Report
 			self.generate_pdf_report(pdf_path, new_dataset_name)
 
 			wx.EndBusyCursor()
 			
-			# ---> REORDERED: Show the message box BEFORE opening Finder <---
 			wx.MessageBox(f"Successfully cloned dataset and executed Triage Plan!\n\nYour new dataset and PDF Action Plan are located at:\n{export_dir}", "Triage Complete", wx.OK | wx.ICON_INFORMATION)
 			
-			# Close the Triage Builder Dialog
 			self.EndModal(wx.ID_OK)
 			
-			# 7. Instantly open the new Diagnostics folder (now guaranteed to stay on top)
 			if sys.platform == "win32":
 				os.startfile(export_dir)
 			elif sys.platform == "darwin":
@@ -3146,7 +3154,6 @@ class TriageBuilderDialog(wx.Dialog):
 			doc = SimpleDocTemplate(filepath, pagesize=letter, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=18)
 			styles = getSampleStyleSheet()
 			
-			# --- Typography ---
 			title_style = ParagraphStyle('Title', parent=styles['Heading1'], fontName='Helvetica-Bold', fontSize=16, textColor=HexColor("#00274C"), spaceAfter=16)
 			h2_style = ParagraphStyle('H2', parent=styles['Heading2'], fontName='Helvetica-Bold', fontSize=12, textColor=HexColor("#333333"), spaceBefore=16, spaceAfter=8)
 			body_style = ParagraphStyle('Body', parent=styles['Normal'], fontName='Helvetica', fontSize=10, leading=14, textColor=HexColor("#1A1A1A"))
@@ -3156,7 +3163,6 @@ class TriageBuilderDialog(wx.Dialog):
 
 			Story = []
 			
-			# --- Header & Global Metrics ---
 			accuracy = self.report.get('accuracy', 0.0)
 			macro_f1 = self.report.get('macro avg', {}).get('f1-score', 0.0)
 			
@@ -3166,7 +3172,6 @@ class TriageBuilderDialog(wx.Dialog):
 			Story.append(Paragraph(f"<b>Overall Accuracy:</b> {accuracy*100:.1f}% | <b>Macro F1-Score:</b> {macro_f1*100:.1f}%", body_style))
 			Story.append(Spacer(1, 15))
 
-			# --- Embedded Confusion Matrix Table ---
 			Story.append(Paragraph("Confusion Matrix Overview", h2_style))
 			Story.append(Paragraph("Cells highlighted with a thick gold border indicate confusions that were addressed in this triage session.", caption_style))
 			
@@ -3206,7 +3211,6 @@ class TriageBuilderDialog(wx.Dialog):
 							bg_color = Color(0.9, 0, 0, alpha=0.1 + (0.5 * intensity))
 						t_style.add('BACKGROUND', (j+1, i+1), (j+1, i+1), bg_color)
 
-			# ---> HIGHLIGHT ADDRESSED CONFUSIONS <---
 			addressed_pairs = []
 			for lb in [self.lb_h1, self.lb_h2, self.lb_h3]:
 				for idx in range(lb.GetCount()):
@@ -3220,9 +3224,7 @@ class TriageBuilderDialog(wx.Dialog):
 				if src in self.classnames and tgt in self.classnames:
 					i = self.classnames.index(src)
 					j = self.classnames.index(tgt)
-					# Draw a thick 2-point Maize border around the addressed cell
 					t_style.add('BOX', (j+1, i+1), (j+1, i+1), 2, HexColor("#FFCB05"))
-			# ----------------------------------------
 
 			first_col_width = 1.5 * inch
 			remaining_width = 5.0 * inch
@@ -3235,7 +3237,6 @@ class TriageBuilderDialog(wx.Dialog):
 			Story.append(cm_table)
 			Story.append(Spacer(1, 15))
 
-			# --- Hypothesis 1 (Merge) ---
 			Story.append(Paragraph("Hypothesis 1: Redundant Behaviors", h2_style))
 			Story.append(Paragraph("These behaviors look identical to the software. LabGym has automatically combined them into a single category for this dataset. No further action is required.", body_style))
 			Story.append(Spacer(1, 5))
@@ -3246,7 +3247,6 @@ class TriageBuilderDialog(wx.Dialog):
 				Story.append(Paragraph(f"• {self.lb_h1.GetString(i)}", item_style))
 			Story.append(Spacer(1, 10))
 
-			# --- Hypothesis 2 (Emergent) ---
 			Story.append(Paragraph("Hypothesis 2: Emergent Behaviors", h2_style))
 			Story.append(Paragraph("The software is confusing these behaviors because there is likely a third, completely different behavior happening that it hasn't been taught yet.", body_style))
 			Story.append(Paragraph("ACTION REQUIRED: Go to the video folders and manually move the mixed-up videos into the new folder you just named.", action_style))
@@ -3264,7 +3264,7 @@ class TriageBuilderDialog(wx.Dialog):
 					examples = self.example_map.get(key, [])
 					
 					if examples:
-						avi_path = examples[0]
+						avi_path = self.get_centroid(examples)
 						jpg_path = avi_path.replace(".avi", ".jpg")
 						file_name = os.path.basename(avi_path)
 						
@@ -3275,7 +3275,6 @@ class TriageBuilderDialog(wx.Dialog):
 							Story.append(img)
 						Story.append(Paragraph(f"Reference file: {file_name}", caption_style))
 
-			# --- Hypothesis 3 (Generalization) ---
 			Story.append(Paragraph("Hypothesis 3: Poor Generalization", h2_style))
 			Story.append(Paragraph("The software is failing here because it hasn't seen enough different examples of this behavior.", body_style))
 			Story.append(Paragraph("ACTION REQUIRED: Go back to the 'Generate/Sort Behavior Examples' tool and add more videos of these specific behaviors in different environments or angles.", action_style))
@@ -3307,7 +3306,6 @@ class TriageBuilderDialog(wx.Dialog):
 							Story.append(img)
 							Story.append(Paragraph(f"Reference file: H3_Variance_References/{avi_name}", caption_style))
 
-			# --- True Positive Baselines (Diagonal) ---
 			Story.append(Paragraph("Baseline References (True Positives)", h2_style))
 			Story.append(Paragraph("Below are representative examples of correctly classified behaviors. Use these as a visual baseline for what the model currently considers an 'ideal' representation of the class.", body_style))
 			
@@ -3322,7 +3320,7 @@ class TriageBuilderDialog(wx.Dialog):
 						has_baselines = True
 						Story.append(Paragraph(f"• {cls_name}", item_style))
 						
-						avi_path = examples[0]
+						avi_path = self.get_centroid(examples)
 						jpg_path = avi_path.replace(".avi", ".jpg")
 						file_name = os.path.basename(avi_path)
 						
