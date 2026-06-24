@@ -1176,21 +1176,6 @@ class AnalyzeAnimal():
 		if self.categorize_behavior:
 			events_df=pd.DataFrame(self.event_probability,index=self.all_time)
 			events_df.to_excel(os.path.join(self.results_path,'all_event_probability.xlsx'),float_format='%.2f',index_label='time/ID')
-
-			names_and_colors = {
-				behavior_name: self.all_behavior_parameters[behavior_name]['color']
-				for behavior_name in self.all_behavior_parameters
-				}
-
-			plot_state_transition_map(
-				self.results_path,
-				self.event_probability,
-				names_and_colors,
-				normalize=True,
-				collapse_repeats=True,
-				include_self=False,
-				min_count=1,
-				)
 			
 		all_parameters=[]
 
