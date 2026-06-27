@@ -34,6 +34,7 @@ logger.debug('loading %s', __file__)
 import cv2
 import numpy as np
 import wx
+import wx.richtext
 
 # Local application/library specific imports.
 logger.debug('importing %s ...', '.analyzebehavior')
@@ -1186,6 +1187,12 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 		boxsizer.Add(module_trainingfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		boxsizer.Add(0,5,0)
 
+		self.count_display=wx.richtext.RichTextCtrl(panel,size=(-1,120),style=wx.TE_READONLY)
+		self.count_display.SetEditable(False)
+		self.count_display.Hide()
+		boxsizer.Add(self.count_display,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(0,5,0)
+
 		module_augmentation=wx.BoxSizer(wx.HORIZONTAL)
 		button_augmentation=wx.Button(panel,label='Specify the methods to\naugment training examples',size=(300,40))
 		button_augmentation.Bind(wx.EVT_BUTTON,self.specify_augmentation)
@@ -1216,6 +1223,45 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 
 		self.Centre()
 		self.Show(True)
+
+
+	def _count_examples(self,folder_path):
+		try:
+			entries=os.listdir(folder_path)
+		except OSError:
+			return {}
+		counts={}
+		avis=[f for f in entries if f.endswith('.avi')]
+		files=avis if avis else [f for f in entries if f.endswith('.jpg')]
+		for f in files:
+			base=os.path.splitext(f)[0]
+			if '_' in base:
+				category=base.split('_',1)[1]
+				counts[category]=counts.get(category,0)+1
+		return counts
+
+
+	def _update_count_display(self,folder_path):
+		counts=self._count_examples(folder_path)
+		if len(counts)<2:
+			self.count_display.Hide()
+			self.Layout()
+			return
+		mean=sum(counts.values())/len(counts)
+		self.count_display.Clear()
+		for name in sorted(counts):
+			count=counts[name]
+			if count<250:
+				color=wx.Colour(180,0,0)
+			elif count<mean*0.67:
+				color=wx.Colour(180,100,0)
+			else:
+				color=wx.Colour(0,0,0)
+			self.count_display.BeginTextColour(color)
+			self.count_display.WriteText(f'{name}: {count} examples\n')
+			self.count_display.EndTextColour()
+		self.count_display.Show()
+		self.Layout()
 
 
 	def select_filepath(self,event):
@@ -1471,6 +1517,9 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 							self.text_trainingfolder.SetLabel('Animations w/ background, pattern images w/o bodyparts in: '+self.data_path+'.')
 					else:
 						self.text_trainingfolder.SetLabel('Pattern images w/o bodyparts in: '+self.data_path+'.')
+
+		if self.data_path is not None:
+			self._update_count_display(self.data_path)
 
 
 	def specify_augmentation(self,event):
