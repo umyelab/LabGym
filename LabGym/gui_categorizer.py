@@ -1278,6 +1278,15 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 					self.count_display.WriteText('  |  ')
 					self.count_display.EndStyle()
 			self.count_display.WriteText('\n')
+			below_250=[(name,250-counts[name]) for name in row if counts[name]<250]
+			if below_250:
+				add_attr=wx.richtext.RichTextAttr()
+				add_attr.SetFontStyle(wx.FONTSTYLE_ITALIC)
+				add_attr.SetFontSize(11)
+				add_attr.SetTextColour(wx.Colour(50,50,50))
+				self.count_display.BeginStyle(add_attr)
+				self.count_display.WriteText('    add: '+', '.join(f'{n} ({needed})' for n,needed in below_250)+'\n')
+				self.count_display.EndStyle()
 		self.count_display.Show()
 		self.Layout()
 
