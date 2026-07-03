@@ -1247,19 +1247,37 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 			self.count_display.Hide()
 			self.Layout()
 			return
-		mean=sum(counts.values())/len(counts)
+		values=list(counts.values())
+		mean=sum(values)/len(values)
+		std=(sum((v-mean)**2 for v in values)/len(values))**0.5
 		self.count_display.Clear()
-		for name in sorted(counts):
-			count=counts[name]
-			if count<250:
-				color=wx.Colour(180,0,0)
-			elif count<mean*0.67:
-				color=wx.Colour(180,100,0)
-			else:
-				color=wx.Colour(0,0,0)
-			self.count_display.BeginTextColour(color)
-			self.count_display.WriteText(f'{name}: {count} examples\n')
-			self.count_display.EndTextColour()
+		names=sorted(counts)
+		i=0
+		while i<len(names):
+			chunk=names[i:i+4]
+			if len(chunk)==4:
+				row_text='  |  '.join(f'{n}: {counts[n]} examples' for n in chunk)
+				if len(row_text)>140:
+					chunk=names[i:i+2]
+			row=chunk
+			i+=len(row)
+			for i_item,name in enumerate(row):
+				count=counts[name]
+				attr=wx.richtext.RichTextAttr()
+				attr.SetTextColour(wx.Colour(180,0,0) if count<250 else wx.Colour(0,0,0))
+				if std>0 and abs(count-mean)>std:
+					attr.SetBackgroundColour(wx.YELLOW)
+				self.count_display.BeginStyle(attr)
+				self.count_display.WriteText(f'{name}: {count} examples')
+				self.count_display.EndStyle()
+				if i_item<len(row)-1:
+					sep_attr=wx.richtext.RichTextAttr()
+					sep_attr.SetTextColour(wx.Colour(0,0,0))
+					sep_attr.SetFontWeight(wx.FONTWEIGHT_BOLD)
+					self.count_display.BeginStyle(sep_attr)
+					self.count_display.WriteText('  |  ')
+					self.count_display.EndStyle()
+			self.count_display.WriteText('\n')
 		self.count_display.Show()
 		self.Layout()
 
