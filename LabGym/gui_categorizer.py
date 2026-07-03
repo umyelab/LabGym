@@ -1187,10 +1187,10 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 		boxsizer.Add(module_trainingfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		boxsizer.Add(0,5,0)
 
-		self.count_display=wx.richtext.RichTextCtrl(panel,size=(-1,120),style=wx.TE_READONLY)
-		self.count_display.SetEditable(False)
-		self.count_display.Hide()
-		boxsizer.Add(self.count_display,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		self.button_view_counts=wx.Button(panel,label='View Behavior Counts',size=(300,40))
+		self.button_view_counts.Bind(wx.EVT_BUTTON,self.show_count_popup)
+		self.button_view_counts.Hide()
+		boxsizer.Add(self.button_view_counts,0,wx.ALIGN_CENTER)
 		boxsizer.Add(0,5,0)
 
 		module_augmentation=wx.BoxSizer(wx.HORIZONTAL)
@@ -1244,20 +1244,27 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 	def _update_count_display(self,folder_path):
 		counts=self._count_examples(folder_path)
 		if len(counts)<2:
-			self.count_display.Hide()
+			self._counts={}
+			self.button_view_counts.Hide()
 			self.Layout()
 			return
+		self._counts=counts
+		self.button_view_counts.Show()
+		self.Layout()
+
+
+	def _render_counts(self,rtc,counts):
 		values=list(counts.values())
 		mean=sum(values)/len(values)
 		std=(sum((v-mean)**2 for v in values)/len(values))**0.5
-		self.count_display.Clear()
+		rtc.Clear()
 		names=sorted(counts)
 		i=0
 		while i<len(names):
 			chunk=names[i:i+4]
 			if len(chunk)==4:
 				row_text='  |  '.join(f'{n}: {counts[n]} examples' for n in chunk)
-				if len(row_text)>140:
+				if len(row_text)>200:
 					chunk=names[i:i+2]
 			row=chunk
 			i+=len(row)
@@ -1267,28 +1274,53 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 				attr.SetTextColour(wx.Colour(180,0,0) if count<250 else wx.Colour(0,0,0))
 				if std>0 and abs(count-mean)>std:
 					attr.SetBackgroundColour(wx.YELLOW)
-				self.count_display.BeginStyle(attr)
-				self.count_display.WriteText(f'{name}: {count} examples')
-				self.count_display.EndStyle()
+				rtc.BeginStyle(attr)
+				rtc.WriteText(f'{name}: {count} examples')
+				rtc.EndStyle()
 				if i_item<len(row)-1:
 					sep_attr=wx.richtext.RichTextAttr()
 					sep_attr.SetTextColour(wx.Colour(0,0,0))
 					sep_attr.SetFontWeight(wx.FONTWEIGHT_BOLD)
-					self.count_display.BeginStyle(sep_attr)
-					self.count_display.WriteText('  |  ')
-					self.count_display.EndStyle()
-			self.count_display.WriteText('\n')
+					rtc.BeginStyle(sep_attr)
+					rtc.WriteText('  |  ')
+					rtc.EndStyle()
+			rtc.WriteText('\n')
 			below_250=[(name,250-counts[name]) for name in row if counts[name]<250]
 			if below_250:
 				add_attr=wx.richtext.RichTextAttr()
 				add_attr.SetFontStyle(wx.FONTSTYLE_ITALIC)
-				add_attr.SetFontSize(11)
-				add_attr.SetTextColour(wx.Colour(50,50,50))
-				self.count_display.BeginStyle(add_attr)
-				self.count_display.WriteText('    add: '+', '.join(f'{n} ({needed})' for n,needed in below_250)+'\n')
-				self.count_display.EndStyle()
-		self.count_display.Show()
-		self.Layout()
+				add_attr.SetFontSize(10)
+				add_attr.SetTextColour(wx.Colour(60,60,60))
+				rtc.BeginStyle(add_attr)
+				rtc.WriteText('    add: '+', '.join(f'{n} ({needed})' for n,needed in below_250)+'\n')
+				rtc.EndStyle()
+
+
+	def show_count_popup(self,event):
+		counts=getattr(self,'_counts',{})
+		if len(counts)<2:
+			return
+		n=len(counts)
+		n_rows=-(-n//4)
+		popup_w=950
+		popup_h=max(120,min(450,n_rows*55+60))
+		popup=wx.PopupTransientWindow(self,wx.NO_BORDER)
+		border_panel=wx.Panel(popup)
+		border_panel.SetBackgroundColour(wx.BLACK)
+		rtc=wx.richtext.RichTextCtrl(border_panel,style=wx.TE_READONLY)
+		rtc.SetEditable(False)
+		self._render_counts(rtc,counts)
+		inner_sizer=wx.BoxSizer(wx.VERTICAL)
+		inner_sizer.Add(rtc,1,wx.EXPAND|wx.ALL,1)
+		border_panel.SetSizer(inner_sizer)
+		outer_sizer=wx.BoxSizer(wx.VERTICAL)
+		outer_sizer.Add(border_panel,1,wx.EXPAND)
+		popup.SetSizer(outer_sizer)
+		popup.SetSize(popup_w,popup_h)
+		frame=self.GetTopLevelParent()
+		fr=frame.GetRect()
+		popup.SetPosition(wx.Point(fr.x+(fr.width-popup_w)//2,fr.y+(fr.height-popup_h)//2))
+		popup.Popup()
 
 
 	def select_filepath(self,event):
