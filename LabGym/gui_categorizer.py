@@ -1130,6 +1130,12 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 		boxsizer.Add(module_inputexamples,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		boxsizer.Add(0,5,0)
 
+		self.button_view_sorted_counts=wx.Button(panel,label='View Behavior Counts',size=(300,40))
+		self.button_view_sorted_counts.Bind(wx.EVT_BUTTON,self.show_sorted_count_popup)
+		self.button_view_sorted_counts.Hide()
+		boxsizer.Add(self.button_view_sorted_counts,0,wx.ALIGN_CENTER)
+		boxsizer.Add(0,5,0)
+
 		module_renameexample=wx.BoxSizer(wx.HORIZONTAL)
 		button_renameexample=wx.Button(panel,label='Select a new folder to store\nall the prepared behavior examples',size=(300,40))
 		button_renameexample.Bind(wx.EVT_BUTTON,self.select_outpath)
@@ -1305,17 +1311,79 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 		popup_w=950
 		popup_h=max(120,min(450,n_rows*55+60))
 		popup=wx.PopupTransientWindow(self,wx.NO_BORDER)
-		border_panel=wx.Panel(popup)
-		border_panel.SetBackgroundColour(wx.BLACK)
-		rtc=wx.richtext.RichTextCtrl(border_panel,style=wx.TE_READONLY)
+		bg=wx.Colour(255,255,255)
+		popup.SetBackgroundColour(bg)
+		def on_paint(evt,_p=popup):
+			dc=wx.PaintDC(_p)
+			dc.SetPen(wx.Pen(wx.BLACK,1))
+			dc.SetBrush(wx.TRANSPARENT_BRUSH)
+			w,h=_p.GetClientSize()
+			dc.DrawRectangle(0,0,w,h)
+		popup.Bind(wx.EVT_PAINT,on_paint)
+		rtc=wx.richtext.RichTextCtrl(popup,style=wx.TE_READONLY|wx.NO_BORDER)
+		rtc.SetBackgroundColour(bg)
 		rtc.SetEditable(False)
 		self._render_counts(rtc,counts)
-		inner_sizer=wx.BoxSizer(wx.VERTICAL)
-		inner_sizer.Add(rtc,1,wx.EXPAND|wx.ALL,1)
-		border_panel.SetSizer(inner_sizer)
-		outer_sizer=wx.BoxSizer(wx.VERTICAL)
-		outer_sizer.Add(border_panel,1,wx.EXPAND)
-		popup.SetSizer(outer_sizer)
+		sizer=wx.BoxSizer(wx.VERTICAL)
+		sizer.Add(rtc,1,wx.EXPAND|wx.ALL,1)
+		popup.SetSizer(sizer)
+		popup.SetSize(popup_w,popup_h)
+		frame=self.GetTopLevelParent()
+		fr=frame.GetRect()
+		popup.SetPosition(wx.Point(fr.x+(fr.width-popup_w)//2,fr.y+(fr.height-popup_h)//2))
+		popup.Popup()
+
+
+	def _count_from_subfolders(self,folder_path):
+		try:
+			subfolders=[d for d in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path,d))]
+		except OSError:
+			return {}
+		counts={}
+		for subfolder in subfolders:
+			path=os.path.join(folder_path,subfolder)
+			avis=[f for f in os.listdir(path) if f.endswith('.avi')]
+			counts[subfolder]=len(avis) if avis else len([f for f in os.listdir(path) if f.endswith('.jpg')])
+		return counts
+
+
+	def _update_sorted_count_display(self,folder_path):
+		counts=self._count_from_subfolders(folder_path)
+		if len(counts)<2:
+			self._sorted_counts={}
+			self.button_view_sorted_counts.Hide()
+			self.Layout()
+			return
+		self._sorted_counts=counts
+		self.button_view_sorted_counts.Show()
+		self.Layout()
+
+
+	def show_sorted_count_popup(self,event):
+		counts=getattr(self,'_sorted_counts',{})
+		if len(counts)<2:
+			return
+		n=len(counts)
+		n_rows=-(-n//4)
+		popup_w=950
+		popup_h=max(120,min(450,n_rows*55+60))
+		popup=wx.PopupTransientWindow(self,wx.NO_BORDER)
+		bg=wx.Colour(255,255,255)
+		popup.SetBackgroundColour(bg)
+		def on_paint(evt,_p=popup):
+			dc=wx.PaintDC(_p)
+			dc.SetPen(wx.Pen(wx.BLACK,1))
+			dc.SetBrush(wx.TRANSPARENT_BRUSH)
+			w,h=_p.GetClientSize()
+			dc.DrawRectangle(0,0,w,h)
+		popup.Bind(wx.EVT_PAINT,on_paint)
+		rtc=wx.richtext.RichTextCtrl(popup,style=wx.TE_READONLY|wx.NO_BORDER)
+		rtc.SetBackgroundColour(bg)
+		rtc.SetEditable(False)
+		self._render_counts(rtc,counts)
+		sizer=wx.BoxSizer(wx.VERTICAL)
+		sizer.Add(rtc,1,wx.EXPAND|wx.ALL,1)
+		popup.SetSizer(sizer)
 		popup.SetSize(popup_w,popup_h)
 		frame=self.GetTopLevelParent()
 		fr=frame.GetRect()
@@ -1329,6 +1397,7 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 		if dialog.ShowModal()==wx.ID_OK:
 			self.file_path=dialog.GetPath()
 			self.text_inputexamples.SetLabel('Path to sorted behavior examples: '+self.file_path+'.')
+			self._update_sorted_count_display(self.file_path)
 		dialog.Destroy()
 
 
