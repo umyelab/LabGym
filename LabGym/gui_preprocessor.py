@@ -483,7 +483,7 @@ class PanelLv2_DrawMarkers(wx.Panel):
 		boxsizer.Add(0,10,0)
 
 		bottom_row = wx.BoxSizer(wx.HORIZONTAL)
-		link = hl.HyperLinkCtrl(panel, 0, 'Preprocessing Basics: Drawing Markers Tutorial Video', URL='https://youtu.be/8Y9RQUGuPtk?si=3jPVZCddf62o2EUB')
+		link = hl.HyperLinkCtrl(panel, 0, 'Video preprocessing: Draw Markers Tutorial Video', URL='https://youtu.be/8Y9RQUGuPtk?si=3jPVZCddf62o2EUB')
 		bottom_row.Add(link, 0, wx.LEFT, 10)
 		bottom_row.AddStretchSpacer()
 		boxsizer.Add(bottom_row, 0, wx.EXPAND)

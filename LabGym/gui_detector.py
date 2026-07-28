@@ -32,6 +32,7 @@ logger.debug('loading %s', __file__)
 
 # Related third party imports.
 import wx
+import wx.lib.agw.hyperlink as hl
 
 # Local application/library specific imports.
 from LabGym import config
@@ -304,6 +305,13 @@ class PanelLv2_TrainDetectors(wx.Panel):
 		boxsizer.Add(0,5,0)
 		boxsizer.Add(button_train,0,wx.RIGHT|wx.ALIGN_RIGHT,90)
 		boxsizer.Add(0,10,0)
+
+		bottom_row = wx.BoxSizer(wx.HORIZONTAL)
+		link = hl.HyperLinkCtrl(panel, 0, 'Training a Detector using LabGym', URL='https://youtu.be/mvwc-kK1dCc?si=OLywKfHwg3qOz_u4')
+		bottom_row.Add(link, 0, wx.LEFT, 10)
+		bottom_row.AddStretchSpacer()
+		boxsizer.Add(bottom_row, 0, wx.EXPAND)
+		boxsizer.Add(0, 10, 0)
 
 		panel.SetSizer(boxsizer)
 
