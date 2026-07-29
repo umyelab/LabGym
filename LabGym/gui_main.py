@@ -412,7 +412,7 @@ _BOX_POPUP = {
 	),
 	'generate_examples': (
 		'Classification',
-		'Generate and sort behavior examples',
+		'Generate and Sort Behavior Examples',
 		'LabGym tracks animals and automatically generates behavior examples. Each example contains both an animation and a "pattern image" that summarizes the animal\'s movement through time. Users then sort these examples into behavior categories such as grooming, rearing, or locomotion.',
 		'Section lll A, Section lll B',
 	),
