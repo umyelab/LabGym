@@ -112,7 +112,10 @@ try:
 	# tomllib is included in the Python Standard Library since version 3.11
 	import tomllib  # type: ignore
 except ModuleNotFoundError:
-	import tomli as tomllib  # A lil' TOML parser
+	try:
+		import tomli as tomllib  # A lil' TOML parser
+	except ModuleNotFoundError:
+		tomllib = None
 from typing import Dict, List
 
 # Related third party imports.
@@ -185,6 +188,8 @@ def _mydebug(myobj: str | Exception) -> logging.LogRecord:
 def get_configdict_from_configfile(configfile: Path) -> Dict:
 	"""Read the configfile and return the config dictionary."""
 	if configfile.name.endswith('.toml'):
+		if tomllib is None:
+			raise ModuleNotFoundError("TOML support requires Python >= 3.11 or the 'tomli' package. Please install it with: pip install tomli")
 		with open(configfile, 'rb') as f:
 			result = tomllib.load(f)
 	elif configfile.name.endswith('.yaml'):

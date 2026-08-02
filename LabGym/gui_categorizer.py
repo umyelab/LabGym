@@ -3043,8 +3043,8 @@ class TriageBuilderDialog(wx.Dialog):
 				from reportlab.lib.units import inch
 				import datetime
 				import os
-			except ImportError:
-				wx.MessageBox("ReportLab is required to generate PDFs. Please run 'pip install reportlab'.", "Missing Dependency", wx.OK | wx.ICON_WARNING)
+			except ImportError as e:
+				wx.MessageBox(f"ReportLab is required to generate PDFs ({e}). Please run 'pip install reportlab'.", "Missing Dependency", wx.OK | wx.ICON_WARNING)
 				return
 
 			doc = SimpleDocTemplate(filepath, pagesize=letter, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=18)
