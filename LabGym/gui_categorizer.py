@@ -1132,17 +1132,19 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 		button_inputexamples=wx.Button(panel,label='Select the folder that stores\nthe sorted behavior examples',size=(300,40))
 		button_inputexamples.Bind(wx.EVT_BUTTON,self.select_filepath)
 		wx.Button.SetToolTip(button_inputexamples,'This folder should contain all the sorted behavior examples. Each subfolder in this folder should contain behavior examples of a behavior type. The names of the subfolders will be read by LabGym as the behavior names.')
+		# Right-hand content: path label + compact count button (always present; Enable/Disable only)
+		inputexamples_right=wx.BoxSizer(wx.VERTICAL)
 		self.text_inputexamples=wx.StaticText(panel,label='None.',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
+		self.button_view_sorted_counts=wx.Button(panel,label='View Behavior Counts',size=(200,28))
+		self.button_view_sorted_counts.Bind(wx.EVT_BUTTON,self.show_sorted_count_popup)
+		self.button_view_sorted_counts.Disable()
+		wx.Button.SetToolTip(self.button_view_sorted_counts,'View example counts for each sorted behavior category.')
+		inputexamples_right.Add(self.text_inputexamples,0,wx.EXPAND)
+		inputexamples_right.Add(self.button_view_sorted_counts,0,wx.TOP,4)
 		module_inputexamples.Add(button_inputexamples,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
-		module_inputexamples.Add(self.text_inputexamples,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		module_inputexamples.Add(inputexamples_right,1,wx.EXPAND|wx.LEFT|wx.RIGHT,10)
 		boxsizer.Add(0,10,0)
 		boxsizer.Add(module_inputexamples,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
-		boxsizer.Add(0,5,0)
-
-		self.button_view_sorted_counts=wx.Button(panel,label='View Behavior Counts',size=(300,40))
-		self.button_view_sorted_counts.Bind(wx.EVT_BUTTON,self.show_sorted_count_popup)
-		self.button_view_sorted_counts.Hide()
-		boxsizer.Add(self.button_view_sorted_counts,0,wx.ALIGN_CENTER)
 		boxsizer.Add(0,5,0)
 
 		module_renameexample=wx.BoxSizer(wx.HORIZONTAL)
@@ -1196,16 +1198,18 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 		button_trainingfolder=wx.Button(panel,label='Select the folder that stores\nall the prepared training examples',size=(300,40))
 		button_trainingfolder.Bind(wx.EVT_BUTTON,self.select_datapath)
 		wx.Button.SetToolTip(button_trainingfolder,'The folder that stores all the prepared behavior examples. If these are previously augmented, this folder should contain a "train" and a "vadilation" subfolder. If body parts are included, the STD value can be found in the filenames of the generated behavior examples with "_stdXX_" where "XX" is the STD value.')
+		# Right-hand content: path label + compact count button (always present; Enable/Disable only)
+		trainingfolder_right=wx.BoxSizer(wx.VERTICAL)
 		self.text_trainingfolder=wx.StaticText(panel,label='None',style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
-		module_trainingfolder.Add(button_trainingfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
-		module_trainingfolder.Add(self.text_trainingfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
-		boxsizer.Add(module_trainingfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
-		boxsizer.Add(0,5,0)
-
-		self.button_view_counts=wx.Button(panel,label='View Behavior Counts',size=(300,40))
+		self.button_view_counts=wx.Button(panel,label='View Behavior Counts',size=(200,28))
 		self.button_view_counts.Bind(wx.EVT_BUTTON,self.show_count_popup)
-		self.button_view_counts.Hide()
-		boxsizer.Add(self.button_view_counts,0,wx.ALIGN_CENTER)
+		self.button_view_counts.Disable()
+		wx.Button.SetToolTip(self.button_view_counts,'View example counts for each prepared training category.')
+		trainingfolder_right.Add(self.text_trainingfolder,0,wx.EXPAND)
+		trainingfolder_right.Add(self.button_view_counts,0,wx.TOP,4)
+		module_trainingfolder.Add(button_trainingfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		module_trainingfolder.Add(trainingfolder_right,1,wx.EXPAND|wx.LEFT|wx.RIGHT,10)
+		boxsizer.Add(module_trainingfolder,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		boxsizer.Add(0,5,0)
 
 		module_augmentation=wx.BoxSizer(wx.HORIZONTAL)
@@ -1260,12 +1264,10 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 		counts=self._count_examples(folder_path)
 		if len(counts)<2:
 			self._counts={}
-			self.button_view_counts.Hide()
-			self.Layout()
+			self.button_view_counts.Disable()
 			return
 		self._counts=counts
-		self.button_view_counts.Show()
-		self.Layout()
+		self.button_view_counts.Enable()
 
 
 	def _iter_count_rows(self,counts):
@@ -1571,12 +1573,10 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 		counts=self._count_from_subfolders(folder_path)
 		if len(counts)<2:
 			self._sorted_counts={}
-			self.button_view_sorted_counts.Hide()
-			self.Layout()
+			self.button_view_sorted_counts.Disable()
 			return
 		self._sorted_counts=counts
-		self.button_view_sorted_counts.Show()
-		self.Layout()
+		self.button_view_sorted_counts.Enable()
 
 
 	def show_sorted_count_popup(self,event):
