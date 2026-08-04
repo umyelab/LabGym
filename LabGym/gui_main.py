@@ -36,6 +36,7 @@ import webbrowser
 
 # Local application/library specific imports.
 from LabGym import __version__
+from .gui_appearance import select_for_appearance
 from .gui_utils import add_or_select_notebook_page
 logger.debug('importing %s ...', '.gui_categorizer')
 from .gui_categorizer import PanelLv2_GenerateExamples,PanelLv2_TrainCategorizers,PanelLv2_SortBehaviors,PanelLv2_TestCategorizers
@@ -539,6 +540,9 @@ class BoxInfoPopup(wx.Frame):
 	def _make_html(self, section, title, description, guide, fill):
 		import html as _h
 		bg = '#{:02X}{:02X}{:02X}'.format(fill.Red(), fill.Green(), fill.Blue())
+		# Section-tinted cards stay light; in OS dark mode, HtmlWindow may
+		# inherit a light default text colour — pin dark ink for contrast only.
+		text = select_for_appearance('#000000', '#111111')
 		base = 'https://www.labgym.org/guides/practical-guide#page-'
 		refs = []
 		for ref in (r.strip() for r in guide.split(',')):
@@ -549,7 +553,7 @@ class BoxInfoPopup(wx.Frame):
 			)
 		guide_html = ', '.join(refs)
 		return (
-			'<html><body bgcolor="{bg}">'
+			'<html><body bgcolor="{bg}" text="{text}">'
 			'<center>'
 			'<font size="+1"><b>{section}</b><br>{title}</font>'
 			'<br><br>'
@@ -560,11 +564,59 @@ class BoxInfoPopup(wx.Frame):
 			'</body></html>'
 		).format(
 			bg=bg,
+			text=text,
 			section=_h.escape(section),
 			title=_h.escape(title),
 			desc=_h.escape(description, quote=False),
 			guide=guide_html,
 		)
+
+
+def _system_colour(index, fallback):
+	"""Return a wx.SystemSettings colour, or fallback if unavailable."""
+	try:
+		colour = wx.SystemSettings.GetColour(index)
+		if colour and colour.IsOk():
+			return colour
+	except Exception:
+		pass
+	return fallback
+
+
+def _workflow_map_surface_colours():
+	"""Native canvas / text colours for the Workflow Map (not connector greys).
+
+	Canvas and free-canvas text follow the system window colour pair. Connector
+	styles are resolved separately so greys can be tuned for hierarchy.
+	"""
+	window_bg = _system_colour(wx.SYS_COLOUR_WINDOW, wx.WHITE)
+	window_fg = _system_colour(wx.SYS_COLOUR_WINDOWTEXT, wx.BLACK)
+	# Light: retain a light canvas (prefer system window, else white).
+	# Dark: native/system window background (near-native dark surface).
+	canvas_bg = select_for_appearance(window_bg, window_bg)
+	# Titles and free-canvas labels follow system window text for contrast.
+	text_fg = select_for_appearance(window_fg, window_fg)
+	return canvas_bg, text_fg
+
+
+def _workflow_map_connector_styles():
+	"""Appearance-aware connector colours for the Workflow Map.
+
+	Between-phase greys are the most prominent neutrals; within-phase greys are
+	clearly visible but slightly less strong. Explicit greys (not grey-text /
+	button system roles) so connectors do not disappear against the canvas.
+	"""
+	# Between-phase: strongest neutrals — medium–dark on light; light on dark.
+	between_color = select_for_appearance(
+		wx.Colour(80, 80, 80),
+		wx.Colour(205, 205, 205),
+	)
+	# Within-phase: secondary neutrals — medium on light; slightly dimmer light grey on dark.
+	within_color = select_for_appearance(
+		wx.Colour(120, 120, 120),
+		wx.Colour(168, 168, 168),
+	)
+	return between_color, within_color
 
 
 class WorkflowMapPanel(wx.Panel):
@@ -582,20 +634,57 @@ class WorkflowMapPanel(wx.Panel):
 	OX = (CANVAS_W - VW * SCALE) / 2			# 0.0
 	OY = (CANVAS_H - VH * SCALE) / 2			# 115.0
 
+	# Connector geometry (logical units → client pixels via ps()).
+	# Between-phase: filled polygonal chevrons (most prominent neutrals).
+	BETWEEN_SHAFT_HALF = 9					# half-height of the thick shaft
+	BETWEEN_HEAD_HALF = 17					# arrowhead half-width
+	BETWEEN_NECK = 26						# distance from tip to neck
+	BETWEEN_OUTLINE_W = 2					# outline pen (logical; scaled with floor)
+	# Within-phase: stroke arrows (vertical / diagonal), secondary weight.
+	WITHIN_LINE_W = 4						# shaft thickness (logical; becomes ≥2 px)
+	WITHIN_HEAD_HALF = 6					# arrowhead half-width
+	WITHIN_HEAD_LEN = 11					# arrowhead length along shaft
+
 	def __init__(self, parent):
 		super().__init__(parent)
-		self.SetBackgroundColour(wx.WHITE)
 		self._clickable_boxes = []				# list of (bx, by, bw, bh, fill, ink, popup_data) in client pixels
+		self._apply_surface_colours()
 		self.Bind(wx.EVT_PAINT, self.on_paint)
 		self.Bind(wx.EVT_LEFT_DOWN, self._on_box_click)
+		# Refresh this map only when the OS appearance/system colours change.
+		if hasattr(wx, 'EVT_SYS_COLOUR_CHANGED'):
+			self.Bind(wx.EVT_SYS_COLOUR_CHANGED, self._on_sys_colour_changed)
+		# Some platforms update appearance on reactivation rather than colour-change.
+		frame = wx.GetTopLevelParent(self)
+		if frame is not None:
+			frame.Bind(wx.EVT_ACTIVATE, self._on_parent_activate)
+
+	def _apply_surface_colours(self):
+		"""Set the panel background from the current native appearance."""
+		canvas_bg, _ = _workflow_map_surface_colours()
+		self.SetBackgroundColour(canvas_bg)
+
+	def _on_sys_colour_changed(self, event):
+		self._apply_surface_colours()
+		self.Refresh()
+		event.Skip()
+
+	def _on_parent_activate(self, event):
+		if event.GetActive():
+			self._apply_surface_colours()
+			self.Refresh()
+		event.Skip()
 
 	def on_paint(self, event):
+		canvas_bg, text_fg = _workflow_map_surface_colours()
+		between_color, within_color = _workflow_map_connector_styles()
+		self.SetBackgroundColour(canvas_bg)
 		dc = wx.PaintDC(self)
-		dc.SetBackground(wx.Brush(wx.WHITE))
+		dc.SetBackground(wx.Brush(canvas_bg))
 		dc.Clear()
-		self._draw(dc)
+		self._draw(dc, text_fg, between_color, within_color)
 
-	def _draw(self, dc):
+	def _draw(self, dc, text_fg, between_color, within_color):
 		import math								# needed for diagonal arrow angle calculations
 		self._clickable_boxes = []				# reset so hit-test rects match this paint
 		W, H = self.CANVAS_W, self.CANVAS_H
@@ -605,13 +694,22 @@ class WorkflowMapPanel(wx.Panel):
 		def py(v): return int(oy + v * scale)	# logical y → client pixel
 		def ps(v): return max(1, int(v * scale))# logical size/thickness → pixels (minimum 1)
 
-		# Section fill and ink (border + arrow) colors
+		# Centralized connector metrics (client pixels). Floors keep hierarchy at scale 0.5.
+		between_outline_w = max(1, ps(self.BETWEEN_OUTLINE_W))
+		between_sh = max(5, ps(self.BETWEEN_SHAFT_HALF))
+		between_hw = max(10, ps(self.BETWEEN_HEAD_HALF))
+		between_neck = max(14, ps(self.BETWEEN_NECK))
+		within_line_w = max(2, ps(self.WITHIN_LINE_W))
+		within_ah = max(3, ps(self.WITHIN_HEAD_HALF))
+		within_al = max(5, ps(self.WITHIN_HEAD_LEN))
+
+		# Section fill and ink (border only) colors — unchanged identity colours
 		s1_fill = wx.Colour(255, 210, 210)		# super light red    — section 1
-		s1_ink  = wx.Colour(160, 55, 55)		# darker red         — section 1 borders and arrows
+		s1_ink  = wx.Colour(160, 55, 55)		# darker red         — section 1 borders
 		s2_fill = wx.Colour(210, 228, 255)		# super light blue   — section 2
-		s2_ink  = wx.Colour(55, 95, 165)		# darker blue        — section 2 borders and arrows
+		s2_ink  = wx.Colour(55, 95, 165)		# darker blue        — section 2 borders
 		s3_fill = wx.Colour(255, 228, 195)		# super light orange — section 3
-		s3_ink  = wx.Colour(175, 100, 20)		# darker orange      — section 3 borders and arrows
+		s3_ink  = wx.Colour(175, 100, 20)		# darker orange      — section 3 borders
 		s4_fill = wx.Colour(235, 215, 255)		# light lavender     — section 4
 		s4_ink  = wx.Colour(120, 60, 180)		# deeper purple      — section 4 borders
 
@@ -630,6 +728,7 @@ class WorkflowMapPanel(wx.Panel):
 
 		def draw_box(cx, cy, lines, fill, ink, key=None):
 			dc.SetFont(font)
+			# Light pastel fills: keep black labels (already correct contrast).
 			dc.SetTextForeground(wx.BLACK)
 			line_widths = [dc.GetTextExtent(l)[0] for l in lines]
 			box_w = max(line_widths) + 2 * MX
@@ -645,28 +744,28 @@ class WorkflowMapPanel(wx.Panel):
 			if key is not None:
 				self._clickable_boxes.append((bx, by, box_w, box_h, fill, ink, _BOX_POPUP[key]))
 
-		def v_arr(x, y1, y2, ink):				# vertical downward arrow with filled arrowhead
-			dc.SetPen(wx.Pen(ink, ps(2)))
-			dc.SetBrush(wx.Brush(ink))
+		def v_arr(x, y1, y2):
+			"""Vertical within-phase connector (downward) using secondary neutral style."""
+			dc.SetPen(wx.Pen(within_color, within_line_w))
+			dc.SetBrush(wx.Brush(within_color))
 			dc.DrawLine(px(x), py(y1), px(x), py(y2))
-			ah, al = ps(5), ps(9)
 			dc.DrawPolygon([(px(x),    py(y2)),
-			                (px(x)-ah, py(y2)-al),
-			                (px(x)+ah, py(y2)-al)])
+			                (px(x)-within_ah, py(y2)-within_al),
+			                (px(x)+within_ah, py(y2)-within_al)])
 
-		def diag_arr(x1, y1, x2, y2, ink, lines=(), label_dx=0, label_dy=0):
-			dc.SetPen(wx.Pen(ink, ps(2)))
-			dc.SetBrush(wx.Brush(ink))
+		def diag_arr(x1, y1, x2, y2, lines=(), label_dx=0, label_dy=0):
+			"""Diagonal within-phase connector using secondary neutral style."""
+			dc.SetPen(wx.Pen(within_color, within_line_w))
+			dc.SetBrush(wx.Brush(within_color))
 			dc.DrawLine(px(x1), py(y1), px(x2), py(y2))
 			dx_v, dy_v = x2 - x1, y2 - y1
 			length = math.hypot(dx_v, dy_v)
 			ux, uy = dx_v / length, dy_v / length
-			ah, al = ps(5), ps(9)
 			tip_x, tip_y = px(x2), py(y2)
-			lft_x = int(tip_x - al * ux + ah * (-uy))
-			lft_y = int(tip_y - al * uy + ah * ux)
-			rgt_x = int(tip_x - al * ux - ah * (-uy))
-			rgt_y = int(tip_y - al * uy - ah * ux)
+			lft_x = int(tip_x - within_al * ux + within_ah * (-uy))
+			lft_y = int(tip_y - within_al * uy + within_ah * ux)
+			rgt_x = int(tip_x - within_al * ux - within_ah * (-uy))
+			rgt_y = int(tip_y - within_al * uy - within_ah * ux)
 			dc.DrawPolygon([(tip_x, tip_y), (lft_x, lft_y), (rgt_x, rgt_y)])
 			if lines:
 				perp_x, perp_y = uy, -ux			# 90 degrees left of arrow direction in screen coords
@@ -676,39 +775,38 @@ class WorkflowMapPanel(wx.Panel):
 				cx_label = px((x1 + x2) / 2) + int(perp_x * offset) + label_dx
 				cy_label = py((y1 + y2) / 2) + int(perp_y * offset) + label_dy
 				dc.SetFont(font)
-				dc.SetTextForeground(wx.BLACK)
+				dc.SetTextForeground(text_fg)
 				lh = dc.GetCharHeight()
 				top = cy_label - (lh * len(lines)) // 2
 				for i, line in enumerate(lines):
 					lw, _ = dc.GetTextExtent(line)
 					dc.DrawText(line, cx_label - lw // 2, top + i * lh)
 
-		def big_arr(x1, x2, cy):				# large grey section-transition arrow pointing right
-			sh   = ps(8)						# shaft half-height (thinner than before)
-			hw   = ps(16)						# arrowhead half-width
-			neck = px(x2) - ps(26)				# x-pixel where the arrowhead begins
-			dc.SetPen(wx.Pen(wx.Colour(130, 130, 130), ps(1)))
-			dc.SetBrush(wx.Brush(wx.Colour(175, 175, 175)))
+		def big_arr(x1, x2, cy):
+			"""Large between-phase connector (right-pointing) using primary neutral style."""
+			neck = px(x2) - between_neck
+			dc.SetPen(wx.Pen(between_color, between_outline_w))
+			dc.SetBrush(wx.Brush(between_color))
 			dc.DrawPolygon([
-				(px(x1), py(cy) - sh),
-				(neck,   py(cy) - sh),
-				(neck,   py(cy) - hw),
+				(px(x1), py(cy) - between_sh),
+				(neck,   py(cy) - between_sh),
+				(neck,   py(cy) - between_hw),
 				(px(x2), py(cy)),
-				(neck,   py(cy) + hw),
-				(neck,   py(cy) + sh),
-				(px(x1), py(cy) + sh),
+				(neck,   py(cy) + between_hw),
+				(neck,   py(cy) + between_sh),
+				(px(x1), py(cy) + between_sh),
 			])
 
 
 		# MAIN TITLE
 		dc.SetFont(bold_font)
-		dc.SetTextForeground(wx.BLACK)
+		dc.SetTextForeground(text_fg)
 		tw, _ = dc.GetTextExtent('LabGym Workflow Map')
 		dc.DrawText('LabGym Workflow Map', (W - tw) // 2, py(65) // 3)
 
 		# SECTION HEADINGS
 		dc.SetFont(head_font)
-		dc.SetTextForeground(wx.BLACK)
+		dc.SetTextForeground(text_fg)
 		for label, cx in [('1. Video Prep', 155), ('2. Tracking', 755), ('3. Classification', 1355)]:
 			tw, _ = dc.GetTextExtent(label)
 			dc.DrawText(label, px(cx) - tw // 2, py(65))
@@ -719,23 +817,23 @@ class WorkflowMapPanel(wx.Panel):
 
 
 		# ── Section 1: Video Prep ──────────────────────────────────────────────
-		v_arr(155, 154 + hbh(2), 259 - hbh(2), s1_ink)		# Collect Footage -> Preprocessing
+		v_arr(155, 154 + hbh(2), 259 - hbh(2))				# Collect Footage -> Preprocessing
 		big_arr(380, 555, 65)								# section 1 -> section 2 transition (centred in gap, at subtitle height)
 
 		# ── Section 2: Tracking ───────────────────────────────────────────────
-		diag_arr(715, 148 + hbh(2), 540, 280 - hbh(2), s2_ink, ['Static', 'Background'],  label_dx=-ps(30), label_dy=ps(38))	# Tracking -> Background Subtraction (steeper angle)
-		diag_arr(795, 148 + hbh(2), 950, 280 - hbh(1), s2_ink, ['Dynamic', 'Background'], label_dx= ps(30), label_dy=ps(25))	# Tracking -> Detector (steeper angle)
-		v_arr(950, 280 + hbh(1), 380 - hbh(2), s2_ink)			# Detector -> Generate Images
-		v_arr(933, 380 + hbh(2), 480 - hbh(2), s2_ink)			# Generate Images -> Roboflow OR EZannot (left fork)
-		v_arr(967, 380 + hbh(2), 480 - hbh(2), s2_ink)			# Generate Images -> Roboflow OR EZannot (right fork)
-		v_arr(950, 480 + hbh(2), 580 - hbh(2), s2_ink)			# Roboflow OR EZannot -> Train Detector
-		big_arr(967, 1142, 65)									# section 2 -> section 3 transition (centred in gap, at subtitle height)
+		diag_arr(715, 148 + hbh(2), 540, 280 - hbh(2), ['Static', 'Background'],  label_dx=-ps(30), label_dy=ps(38))	# Tracking -> Background Subtraction (steeper angle)
+		diag_arr(795, 148 + hbh(2), 950, 280 - hbh(1), ['Dynamic', 'Background'], label_dx= ps(30), label_dy=ps(25))	# Tracking -> Detector (steeper angle)
+		v_arr(950, 280 + hbh(1), 380 - hbh(2))				# Detector -> Generate Images
+		v_arr(933, 380 + hbh(2), 480 - hbh(2))				# Generate Images -> Roboflow OR EZannot (left fork)
+		v_arr(967, 380 + hbh(2), 480 - hbh(2))				# Generate Images -> Roboflow OR EZannot (right fork)
+		v_arr(950, 480 + hbh(2), 580 - hbh(2))				# Roboflow OR EZannot -> Train Detector
+		big_arr(967, 1142, 65)								# section 2 -> section 3 transition (centred in gap, at subtitle height)
 
 		# ── Section 3: Classification ─────────────────────────────────────────
-		v_arr(1355, 164 + hbh(3), 278 - hbh(2), s3_ink)		# Generate and sort -> Train Categorizer
-		v_arr(1355, 278 + hbh(2), 378 - hbh(2), s3_ink)		# Train Categorizer -> Test Categorizer
-		v_arr(1355, 378 + hbh(2), 478 - hbh(2), s3_ink)		# Test Categorizer -> Analyze Behaviors
-		big_arr(1567, 1742, 65)									# section 3 -> section 4 transition (centred in gap, at subtitle height)
+		v_arr(1355, 164 + hbh(3), 278 - hbh(2))			# Generate and sort -> Train Categorizer
+		v_arr(1355, 278 + hbh(2), 378 - hbh(2))			# Train Categorizer -> Test Categorizer
+		v_arr(1355, 378 + hbh(2), 478 - hbh(2))			# Test Categorizer -> Analyze Behaviors
+		big_arr(1567, 1742, 65)								# section 3 -> section 4 transition (centred in gap, at subtitle height)
 
 
 		# BOXES
