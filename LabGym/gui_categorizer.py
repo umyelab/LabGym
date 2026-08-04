@@ -35,7 +35,6 @@ import cv2
 import numpy as np
 import wx
 import wx.richtext
-import wx.lib.agw.hyperlink as hl
 import wx.lib.buttons as wxbuttons
 
 # Local application/library specific imports.
@@ -48,7 +47,7 @@ logger.debug('importing %s done', '.analyzebehavior_dt')
 from .categorizer import Categorizers
 from LabGym import config
 from .tools import sort_examples_from_csv
-from .gui_utils import add_or_select_notebook_page, add_info_button, INFO_COLOUR_S3
+from .gui_utils import add_or_select_notebook_page, add_info_button, create_hyperlink, INFO_COLOUR_S3
 
 
 class PanelLv2_GenerateExamples(wx.Panel):
@@ -720,11 +719,14 @@ class PanelLv2_SortBehaviors(wx.Panel):
 		boxsizer.Add(button_sortexamplescsv,0,wx.ALIGN_CENTER,10)
 		boxsizer.Add(0,30,0)
 
-		bottom_row = wx.BoxSizer(wx.HORIZONTAL)
-		link = hl.HyperLinkCtrl(panel, 0, 'Sorting Behavior Examples using LabGym', URL='https://youtu.be/WDCJ2HdrYJo?si=O6orNTNZiwR1girH')
-		bottom_row.Add(link, 0, wx.LEFT, 10)
-		bottom_row.AddStretchSpacer()
-		boxsizer.Add(bottom_row, 0, wx.EXPAND)
+		# Align with the centered 300px button column (same wx.ALIGN_CENTER as buttons above).
+		boxsizer.Add(
+			create_hyperlink(
+				panel,
+				'Sorting Behavior Examples using LabGym',
+				'https://youtu.be/WDCJ2HdrYJo?si=O6orNTNZiwR1girH',
+			),
+			0, wx.ALIGN_CENTER, 10)
 		boxsizer.Add(0, 10, 0)
 
 		panel.SetSizer(boxsizer)

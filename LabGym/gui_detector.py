@@ -32,13 +32,12 @@ logger.debug('loading %s', __file__)
 
 # Related third party imports.
 import wx
-import wx.lib.agw.hyperlink as hl
 
 # Local application/library specific imports.
 from LabGym import config
 from .detector import Detector
 from .tools import extract_frames
-from .gui_utils import add_info_button, INFO_COLOUR_S2
+from .gui_utils import add_info_button, create_hyperlink, INFO_COLOUR_S2
 
 
 class PanelLv2_GenerateImages(wx.Panel):
@@ -306,11 +305,16 @@ class PanelLv2_TrainDetectors(wx.Panel):
 		boxsizer.Add(button_train,0,wx.RIGHT|wx.ALIGN_RIGHT,90)
 		boxsizer.Add(0,10,0)
 
-		bottom_row = wx.BoxSizer(wx.HORIZONTAL)
-		link = hl.HyperLinkCtrl(panel, 0, 'Training a Detector using LabGym', URL='https://youtu.be/mvwc-kK1dCc?si=OLywKfHwg3qOz_u4')
-		bottom_row.Add(link, 0, wx.LEFT, 10)
-		bottom_row.AddStretchSpacer()
-		boxsizer.Add(bottom_row, 0, wx.EXPAND)
+		# Match nested 10px module + button margins so the link lines up with the button column.
+		module_tutorial=wx.BoxSizer(wx.HORIZONTAL)
+		module_tutorial.Add(
+			create_hyperlink(
+				panel,
+				'Training a Detector using LabGym',
+				'https://youtu.be/mvwc-kK1dCc?si=OLywKfHwg3qOz_u4',
+			),
+			0, wx.LEFT|wx.RIGHT, 10)
+		boxsizer.Add(module_tutorial,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
 		boxsizer.Add(0, 10, 0)
 
 		panel.SetSizer(boxsizer)

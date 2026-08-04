@@ -31,13 +31,16 @@ logger.debug('loading %s', __file__)
 import wx
 import wx.aui
 import wx.html
-import wx.lib.agw.hyperlink as hl
 import webbrowser
 
 # Local application/library specific imports.
 from LabGym import __version__
 from .gui_appearance import select_for_appearance
-from .gui_utils import add_or_select_notebook_page
+from .gui_utils import (
+	add_or_select_notebook_page,
+	create_hyperlink,
+	hyperlink_html_style,
+)
 logger.debug('importing %s ...', '.gui_categorizer')
 from .gui_categorizer import PanelLv2_GenerateExamples,PanelLv2_TrainCategorizers,PanelLv2_SortBehaviors,PanelLv2_TestCategorizers
 logger.debug('importing %s done', '.gui_categorizer')
@@ -72,7 +75,7 @@ class InitialPanel(wx.Panel):
 		boxsizer.Add(self.text_developers,0,wx.LEFT|wx.RIGHT|wx.EXPAND,5)
 		boxsizer.Add(0,60,0)
 
-		homepage=hl.HyperLinkCtrl(panel,0,'Home Page',URL='https://www.labgym.org')
+		homepage=create_hyperlink(panel,'Home Page','https://www.labgym.org')
 		boxsizer.Add(homepage,0,wx.ALIGN_CENTER,50)
 		boxsizer.Add(0,50,0)
 
@@ -190,7 +193,7 @@ class PanelLv1_TrainingModule(wx.Panel):
 		boxsizer.Add(button_generateimages,0,wx.ALIGN_CENTER,10)
 		boxsizer.Add(0,5,0)
 
-		link_annotate=wx.lib.agw.hyperlink.HyperLinkCtrl(panel,0,'\nAnnotate images with EZannot\n',URL='https://github.com/yujiahu415/EZannot')
+		link_annotate=create_hyperlink(panel,'\nAnnotate images with EZannot\n','https://github.com/yujiahu415/EZannot')
 		boxsizer.Add(link_annotate,0,wx.ALIGN_CENTER,10)
 		boxsizer.Add(0,5,0)
 
@@ -540,9 +543,11 @@ class BoxInfoPopup(wx.Frame):
 	def _make_html(self, section, title, description, guide, fill):
 		import html as _h
 		bg = '#{:02X}{:02X}{:02X}'.format(fill.Red(), fill.Green(), fill.Blue())
-		# Section-tinted cards stay light; in OS dark mode, HtmlWindow may
-		# inherit a light default text colour — pin dark ink for contrast only.
+		# Section-tinted cards stay light; pin dark body text for contrast under
+		# OS dark mode (HtmlWindow may otherwise inherit a light default).
 		text = select_for_appearance('#000000', '#111111')
+		# Shared cyan link family: normal == visited; hover slightly brighter.
+		link_c, vlink_c, hover_c = hyperlink_html_style()
 		base = 'https://www.labgym.org/guides/practical-guide#page-'
 		refs = []
 		for ref in (r.strip() for r in guide.split(',')):
@@ -552,8 +557,16 @@ class BoxInfoPopup(wx.Frame):
 				else _h.escape(ref)
 			)
 		guide_html = ', '.join(refs)
+		# body link/vlink + CSS cover both classic HtmlWindow and engines that
+		# honor style rules; visited never becomes purple.
 		return (
-			'<html><body bgcolor="{bg}" text="{text}">'
+			'<html><head><style type="text/css">'
+			'a:link {{ color: {link}; }}'
+			'a:visited {{ color: {vlink}; }}'
+			'a:hover {{ color: {hover}; }}'
+			'a:active {{ color: {hover}; }}'
+			'</style></head>'
+			'<body bgcolor="{bg}" text="{text}" link="{link}" vlink="{vlink}" alink="{hover}">'
 			'<center>'
 			'<font size="+1"><b>{section}</b><br>{title}</font>'
 			'<br><br>'
@@ -565,6 +578,9 @@ class BoxInfoPopup(wx.Frame):
 		).format(
 			bg=bg,
 			text=text,
+			link=link_c,
+			vlink=vlink_c,
+			hover=hover_c,
 			section=_h.escape(section),
 			title=_h.escape(title),
 			desc=_h.escape(description, quote=False),
