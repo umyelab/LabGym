@@ -77,6 +77,9 @@ class InitialPanel(wx.Panel):
 
 		homepage=create_hyperlink(panel,'Home Page','https://www.labgym.org')
 		boxsizer.Add(homepage,0,wx.ALIGN_CENTER,50)
+		boxsizer.Add(0,14,0)
+		resources=create_hyperlink(panel,'Resources','https://www.labgym.org/resources')
+		boxsizer.Add(resources,0,wx.ALIGN_CENTER,50)
 		boxsizer.Add(0,50,0)
 
 		module_modules=wx.BoxSizer(wx.HORIZONTAL)
