@@ -19,7 +19,6 @@ Email: bingye@umich.edu
 
 # Standard library imports.
 import logging
-import sys
 from .gui_app_icon import set_frame_icon, setup_application_icons
 
 # Log the load of this module (by the module loader, on first import).
@@ -792,10 +791,8 @@ class MainFrame(wx.Frame):
 		self.SetMinSize(self.FIXED_FRAME_SIZE)
 		self.SetMaxSize(self.FIXED_FRAME_SIZE)
 
-		# Set the app icon within GUI
-		set_frame_icon(self, context='normal')  # Set normal icon first
-		if sys.platform.startswith("win"):
-			set_frame_icon(self, context='small', size=16)  # Override with small icon for title bar
+		# Set the app icon within GUI (unified simplified artwork on all platforms)
+		set_frame_icon(self)
 
 		self.init_menubar()
 
