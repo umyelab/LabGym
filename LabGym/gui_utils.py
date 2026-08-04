@@ -43,7 +43,7 @@ def add_info_button(panel, boxsizer, colour):
 	btn = wxbuttons.GenButton(panel, label='i', size=(28, 28))
 	btn.SetBackgroundColour(colour)
 	btn.SetForegroundColour(wx.Colour(60, 60, 60))
-	btn.SetFont(wx.Font(13, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_ITALIC, wx.FONTWEIGHT_BOLD))
+	btn.SetFont(wx.Font(13, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD))
 	btn.SetToolTip('View Workflow Map')
 	bar.Add(btn, 0, wx.RIGHT | wx.TOP, 6)
 	boxsizer.Add(bar, 0, wx.EXPAND)

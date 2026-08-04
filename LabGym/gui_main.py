@@ -762,13 +762,6 @@ class WorkflowMapPanel(wx.ScrolledWindow):			# scrollable panel — diagram is f
 		draw_box(1955, 295, ['Generate', 'Behavior Plot'], s4_fill, s4_ink, 'generate_plot')
 		draw_box(1955, 395, ['Calculate', 'Distances'],    s4_fill, s4_ink, 'calc_distances')
 
-		# AND/OR labels between section 4 boxes (drawn last so they sit on top)
-		dc.SetFont(font)
-		dc.SetTextForeground(wx.BLACK)
-		for cy_ao in [245, 345]:
-			tw, th = dc.GetTextExtent('AND/OR')
-			dc.DrawText('AND/OR', px(1955) - tw // 2, py(cy_ao) - th // 2)
-
 	def _on_box_click(self, evt):
 		pos = evt.GetPosition()
 		lx, ly = self.CalcUnscrolledPosition(pos.x, pos.y)
