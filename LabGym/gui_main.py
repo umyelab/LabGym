@@ -568,41 +568,43 @@ class BoxInfoPopup(wx.Frame):
 		)
 
 
-class WorkflowMapPanel(wx.ScrolledWindow):			# scrollable panel — diagram is fixed-size, scrollbars appear if window is smaller
-	"""Displays the LabGym workflow map at a fixed pixel canvas sized to the default LabGym window."""
+class WorkflowMapPanel(wx.Panel):
+	"""Displays the LabGym workflow map at a fixed scale for the fixed LabGym window size."""
 
-	CANVAS_W = 1100								# matches LabGym's default window width (set in MainFrame.__init__)
-	CANVAS_H = 560								# default window height (600) minus ~40px for the notebook tab bar
+	# Logical (virtual) coordinate space — source of truth for layout.
+	VW = 2200
+	VH = 660
+	# Fixed drawing area: Workflow Map page client size inside FIXED_FRAME_SIZE (1100×650).
+	CANVAS_W = 1100
+	CANVAS_H = 560
+	# One-time aspect-preserving fit of the logical map into the fixed canvas.
+	SCALE = min(CANVAS_W / VW, CANVAS_H / VH)  # 0.5
+	# Centre the scaled logical rect on the fixed canvas.
+	OX = (CANVAS_W - VW * SCALE) / 2			# 0.0
+	OY = (CANVAS_H - VH * SCALE) / 2			# 115.0
 
 	def __init__(self, parent):
-		super().__init__(parent)					# run wx.ScrolledWindow's own setup
-		self.SetBackgroundColour(wx.WHITE)			# make the panel background white
-		self.SetScrollRate(10, 10)					# scroll 10 pixels per step when dragging the scrollbar
-		self.SetVirtualSize(self.CANVAS_W, self.CANVAS_H)	# tell wx the total scrollable area
-		self._clickable_boxes = []				# list of (bx, by, bw, bh, fill, ink, popup_data) populated each paint
-		self.Bind(wx.EVT_PAINT, self.on_paint)		# call on_paint whenever wx needs to redraw this panel
-		self.Bind(wx.EVT_LEFT_DOWN, self._on_box_click)	# show info popup when user clicks a box
+		super().__init__(parent)
+		self.SetBackgroundColour(wx.WHITE)
+		self._clickable_boxes = []				# list of (bx, by, bw, bh, fill, ink, popup_data) in client pixels
+		self.Bind(wx.EVT_PAINT, self.on_paint)
+		self.Bind(wx.EVT_LEFT_DOWN, self._on_box_click)
 
 	def on_paint(self, event):
-		dc = wx.PaintDC(self)						# create a drawing context which is required in an EVT_PAINT handler
-		dc.SetBackground(wx.Brush(wx.WHITE))		# set white background for the clear
-		dc.Clear()									# erase the physical visible area before adjusting for scroll
-		self.PrepareDC(dc)							# shift the DC origin to account for the current scroll position
-		self._draw(dc)								# hand off to the main drawing method
+		dc = wx.PaintDC(self)
+		dc.SetBackground(wx.Brush(wx.WHITE))
+		dc.Clear()
+		self._draw(dc)
 
 	def _draw(self, dc):
 		import math								# needed for diagonal arrow angle calculations
-		self._clickable_boxes = []				# reset on every repaint so rects stay in sync with current scale/offset
-		W, H = self.CANVAS_W, self.CANVAS_H		# fixed canvas dimensions — diagram never rescales
+		self._clickable_boxes = []				# reset so hit-test rects match this paint
+		W, H = self.CANVAS_W, self.CANVAS_H
+		scale, ox, oy = self.SCALE, self.OX, self.OY
 
-		VW, VH = 2200, 660						# virtual coordinate space — sized to match actual content bounds
-		scale = min(W / VW, H / VH) * 0.95		# compute scale so the diagram fills the canvas with a 5% margin
-		ox = W / 2 - 1060 * scale				# offset so the 4-section content midpoint (x≈65–2055, cx≈1060) lands at the canvas centre
-		oy = (H - VH * scale) / 2				# vertical offset to centre the diagram on the canvas
-
-		def px(v): return int(ox + v * scale)	# convert a virtual x-coordinate to a real screen pixel
-		def py(v): return int(oy + v * scale)	# convert a virtual y-coordinate to a real screen pixel
-		def ps(v): return max(1, int(v * scale))# convert a virtual size/thickness to pixels (minimum 1)
+		def px(v): return int(ox + v * scale)	# logical x → client pixel
+		def py(v): return int(oy + v * scale)	# logical y → client pixel
+		def ps(v): return max(1, int(v * scale))# logical size/thickness → pixels (minimum 1)
 
 		# Section fill and ink (border + arrow) colors
 		s1_fill = wx.Colour(255, 210, 210)		# super light red    — section 1
@@ -615,7 +617,7 @@ class WorkflowMapPanel(wx.ScrolledWindow):			# scrollable panel — diagram is f
 		s4_ink  = wx.Colour(120, 60, 180)		# deeper purple      — section 4 borders
 
 		font      = wx.Font(max(12, ps(16)), wx.FONTFAMILY_DEFAULT,
-		                    wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)	# body text font, scales with window size
+		                    wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)	# body text font at fixed map scale
 		bold_font = wx.Font(max(18, ps(26)), wx.FONTFAMILY_DEFAULT,
 		                    wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)	# large bold font for the main title
 		head_font = wx.Font(max(15, ps(22)), wx.FONTFAMILY_DEFAULT,
@@ -763,10 +765,10 @@ class WorkflowMapPanel(wx.ScrolledWindow):			# scrollable panel — diagram is f
 		draw_box(1955, 395, ['Calculate', 'Distances'],    s4_fill, s4_ink, 'calc_distances')
 
 	def _on_box_click(self, evt):
-		pos = evt.GetPosition()
-		lx, ly = self.CalcUnscrolledPosition(pos.x, pos.y)
+		# Click coords are already in client space; box rects are recorded in the same space during paint.
+		x, y = evt.GetPosition()
 		for bx, by, bw, bh, fill, ink, data in self._clickable_boxes:
-			if bx <= lx < bx + bw and by <= ly < by + bh:
+			if bx <= x < bx + bw and by <= y < by + bh:
 				section, title, desc, guide = data
 				popup = BoxInfoPopup(self, section, title, desc, guide, fill, ink)
 				popup.Show()
@@ -777,10 +779,18 @@ class WorkflowMapPanel(wx.ScrolledWindow):			# scrollable panel — diagram is f
 class MainFrame(wx.Frame):
 	"""Main frame and its notebook."""
 
-	def __init__(self):
-		super().__init__(None, title=f'LabGym v{__version__}')
+	# Fixed outer window size — large enough for the full Workflow Map (canvas 1100×560) without scroll.
+	# Height includes map client + notebook tabs + menubar/chrome (~90px). Not resizable.
+	FIXED_FRAME_SIZE = (1100, 650)
 
-		self.SetSize((1000, 600))
+	def __init__(self):
+		# Disable resize border and maximize so the frame stays at FIXED_FRAME_SIZE.
+		style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX)
+		super().__init__(None, title=f'LabGym v{__version__}', style=style)
+
+		self.SetSize(self.FIXED_FRAME_SIZE)
+		self.SetMinSize(self.FIXED_FRAME_SIZE)
+		self.SetMaxSize(self.FIXED_FRAME_SIZE)
 
 		# Set the app icon within GUI
 		set_frame_icon(self, context='normal')  # Set normal icon first
