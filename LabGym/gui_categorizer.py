@@ -36,6 +36,7 @@ import numpy as np
 import wx
 import wx.richtext
 import wx.lib.agw.hyperlink as hl
+import wx.lib.buttons as wxbuttons
 
 # Local application/library specific imports.
 logger.debug('importing %s ...', '.analyzebehavior')
@@ -1267,60 +1268,8 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 		self.Layout()
 
 
-	def _render_legend(self,rtc,threshold):
-		rtc.Clear()
-		leg=wx.richtext.RichTextAttr()
-		leg.SetFontSize(10)
-		leg.SetFontStyle(wx.FONTSTYLE_ITALIC)
-		leg.SetFontWeight(wx.FONTWEIGHT_BOLD)
-		leg.SetTextColour(wx.Colour(0,0,0))
-		leg_red=wx.richtext.RichTextAttr()
-		leg_red.SetFontSize(10)
-		leg_red.SetFontStyle(wx.FONTSTYLE_ITALIC)
-		leg_red.SetFontWeight(wx.FONTWEIGHT_BOLD)
-		leg_red.SetTextColour(wx.Colour(180,0,0))
-		leg_hl=wx.richtext.RichTextAttr()
-		leg_hl.SetFontSize(10)
-		leg_hl.SetFontStyle(wx.FONTSTYLE_ITALIC)
-		leg_hl.SetFontWeight(wx.FONTWEIGHT_BOLD)
-		leg_hl.SetTextColour(wx.Colour(0,0,0))
-		leg_hl.SetBackgroundColour(wx.YELLOW)
-		rtc.BeginStyle(leg_red)
-		rtc.WriteText('Red text')
-		rtc.EndStyle()
-		rtc.BeginStyle(leg)
-		rtc.WriteText(f': Example count is below {threshold} (minimum threshold)\n')
-		rtc.EndStyle()
-		rtc.BeginStyle(leg_hl)
-		rtc.WriteText('Yellow highlight')
-		rtc.EndStyle()
-		rtc.BeginStyle(leg)
-		rtc.WriteText(': Example count is outside 1 standard deviation from the mean\n')
-		rtc.EndStyle()
-
-	def _make_header_panel(self,parent,title,threshold,bg):
-		panel=wx.Panel(parent)
-		panel.SetBackgroundColour(bg)
-		vs=wx.BoxSizer(wx.VERTICAL)
-		vs.Add((0,12))
-		title_lbl=wx.StaticText(panel,label=title,style=wx.ALIGN_CENTRE_HORIZONTAL)
-		title_lbl.SetFont(wx.Font(18,wx.FONTFAMILY_DEFAULT,wx.FONTSTYLE_NORMAL,wx.FONTWEIGHT_BOLD))
-		title_lbl.SetForegroundColour(wx.Colour(0,0,0))
-		vs.Add(title_lbl,0,wx.EXPAND|wx.BOTTOM,6)
-		rtc_leg=wx.richtext.RichTextCtrl(panel,size=(-1,75),style=wx.TE_READONLY|wx.NO_BORDER|wx.TE_NO_VSCROLL)
-		rtc_leg.SetBackgroundColour(bg)
-		rtc_leg.SetEditable(False)
-		self._render_legend(rtc_leg,threshold)
-		vs.Add(rtc_leg,0,wx.EXPAND)
-		panel.SetSizer(vs)
-		return panel,rtc_leg
-
-
-	def _render_body(self,rtc,counts,threshold):
-		values=list(counts.values())
-		mean=sum(values)/len(values)
-		std=(sum((v-mean)**2 for v in values)/len(values))**0.5
-		rtc.Clear()
+	def _iter_count_rows(self,counts):
+		'''Yield behavior-name rows matching the 3-items-per-row body layout.'''
 		names=sorted(counts)
 		i=0
 		while i<len(names):
@@ -1329,8 +1278,69 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 				row_text='  |  '.join(f'{n}: {counts[n]} examples' for n in chunk)
 				if len(row_text)>200:
 					chunk=names[i:i+2]
-			row=chunk
-			i+=len(row)
+			yield chunk
+			i+=len(chunk)
+
+
+	def _count_display_lines(self,counts,threshold):
+		'''Return (count_rows, add_rows) for the body layout at the given threshold.'''
+		count_rows=0
+		add_rows=0
+		for row in self._iter_count_rows(counts):
+			count_rows+=1
+			if any(counts[name]<threshold for name in row):
+				add_rows+=1
+		return count_rows,add_rows
+
+
+	def _counts_area_height(self,counts,threshold,max_h):
+		'''Natural height for the counts area; capped only when content exceeds max_h.
+
+		Returns (display_height, needs_scroll).
+		'''
+		# Generous per-line budget so ordinary small datasets do not show a scrollbar
+		count_row_h=26
+		add_row_h=20
+		pad=18
+		count_rows,add_rows=self._count_display_lines(counts,threshold)
+		natural=count_rows*count_row_h+add_rows*add_row_h+pad
+		if natural<=max_h:
+			return natural,False
+		return max_h,True
+
+
+	def _measure_popup_width(self,title,counts,threshold,min_w,max_w):
+		'''Content-based width from longest title/legend/threshold/count line.'''
+		dc=wx.ScreenDC()
+		normal=wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)
+		title_font=wx.Font(16,wx.FONTFAMILY_DEFAULT,wx.FONTSTYLE_NORMAL,wx.FONTWEIGHT_BOLD)
+		widths=[]
+		dc.SetFont(title_font)
+		widths.append(dc.GetTextExtent(title)[0])
+		dc.SetFont(normal)
+		widths.append(dc.GetTextExtent(
+			f'Red text: Example count is below {threshold} (minimum threshold)')[0])
+		widths.append(dc.GetTextExtent(
+			'Yellow highlight: Example count is outside 1 standard deviation from the mean')[0])
+		# label + text field + Update button
+		widths.append(dc.GetTextExtent('Minimum recommended examples:')[0]+70+72+24)
+		for row in self._iter_count_rows(counts):
+			line='  |  '.join(f'{n}: {counts[n]} examples' for n in row)
+			widths.append(dc.GetTextExtent(line)[0])
+			below=[(name,threshold-counts[name]) for name in row if counts[name]<threshold]
+			if below:
+				add_line='    add: '+', '.join(f'{n} ({needed})' for n,needed in below)
+				widths.append(dc.GetTextExtent(add_line)[0])
+		content_w=max(widths)+40
+		return max(min_w,min(max_w,content_w))
+
+
+	def _render_body(self,rtc,counts,threshold):
+		values=list(counts.values())
+		mean=sum(values)/len(values)
+		std=(sum((v-mean)**2 for v in values)/len(values))**0.5
+		rtc.Clear()
+		for row in self._iter_count_rows(counts):
 			for i_item,name in enumerate(row):
 				count=counts[name]
 				attr=wx.richtext.RichTextAttr()
@@ -1359,20 +1369,27 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 				rtc.EndStyle()
 
 
-	def show_count_popup(self,event):
-		counts=getattr(self,'_counts',{})
-		if len(counts)<2:
-			return
-		if not hasattr(self,'_count_threshold'):
-			self._count_threshold=250
-		threshold=self._count_threshold
-		n=len(counts)
-		n_rows=-(-n//4)
-		popup_w=820
-		popup_h=max(220,min(400,n_rows*55+190))
-		popup=wx.PopupTransientWindow(self,wx.NO_BORDER)
+	def _show_behavior_count_popup(self,title,counts,threshold,set_threshold):
+		'''Shared builder for prepared/sorted View Behavior Counts popups.'''
 		bg=wx.Colour(255,255,255)
+		fg=wx.Colour(0,0,0)
+		btn_bg=wx.Colour(230,230,230)
+		red_fg=wx.Colour(180,0,0)
+		margin=10
+
+		frame=self.GetTopLevelParent()
+		fr=frame.GetRect()
+		min_w=360
+		max_w=max(min_w,min(720,fr.width-40))
+		max_counts_h=max(120,min(360,fr.height//2))
+
+		popup_w=self._measure_popup_width(title,counts,threshold,min_w,max_w)
+		counts_h,needs_scroll=self._counts_area_height(counts,threshold,max_counts_h)
+
+		popup=wx.PopupTransientWindow(self,wx.NO_BORDER)
 		popup.SetBackgroundColour(bg)
+		popup._applied_threshold=threshold
+
 		def on_paint(evt,_p=popup):
 			dc=wx.PaintDC(_p)
 			dc.SetPen(wx.Pen(wx.BLACK,1))
@@ -1380,38 +1397,161 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 			w,h=_p.GetClientSize()
 			dc.DrawRectangle(0,0,w,h)
 		popup.Bind(wx.EVT_PAINT,on_paint)
+
 		outer=wx.BoxSizer(wx.VERTICAL)
-		header_panel,rtc_leg=self._make_header_panel(popup,'Prepared Training Examples',threshold,bg)
-		outer.Add(header_panel,0,wx.EXPAND|wx.LEFT|wx.RIGHT|wx.TOP,1)
-		ctrl_panel=wx.Panel(popup)
-		ctrl_panel.SetBackgroundColour(bg)
-		ctrl_sizer=wx.BoxSizer(wx.HORIZONTAL)
-		lbl=wx.StaticText(ctrl_panel,label='Threshold:')
-		spin=wx.SpinCtrl(ctrl_panel,value=str(threshold),min=1,max=99999,initial=threshold)
-		btn=wx.Button(ctrl_panel,label='Apply')
-		ctrl_sizer.Add(lbl,0,wx.ALIGN_CENTER_VERTICAL|wx.LEFT,8)
-		ctrl_sizer.Add(spin,0,wx.ALIGN_CENTER_VERTICAL|wx.LEFT,5)
-		ctrl_sizer.Add(btn,0,wx.ALIGN_CENTER_VERTICAL|wx.LEFT,5)
-		ctrl_panel.SetSizer(ctrl_sizer)
-		outer.Add(ctrl_panel,0,wx.EXPAND|wx.LEFT|wx.RIGHT,2)
-		outer.Add((0,20))
-		rtc_counts=wx.richtext.RichTextCtrl(popup,style=wx.TE_READONLY|wx.NO_BORDER)
+
+		# Title + close control (outside-click dismissal still works)
+		title_row=wx.BoxSizer(wx.HORIZONTAL)
+		title_lbl=wx.StaticText(popup,label=title,style=wx.ALIGN_CENTRE_HORIZONTAL)
+		title_lbl.SetFont(wx.Font(16,wx.FONTFAMILY_DEFAULT,wx.FONTSTYLE_NORMAL,wx.FONTWEIGHT_BOLD))
+		title_lbl.SetForegroundColour(fg)
+		title_lbl.SetBackgroundColour(bg)
+		close_btn=wxbuttons.GenButton(popup,label='×',size=(24,24))
+		close_btn.SetBackgroundColour(btn_bg)
+		close_btn.SetForegroundColour(fg)
+		close_btn.SetFont(wx.Font(14,wx.FONTFAMILY_DEFAULT,wx.FONTSTYLE_NORMAL,wx.FONTWEIGHT_BOLD))
+		close_btn.SetBezelWidth(1)
+		close_btn.SetUseFocusIndicator(False)
+		close_btn.SetToolTip('Close')
+		title_row.Add((24,24),0,wx.ALIGN_CENTER_VERTICAL)  # balance the close button
+		title_row.Add(title_lbl,1,wx.ALIGN_CENTER_VERTICAL)
+		title_row.Add(close_btn,0,wx.ALIGN_CENTER_VERTICAL)
+		outer.Add(title_row,0,wx.EXPAND|wx.LEFT|wx.RIGHT|wx.TOP,margin)
+
+		# Legend: plain StaticText rows (no RichTextCtrl / scrollbars)
+		leg_font=wx.SystemSettings.GetFont(wx.SYS_DEFAULT_GUI_FONT)
+
+		leg1=wx.BoxSizer(wx.HORIZONTAL)
+		red_sample=wx.StaticText(popup,label='Red text:')
+		red_sample.SetFont(leg_font)
+		red_sample.SetForegroundColour(red_fg)
+		red_sample.SetBackgroundColour(bg)
+		red_explain=wx.StaticText(
+			popup,label=f' Example count is below {threshold} (minimum threshold)')
+		red_explain.SetFont(leg_font)
+		red_explain.SetForegroundColour(fg)
+		red_explain.SetBackgroundColour(bg)
+		leg1.Add(red_sample,0,wx.ALIGN_CENTER_VERTICAL)
+		leg1.Add(red_explain,0,wx.ALIGN_CENTER_VERTICAL)
+		outer.Add(leg1,0,wx.LEFT|wx.RIGHT|wx.TOP,margin)
+
+		leg2=wx.BoxSizer(wx.HORIZONTAL)
+		# Small coloured chip so the sample is visible even when StaticText bg is ignored
+		yl_chip=wx.Panel(popup)
+		yl_chip.SetBackgroundColour(wx.YELLOW)
+		yl_chip_s=wx.BoxSizer(wx.HORIZONTAL)
+		yl_sample=wx.StaticText(yl_chip,label='Yellow highlight:')
+		yl_sample.SetFont(leg_font)
+		yl_sample.SetForegroundColour(fg)
+		yl_sample.SetBackgroundColour(wx.YELLOW)
+		yl_chip_s.Add(yl_sample,0,wx.ALL,1)
+		yl_chip.SetSizer(yl_chip_s)
+		yl_explain=wx.StaticText(
+			popup,label=' Example count is outside 1 standard deviation from the mean')
+		yl_explain.SetFont(leg_font)
+		yl_explain.SetForegroundColour(fg)
+		yl_explain.SetBackgroundColour(bg)
+		leg2.Add(yl_chip,0,wx.ALIGN_CENTER_VERTICAL)
+		leg2.Add(yl_explain,0,wx.ALIGN_CENTER_VERTICAL|wx.LEFT,2)
+		outer.Add(leg2,0,wx.LEFT|wx.RIGHT|wx.TOP,margin)
+
+		# Threshold row (same white surface as the rest of the dialog)
+		thr_row=wx.BoxSizer(wx.HORIZONTAL)
+		thr_lbl=wx.StaticText(popup,label='Minimum recommended examples:')
+		thr_lbl.SetFont(leg_font)
+		thr_lbl.SetForegroundColour(fg)
+		thr_lbl.SetBackgroundColour(bg)
+		thr_txt=wx.TextCtrl(
+			popup,value=str(threshold),size=(64,-1),
+			style=wx.TE_PROCESS_ENTER|wx.TE_RIGHT)
+		thr_txt.SetForegroundColour(fg)
+		thr_txt.SetBackgroundColour(bg)
+		# GenButton paints its own colours; native wx.Button often does not on macOS
+		btn=wxbuttons.GenButton(popup,label='Update',size=(72,26))
+		btn.SetBackgroundColour(btn_bg)
+		btn.SetForegroundColour(fg)
+		btn.SetBezelWidth(1)
+		btn.SetUseFocusIndicator(False)
+		thr_row.Add(thr_lbl,0,wx.ALIGN_CENTER_VERTICAL)
+		thr_row.Add(thr_txt,0,wx.ALIGN_CENTER_VERTICAL|wx.LEFT,6)
+		thr_row.Add(btn,0,wx.ALIGN_CENTER_VERTICAL|wx.LEFT,6)
+		outer.Add(thr_row,0,wx.LEFT|wx.RIGHT|wx.TOP,margin)
+
+		# Counts (RichTextCtrl kept only for mixed red/yellow inline formatting)
+		rtc_style=wx.TE_READONLY|wx.NO_BORDER
+		if not needs_scroll:
+			rtc_style|=wx.TE_NO_VSCROLL
+		rtc_counts=wx.richtext.RichTextCtrl(
+			popup,size=(popup_w-2*margin,counts_h),style=rtc_style)
 		rtc_counts.SetBackgroundColour(bg)
+		rtc_counts.SetForegroundColour(fg)
 		rtc_counts.SetEditable(False)
+		rtc_counts.SetMinSize((popup_w-2*margin,counts_h))
 		self._render_body(rtc_counts,counts,threshold)
-		outer.Add(rtc_counts,1,wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM,1)
+		outer.Add(rtc_counts,0,wx.EXPAND|wx.LEFT|wx.RIGHT|wx.TOP|wx.BOTTOM,margin)
+
 		popup.SetSizer(outer)
-		popup.SetSize(popup_w,popup_h)
+		outer.Layout()
+		popup_h=outer.GetMinSize().height+2
+		popup.SetClientSize(popup_w,popup_h)
+
+		def _parse_threshold():
+			s=thr_txt.GetValue().strip()
+			if not s.isdigit():
+				return None
+			v=int(s)
+			return v if v>=1 else None
+
+		def _filter_threshold_char(evt):
+			key=evt.GetKeyCode()
+			if key in (
+					wx.WXK_BACK,wx.WXK_DELETE,wx.WXK_TAB,wx.WXK_LEFT,wx.WXK_RIGHT,
+					wx.WXK_HOME,wx.WXK_END,wx.WXK_RETURN,wx.WXK_NUMPAD_ENTER,
+					wx.WXK_NUMPAD_DELETE):
+				evt.Skip()
+				return
+			if wx.WXK_NUMPAD0<=key<=wx.WXK_NUMPAD9:
+				evt.Skip()
+				return
+			if 32<=key<256 and chr(key).isdigit():
+				evt.Skip()
+				return
+			# ignore non-digit characters
+
 		def on_apply(evt):
-			t=spin.GetValue()
-			self._count_threshold=t
-			self._render_legend(rtc_leg,t)
+			t=_parse_threshold()
+			if t is None:
+				thr_txt.SetValue(str(popup._applied_threshold))
+				return
+			popup._applied_threshold=t
+			set_threshold(t)
+			red_explain.SetLabel(f' Example count is below {t} (minimum threshold)')
 			self._render_body(rtc_counts,counts,t)
+			new_h,_=self._counts_area_height(counts,t,max_counts_h)
+			rtc_counts.SetMinSize((popup_w-2*margin,new_h))
+			rtc_counts.SetSize((popup_w-2*margin,new_h))
+			outer.Layout()
+			popup.SetClientSize(popup_w,outer.GetMinSize().height+2)
+
+		thr_txt.Bind(wx.EVT_CHAR,_filter_threshold_char)
+		thr_txt.Bind(wx.EVT_TEXT_ENTER,on_apply)
 		btn.Bind(wx.EVT_BUTTON,on_apply)
-		frame=self.GetTopLevelParent()
-		fr=frame.GetRect()
-		popup.SetPosition(wx.Point(fr.x+(fr.width-popup_w)//2,fr.y+(fr.height-popup_h)//2))
+		close_btn.Bind(wx.EVT_BUTTON,lambda evt:popup.Dismiss())
+
+		ph=popup.GetSize().height
+		popup.SetPosition(wx.Point(fr.x+(fr.width-popup_w)//2,fr.y+(fr.height-ph)//2))
 		popup.Popup()
+
+
+	def show_count_popup(self,event):
+		counts=getattr(self,'_counts',{})
+		if len(counts)<2:
+			return
+		if not hasattr(self,'_count_threshold'):
+			self._count_threshold=250
+		self._show_behavior_count_popup(
+			'Prepared Training Examples',counts,self._count_threshold,
+			lambda t:setattr(self,'_count_threshold',t))
 
 
 	def _count_from_subfolders(self,folder_path):
@@ -1445,53 +1585,9 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 			return
 		if not hasattr(self,'_sorted_count_threshold'):
 			self._sorted_count_threshold=250
-		threshold=self._sorted_count_threshold
-		n=len(counts)
-		n_rows=-(-n//4)
-		popup_w=820
-		popup_h=max(220,min(400,n_rows*55+190))
-		popup=wx.PopupTransientWindow(self,wx.NO_BORDER)
-		bg=wx.Colour(255,255,255)
-		popup.SetBackgroundColour(bg)
-		def on_paint(evt,_p=popup):
-			dc=wx.PaintDC(_p)
-			dc.SetPen(wx.Pen(wx.BLACK,1))
-			dc.SetBrush(wx.TRANSPARENT_BRUSH)
-			w,h=_p.GetClientSize()
-			dc.DrawRectangle(0,0,w,h)
-		popup.Bind(wx.EVT_PAINT,on_paint)
-		outer=wx.BoxSizer(wx.VERTICAL)
-		header_panel,rtc_leg=self._make_header_panel(popup,'Sorted Behavior Examples',threshold,bg)
-		outer.Add(header_panel,0,wx.EXPAND|wx.LEFT|wx.RIGHT|wx.TOP,1)
-		ctrl_panel=wx.Panel(popup)
-		ctrl_panel.SetBackgroundColour(bg)
-		ctrl_sizer=wx.BoxSizer(wx.HORIZONTAL)
-		lbl=wx.StaticText(ctrl_panel,label='Threshold:')
-		spin=wx.SpinCtrl(ctrl_panel,value=str(threshold),min=1,max=99999,initial=threshold)
-		btn=wx.Button(ctrl_panel,label='Apply')
-		ctrl_sizer.Add(lbl,0,wx.ALIGN_CENTER_VERTICAL|wx.LEFT,8)
-		ctrl_sizer.Add(spin,0,wx.ALIGN_CENTER_VERTICAL|wx.LEFT,5)
-		ctrl_sizer.Add(btn,0,wx.ALIGN_CENTER_VERTICAL|wx.LEFT,5)
-		ctrl_panel.SetSizer(ctrl_sizer)
-		outer.Add(ctrl_panel,0,wx.EXPAND|wx.LEFT|wx.RIGHT,2)
-		outer.Add((0,20))
-		rtc_counts=wx.richtext.RichTextCtrl(popup,style=wx.TE_READONLY|wx.NO_BORDER)
-		rtc_counts.SetBackgroundColour(bg)
-		rtc_counts.SetEditable(False)
-		self._render_body(rtc_counts,counts,threshold)
-		outer.Add(rtc_counts,1,wx.EXPAND|wx.LEFT|wx.RIGHT|wx.BOTTOM,1)
-		popup.SetSizer(outer)
-		popup.SetSize(popup_w,popup_h)
-		def on_apply(evt):
-			t=spin.GetValue()
-			self._sorted_count_threshold=t
-			self._render_legend(rtc_leg,t)
-			self._render_body(rtc_counts,counts,t)
-		btn.Bind(wx.EVT_BUTTON,on_apply)
-		frame=self.GetTopLevelParent()
-		fr=frame.GetRect()
-		popup.SetPosition(wx.Point(fr.x+(fr.width-popup_w)//2,fr.y+(fr.height-popup_h)//2))
-		popup.Popup()
+		self._show_behavior_count_popup(
+			'Sorted Behavior Examples',counts,self._sorted_count_threshold,
+			lambda t:setattr(self,'_sorted_count_threshold',t))
 
 
 	def select_filepath(self,event):
