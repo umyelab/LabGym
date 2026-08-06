@@ -331,10 +331,11 @@ class PanelLv1_AnalysisModule(wx.Panel):
 		button_statetransition=wx.Button(panel,label='State Transition Map',size=(300,40))
 		button_statetransition.Bind(wx.EVT_BUTTON,self.state_transition_map)
 		wx.Button.SetToolTip(
-    		button_statetransition,
-    		'Generate a state transition map from an all_event_probability.xlsx file. '
-    		'You can exclude behaviors such as "other" or "unknown", and customize '
-    		'whether repeated states and self-transitions are included.'
+			button_statetransition,
+			'Generate one State Transition Map per animal from a LabGym all_events.xlsx file. '
+			'Results go to state_transition_map under your chosen folder (updated on regenerate). '
+			'Nodes show time occupancy; edges show bout-level transition probabilities. '
+			'Excluded behaviors remove nodes and break sequences rather than bridging transitions.'
 			)
 		boxsizer.Add(button_statetransition,0,wx.ALIGN_CENTER,10)
 		boxsizer.Add(0,20,0)

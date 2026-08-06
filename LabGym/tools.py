@@ -991,441 +991,1165 @@ def plot_events(result_path,event_probability,time_points,names_and_colors,behav
 
 	print('The raster plot stored in: '+str(result_path))
 
-def plot_state_transition_map(
-    result_path,
-    event_probability,
-    names_and_colors,
-    behavior_to_include=None,
-    layout_path=None,
-    save_layout=True,
-    normalize=True,
-    collapse_repeats=True,
-    include_self=False,
-    min_count=1,
-    keep_absent_nodes=True,
-):
-	
-	print('Exporting the state transition map for this analysis batch...')
-	print(datetime.datetime.now())
+def stm_safe_animal_folder_name(animal_id):
+	'''Return a filesystem-safe animal package folder name (ID only).'''
+	raw = str(animal_id).strip()
+	safe = []
+	for ch in raw:
+		if ch in '/\\:*?"<>|' or ord(ch) < 32:
+			safe.append('_')
+		else:
+			safe.append(ch)
+	name = ''.join(safe).rstrip(' .')
+	return name if name else 'unknown'
 
-	import json
-	from matplotlib.patches import FancyArrowPatch
-	from matplotlib import patheffects as pe
 
-	def _get_hex_color(color_info):
-		if isinstance(color_info, (list, tuple)):
-			for item in reversed(color_info):
-				if isinstance(item, str) and item.startswith('#') and len(item) == 7:
-					return item
-		if isinstance(color_info, str) and color_info.startswith('#') and len(color_info) == 7:
-			return color_info
+def stm_is_animal_package_dirname(name):
+	'''
+	True if a directory basename is a legitimate STM animal package name.
+
+	Accepts legacy animal_* names and ID-only names that could be produced by
+	stm_safe_animal_folder_name (digits and simple sanitized IDs). Rejects
+	arbitrary prose folder names so user content is not treated as packages.
+	'''
+	if not name or name in ('.', '..') or name.startswith('.'):
+		return False
+	if name.startswith('animal_'):
+		return True
+	# ID-only: must already be filesystem-safe.
+	if name != stm_safe_animal_folder_name(name):
+		return False
+	# Narrow patterns: pure digit IDs (including negative) or simple alnum IDs.
+	if name.isdigit():
+		return True
+	if len(name) > 1 and name[0] == '-' and name[1:].isdigit():
+		return True
+	has_alnum = False
+	for ch in name:
+		if ch.isalnum():
+			has_alnum = True
+			continue
+		if ch in '_-.':
+			continue
+		return False
+	return has_alnum
+
+
+def stm_figure_id_subtitle(animal_id):
+	'''Second line of the map title (slightly smaller in the figure).'''
+	return 'ID ' + str(animal_id)
+
+
+def stm_default_behavior_color(behavior_name, index=0):
+	'''Deterministic default hex color for a behavior name.'''
+	import matplotlib as mpl
+
+	palette = list(mpl.colors.cnames.values())
+	if not palette:
 		return '#4C72B0'
+	# Prefer index when provided; fall back to stable hash for unknown order.
+	if index is not None and index >= 0:
+		return palette[index % len(palette)]
+	return palette[abs(hash(behavior_name)) % len(palette)]
 
-	def _split_label(label, max_len=12):
-		words = label.split()
-		lines = []
-		current = ''
 
-		for word in words:
-			if len(current) + len(word) + 1 <= max_len:
-				current = (current + ' ' + word).strip()
-			else:
-				if current:
-					lines.append(current)
-				current = word
+def stm_get_hex_color(color_info):
+	'''Extract a #RRGGBB color from common LabGym color containers.'''
+	if isinstance(color_info, (list, tuple)):
+		for item in reversed(color_info):
+			if isinstance(item, str) and item.startswith('#') and len(item) == 7:
+				return item
+	if isinstance(color_info, str) and color_info.startswith('#') and len(color_info) == 7:
+		return color_info
+	return '#4C72B0'
 
-		if current:
-			lines.append(current)
 
-		return '\n'.join(lines)
+def stm_hard_labels(events):
+	'''Return hard behavior labels only from event [name, probability] pairs.'''
+	labels = []
+	for event in events:
+		if isinstance(event, (list, tuple)) and len(event) >= 1:
+			labels.append(event[0])
+		else:
+			labels.append('NA')
+	return labels
 
-	# ---------- behavior order ----------
-	all_behavior_names = list(names_and_colors.keys())
 
-	if behavior_to_include is None or behavior_to_include == ['all']:
-		behavior_names = all_behavior_names
-	else:
-		behavior_names = [b for b in behavior_to_include if b in all_behavior_names]
+def stm_compute_animal_metrics(hard_labels, included_behaviors):
+	'''
+	Build bout segments, occupancy, and row-normalized transition metrics
+	for one animal from hard labels.
 
-	if len(behavior_names) == 0:
-		print('No selected behavior names found; state transition map skipped.')
-		return
+	included_behaviors: iterable of behavior names to keep on the map.
+	NA and any label not in included_behaviors create sequence breaks.
 
-	name_to_idx = {name: idx for idx, name in enumerate(behavior_names)}
-	n_behaviors = len(behavior_names)
+	Returns a dict with:
+	  status: 'ok' or 'empty'
+	  observed_behaviors, frame_counts, occupancy, bout_labels, segments,
+	  count_matrix (DataFrame), probability_matrix (DataFrame with NaN for
+	  zero-outgoing rows), transition_total, bout_total, included_frame_total
+	'''
+	included = list(included_behaviors)
+	included_set = set(included)
+	frame_counts = {b: 0 for b in included}
+	segments = []
+	current_bouts = []
+	current_label = None
+	current_count = 0
 
-	count_matrix = np.zeros((n_behaviors, n_behaviors), dtype=np.int32)
-	state_counts = np.zeros(n_behaviors, dtype=np.int64)
-	total_transitions = 0
+	def flush_bout():
+		nonlocal current_label, current_count
+		if current_label is not None:
+			current_bouts.append(current_label)
+			current_label = None
+			current_count = 0
 
-	# ---------- count actual transitions and behavior frequencies ----------
-	for animal_id in event_probability:
+	def flush_segment():
+		nonlocal current_bouts
+		flush_bout()
+		if current_bouts:
+			segments.append(list(current_bouts))
+			current_bouts = []
 
-		sequence = []
-
-		for event in event_probability[animal_id]:
-			behavior_name = event[0]
-
-			if behavior_name == 'NA':
-				continue
-			if behavior_name not in name_to_idx:
-				continue
-
-			sequence.append(behavior_name)
-
-		if len(sequence) < 2:
+	for label in hard_labels:
+		if label == 'NA' or label not in included_set:
+			flush_segment()
 			continue
+		frame_counts[label] += 1
+		if current_label is None:
+			current_label = label
+			current_count = 1
+		elif label == current_label:
+			current_count += 1
+		else:
+			current_bouts.append(current_label)
+			current_label = label
+			current_count = 1
+	flush_segment()
 
-		if collapse_repeats:
-			compressed = [sequence[0]]
-			for state in sequence[1:]:
-				if state != compressed[-1]:
-					compressed.append(state)
-			sequence = compressed
+	included_frame_total = sum(frame_counts[b] for b in included)
+	bout_labels = [b for seg in segments for b in seg]
+	bout_total = len(bout_labels)
 
-		if len(sequence) < 2:
-			continue
-
-		for state in sequence:
-			state_counts[name_to_idx[state]] += 1
-
-		for i in range(len(sequence) - 1):
-			src = sequence[i]
-			dst = sequence[i + 1]
-
-			if include_self is False and src == dst:
-				continue
-
-			count_matrix[name_to_idx[src], name_to_idx[dst]] += 1
-			total_transitions += 1
-
-	# ---------- save raw counts ----------
-	count_df = pd.DataFrame(count_matrix, index=behavior_names, columns=behavior_names)
-	count_df.to_excel(
-		os.path.join(result_path, 'state_transition_counts.xlsx'),
-		index_label='from/to'
-	)
-
-	# ---------- normalization ----------
-	if normalize:
-		total_states = state_counts.sum()
-
-		# p(i): frequency of behavior i
-		behavior_frequency = np.divide(
-			state_counts.astype('float64'),
-			float(total_states),
-			out=np.zeros_like(state_counts, dtype='float64'),
-			where=total_states != 0
-		)
-
-		# P_obs(i -> j): observed transition probability
-		observed_probability = np.divide(
-			count_matrix.astype('float64'),
-			float(total_transitions),
-			out=np.zeros_like(count_matrix, dtype='float64'),
-			where=total_transitions != 0
-		)
-
-		# P_exp(i -> j) = p(i) * p(j)
-		expected_probability = behavior_frequency[:, None] * behavior_frequency[None, :]
-
-		# E_ij = P_obs(i -> j) / P_exp(i -> j)
-		prob_matrix = np.divide(
-			observed_probability,
-			expected_probability,
-			out=np.zeros_like(observed_probability, dtype='float64'),
-			where=expected_probability > 0
-		)
-
-		pd.DataFrame(
-			behavior_frequency,
-			index=behavior_names,
-			columns=['behavior_frequency']
-		).to_excel(
-			os.path.join(result_path, 'state_behavior_frequency.xlsx'),
-			float_format='%.6f',
-			index_label='behavior'
-		)
-
-		pd.DataFrame(
-			observed_probability,
-			index=behavior_names,
-			columns=behavior_names
-		).to_excel(
-			os.path.join(result_path, 'state_transition_observed_probability.xlsx'),
-			float_format='%.6f',
-			index_label='from/to'
-		)
-
-		pd.DataFrame(
-			expected_probability,
-			index=behavior_names,
-			columns=behavior_names
-		).to_excel(
-			os.path.join(result_path, 'state_transition_expected_probability.xlsx'),
-			float_format='%.6f',
-			index_label='from/to'
-		)
-
-		pd.DataFrame(
-			prob_matrix,
-			index=behavior_names,
-			columns=behavior_names
-		).to_excel(
-			os.path.join(result_path, 'state_transition_normalized_enrichment.xlsx'),
-			float_format='%.6f',
-			index_label='from/to'
-		)
-
-	else:
-		prob_matrix = count_matrix.astype('float64')
-
-	# ---------- fixed layout ----------
-	if layout_path is None:
-		layout_path = os.path.join(result_path, 'state_transition_layout.json')
-
-	positions = None
-
-	if os.path.exists(layout_path):
-		try:
-			with open(layout_path, 'r') as f:
-				loaded = json.load(f)
-
-			if all(name in loaded for name in behavior_names):
-				positions = {
-					name: tuple(loaded[name])
-					for name in behavior_names
-				}
-		except Exception:
-			positions = None
-
-	if positions is None:
-		radius = 1.0
-		angles = np.linspace(
-			np.pi / 2,
-			np.pi / 2 - 2 * np.pi,
-			n_behaviors,
-			endpoint=False
-		)
-
-		positions = {
-			name: (
-				float(radius * np.cos(angle)),
-				float(radius * np.sin(angle))
-			)
-			for name, angle in zip(behavior_names, angles)
+	if included_frame_total == 0:
+		return {
+			'status': 'empty',
+			'observed_behaviors': [],
+			'frame_counts': {},
+			'occupancy': {},
+			'bout_labels': [],
+			'segments': [],
+			'count_matrix': None,
+			'probability_matrix': None,
+			'transition_total': 0,
+			'bout_total': 0,
+			'included_frame_total': 0,
 		}
 
-	if save_layout:
-		with open(os.path.join(result_path, 'state_transition_layout.json'), 'w') as f:
-			json.dump(
-				{name: list(positions[name]) for name in behavior_names},
-				f,
-				indent=2
+	observed = sorted([b for b in included if frame_counts[b] > 0])
+	occupancy = {
+		b: float(frame_counts[b]) / float(included_frame_total)
+		for b in observed
+	}
+
+	n = len(observed)
+	name_to_idx = {name: i for i, name in enumerate(observed)}
+	counts = np.zeros((n, n), dtype=np.int64)
+	for seg in segments:
+		for i in range(len(seg) - 1):
+			src = seg[i]
+			dst = seg[i + 1]
+			counts[name_to_idx[src], name_to_idx[dst]] += 1
+
+	count_df = pd.DataFrame(counts, index=observed, columns=observed)
+	prob = np.full((n, n), np.nan, dtype=np.float64)
+	for i in range(n):
+		row_sum = int(counts[i, :].sum())
+		if row_sum > 0:
+			prob[i, :] = counts[i, :].astype(np.float64) / float(row_sum)
+	prob_df = pd.DataFrame(prob, index=observed, columns=observed)
+
+	return {
+		'status': 'ok',
+		'observed_behaviors': observed,
+		'frame_counts': {b: int(frame_counts[b]) for b in observed},
+		'occupancy': occupancy,
+		'bout_labels': bout_labels,
+		'segments': segments,
+		'count_matrix': count_df,
+		'probability_matrix': prob_df,
+		'transition_total': int(counts.sum()),
+		'bout_total': bout_total,
+		'included_frame_total': int(included_frame_total),
+	}
+
+
+# Known STM artifacts inside a per-animal package (ID folder; current + obsolete names).
+_STM_ANIMAL_KNOWN_FILES = frozenset({
+	'state_transition_map.png',
+	'state_transition_counts.xlsx',
+	'state_transition_probabilities.xlsx',
+	'state_behavior_occupancy.xlsx',
+	'state_transition_summary.xlsx',
+	'state_transition_map_normalized.png',
+	'state_transition_map_counts.png',
+	'state_transition_observed_probability.xlsx',
+	'state_transition_expected_probability.xlsx',
+	'state_transition_normalized_enrichment.xlsx',
+	'state_behavior_frequency.xlsx',
+})
+
+# Known obsolete/misplaced STM files at the STM results root only.
+_STM_ROOT_OBSOLETE_FILES = frozenset({
+	'state_transition_map_normalized.png',
+	'state_transition_map_counts.png',
+	'state_transition_observed_probability.xlsx',
+	'state_transition_expected_probability.xlsx',
+	'state_transition_normalized_enrichment.xlsx',
+	'state_behavior_frequency.xlsx',
+	'state_transition_counts.xlsx',
+	'state_transition_probabilities.xlsx',
+	'state_behavior_occupancy.xlsx',
+	'state_transition_summary.xlsx',
+	'state_transition_map.png',
+	# legacy persistence artifacts from earlier STM drafts
+	'state_transition_colors.json',
+	'state_transition_layout.json',
+})
+
+# Drawing constants (static PNG readability).
+_STM_NODE_SIZE_MIN = 2000.0   # scatter marker area; floor for legibility
+_STM_NODE_SIZE_SPAN = 2800.0  # extra area at full occupancy
+_STM_EDGE_LW_MIN = 0.7
+_STM_EDGE_LW_SPAN = 3.2       # previous max ~8.4 (0.4 + 8*sqrt); compressed
+_STM_EDGE_SHRINK = 54         # previous 38; clear space outside nodes
+_STM_EDGE_MUTATION_SCALE = 22 # arrowhead size (linewidth independent)
+_STM_EDGE_RAD_SINGLE = 0.08   # mild curve for one-direction edges
+_STM_EDGE_RAD_BIDIR = 0.40    # stronger opposite bow for A↔B pairs
+_STM_FIGSIZE = (11.5, 11.5)
+_STM_VIEW_PAD = 0.52          # data-space margin around fixed circular layout
+# Edge-label placement (tangent-aligned, clamp-limited rotation; offset beside curve).
+_STM_EDGE_LABEL_T = 0.55              # preferred fraction along curve (~50–60%)
+_STM_EDGE_LABEL_OFFSET_PX = 26.0      # farther beside the stroke (~+8 px from prior 18)
+_STM_EDGE_LABEL_MAX_ROTATION = 22.0   # restrained clamp (~±20–25°) for readability
+_STM_EDGE_LABEL_BBOX_PAD = 0.48
+_STM_EDGE_LABEL_BBOX_EDGECOLOR = '#555555'
+_STM_EDGE_LABEL_BBOX_LW = 0.5
+_STM_EDGE_LABEL_T_CANDIDATES = (0.55, 0.50, 0.60, 0.45, 0.65)
+_STM_TITLE_FONTSIZE = 16.0
+_STM_TITLE_SUBTITLE_SCALE = 0.875     # ~87.5% of main title size
+_STM_LEGEND_FONTSIZE = 7.5
+_STM_LEGEND_TEXT = (
+	'Node size = time spent in each behavior\n'
+	'            (% of included frames)\n'
+	'Edge width = probability of transitioning\n'
+	'             to the next behavior\n'
+	'Edge label = transition probability\n'
+	'             (number of observed transitions)'
+)
+
+
+def stm_arc3_quadratic_control(x1, y1, x2, y2, rad):
+	'''
+	Control point for a matplotlib ConnectionStyle Arc3 quadratic Bezier.
+
+	Matches FancyArrowPatch connectionstyle='arc3,rad=...'.
+	'''
+	mid_x = (x1 + x2) / 2.0
+	mid_y = (y1 + y2) / 2.0
+	dx = x2 - x1
+	dy = y2 - y1
+	return mid_x + float(rad) * dy, mid_y - float(rad) * dx
+
+
+def stm_arc3_point_and_tangent(x1, y1, x2, y2, rad, t):
+	'''Point and unit tangent on an Arc3 quadratic Bezier at parameter t.'''
+	t = max(0.0, min(1.0, float(t)))
+	rad = float(rad)
+	cx, cy = stm_arc3_quadratic_control(x1, y1, x2, y2, rad)
+	u = 1.0 - t
+	px = u * u * x1 + 2.0 * u * t * cx + t * t * x2
+	py = u * u * y1 + 2.0 * u * t * cy + t * t * y2
+	tx = 2.0 * u * (cx - x1) + 2.0 * t * (x2 - cx)
+	ty = 2.0 * u * (cy - y1) + 2.0 * t * (y2 - cy)
+	tlen = math.hypot(tx, ty)
+	if tlen < 1e-12:
+		tx, ty = (x2 - x1), (y2 - y1)
+		tlen = math.hypot(tx, ty) or 1.0
+	return px, py, tx / tlen, ty / tlen
+
+
+def stm_arc3_bulge_normal(x1, y1, x2, y2, rad, tx, ty):
+	'''Unit normal pointing toward the Arc3 bulge (same side as the curve).'''
+	nx, ny = -ty, tx
+	cx, cy = stm_arc3_quadratic_control(x1, y1, x2, y2, rad)
+	mid_x = (x1 + x2) / 2.0
+	mid_y = (y1 + y2) / 2.0
+	bulge_x = cx - mid_x
+	bulge_y = cy - mid_y
+	if bulge_x * bulge_x + bulge_y * bulge_y > 1e-18:
+		if nx * bulge_x + ny * bulge_y < 0.0:
+			nx, ny = -nx, -ny
+	return nx, ny
+
+
+def stm_edge_label_rotation(tx, ty, max_deg=None):
+	'''
+	Rotation (degrees) that follows the edge tangent but stays readable.
+
+	Forces upright text (never upside down), then clamps to ±max_deg.
+	'''
+	if max_deg is None:
+		max_deg = _STM_EDGE_LABEL_MAX_ROTATION
+	max_deg = abs(float(max_deg))
+	angle = math.degrees(math.atan2(float(ty), float(tx)))
+	# Choose the upright orientation in (-90, 90].
+	if angle > 90.0:
+		angle -= 180.0
+	elif angle < -90.0:
+		angle += 180.0
+	if angle > max_deg:
+		angle = max_deg
+	elif angle < -max_deg:
+		angle = -max_deg
+	return angle
+
+
+def stm_edge_label_placement(x1, y1, x2, y2, rad, t=None, clear=None, side=1):
+	'''
+	Anchor an edge label beside its Arc3 curve with clamped tangent rotation.
+
+	``clear`` is a data-space perpendicular offset (caller converts pixel offset).
+	``side``: +1 = bulge side (preferred), -1 = opposite side.
+	Returns (label_x, label_y, rotation_deg) with |rotation| ≤ max clamp.
+	'''
+	if t is None:
+		t = _STM_EDGE_LABEL_T
+	if clear is None:
+		clear = 0.06
+	px, py, tx, ty = stm_arc3_point_and_tangent(x1, y1, x2, y2, rad, t)
+	nx, ny = stm_arc3_bulge_normal(x1, y1, x2, y2, rad, tx, ty)
+	s = 1.0 if float(side) >= 0 else -1.0
+	label_x = px + s * float(clear) * nx
+	label_y = py + s * float(clear) * ny
+	return label_x, label_y, stm_edge_label_rotation(tx, ty)
+
+
+def _stm_data_units_per_display_pixel(ax):
+	'''Approximate data units per display pixel (equal-aspect axes).'''
+	p0 = ax.transData.transform((0.0, 0.0))
+	p1 = ax.transData.transform((1.0, 0.0))
+	dist = math.hypot(float(p1[0] - p0[0]), float(p1[1] - p0[1]))
+	if dist < 1e-12:
+		return 0.01
+	return 1.0 / dist
+
+
+def _stm_node_radius_data(ax, marker_size):
+	'''Approximate scatter-marker radius in data units.'''
+	# scatter s is area in points^2; half-width ≈ 0.5 * sqrt(s) points.
+	r_pts = 0.5 * math.sqrt(max(float(marker_size), 1.0))
+	r_disp = r_pts * (float(ax.figure.dpi) / 72.0)
+	return r_disp * _stm_data_units_per_display_pixel(ax)
+
+
+def _stm_sample_arc3_polyline(x1, y1, x2, y2, rad, n=18):
+	'''Sample Arc3 path as a polyline for proximity tests.'''
+	pts = []
+	for i in range(n + 1):
+		t = i / float(n)
+		px, py, _, _ = stm_arc3_point_and_tangent(x1, y1, x2, y2, rad, t)
+		pts.append((px, py))
+	return pts
+
+
+def _stm_min_dist_to_polyline(x, y, polyline):
+	best = float('inf')
+	if not polyline:
+		return best
+	for i in range(len(polyline) - 1):
+		x1, y1 = polyline[i]
+		x2, y2 = polyline[i + 1]
+		dx = x2 - x1
+		dy = y2 - y1
+		den = dx * dx + dy * dy
+		if den < 1e-18:
+			d = math.hypot(x - x1, y - y1)
+		else:
+			u = max(0.0, min(1.0, ((x - x1) * dx + (y - y1) * dy) / den))
+			d = math.hypot(x - (x1 + u * dx), y - (y1 + u * dy))
+		if d < best:
+			best = d
+	return best
+
+
+def stm_pick_edge_label_position(
+	x1,
+	y1,
+	x2,
+	y2,
+	rad,
+	clear_data,
+	node_centers,
+	node_radii,
+	other_polylines,
+	placed_centers,
+	label_half_w,
+	label_half_h,
+):
+	'''
+	Choose an edge-label center and clamped rotation beside the curve.
+
+	Avoids node overlap when a free candidate exists; prefers positions away
+	from other edges when a nearby t/side on the same edge is free.
+	Returns (label_x, label_y, rotation_deg).
+	'''
+	label_r = 0.5 * math.hypot(2.0 * label_half_w, 2.0 * label_half_h)
+	node_margin = 1.05 * label_r
+	edge_clear = max(label_half_h, 0.5 * label_half_w) * 0.9
+
+	best = None
+	best_score = float('inf')
+	for t in _STM_EDGE_LABEL_T_CANDIDATES:
+		for side in (1, -1):
+			lx, ly, rot = stm_edge_label_placement(
+				x1, y1, x2, y2, rad, t=t, clear=clear_data, side=side,
 			)
+			score = 0.0
+			# Prefer mid-curve and bulge side.
+			score += 8.0 * abs(float(t) - _STM_EDGE_LABEL_T)
+			if side < 0:
+				score += 2.5
 
-	# ---------- draw ----------
+			# Hard: node overlap.
+			for name, (nx, ny) in node_centers.items():
+				r = float(node_radii.get(name, 0.0)) + node_margin
+				d = math.hypot(lx - nx, ly - ny)
+				if d < r:
+					score += 1000.0 + (r - d) * 50.0
 
-	fig, ax = plt.subplots(figsize=(10, 10))
-	ax.set_aspect('equal')
-	ax.axis('off')
-	max_edge_value = max(prob_matrix.max(), 1e-6) if normalize else max(count_matrix.max(), 1)
-	outgoing = count_matrix.sum(axis=1)
-	incoming = count_matrix.sum(axis=0)
+			# Soft: other edges (avoid sitting on foreign strokes).
+			for poly in other_polylines:
+				d = _stm_min_dist_to_polyline(lx, ly, poly)
+				if d < edge_clear:
+					score += 40.0 * (1.0 - d / max(edge_clear, 1e-9))
 
-	node_activity = outgoing + incoming
-	max_activity = max(node_activity.max(), 1)
+			# Soft: already-placed labels.
+			for px, py in placed_centers:
+				d = math.hypot(lx - px, ly - py)
+				sep = 1.7 * label_r
+				if d < sep:
+					score += 25.0 * (1.0 - d / max(sep, 1e-9))
 
+			if score < best_score:
+				best_score = score
+				best = (lx, ly, rot)
+
+	if best is None:
+		return stm_edge_label_placement(x1, y1, x2, y2, rad, clear=clear_data)
+	return best
+
+
+def stm_circular_layout(behavior_names, radius=1.0):
+	'''Place behaviors evenly on a circle (fresh deterministic layout each run).'''
+	names = list(behavior_names)
+	if len(names) == 0:
+		return {}
+	angles = np.linspace(
+		np.pi / 2,
+		np.pi / 2 - 2 * np.pi,
+		len(names),
+		endpoint=False,
+	)
+	return {
+		name: (float(radius * np.cos(angle)), float(radius * np.sin(angle)))
+		for name, angle in zip(names, angles)
+	}
+
+
+def stm_session_colors(behavior_names, existing_colors=None):
+	'''
+	Build hex colors for this session only (no disk persistence).
+	Uses existing_colors when provided; fills the rest with deterministic defaults.
+	'''
+	names = list(behavior_names)
+	colors = {}
+	if existing_colors:
+		for b, c in existing_colors.items():
+			if b not in names:
+				continue
+			if isinstance(c, str) and c.startswith('#') and len(c) == 7:
+				colors[b] = c
+			else:
+				colors[b] = stm_get_hex_color(c)
+	for i, b in enumerate(names):
+		if b not in colors:
+			colors[b] = stm_default_behavior_color(b, index=i)
+	return colors
+
+
+def stm_remove_known_files(directory, known_filenames):
+	'''Remove exact known filenames that exist as files under directory.'''
+	if not os.path.isdir(directory):
+		return
+	for name in known_filenames:
+		path = os.path.join(directory, name)
+		if os.path.isfile(path):
+			try:
+				os.remove(path)
+			except OSError:
+				pass
+
+
+def stm_cleanup_stale_animal_folder(animal_dir):
+	'''
+	Safe cleanup of a stale per-animal package directory.
+
+	Removes only known STM-generated artifacts. Does not delete unknown files
+	or nested directories. Removes the folder itself only if empty afterward.
+
+	Returns:
+	  'removed'   — directory deleted (only known artifacts were present)
+	  'preserved' — directory kept because non-STM content remained
+	  'missing'   — path was not a directory
+	'''
+	if not os.path.isdir(animal_dir):
+		return 'missing'
+
+	stm_remove_known_files(animal_dir, _STM_ANIMAL_KNOWN_FILES)
+
+	try:
+		remaining = os.listdir(animal_dir)
+	except OSError:
+		return 'preserved'
+
+	if len(remaining) == 0:
+		try:
+			os.rmdir(animal_dir)
+			return 'removed'
+		except OSError:
+			return 'preserved'
+
+	return 'preserved'
+
+
+def _stm_dir_has_known_animal_files(directory):
+	'''True if directory contains any known per-animal STM output files.'''
+	if not os.path.isdir(directory):
+		return False
+	for name in _STM_ANIMAL_KNOWN_FILES:
+		if os.path.isfile(os.path.join(directory, name)):
+			return True
+	return False
+
+
+def stm_cleanup_obsolete_artifacts(stm_dir, current_animal_folder_names):
+	'''
+	Clean stale STM artifacts inside stm_dir only:
+	- exact known obsolete root filenames
+	- known artifacts inside per-animal folders no longer present
+
+	Per-animal folders are ID-only (e.g. "0", "1"). Legacy packages named
+	animal_* are also cleaned. ID-only directories are treated as packages only
+	when they contain known STM-generated files (unrelated numeric user folders
+	without STM artifacts are left alone).
+
+	Never recursively deletes animal folders that still contain unknown content.
+
+	Returns a list of animal folder basenames that were preserved because
+	non-STM content remained after known-artifact removal.
+	'''
+	preserved_stale_animals = []
+	if not os.path.isdir(stm_dir):
+		return preserved_stale_animals
+
+	stm_remove_known_files(stm_dir, _STM_ROOT_OBSOLETE_FILES)
+
+	current = set(current_animal_folder_names)
+	for entry in os.listdir(stm_dir):
+		full = os.path.join(stm_dir, entry)
+		if not os.path.isdir(full):
+			continue
+		if entry in current:
+			continue
+		if not stm_is_animal_package_dirname(entry):
+			continue
+		# Legacy animal_* always eligible; ID-only only when STM outputs present.
+		if not entry.startswith('animal_') and not _stm_dir_has_known_animal_files(full):
+			continue
+		outcome = stm_cleanup_stale_animal_folder(full)
+		if outcome == 'preserved':
+			preserved_stale_animals.append(entry)
+
+	return preserved_stale_animals
+
+
+def stm_clear_animal_metric_files(animal_dir):
+	'''Remove known metric/map files when an animal package becomes empty-only.'''
+	stm_remove_known_files(animal_dir, _STM_ANIMAL_KNOWN_FILES)
+
+
+# Node-label typography only (does not affect layout/node geometry).
+_STM_NODE_LABEL_MAX_CHARS = 9   # ~8–9 chars/line for balanced multi-word names
+# Default matplotlib linespacing is ~1.2; a modest bump aids multi-line scanability
+# without expanding the block enough to crowd node borders.
+_STM_NODE_LABEL_LINESPACING = 1.45
+
+
+def stm_wrap_behavior_name(name, max_line_chars=None):
+	'''
+	Deterministic wrap of a behavior name for node labels.
+
+	Prefers breaks near ~8–9 characters (default max_line_chars) so multi-word
+	names form balanced lines. Breaks on spaces when possible; hard-splits only
+	when a single token exceeds the limit.
+	'''
+	if max_line_chars is None:
+		max_line_chars = _STM_NODE_LABEL_MAX_CHARS
+	name = str(name).strip()
+	if not name:
+		return ['']
+	if max_line_chars < 4:
+		max_line_chars = 4
+
+	def hard_chunks(token):
+		if len(token) <= max_line_chars:
+			return [token]
+		return [
+			token[i:i + max_line_chars]
+			for i in range(0, len(token), max_line_chars)
+		]
+
+	words = name.split()
+	if not words:
+		return hard_chunks(name)
+
+	# Soft target slightly under the hard max encourages more even lines
+	# (e.g. "behind" / "the wheel" rather than a packed first line + short tail).
+	target = max(4, min(max_line_chars, 9))
+	soft = max(4, target - 1)  # prefer ~8 when max is 9
+
+	lines = []
+	current = ''
+	for word in words:
+		pieces = hard_chunks(word)
+		for piece in pieces:
+			if not current:
+				current = piece
+				continue
+			proposed = current + ' ' + piece
+			# Stay under hard max; prefer not to exceed soft width when the
+			# next piece could start a cleaner subsequent line.
+			if len(proposed) <= soft:
+				current = proposed
+			elif len(proposed) <= max_line_chars and len(current) < soft:
+				# Fill toward the hard max only when current line is still short.
+				current = proposed
+			else:
+				lines.append(current)
+				current = piece
+	if current:
+		lines.append(current)
+	return lines
+
+
+def stm_format_node_label(behavior_name, occupancy):
+	'''Return (label_text, fontsize) for a node.'''
+	name_lines = stm_wrap_behavior_name(behavior_name)
+	pct = int(round(100.0 * float(occupancy)))
+	# Name lines first; occupancy kept on its own final line (visual association).
+	lines = list(name_lines) + [str(pct) + '%']
+	n = len(lines)
+	if n <= 2:
+		fontsize = 9
+	elif n == 3:
+		fontsize = 8
+	else:
+		fontsize = 7
+	return '\n'.join(lines), fontsize
+
+
+def stm_node_marker_size(occupancy):
+	'''Scatter marker area from occupancy with a legibility floor.'''
+	occ = max(0.0, min(1.0, float(occupancy)))
+	return _STM_NODE_SIZE_MIN + _STM_NODE_SIZE_SPAN * occ
+
+
+def stm_edge_linewidth(probability, max_probability):
+	'''Compressed linewidth from row-normalized probability.'''
+	max_p = max(float(max_probability), 1e-6)
+	p = max(0.0, float(probability))
+	return _STM_EDGE_LW_MIN + _STM_EDGE_LW_SPAN * math.sqrt(p / max_p)
+
+
+def stm_format_edge_label(probability, count):
+	'''Exact static edge label format: probability (count).'''
+	return f'{float(probability):.2f} ({int(count)})'
+
+
+def _stm_draw_animal_map(
+	animal_dir,
+	animal_id,
+	metrics,
+	positions,
+	behavior_colors,
+	dpi=300,
+):
+	'''Draw one animal state transition map PNG from computed metrics.'''
 	from matplotlib.patches import FancyArrowPatch
 
-	def draw_directed_edge(src_idx, dst_idx, rad):
+	observed = metrics['observed_behaviors']
+	occupancy = metrics['occupancy']
+	count_df = metrics['count_matrix']
+	prob_df = metrics['probability_matrix']
 
-		src_name = behavior_names[src_idx]
-		dst_name = behavior_names[dst_idx]
+	fig, ax = plt.subplots(figsize=_STM_FIGSIZE)
+	ax.set_aspect('equal')
+	ax.axis('off')
 
-		raw_count = count_matrix[src_idx, dst_idx]
-		edge_value = prob_matrix[src_idx, dst_idx] if normalize else raw_count
+	# Fix view before transform-based label offsets (pixel → data).
+	pad = _STM_VIEW_PAD
+	xs = [positions[b][0] for b in observed]
+	ys = [positions[b][1] for b in observed]
+	ax.set_xlim(min(xs) - pad, max(xs) + pad)
+	ax.set_ylim(min(ys) - pad, max(ys) + pad)
+	fig.canvas.draw()
 
-		if raw_count < min_count or edge_value <= 0:
-			return
+	max_edge = 1e-6
+	for a in observed:
+		for b in observed:
+			n = int(count_df.loc[a, b])
+			if n >= 1:
+				p = float(prob_df.loc[a, b])
+				if not np.isnan(p):
+					max_edge = max(max_edge, p)
 
-		x1, y1 = positions[src_name]
-		x2, y2 = positions[dst_name]
+	# Collect directed edges (layout positions unchanged; only curve rad for pairs).
+	edge_specs = []
+	for i, src in enumerate(observed):
+		for j, dst in enumerate(observed):
+			if i >= j:
+				continue
+			exists_ij = int(count_df.loc[src, dst]) >= 1
+			exists_ji = int(count_df.loc[dst, src]) >= 1
+			if exists_ij and exists_ji:
+				edge_specs.append((src, dst, _STM_EDGE_RAD_BIDIR))
+				edge_specs.append((dst, src, _STM_EDGE_RAD_BIDIR))
+			elif exists_ij:
+				edge_specs.append((src, dst, _STM_EDGE_RAD_SINGLE))
+			elif exists_ji:
+				edge_specs.append((dst, src, _STM_EDGE_RAD_SINGLE))
 
-		linewidth = 0.4 + 8.0 * np.sqrt(edge_value / max_edge_value)
-
+	drawn_edges = []
+	for src, dst, rad in edge_specs:
+		raw_count = int(count_df.loc[src, dst])
+		if raw_count < 1:
+			continue
+		edge_value = float(prob_df.loc[src, dst])
+		if np.isnan(edge_value) or edge_value <= 0:
+			continue
+		x1, y1 = positions[src]
+		x2, y2 = positions[dst]
+		linewidth = stm_edge_linewidth(edge_value, max_edge)
 		arrow = FancyArrowPatch(
 			(x1, y1),
 			(x2, y2),
 			arrowstyle='-|>',
-			mutation_scale=16,
+			mutation_scale=_STM_EDGE_MUTATION_SCALE,
 			linewidth=linewidth,
 			color='black',
 			alpha=0.75,
-			shrinkA=38,
-			shrinkB=38,
+			shrinkA=_STM_EDGE_SHRINK,
+			shrinkB=_STM_EDGE_SHRINK,
 			connectionstyle=f'arc3,rad={rad}',
-			zorder=1
+			zorder=1,
 		)
 		ax.add_patch(arrow)
+		drawn_edges.append({
+			'src': src,
+			'dst': dst,
+			'rad': rad,
+			'x1': x1,
+			'y1': y1,
+			'x2': x2,
+			'y2': y2,
+			'value': edge_value,
+			'count': raw_count,
+			'polyline': _stm_sample_arc3_polyline(x1, y1, x2, y2, rad),
+		})
 
-		# label position: put the label on the curved edge
-		dx = x2 - x1
-		dy = y2 - y1
-		length = max((dx**2 + dy**2)**0.5, 1e-6)
+	# Node geometry for label collision (nodes drawn after labels for z-order).
+	node_centers = {b: positions[b] for b in observed}
+	node_radii = {
+		b: _stm_node_radius_data(ax, stm_node_marker_size(occupancy[b]))
+		for b in observed
+	}
+	clear_data = (
+		_STM_EDGE_LABEL_OFFSET_PX * _stm_data_units_per_display_pixel(ax)
+	)
+	# Approximate half-size of "0.xx (nn)" at fontsize 8 + bbox pad.
+	label_half_w = 36.0 * (float(ax.figure.dpi) / 72.0) * _stm_data_units_per_display_pixel(ax)
+	label_half_h = 11.0 * (float(ax.figure.dpi) / 72.0) * _stm_data_units_per_display_pixel(ax)
 
-		mid_x = (x1 + x2) / 2
-		mid_y = (y1 + y2) / 2
-
-		# same geometry as arc3 curve: offset label perpendicular to edge
-		label_x = mid_x - (rad * 0.5) * dy
-		label_y = mid_y + (rad * 0.5) * dx
-
-		label = f'{edge_value:.2f}' if normalize else str(int(raw_count))
-
-		# outgoing behavior color
-		outgoing_name = behavior_names[dst_idx]
-		node_color = _get_hex_color(names_and_colors[outgoing_name])
-
+	polylines = [e['polyline'] for e in drawn_edges]
+	placed_centers = []
+	for i, edge in enumerate(drawn_edges):
+		other = [polylines[j] for j in range(len(polylines)) if j != i]
+		label_x, label_y, label_rot = stm_pick_edge_label_position(
+			edge['x1'],
+			edge['y1'],
+			edge['x2'],
+			edge['y2'],
+			edge['rad'],
+			clear_data,
+			node_centers,
+			node_radii,
+			other,
+			placed_centers,
+			label_half_w,
+			label_half_h,
+		)
 		ax.text(
 			label_x,
 			label_y,
-			label,
+			stm_format_edge_label(edge['value'], edge['count']),
 			fontsize=8,
 			ha='center',
 			va='center',
+			rotation=label_rot,
+			rotation_mode='anchor',
 			zorder=4,
 			bbox=dict(
-				boxstyle='round,pad=0.20',
-				facecolor=node_color,
-				edgecolor='black',
-				linewidth=0.8,
-				alpha=0.85
-			)
+				boxstyle='round,pad=%.2f' % _STM_EDGE_LABEL_BBOX_PAD,
+				facecolor='white',
+				edgecolor=_STM_EDGE_LABEL_BBOX_EDGECOLOR,
+				linewidth=_STM_EDGE_LABEL_BBOX_LW,
+				alpha=1.0,
+			),
 		)
+		placed_centers.append((label_x, label_y))
 
-
-	# process each behavior pair once
-	for i in range(len(behavior_names)):
-		for j in range(i + 1, len(behavior_names)):
-
-			value_ij = prob_matrix[i, j] if normalize else count_matrix[i, j]
-			value_ji = prob_matrix[j, i] if normalize else count_matrix[j, i]
-
-			exists_ij = count_matrix[i, j] >= min_count and value_ij > 0
-			exists_ji = count_matrix[j, i] >= min_count and value_ji > 0
-
-			if not exists_ij and not exists_ji:
-				continue
-
-			if exists_ij and exists_ji:
-				draw_directed_edge(i, j, rad=0.28)
-				draw_directed_edge(j, i, rad=0.28)
-
-			elif exists_ij:
-				draw_directed_edge(i, j, rad=0.08)
-
-			elif exists_ji:
-				draw_directed_edge(j, i, rad=0.08)
-
-
-	# optional self-transition edges
-	if include_self:
-		for i, src_name in enumerate(behavior_names):
-
-			raw_count = count_matrix[i, i]
-			edge_value = prob_matrix[i, i] if normalize else raw_count
-
-			if raw_count < min_count or edge_value <= 0:
-				continue
-
-			x, y = positions[src_name]
-
-			loop = FancyArrowPatch(
-				(x + 0.02, y + 0.02),
-				(x + 0.03, y + 0.03),
-				arrowstyle='-|>',
-				mutation_scale=14,
-				linewidth=1.0 + 5.0 * edge_value / max_edge_value,
-				color='black',
-				alpha=0.75,
-				connectionstyle='arc3,rad=0.8',
-				zorder=1
-			)
-			ax.add_patch(loop)
-
-			label = f'{edge_value:.2f}' if normalize else str(int(raw_count))
-			ax.text(
-				x + 0.12,
-				y + 0.12,
-				label,
-				fontsize=8,
-				ha='center',
-				va='center',
-				zorder=4,
-				bbox=dict(
-					boxstyle='round,pad=0.20',
-					facecolor='white',
-					edgecolor='gray',
-					linewidth=0.8,
-					alpha=0.95
-				)
-			)
-
-	# ---------- nodes ----------
-	for idx, behavior_name in enumerate(behavior_names):
-
-		if keep_absent_nodes is False and node_activity[idx] == 0:
-			continue
-
+	for behavior_name in observed:
 		x, y = positions[behavior_name]
-
-		node_size = 900 + 2600 * (node_activity[idx] / max_activity)
-		node_color = _get_hex_color(names_and_colors[behavior_name])
-		node_alpha = 1.0 if node_activity[idx] > 0 else 0.25
-
+		occ = occupancy[behavior_name]
+		node_size = stm_node_marker_size(occ)
+		node_color = stm_get_hex_color(behavior_colors.get(behavior_name, '#4C72B0'))
 		ax.scatter(
 			x,
 			y,
 			s=node_size,
 			c=node_color,
-			alpha=node_alpha,
+			alpha=1.0,
 			edgecolors='black',
 			linewidths=1.5,
-			zorder=5
+			zorder=5,
 		)
-
+		label, fontsize = stm_format_node_label(behavior_name, occ)
 		ax.text(
 			x,
 			y,
-			_split_label(behavior_name),
+			label,
 			ha='center',
 			va='center',
-			fontsize=10,
-			zorder=6
+			multialignment='center',
+			fontsize=fontsize,
+			linespacing=_STM_NODE_LABEL_LINESPACING,
+			zorder=6,
 		)
 
-	title = 'State Transition Map (normalized)' if normalize else 'State Transition Map (counts)'
-	ax.set_title(title, fontsize=16, pad=20)
-
-	output_name = 'state_transition_map_normalized.png' if normalize else 'state_transition_map_counts.png'
-	pad = 0.35
-
-	xs = [positions[b][0] for b in behavior_names]
-	ys = [positions[b][1] for b in behavior_names]
-
-	ax.set_xlim(min(xs) - pad, max(xs) + pad)
-	ax.set_ylim(min(ys) - pad, max(ys) + pad)
-
-	plt.savefig(
-		os.path.join(result_path, output_name),
-		dpi=300,
-		bbox_inches='tight',
-		pad_inches=0.4
+	# Centered two-line title: main + slightly smaller ID line.
+	ax.text(
+		0.5,
+		1.065,
+		'State Transition Map',
+		transform=ax.transAxes,
+		ha='center',
+		va='bottom',
+		fontsize=_STM_TITLE_FONTSIZE,
+		zorder=10,
 	)
-	plt.close()
+	ax.text(
+		0.5,
+		1.012,
+		stm_figure_id_subtitle(animal_id),
+		transform=ax.transAxes,
+		ha='center',
+		va='bottom',
+		fontsize=_STM_TITLE_FONTSIZE * _STM_TITLE_SUBTITLE_SCALE,
+		zorder=10,
+	)
+	# Compact legend in a free corner (axes-fraction; outside layout radius).
+	ax.text(
+		0.02,
+		0.02,
+		_STM_LEGEND_TEXT,
+		transform=ax.transAxes,
+		ha='left',
+		va='bottom',
+		fontsize=_STM_LEGEND_FONTSIZE,
+		color='#444444',
+		linespacing=1.35,
+		zorder=9,
+		bbox=dict(
+			boxstyle='round,pad=0.40',
+			facecolor='white',
+			edgecolor='#cccccc',
+			linewidth=0.4,
+			alpha=0.92,
+		),
+	)
+	plt.savefig(
+		os.path.join(animal_dir, 'state_transition_map.png'),
+		dpi=dpi,
+		bbox_inches='tight',
+		pad_inches=0.4,
+	)
+	plt.close(fig)
 
-	print('The state transition map stored in: ' + str(result_path))
+
+def plot_state_transition_map(
+	stm_dir,
+	event_probability,
+	behavior_to_include,
+	behavior_colors=None,
+	input_path=None,
+	excluded_behaviors=None,
+	draw_maps=True,
+	map_dpi=300,
+):
+	'''
+	Generate one State Transition Map package per animal (V1 product).
+
+	stm_dir: stable results folder
+	  <parent>/state_transition_map/
+	event_probability: animal_id -> list of [hard_label, probability]
+	behavior_to_include: included behavior names after exclusions
+	behavior_colors: optional session dict behavior -> hex (not persisted)
+
+	Returns a result dict for the GUI:
+	  status: 'success' | 'warning_partial' | 'warning_no_maps' | 'error'
+	  maps_written, empty_animals, ok_animals, stm_dir,
+	  animal_statuses, message, ...
+	'''
+	print('Exporting state transition maps (per animal)...')
+	print(datetime.datetime.now())
+
+	if behavior_to_include is None or behavior_to_include == ['all']:
+		included = []
+		if behavior_colors:
+			included = list(behavior_colors.keys())
+		else:
+			seen = set()
+			for animal_id in event_probability:
+				for event in event_probability[animal_id]:
+					name = event[0] if isinstance(event, (list, tuple)) and event else 'NA'
+					if name != 'NA':
+						seen.add(name)
+			included = sorted(seen)
+	else:
+		included = list(behavior_to_include)
+
+	if len(included) == 0:
+		return {
+			'status': 'error',
+			'maps_written': 0,
+			'empty_animals': 0,
+			'ok_animals': 0,
+			'stm_dir': stm_dir,
+			'animal_statuses': {},
+			'message': 'No behaviors remain after exclusion.',
+			'preserved_stale_animal_folders': [],
+		}
+
+	os.makedirs(stm_dir, exist_ok=True)
+	colors = stm_session_colors(included, existing_colors=behavior_colors)
+
+	# ----- pass 1: compute per-animal metrics -----
+	computed = {}
+	animal_statuses = {}
+	union_observed = set()
+	folder_by_id = {}
+
+	for animal_id in event_probability:
+		folder = stm_safe_animal_folder_name(animal_id)
+		folder_by_id[animal_id] = folder
+		hard = stm_hard_labels(event_probability[animal_id])
+		metrics = stm_compute_animal_metrics(hard, included)
+		computed[animal_id] = metrics
+		animal_statuses[animal_id] = metrics['status']
+		if metrics['status'] == 'ok':
+			union_observed.update(metrics['observed_behaviors'])
+
+	# ----- stale cleanup -----
+	preserved_stale_animals = stm_cleanup_obsolete_artifacts(
+		stm_dir, set(folder_by_id.values())
+	)
+
+	# Fresh deterministic layout every run (no disk persistence).
+	ordered_union = sorted(union_observed)
+	positions = stm_circular_layout(ordered_union)
+
+	# ----- pass 2: write packages / draw -----
+	maps_written = 0
+	empty_animals = 0
+	ok_animals = 0
+
+	for animal_id in event_probability:
+		metrics = computed[animal_id]
+		animal_dir = os.path.join(stm_dir, folder_by_id[animal_id])
+		os.makedirs(animal_dir, exist_ok=True)
+
+		if metrics['status'] == 'empty':
+			empty_animals += 1
+			stm_clear_animal_metric_files(animal_dir)
+			pd.DataFrame(
+				[{
+					'animal_id': animal_id,
+					'status': 'empty',
+					'included_frame_total': 0,
+					'bout_total': 0,
+					'transition_total': 0,
+					'note': 'No included behavior frames for this animal.',
+				}]
+			).to_excel(
+				os.path.join(animal_dir, 'state_transition_summary.xlsx'),
+				index=False,
+			)
+			continue
+
+		ok_animals += 1
+		observed = metrics['observed_behaviors']
+		metrics['count_matrix'].to_excel(
+			os.path.join(animal_dir, 'state_transition_counts.xlsx'),
+			index_label='from/to',
+		)
+		metrics['probability_matrix'].to_excel(
+			os.path.join(animal_dir, 'state_transition_probabilities.xlsx'),
+			float_format='%.6f',
+			index_label='from/to',
+		)
+		occ_rows = []
+		for b in observed:
+			occ_rows.append({
+				'behavior': b,
+				'frame_count': metrics['frame_counts'][b],
+				'occupancy': metrics['occupancy'][b],
+			})
+		pd.DataFrame(occ_rows).to_excel(
+			os.path.join(animal_dir, 'state_behavior_occupancy.xlsx'),
+			float_format='%.6f',
+			index=False,
+		)
+		undefined_sources = []
+		for b in observed:
+			row_sum = int(metrics['count_matrix'].loc[b].sum())
+			if row_sum == 0:
+				undefined_sources.append(b)
+		pd.DataFrame(
+			[{
+				'animal_id': animal_id,
+				'status': 'ok',
+				'included_frame_total': metrics['included_frame_total'],
+				'bout_total': metrics['bout_total'],
+				'transition_total': metrics['transition_total'],
+				'observed_behaviors': ','.join(observed),
+				'undefined_probability_rows': ','.join(undefined_sources),
+			}]
+		).to_excel(
+			os.path.join(animal_dir, 'state_transition_summary.xlsx'),
+			index=False,
+		)
+
+		if draw_maps:
+			animal_positions = {b: positions[b] for b in observed}
+			_stm_draw_animal_map(
+				animal_dir,
+				animal_id,
+				metrics,
+				animal_positions,
+				colors,
+				dpi=map_dpi,
+			)
+		maps_written += 1
+
+	# run summary
+	summary_rows = []
+	for animal_id, status in animal_statuses.items():
+		summary_rows.append({
+			'animal_id': animal_id,
+			'status': status,
+			'folder': folder_by_id[animal_id],
+			'input_path': str(input_path) if input_path else '',
+			'excluded_behaviors': ';'.join(excluded_behaviors or []),
+			'included_behaviors': ';'.join(included),
+			'maps_written_total': None,
+			'empty_animals_total': None,
+			'preserved_stale_animal_folders': None,
+		})
+	if summary_rows:
+		summary_rows[0]['maps_written_total'] = maps_written
+		summary_rows[0]['empty_animals_total'] = empty_animals
+		summary_rows[0]['preserved_stale_animal_folders'] = ';'.join(
+			preserved_stale_animals
+		) if preserved_stale_animals else ''
+	elif preserved_stale_animals:
+		summary_rows.append({
+			'animal_id': '',
+			'status': 'note',
+			'folder': '',
+			'input_path': str(input_path) if input_path else '',
+			'excluded_behaviors': ';'.join(excluded_behaviors or []),
+			'included_behaviors': ';'.join(included),
+			'maps_written_total': maps_written,
+			'empty_animals_total': empty_animals,
+			'preserved_stale_animal_folders': ';'.join(preserved_stale_animals),
+		})
+	pd.DataFrame(summary_rows).to_excel(
+		os.path.join(stm_dir, 'run_summary.xlsx'),
+		index=False,
+	)
+
+	if maps_written == 0:
+		status = 'warning_no_maps'
+		message = (
+			'No included behavior frames were available for any animal. '
+			'No maps were generated. Run summary written to:\n' + str(stm_dir)
+		)
+	elif empty_animals > 0:
+		status = 'warning_partial'
+		message = (
+			'Generated maps for {ok} animal(s); {empty} animal(s) had no included frames '
+			'(summary only).\nResults updated in:\n{path}'
+		).format(ok=maps_written, empty=empty_animals, path=stm_dir)
+	else:
+		status = 'success'
+		message = (
+			'Generated maps for {ok} animal(s).\nResults updated in:\n{path}'
+		).format(ok=maps_written, path=stm_dir)
+
+	if preserved_stale_animals:
+		message = (
+			message
+			+ '\nPreserved stale animal folder(s) with non-STM content: '
+			+ ', '.join(preserved_stale_animals)
+		)
+
+	print(message)
+	print('The state transition maps are stored in: ' + str(stm_dir))
+
+	return {
+		'status': status,
+		'maps_written': maps_written,
+		'empty_animals': empty_animals,
+		'ok_animals': ok_animals,
+		'stm_dir': stm_dir,
+		'animal_statuses': animal_statuses,
+		'message': message,
+		'behavior_colors': colors,
+		'positions': positions,
+		'metrics': computed,
+		'preserved_stale_animal_folders': list(preserved_stale_animals),
+	}
 
 def extract_frames(path_to_video,out_path,framewidth=None,start_t=0,duration=0,skip_redundant=1000):
 
