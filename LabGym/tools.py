@@ -1040,11 +1040,37 @@ def stm_figure_id_subtitle(animal_id):
 	return 'ID ' + str(animal_id)
 
 
+# Default fills must be either dark (L <= 0.15, white text >= 4.5:1) or
+# light (L >= 0.28, black text >= 4.5:1); no mid-band defaults (0.15 < L < 0.28).
+_STM_DEFAULT_COLOR_PALETTE = (
+	# Light band (auto black text)
+	'#6B9FE0',
+	'#DD8452',
+	'#55A868',
+	'#E57373',
+	'#DA8BC3',
+	'#64B5CD',
+	'#CCB974',
+	'#90CAF9',
+	'#A5D6A7',
+	'#FFAB91',
+	# Dark band (auto white text)
+	'#0D47A1',
+	'#1B5E20',
+	'#B71C1C',
+	'#4A148C',
+	'#006064',
+)
+
+
+def stm_default_color_palette():
+	'''Return the curated default behavior-color palette.'''
+	return _STM_DEFAULT_COLOR_PALETTE
+
+
 def stm_default_behavior_color(behavior_name, index=0):
 	'''Deterministic default hex color for a behavior name.'''
-	import matplotlib as mpl
-
-	palette = list(mpl.colors.cnames.values())
+	palette = stm_default_color_palette()
 	if not palette:
 		return '#4C72B0'
 	# Prefer index when provided; fall back to stable hash for unknown order.
@@ -1062,6 +1088,41 @@ def stm_get_hex_color(color_info):
 	if isinstance(color_info, str) and color_info.startswith('#') and len(color_info) == 7:
 		return color_info
 	return '#4C72B0'
+
+
+def stm_hex_to_rgb01(hex_color):
+	'''Convert #RRGGBB to RGB floats in [0, 1].'''
+	h = stm_get_hex_color(hex_color).lstrip('#')
+	return tuple(int(h[i:i + 2], 16) / 255.0 for i in (0, 2, 4))
+
+
+def stm_relative_luminance(hex_color):
+	'''WCAG relative luminance for a hex color.'''
+	def channel(c):
+		return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
+
+	r, g, b = stm_hex_to_rgb01(hex_color)
+	return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
+
+
+def stm_contrast_ratio(color_a, color_b):
+	'''WCAG contrast ratio between two hex colors.'''
+	l1 = stm_relative_luminance(color_a)
+	l2 = stm_relative_luminance(color_b)
+	lighter = max(l1, l2)
+	darker = min(l1, l2)
+	return (lighter + 0.05) / (darker + 0.05)
+
+
+def stm_node_label_color(hex_color):
+	'''
+	Choose black or white node-label text for readable contrast on fill.
+
+	Uses WCAG luminance cut at 0.179 (maximizes contrast vs #000 / #FFF).
+	'''
+	if stm_relative_luminance(hex_color) < 0.179:
+		return '#FFFFFF'
+	return '#000000'
 
 
 def stm_hard_labels(events):
@@ -1222,31 +1283,97 @@ _STM_NODE_SIZE_MIN = 2000.0   # scatter marker area; floor for legibility
 _STM_NODE_SIZE_SPAN = 2800.0  # extra area at full occupancy
 _STM_EDGE_LW_MIN = 0.7
 _STM_EDGE_LW_SPAN = 3.2       # previous max ~8.4 (0.4 + 8*sqrt); compressed
-_STM_EDGE_SHRINK = 54         # previous 38; clear space outside nodes
-_STM_EDGE_MUTATION_SCALE = 22 # arrowhead size (linewidth independent)
-_STM_EDGE_RAD_SINGLE = 0.08   # mild curve for one-direction edges
-_STM_EDGE_RAD_BIDIR = 0.40    # stronger opposite bow for A↔B pairs
-_STM_FIGSIZE = (11.5, 11.5)
+_STM_EDGE_SHRINK_PAD = 4.0    # points beyond node radius for endpoint trim
+_STM_EDGE_MUTATION_SCALE = 28 # arrowhead size (linewidth independent)
+_STM_EDGE_RAD_SINGLE = 0.12   # mild curve for one-direction edges
+_STM_EDGE_RAD_BIDIR = 0.48    # stronger opposite bow for A↔B pairs
+_STM_FIGSIZE_MAP = 11.5       # square map axes reference size (inches)
 _STM_VIEW_PAD = 0.52          # data-space margin around fixed circular layout
-# Edge-label placement (tangent-aligned, clamp-limited rotation; offset beside curve).
+# Obstacle-aware Arc3 routing.
+_STM_ROUTE_SAMPLE_N = 48
+_STM_ROUTE_NODE_PAD_PT = 2.0
+# Reasonable Arc3 magnitudes only (no extreme bows just to dodge nodes).
+_STM_ROUTE_INITIAL_MAGS = (0.12, 0.20, 0.28, 0.36, 0.48)
+_STM_ROUTE_REASONABLE_MAX = 0.48
+# Bounds↔route reselection iterations (bounded deterministic convergence).
+_STM_ROUTE_CONVERGENCE_MAX = 3
+_STM_ROUTE_LIMIT_EPS = 1e-9
+# Final selected geometry must fit active axes (data units).
+_STM_ROUTE_BOUNDS_FIT_TOL = 1e-6
+# Minimum t-width for a detected pass-behind crossing (never drop micro-hits).
+_STM_PASS_BEHIND_MIN_INTERVAL_DT = 1.0 / float(_STM_ROUTE_SAMPLE_N)
+_STM_PASS_BEHIND_DASH_PT = 7.0   # dashed approach/exit length in typographic points
+_STM_PASS_BEHIND_LEGEND = 'Dashed segment = edge passes behind a node.'
+_STM_PASS_BEHIND_ZORDER = 1.5
+# Edge-label placement / callout fallback.
 _STM_EDGE_LABEL_T = 0.55              # preferred fraction along curve (~50–60%)
-_STM_EDGE_LABEL_OFFSET_PX = 26.0      # farther beside the stroke (~+8 px from prior 18)
 _STM_EDGE_LABEL_MAX_ROTATION = 22.0   # restrained clamp (~±20–25°) for readability
 _STM_EDGE_LABEL_BBOX_PAD = 0.48
 _STM_EDGE_LABEL_BBOX_EDGECOLOR = '#555555'
 _STM_EDGE_LABEL_BBOX_LW = 0.5
-_STM_EDGE_LABEL_T_CANDIDATES = (0.55, 0.50, 0.60, 0.45, 0.65)
+_STM_EDGE_LABEL_FONTSIZE = 8.0
+# Single-line on-map format: "T5 · 0.89 (8)" (U+00B7 middle dot with spaces).
+_STM_EDGE_LABEL_MIDDOT = ' \u00b7 '
+_STM_EDGE_LABEL_T_CANDIDATES = (0.55, 0.50, 0.60, 0.45, 0.65, 0.40, 0.70)
+_STM_LABEL_MIN_CLEARANCE_PT = 5.0
+_STM_CALLOUT_PERP_PT = (8.0, 12.0, 16.0, 22.0)
+_STM_CALLOUT_ALONG_PT = (0.0, -4.0, 4.0, -8.0, 8.0)
+_STM_EDGE_CASING_EXTRA = 2.2          # white underlay wider than black stroke (pt)
+_STM_EDGE_CASING_ZORDER = 1
+_STM_EDGE_FOREGROUND_ZORDER = 2
 _STM_TITLE_FONTSIZE = 16.0
 _STM_TITLE_SUBTITLE_SCALE = 0.875     # ~87.5% of main title size
 _STM_LEGEND_FONTSIZE = 7.5
+_STM_KEY_FONTSIZE = 8.5
+_STM_KEY_TITLE_FONTSIZE = 10.0
+_STM_KEY_LINE_SPACING = 1.20
+_STM_KEY_GAP_PT = 3.0
+_STM_KEY_TOP_MARGIN_PT = 4.0
+_STM_KEY_BOTTOM_MARGIN_PT = 6.0
+_STM_KEY_EXPLAIN = 'Values show: transition probability (count)'
 _STM_LEGEND_TEXT = (
 	'Node size = time spent in each behavior\n'
 	'            (% of included frames)\n'
 	'Edge width = probability of transitioning\n'
 	'             to the next behavior\n'
-	'Edge label = transition probability\n'
-	'             (number of observed transitions)'
+	'Edge label = T# and probability (count)\n'
+	'Transition key lists each T# below'
 )
+
+
+def _stm_expand_micro_interval(t_enter, t_exit, min_dt):
+	'''Expand a near-zero [t_enter, t_exit] to at least min_dt, clamped to [0, 1].'''
+	t_enter = float(t_enter)
+	t_exit = float(t_exit)
+	if t_exit < t_enter:
+		t_enter, t_exit = t_exit, t_enter
+	min_dt = max(float(min_dt), 1e-9)
+	width = t_exit - t_enter
+	if width + 1e-12 >= min_dt:
+		return max(0.0, t_enter), min(1.0, t_exit)
+	mid = 0.5 * (t_enter + t_exit)
+	half = 0.5 * min_dt
+	t_enter = mid - half
+	t_exit = mid + half
+	if t_enter < 0.0:
+		t_enter = 0.0
+		t_exit = min(1.0, t_enter + min_dt)
+	elif t_exit > 1.0:
+		t_exit = 1.0
+		t_enter = max(0.0, t_exit - min_dt)
+	return t_enter, t_exit
+
+
+def stm_marker_radius_points(marker_size):
+	'''Scatter marker radius in typographic points from marker area s.'''
+	return 0.5 * math.sqrt(max(float(marker_size), 1.0))
+
+
+def stm_edge_shrink_points(marker_size, pad=None):
+	'''FancyArrowPatch shrink (points) so the path meets the node boundary.'''
+	if pad is None:
+		pad = _STM_EDGE_SHRINK_PAD
+	return stm_marker_radius_points(marker_size) + float(pad)
 
 
 def stm_arc3_quadratic_control(x1, y1, x2, y2, rad):
@@ -1279,25 +1406,44 @@ def stm_arc3_point_and_tangent(x1, y1, x2, y2, rad, t):
 	return px, py, tx / tlen, ty / tlen
 
 
-def stm_arc3_bulge_normal(x1, y1, x2, y2, rad, tx, ty):
-	'''Unit normal pointing toward the Arc3 bulge (same side as the curve).'''
-	nx, ny = -ty, tx
-	cx, cy = stm_arc3_quadratic_control(x1, y1, x2, y2, rad)
-	mid_x = (x1 + x2) / 2.0
-	mid_y = (y1 + y2) / 2.0
-	bulge_x = cx - mid_x
-	bulge_y = cy - mid_y
-	if bulge_x * bulge_x + bulge_y * bulge_y > 1e-18:
-		if nx * bulge_x + ny * bulge_y < 0.0:
-			nx, ny = -nx, -ny
-	return nx, ny
+def stm_arc3_point_at_arclength(x1, y1, x2, y2, rad, target_len, from_end=False, n=64):
+	'''
+	Point on an Arc3 curve after traveling target_len along the polyline sample.
+
+	When from_end is True, travel backward from the destination.
+	'''
+	pts = []
+	for i in range(n + 1):
+		t = i / float(n)
+		px, py, _, _ = stm_arc3_point_and_tangent(x1, y1, x2, y2, rad, t)
+		pts.append((px, py, t))
+	if from_end:
+		pts = list(reversed(pts))
+	traveled = 0.0
+	for i in range(len(pts) - 1):
+		x_a, y_a, _ = pts[i]
+		x_b, y_b, t_b = pts[i + 1]
+		seg = math.hypot(x_b - x_a, y_b - y_a)
+		if traveled + seg >= float(target_len):
+			remain = float(target_len) - traveled
+			if seg < 1e-18:
+				return x_a, y_a, pts[i][2]
+			u = remain / seg
+			return (
+				x_a + u * (x_b - x_a),
+				y_a + u * (y_b - y_a),
+				t_b,
+			)
+		traveled += seg
+	x_last, y_last, t_last = pts[-1]
+	return x_last, y_last, t_last
 
 
 def stm_edge_label_rotation(tx, ty, max_deg=None):
 	'''
 	Rotation (degrees) that follows the edge tangent but stays readable.
 
-	Forces upright text (never upside down), then clamps to ±max_deg.
+	Forces upright text (never upside down), then clamps to +/- max_deg.
 	'''
 	if max_deg is None:
 		max_deg = _STM_EDGE_LABEL_MAX_ROTATION
@@ -1315,24 +1461,17 @@ def stm_edge_label_rotation(tx, ty, max_deg=None):
 	return angle
 
 
-def stm_edge_label_placement(x1, y1, x2, y2, rad, t=None, clear=None, side=1):
+def stm_edge_label_placement(x1, y1, x2, y2, rad, t=None):
 	'''
-	Anchor an edge label beside its Arc3 curve with clamped tangent rotation.
+	Anchor an edge label directly on its Arc3 curve (zero perpendicular offset).
 
-	``clear`` is a data-space perpendicular offset (caller converts pixel offset).
-	``side``: +1 = bulge side (preferred), -1 = opposite side.
-	Returns (label_x, label_y, rotation_deg) with |rotation| ≤ max clamp.
+	Collision handling may only vary ``t``. Returns (label_x, label_y,
+	rotation_deg) with |rotation| <= max clamp.
 	'''
 	if t is None:
 		t = _STM_EDGE_LABEL_T
-	if clear is None:
-		clear = 0.06
 	px, py, tx, ty = stm_arc3_point_and_tangent(x1, y1, x2, y2, rad, t)
-	nx, ny = stm_arc3_bulge_normal(x1, y1, x2, y2, rad, tx, ty)
-	s = 1.0 if float(side) >= 0 else -1.0
-	label_x = px + s * float(clear) * nx
-	label_y = py + s * float(clear) * ny
-	return label_x, label_y, stm_edge_label_rotation(tx, ty)
+	return px, py, stm_edge_label_rotation(tx, ty)
 
 
 def _stm_data_units_per_display_pixel(ax):
@@ -1345,12 +1484,14 @@ def _stm_data_units_per_display_pixel(ax):
 	return 1.0 / dist
 
 
+def _stm_data_units_per_point(ax):
+	'''Approximate data units per typographic point on equal-aspect axes.'''
+	return _stm_data_units_per_display_pixel(ax) * (float(ax.figure.dpi) / 72.0)
+
+
 def _stm_node_radius_data(ax, marker_size):
 	'''Approximate scatter-marker radius in data units.'''
-	# scatter s is area in points^2; half-width ≈ 0.5 * sqrt(s) points.
-	r_pts = 0.5 * math.sqrt(max(float(marker_size), 1.0))
-	r_disp = r_pts * (float(ax.figure.dpi) / 72.0)
-	return r_disp * _stm_data_units_per_display_pixel(ax)
+	return stm_marker_radius_points(marker_size) * _stm_data_units_per_point(ax)
 
 
 def _stm_sample_arc3_polyline(x1, y1, x2, y2, rad, n=18):
@@ -1383,13 +1524,599 @@ def _stm_min_dist_to_polyline(x, y, polyline):
 	return best
 
 
+def stm_visible_edge_halfwidth_pt(linewidth_pt):
+	'''Outer half-width of the white casing (foreground + casing extra).'''
+	return 0.5 * (float(linewidth_pt) + _STM_EDGE_CASING_EXTRA)
+
+
+def stm_edge_halfwidth_data(ax, halfwidth_pt):
+	'''Convert a stroke half-width in typographic points to data units.'''
+	return float(halfwidth_pt) * _stm_data_units_per_point(ax)
+
+
+def _stm_rad_sign(rad):
+	if float(rad) < 0.0:
+		return -1
+	return 1
+
+
+def _stm_unordered_pair_key(src, dst):
+	return tuple(sorted((src, dst)))
+
+
+def stm_route_node_clearance(
+	polyline,
+	obstacle_centers,
+	obstacle_radii,
+	half_width_data,
+	pad_data,
+):
+	'''
+	Minimum clearance of a sampled curve against non-endpoint node obstacles.
+
+	Clearance uses complete visible casing half-width plus node radius and pad.
+	'''
+	if not obstacle_centers:
+		return float('inf')
+	best = float('inf')
+	hw = float(half_width_data)
+	pad = float(pad_data)
+	for px, py in polyline:
+		for name, (nx, ny) in obstacle_centers.items():
+			r = float(obstacle_radii.get(name, 0.0)) + hw + pad
+			clearance = math.hypot(px - nx, py - ny) - r
+			if clearance < best:
+				best = clearance
+	return best
+
+
+def _stm_orient(ax, ay, bx, by, cx, cy):
+	return (bx - ax) * (cy - ay) - (by - ay) * (cx - ax)
+
+
+def _stm_segments_proper_intersect(a, b, c, d):
+	'''True when open segments ab and cd properly cross (not shared endpoints).'''
+	ax, ay = a
+	bx, by = b
+	cx, cy = c
+	dx, dy = d
+	o1 = _stm_orient(ax, ay, bx, by, cx, cy)
+	o2 = _stm_orient(ax, ay, bx, by, dx, dy)
+	o3 = _stm_orient(cx, cy, dx, dy, ax, ay)
+	o4 = _stm_orient(cx, cy, dx, dy, bx, by)
+	if o1 == 0 or o2 == 0 or o3 == 0 or o4 == 0:
+		return False
+	return (o1 > 0) != (o2 > 0) and (o3 > 0) != (o4 > 0)
+
+
+def stm_polyline_segment_intersections(poly_a, poly_b):
+	'''Count proper open-segment crossings between two polylines.'''
+	if not poly_a or not poly_b:
+		return 0
+	count = 0
+	for i in range(len(poly_a) - 1):
+		for j in range(len(poly_b) - 1):
+			if _stm_segments_proper_intersect(
+				poly_a[i],
+				poly_a[i + 1],
+				poly_b[j],
+				poly_b[j + 1],
+			):
+				count += 1
+	return count
+
+
+def stm_edge_route_signed_rads(magnitudes):
+	'''Expand magnitude list into fixed-order signed rad candidates (+m, -m).'''
+	seen = set()
+	out = []
+	for mag in magnitudes:
+		m = abs(float(mag))
+		if m < 1e-12 or m > _STM_ROUTE_REASONABLE_MAX + 1e-12:
+			continue
+		for signed in (m, -m):
+			key = round(signed, 12)
+			if key in seen:
+				continue
+			seen.add(key)
+			out.append(signed)
+	return out
+
+
+def stm_edge_route_reasonable_rads(seed_magnitude):
+	'''Reasonable curvature candidates only (seed magnitude + mild ladder).'''
+	mags = [abs(float(seed_magnitude))]
+	for m in _STM_ROUTE_INITIAL_MAGS:
+		if abs(float(m) - mags[0]) > 1e-12:
+			mags.append(float(m))
+	return stm_edge_route_signed_rads(mags)
+
+
+def stm_route_crossed_nodes(
+	polyline,
+	obstacle_centers,
+	obstacle_radii,
+	half_width_data,
+	pad_data,
+):
+	'''Names of unrelated nodes whose reserved disk is hit by the polyline.'''
+	crossed = []
+	hw = float(half_width_data)
+	pad = float(pad_data)
+	for name, (nx, ny) in sorted(obstacle_centers.items()):
+		r = float(obstacle_radii.get(name, 0.0)) + hw + pad
+		for px, py in polyline:
+			if math.hypot(px - nx, py - ny) < r:
+				crossed.append(name)
+				break
+	return crossed
+
+
+def stm_route_obstacle_t_intervals(
+	x1,
+	y1,
+	x2,
+	y2,
+	rad,
+	obstacle_centers,
+	obstacle_radii,
+	half_width_data,
+	pad_data,
+	n=None,
+):
+	'''
+	List of (node_name, t_enter, t_exit) for curve segments inside obstacle disks.
+
+	Intervals sorted by t_enter; multiple unrelated nodes are supported.
+	Single-sample / near-zero hits are expanded to a minimum t-width so
+	pass-behind hide+dash never drops a detected crossing.
+	'''
+	if n is None:
+		n = _STM_ROUTE_SAMPLE_N * 2
+	hw = float(half_width_data)
+	pad = float(pad_data)
+	# At least one sample step and the global minimum hide window.
+	min_dt = max(_STM_PASS_BEHIND_MIN_INTERVAL_DT, 1.0 / float(max(n, 1)))
+	intervals = []
+	for name, (nx, ny) in sorted(obstacle_centers.items()):
+		r = float(obstacle_radii.get(name, 0.0)) + hw + pad
+		inside = []
+		for i in range(n + 1):
+			t = i / float(n)
+			px, py, _, _ = stm_arc3_point_and_tangent(x1, y1, x2, y2, rad, t)
+			inside.append(math.hypot(px - nx, py - ny) < r)
+		i = 0
+		while i <= n:
+			if not inside[i]:
+				i += 1
+				continue
+			start = i
+			while i <= n and inside[i]:
+				i += 1
+			t_enter = start / float(n)
+			t_exit = (i - 1) / float(n)
+			t_enter, t_exit = _stm_expand_micro_interval(t_enter, t_exit, min_dt)
+			intervals.append((name, t_enter, t_exit))
+	intervals.sort(key=lambda item: item[1])
+	return intervals
+
+
+def stm_pass_behind_path_pieces(
+	x1,
+	y1,
+	x2,
+	y2,
+	rad,
+	intervals,
+	dash_delta_t,
+	n=None,
+):
+	'''
+	Split an Arc3 into solid / dashed pieces around pass-behind intervals.
+
+	For each crossing: solid ... [dash approach] [hidden under node]
+	[dash exit] solid ...
+	'''
+	if n is None:
+		n = _STM_ROUTE_SAMPLE_N * 2
+	dash = max(float(dash_delta_t), 1e-4)
+	# Collect hidden ranges and dash ranges along t in [0, 1].
+	hidden = []
+	dash_spans = []
+	for _name, t_enter, t_exit in intervals:
+		hidden.append((t_enter, t_exit))
+		dash_spans.append((max(0.0, t_enter - dash), t_enter))
+		dash_spans.append((t_exit, min(1.0, t_exit + dash)))
+
+	def covered(t, spans):
+		for a, b in spans:
+			if a - 1e-12 <= t <= b + 1e-12:
+				return True
+		return False
+
+	# Sample and classify.
+	samples = []
+	for i in range(n + 1):
+		t = i / float(n)
+		px, py, _, _ = stm_arc3_point_and_tangent(x1, y1, x2, y2, rad, t)
+		if covered(t, hidden):
+			kind = 'hidden'
+		elif covered(t, dash_spans):
+			kind = 'dash'
+		else:
+			kind = 'solid'
+		samples.append((t, px, py, kind))
+
+	pieces = []
+	run = []
+	run_kind = None
+	for t, px, py, kind in samples:
+		if kind == 'hidden':
+			if run:
+				pieces.append({'style': run_kind, 'points': run})
+				run = []
+				run_kind = None
+			continue
+		if run_kind is None:
+			run_kind = kind
+			run = [(px, py)]
+		elif kind == run_kind:
+			run.append((px, py))
+		else:
+			pieces.append({'style': run_kind, 'points': run})
+			run_kind = kind
+			run = [(px, py)]
+	if run:
+		pieces.append({'style': run_kind, 'points': run})
+	return pieces
+
+
+def stm_select_edge_route(
+	x1,
+	y1,
+	x2,
+	y2,
+	src,
+	dst,
+	seed_magnitude,
+	node_centers,
+	node_radii,
+	half_width_data,
+	pad_data,
+	selected_polylines,
+	paired_sign=None,
+	diag_context='',
+):
+	'''
+	Select a reasonable Arc3 rad for a directed transition.
+
+	Prefers fully clear routes (casing-aware) ranked by fewer intersections,
+	milder |rad|, greater clearance, then ladder index. If no clear reasonable
+	route exists, returns the best deterministic fallback with pass_behind=True
+	(never raises).
+	'''
+	del diag_context  # retained for call-site compatibility
+	obstacles = {
+		name: center
+		for name, center in node_centers.items()
+		if name != src and name != dst
+	}
+	obst_radii = {
+		name: float(node_radii.get(name, 0.0)) for name in obstacles
+	}
+	rad_list = stm_edge_route_reasonable_rads(seed_magnitude)
+
+	def evaluate_all():
+		scored = []
+		for idx, rad in enumerate(rad_list):
+			polyline = _stm_sample_arc3_polyline(
+				x1, y1, x2, y2, rad, n=_STM_ROUTE_SAMPLE_N,
+			)
+			clearance = stm_route_node_clearance(
+				polyline,
+				obstacles,
+				obst_radii,
+				half_width_data,
+				pad_data,
+			)
+			intersections = 0
+			for other in selected_polylines:
+				intersections += stm_polyline_segment_intersections(
+					polyline, other,
+				)
+			scored.append({
+				'rad': float(rad),
+				'polyline': polyline,
+				'clearance': float(clearance),
+				'intersections': int(intersections),
+				'index': idx,
+			})
+		return scored
+
+	def rank_pick(candidates, reciprocal_side_relaxed, pass_behind):
+		best = min(
+			candidates,
+			key=lambda c: (
+				c['intersections'],
+				abs(c['rad']),
+				-c['clearance'],
+				c['index'],
+			),
+		)
+		crossed = []
+		if pass_behind:
+			crossed = stm_route_crossed_nodes(
+				best['polyline'],
+				obstacles,
+				obst_radii,
+				half_width_data,
+				pad_data,
+			)
+		return {
+			'rad': best['rad'],
+			'polyline': best['polyline'],
+			'clearance': best['clearance'],
+			'intersections': best['intersections'],
+			'reciprocal_side_relaxed': bool(reciprocal_side_relaxed),
+			'pass_behind': bool(pass_behind),
+			'crossed_nodes': crossed,
+		}
+
+	def filter_reciprocal(candidates):
+		if paired_sign is None:
+			return candidates, False
+		same_sign = [
+			c for c in candidates
+			if _stm_rad_sign(c['rad']) == int(paired_sign)
+		]
+		if same_sign:
+			return same_sign, False
+		return candidates, True
+
+	all_scored = evaluate_all()
+	if not all_scored:
+		# Degenerate seed path (should not happen with non-empty ladder).
+		polyline = _stm_sample_arc3_polyline(
+			x1, y1, x2, y2, float(seed_magnitude) or _STM_EDGE_RAD_SINGLE,
+			n=_STM_ROUTE_SAMPLE_N,
+		)
+		return {
+			'rad': float(seed_magnitude) or _STM_EDGE_RAD_SINGLE,
+			'polyline': polyline,
+			'clearance': 0.0,
+			'intersections': 0,
+			'reciprocal_side_relaxed': False,
+			'pass_behind': False,
+			'crossed_nodes': [],
+		}
+
+	clear = [c for c in all_scored if c['clearance'] >= 0.0]
+	if clear:
+		pool, relaxed = filter_reciprocal(clear)
+		return rank_pick(pool, relaxed, pass_behind=False)
+
+	# No clear reasonable route: pass-behind fallback (never extreme rads).
+	pool, relaxed = filter_reciprocal(all_scored)
+	return rank_pick(pool, relaxed, pass_behind=True)
+
+
+def stm_route_bounds_from_geometry(positions, observed, polylines, half_widths_data):
+	'''Data limits enclosing nodes and route samples padded by casing half-width.'''
+	xs = [positions[b][0] for b in observed]
+	ys = [positions[b][1] for b in observed]
+	xmin, xmax = min(xs), max(xs)
+	ymin, ymax = min(ys), max(ys)
+	for poly, half_w in zip(polylines, half_widths_data):
+		pad = float(half_w)
+		for px, py in poly:
+			xmin = min(xmin, px - pad)
+			xmax = max(xmax, px + pad)
+			ymin = min(ymin, py - pad)
+			ymax = max(ymax, py + pad)
+	return (
+		xmin - _STM_VIEW_PAD,
+		xmax + _STM_VIEW_PAD,
+		ymin - _STM_VIEW_PAD,
+		ymax + _STM_VIEW_PAD,
+	)
+
+
+def stm_collect_reasonable_route_polylines(ordered_edges, positions, count_df):
+	'''
+	Every deterministic reasonable Arc3 polyline for each transition edge.
+
+	Used for conservative bounds envelopes when select/bounds iteration
+	does not converge. Order is by edge list then rad ladder index.
+	'''
+	polylines = []
+	halfwidth_pts = []
+	for edge in ordered_edges:
+		src = edge['src']
+		dst = edge['dst']
+		x1, y1 = positions[src]
+		x2, y2 = positions[dst]
+		seed = stm_edge_rad(src, dst, count_df)
+		lw = float(edge.get('linewidth', _STM_EDGE_LW_MIN))
+		hw_pt = stm_visible_edge_halfwidth_pt(lw)
+		for rad in stm_edge_route_reasonable_rads(seed):
+			polylines.append(
+				_stm_sample_arc3_polyline(
+					x1, y1, x2, y2, rad, n=_STM_ROUTE_SAMPLE_N,
+				)
+			)
+			halfwidth_pts.append(hw_pt)
+	return polylines, halfwidth_pts
+
+
+def stm_route_conservative_envelope_bounds(
+	positions,
+	observed,
+	ordered_edges,
+	count_df,
+	units_per_point,
+	current_limits=None,
+):
+	'''
+	Deterministic axes bounds covering every reasonable route candidate plus
+	visible casing (scaled if the envelope grows the data span vs current limits).
+	'''
+	polylines, halfwidth_pts = stm_collect_reasonable_route_polylines(
+		ordered_edges, positions, count_df,
+	)
+	if not polylines:
+		# Nodes only (no transitions).
+		xs = [positions[b][0] for b in observed]
+		ys = [positions[b][1] for b in observed]
+		return (
+			min(xs) - _STM_VIEW_PAD,
+			max(xs) + _STM_VIEW_PAD,
+			min(ys) - _STM_VIEW_PAD,
+			max(ys) + _STM_VIEW_PAD,
+		)
+	# Geometry-only envelope of all candidates (no casing yet).
+	zero_hw = [0.0] * len(polylines)
+	geom = stm_route_bounds_from_geometry(
+		positions, observed, polylines, zero_hw,
+	)
+	geom_span = max(geom[1] - geom[0], geom[3] - geom[2], 1e-12)
+	if current_limits is not None:
+		cx0, cx1, cy0, cy1 = current_limits
+		cur_span = max(float(cx1) - float(cx0), float(cy1) - float(cy0), 1e-12)
+	else:
+		cur_span = geom_span
+	# Expanding the view grows data-units-per-point; scale casing pads accordingly.
+	growth = max(1.0, geom_span / cur_span)
+	upt = float(units_per_point) * growth
+	halfs = [float(hw_pt) * upt for hw_pt in halfwidth_pts]
+	return stm_route_bounds_from_geometry(
+		positions, observed, polylines, halfs,
+	)
+
+
+def stm_selected_routes_fit_axes_bounds(
+	selected_edges,
+	half_widths_data,
+	limits,
+	tol=None,
+):
+	'''
+	True when every selected route sample expanded by casing fits in limits.
+
+	limits: (xmin, xmax, ymin, ymax)
+	'''
+	if tol is None:
+		tol = _STM_ROUTE_BOUNDS_FIT_TOL
+	xmin, xmax, ymin, ymax = (float(v) for v in limits)
+	tol = float(tol)
+	for edge, half_w in zip(selected_edges, half_widths_data):
+		pad = float(half_w)
+		for px, py in edge.get('polyline') or ():
+			if (
+				px - pad < xmin - tol
+				or px + pad > xmax + tol
+				or py - pad < ymin - tol
+				or py + pad > ymax + tol
+			):
+				return False
+	return True
+
+
+def _stm_label_point_clearance(
+	lx,
+	ly,
+	node_centers,
+	node_radii,
+	other_polylines,
+	placed_centers,
+	label_half_w,
+	label_half_h,
+	arrow_xy=None,
+):
+	label_r = 0.5 * math.hypot(2.0 * label_half_w, 2.0 * label_half_h)
+	node_margin = 1.05 * label_r
+	edge_extent = max(label_half_h, 0.5 * label_half_w) * 0.9
+	label_sep = 1.7 * label_r
+	min_clearance = float('inf')
+	for name, (nx, ny) in node_centers.items():
+		reserved = float(node_radii.get(name, 0.0)) + node_margin
+		clearance = math.hypot(lx - nx, ly - ny) - reserved
+		if clearance < min_clearance:
+			min_clearance = clearance
+	for poly in other_polylines:
+		clearance = _stm_min_dist_to_polyline(lx, ly, poly) - edge_extent
+		if clearance < min_clearance:
+			min_clearance = clearance
+	for px, py in placed_centers:
+		clearance = math.hypot(lx - px, ly - py) - label_sep
+		if clearance < min_clearance:
+			min_clearance = clearance
+	if arrow_xy is not None:
+		ah_x, ah_y = arrow_xy
+		ah_r = max(label_half_w, label_half_h) * 0.85
+		clearance = math.hypot(lx - ah_x, ly - ah_y) - ah_r
+		if clearance < min_clearance:
+			min_clearance = clearance
+	return min_clearance
+
+
+def stm_evaluate_oncurve_label_candidates(
+	x1,
+	y1,
+	x2,
+	y2,
+	rad,
+	node_centers,
+	node_radii,
+	other_polylines,
+	placed_centers,
+	label_half_w,
+	label_half_h,
+):
+	'''Score every on-curve t by maximin clearance; return ordered results.'''
+	ah_x, ah_y, _, _ = stm_arc3_point_and_tangent(x1, y1, x2, y2, rad, 0.92)
+	results = []
+	for t in _STM_EDGE_LABEL_T_CANDIDATES:
+		lx, ly, rot = stm_edge_label_placement(x1, y1, x2, y2, rad, t=t)
+		clearance = _stm_label_point_clearance(
+			lx,
+			ly,
+			node_centers,
+			node_radii,
+			other_polylines,
+			placed_centers,
+			label_half_w,
+			label_half_h,
+			arrow_xy=(ah_x, ah_y),
+		)
+		results.append({
+			't': float(t),
+			'x': lx,
+			'y': ly,
+			'rotation': rot,
+			'clearance': float(clearance),
+		})
+	return results
+
+
+def stm_best_oncurve_label_candidate(candidates):
+	'''Best maximin on-curve candidate; central t only as exact clearance tie-break.'''
+	if not candidates:
+		return None
+	return min(
+		candidates,
+		key=lambda c: (
+			-c['clearance'],
+			abs(c['t'] - _STM_EDGE_LABEL_T),
+		),
+	)
+
+
 def stm_pick_edge_label_position(
 	x1,
 	y1,
 	x2,
 	y2,
 	rad,
-	clear_data,
 	node_centers,
 	node_radii,
 	other_polylines,
@@ -1398,56 +2125,289 @@ def stm_pick_edge_label_position(
 	label_half_h,
 ):
 	'''
-	Choose an edge-label center and clamped rotation beside the curve.
+	Choose an on-curve edge-label center by maximizing minimum clearance.
 
-	Avoids node overlap when a free candidate exists; prefers positions away
-	from other edges when a nearby t/side on the same edge is free.
-	Returns (label_x, label_y, rotation_deg).
+	Returns (label_x, label_y, rotation_deg). Does not apply callout placement.
 	'''
-	label_r = 0.5 * math.hypot(2.0 * label_half_w, 2.0 * label_half_h)
-	node_margin = 1.05 * label_r
-	edge_clear = max(label_half_h, 0.5 * label_half_w) * 0.9
-
-	best = None
-	best_score = float('inf')
-	for t in _STM_EDGE_LABEL_T_CANDIDATES:
-		for side in (1, -1):
-			lx, ly, rot = stm_edge_label_placement(
-				x1, y1, x2, y2, rad, t=t, clear=clear_data, side=side,
-			)
-			score = 0.0
-			# Prefer mid-curve and bulge side.
-			score += 8.0 * abs(float(t) - _STM_EDGE_LABEL_T)
-			if side < 0:
-				score += 2.5
-
-			# Hard: node overlap.
-			for name, (nx, ny) in node_centers.items():
-				r = float(node_radii.get(name, 0.0)) + node_margin
-				d = math.hypot(lx - nx, ly - ny)
-				if d < r:
-					score += 1000.0 + (r - d) * 50.0
-
-			# Soft: other edges (avoid sitting on foreign strokes).
-			for poly in other_polylines:
-				d = _stm_min_dist_to_polyline(lx, ly, poly)
-				if d < edge_clear:
-					score += 40.0 * (1.0 - d / max(edge_clear, 1e-9))
-
-			# Soft: already-placed labels.
-			for px, py in placed_centers:
-				d = math.hypot(lx - px, ly - py)
-				sep = 1.7 * label_r
-				if d < sep:
-					score += 25.0 * (1.0 - d / max(sep, 1e-9))
-
-			if score < best_score:
-				best_score = score
-				best = (lx, ly, rot)
-
+	candidates = stm_evaluate_oncurve_label_candidates(
+		x1,
+		y1,
+		x2,
+		y2,
+		rad,
+		node_centers,
+		node_radii,
+		other_polylines,
+		placed_centers,
+		label_half_w,
+		label_half_h,
+	)
+	best = stm_best_oncurve_label_candidate(candidates)
 	if best is None:
-		return stm_edge_label_placement(x1, y1, x2, y2, rad, clear=clear_data)
-	return best
+		return stm_edge_label_placement(x1, y1, x2, y2, rad)
+	return best['x'], best['y'], best['rotation']
+
+
+def _stm_leader_samples(ax, ay, bx, by, n=12):
+	pts = []
+	for i in range(n + 1):
+		u = i / float(n)
+		pts.append((ax + u * (bx - ax), ay + u * (by - ay)))
+	return pts
+
+
+def _stm_callout_catalog_offsets():
+	'''Fixed-order (perp_sign, perp_pt, along_pt) callout catalog.'''
+	catalog = []
+	for perp_pt in _STM_CALLOUT_PERP_PT:
+		for perp_sign in (1.0, -1.0):
+			for along_pt in _STM_CALLOUT_ALONG_PT:
+				catalog.append((perp_sign, float(perp_pt), float(along_pt)))
+	return catalog
+
+
+def stm_place_edge_label(
+	x1,
+	y1,
+	x2,
+	y2,
+	rad,
+	node_centers,
+	node_radii,
+	other_polylines,
+	placed_centers,
+	label_half_w,
+	label_half_h,
+	min_clearance_data,
+	units_per_point,
+):
+	'''
+	Place a full edge label on-curve when clearance allows; otherwise callout.
+
+	Callout attachment is the best maximin on-curve candidate. Every fixed
+	catalog offset is scored by maximin over the callout box and full leader.
+	'''
+	candidates = stm_evaluate_oncurve_label_candidates(
+		x1,
+		y1,
+		x2,
+		y2,
+		rad,
+		node_centers,
+		node_radii,
+		other_polylines,
+		placed_centers,
+		label_half_w,
+		label_half_h,
+	)
+	best_on = stm_best_oncurve_label_candidate(candidates)
+	if best_on is None:
+		lx, ly, rot = stm_edge_label_placement(x1, y1, x2, y2, rad)
+		return {
+			'mode': 'on_curve',
+			'x': lx,
+			'y': ly,
+			'rotation': rot,
+			'attach_x': lx,
+			'attach_y': ly,
+			'attach_t': _STM_EDGE_LABEL_T,
+			'clearance': float('inf'),
+			'leader_length': 0.0,
+		}
+	if best_on['clearance'] >= float(min_clearance_data):
+		return {
+			'mode': 'on_curve',
+			'x': best_on['x'],
+			'y': best_on['y'],
+			'rotation': best_on['rotation'],
+			'attach_x': best_on['x'],
+			'attach_y': best_on['y'],
+			'attach_t': best_on['t'],
+			'clearance': best_on['clearance'],
+			'leader_length': 0.0,
+		}
+
+	ax_pt, ay_pt = best_on['x'], best_on['y']
+	_, _, tx, ty = stm_arc3_point_and_tangent(
+		x1, y1, x2, y2, rad, best_on['t'],
+	)
+	nx, ny = -ty, tx
+	ah_x, ah_y, _, _ = stm_arc3_point_and_tangent(x1, y1, x2, y2, rad, 0.92)
+
+	scored = []
+	for idx, (perp_sign, perp_pt, along_pt) in enumerate(
+		_stm_callout_catalog_offsets()
+	):
+		cx = (
+			ax_pt
+			+ perp_sign * perp_pt * units_per_point * nx
+			+ along_pt * units_per_point * tx
+		)
+		cy = (
+			ay_pt
+			+ perp_sign * perp_pt * units_per_point * ny
+			+ along_pt * units_per_point * ty
+		)
+		box_clear = _stm_label_point_clearance(
+			cx,
+			cy,
+			node_centers,
+			node_radii,
+			other_polylines,
+			placed_centers,
+			label_half_w,
+			label_half_h,
+			arrow_xy=(ah_x, ah_y),
+		)
+		leader_clear = float('inf')
+		for sx, sy in _stm_leader_samples(ax_pt, ay_pt, cx, cy):
+			c = _stm_label_point_clearance(
+				sx,
+				sy,
+				node_centers,
+				node_radii,
+				other_polylines,
+				placed_centers,
+				label_half_w * 0.25,
+				label_half_h * 0.25,
+				arrow_xy=(ah_x, ah_y),
+			)
+			if c < leader_clear:
+				leader_clear = c
+		min_clear = min(box_clear, leader_clear)
+		leader_len = math.hypot(cx - ax_pt, cy - ay_pt)
+		scored.append({
+			'index': idx,
+			'x': cx,
+			'y': cy,
+			'clearance': min_clear,
+			'leader_length': leader_len,
+		})
+
+	passing = [c for c in scored if c['clearance'] >= float(min_clearance_data)]
+	pool = passing if passing else scored
+	chosen = min(
+		pool,
+		key=lambda c: (
+			-c['clearance'],
+			c['leader_length'],
+			c['index'],
+		),
+	)
+	return {
+		'mode': 'callout',
+		'x': chosen['x'],
+		'y': chosen['y'],
+		'rotation': 0.0,
+		'attach_x': ax_pt,
+		'attach_y': ay_pt,
+		'attach_t': best_on['t'],
+		'clearance': chosen['clearance'],
+		'leader_length': chosen['leader_length'],
+	}
+
+
+def stm_key_region_height_inches(n_body_lines):
+	'''Key axes height (inches) from font/gap packing so the body is unclipped.'''
+	n = max(int(n_body_lines), 1)
+	total_pt = (
+		_STM_KEY_TOP_MARGIN_PT
+		+ _STM_KEY_TITLE_FONTSIZE * _STM_KEY_LINE_SPACING
+		+ _STM_KEY_GAP_PT
+		+ _STM_KEY_FONTSIZE * _STM_KEY_LINE_SPACING
+		+ _STM_KEY_GAP_PT
+		+ n * _STM_KEY_FONTSIZE * _STM_KEY_LINE_SPACING
+		+ _STM_KEY_BOTTOM_MARGIN_PT
+	)
+	return total_pt / 72.0
+
+
+def stm_key_pack_y_positions(n_body_lines, axes_height_inches=None):
+	'''
+	Axes-fraction y positions (va=top) for title, explain, and body.
+
+	Gaps between blocks are controlled in typographic points (_STM_KEY_GAP_PT).
+	'''
+	if axes_height_inches is None:
+		axes_height_inches = stm_key_region_height_inches(n_body_lines)
+	h = max(float(axes_height_inches), 1e-9)
+
+	def frac(pt):
+		return (float(pt) / 72.0) / h
+
+	y = 1.0 - frac(_STM_KEY_TOP_MARGIN_PT)
+	y_title = y
+	y -= frac(_STM_KEY_TITLE_FONTSIZE * _STM_KEY_LINE_SPACING + _STM_KEY_GAP_PT)
+	y_explain = y
+	y -= frac(_STM_KEY_FONTSIZE * _STM_KEY_LINE_SPACING + _STM_KEY_GAP_PT)
+	y_body = y
+	return {
+		'title': y_title,
+		'explain': y_explain,
+		'body': y_body,
+		'gap_pt': _STM_KEY_GAP_PT,
+		'height_inches': h,
+	}
+
+
+def stm_edge_rad(src, dst, count_df):
+	'''Preferred Arc3 magnitude seed (single vs reciprocal); not the drawn rad.'''
+	if src == dst:
+		return _STM_EDGE_RAD_SINGLE
+	exists_ij = int(count_df.loc[src, dst]) >= 1
+	exists_ji = int(count_df.loc[dst, src]) >= 1
+	if exists_ij and exists_ji:
+		return _STM_EDGE_RAD_BIDIR
+	return _STM_EDGE_RAD_SINGLE
+
+def stm_ordered_transition_edges(observed, count_df, prob_df):
+	'''
+	Directed transitions with count >= 1, ordered by (src_index, dst_index).
+
+	``observed`` must already be in the deterministic display order.
+	'''
+	edges = []
+	for src in observed:
+		for dst in observed:
+			raw_count = int(count_df.loc[src, dst])
+			if raw_count < 1:
+				continue
+			edge_value = float(prob_df.loc[src, dst])
+			if np.isnan(edge_value) or edge_value <= 0:
+				continue
+			edges.append({
+				'src': src,
+				'dst': dst,
+				'count': raw_count,
+				'value': edge_value,
+			})
+	return edges
+
+
+def stm_assign_edge_identifiers(edges):
+	'''Attach deterministic T1, T2, ... identifiers (T = transition) in list order.'''
+	out = []
+	for i, edge in enumerate(edges, start=1):
+		item = dict(edge)
+		item['edge_id'] = 'T%d' % i
+		out.append(item)
+	return out
+
+
+def stm_format_transition_key_lines(entries):
+	'''Format transition-key lines: T#: source → destination: probability (count).'''
+	lines = []
+	for entry in entries:
+		lines.append(
+			'%s: %s \u2192 %s: %.2f (%d)' % (
+				entry['edge_id'],
+				entry['src'],
+				entry['dst'],
+				float(entry['value']),
+				int(entry['count']),
+			)
+		)
+	return lines
 
 
 def stm_circular_layout(behavior_names, radius=1.0):
@@ -1653,12 +2613,21 @@ def stm_wrap_behavior_name(name, max_line_chars=None):
 	return lines
 
 
+def stm_format_occupancy_percent(occupancy):
+	'''Display occupancy percent; positive values below 1% become "<1%".'''
+	occ = float(occupancy)
+	if occ <= 0.0:
+		return '0%'
+	if occ < 0.01:
+		return '<1%'
+	return str(int(round(100.0 * occ))) + '%'
+
+
 def stm_format_node_label(behavior_name, occupancy):
 	'''Return (label_text, fontsize) for a node.'''
 	name_lines = stm_wrap_behavior_name(behavior_name)
-	pct = int(round(100.0 * float(occupancy)))
 	# Name lines first; occupancy kept on its own final line (visual association).
-	lines = list(name_lines) + [str(pct) + '%']
+	lines = list(name_lines) + [stm_format_occupancy_percent(occupancy)]
 	n = len(lines)
 	if n <= 2:
 		fontsize = 9
@@ -1682,9 +2651,163 @@ def stm_edge_linewidth(probability, max_probability):
 	return _STM_EDGE_LW_MIN + _STM_EDGE_LW_SPAN * math.sqrt(p / max_p)
 
 
-def stm_format_edge_label(probability, count):
-	'''Exact static edge label format: probability (count).'''
-	return f'{float(probability):.2f} ({int(count)})'
+def stm_format_edge_label(probability, count, edge_id=None):
+	'''On-map edge label: single-line "T# · probability (count)" when id is set.'''
+	body = '%.2f (%d)' % (float(probability), int(count))
+	if edge_id:
+		return '%s%s%s' % (edge_id, _STM_EDGE_LABEL_MIDDOT, body)
+	return body
+
+
+def stm_edge_label_half_extents_pt(label_text=None, fontsize=None):
+	'''
+	Half-width / half-height of a single-line on-map edge label bbox in points.
+
+	Includes approximate glyph span and the white bbox pad. Uses a
+	representative long label when label_text is omitted.
+	'''
+	if fontsize is None:
+		fontsize = _STM_EDGE_LABEL_FONTSIZE
+	if label_text is None:
+		label_text = stm_format_edge_label(0.99, 999, edge_id='T99')
+	# Proportional sans-serif approx (no figure/renderer required).
+	char_em = 0.55 * float(fontsize)
+	pad = float(_STM_EDGE_LABEL_BBOX_PAD) * float(fontsize)
+	full_w = len(label_text) * char_em + 2.0 * pad
+	# Single line: text height + pad (no multi-line stack).
+	full_h = float(fontsize) * 1.15 + 2.0 * pad
+	return 0.5 * full_w, 0.5 * full_h
+
+
+def stm_edge_label_half_extents_data(ax, label_text=None, fontsize=None):
+	'''Convert single-line edge-label bbox half-extents to data coordinates.'''
+	half_w_pt, half_h_pt = stm_edge_label_half_extents_pt(label_text, fontsize)
+	scale = (
+		(float(ax.figure.dpi) / 72.0) * _stm_data_units_per_display_pixel(ax)
+	)
+	return half_w_pt * scale, half_h_pt * scale
+
+
+def _stm_draw_polyline_stroke(ax, points, linewidth, color, alpha, zorder, linestyle='-'):
+	'''Draw a polyline stroke (white casing or black foreground).'''
+	if len(points) < 2:
+		return
+	xs = [p[0] for p in points]
+	ys = [p[1] for p in points]
+	ax.plot(
+		xs,
+		ys,
+		color=color,
+		linewidth=linewidth,
+		alpha=alpha,
+		zorder=zorder,
+		linestyle=linestyle,
+		solid_capstyle='round',
+		solid_joinstyle='round',
+		dash_capstyle='round',
+	)
+
+
+def _stm_draw_edge_path(
+	ax,
+	edge,
+	occupancy,
+	node_centers,
+	node_radii,
+	half_width_data,
+	pad_data,
+	dash_delta_t,
+):
+	'''
+	Draw one directed edge with shared casing/FG geometry.
+
+	Clear routes use FancyArrowPatch. Pass-behind routes use solid segments
+	with dashed approach/exit and a terminal arrowhead; interior under nodes
+	is omitted so the edge appears to continue behind.
+	'''
+	from matplotlib.patches import FancyArrowPatch
+
+	x1, y1 = edge['x1'], edge['y1']
+	x2, y2 = edge['x2'], edge['y2']
+	rad = edge['rad']
+	lw = edge['linewidth']
+	casing_lw = lw + _STM_EDGE_CASING_EXTRA
+	shrink_a = stm_edge_shrink_points(stm_node_marker_size(occupancy[edge['src']]))
+	shrink_b = stm_edge_shrink_points(stm_node_marker_size(occupancy[edge['dst']]))
+
+	if not edge.get('pass_behind'):
+		common = dict(
+			arrowstyle='-|>',
+			mutation_scale=_STM_EDGE_MUTATION_SCALE,
+			shrinkA=shrink_a,
+			shrinkB=shrink_b,
+			connectionstyle='arc3,rad=%s' % rad,
+		)
+		ax.add_patch(FancyArrowPatch(
+			(x1, y1),
+			(x2, y2),
+			linewidth=casing_lw,
+			color='white',
+			alpha=1.0,
+			zorder=_STM_EDGE_CASING_ZORDER,
+			**common
+		))
+		ax.add_patch(FancyArrowPatch(
+			(x1, y1),
+			(x2, y2),
+			linewidth=lw,
+			color='black',
+			alpha=0.75,
+			zorder=_STM_EDGE_FOREGROUND_ZORDER,
+			**common
+		))
+		return
+
+	obstacles = {
+		name: center
+		for name, center in node_centers.items()
+		if name != edge['src'] and name != edge['dst']
+	}
+	obst_radii = {name: float(node_radii.get(name, 0.0)) for name in obstacles}
+	intervals = stm_route_obstacle_t_intervals(
+		x1, y1, x2, y2, rad,
+		obstacles, obst_radii, half_width_data, pad_data,
+	)
+	pieces = stm_pass_behind_path_pieces(
+		x1, y1, x2, y2, rad, intervals, dash_delta_t,
+	)
+	for piece in pieces:
+		style = piece['style']
+		pts = piece['points']
+		ls = '--' if style == 'dash' else '-'
+		_stm_draw_polyline_stroke(
+			ax, pts, casing_lw, 'white', 1.0, _STM_EDGE_CASING_ZORDER, ls,
+		)
+		_stm_draw_polyline_stroke(
+			ax, pts, lw, 'black', 0.75, _STM_PASS_BEHIND_ZORDER, ls,
+		)
+	# Terminal arrowhead on the last free fragment approaching destination.
+	tip_pts = None
+	for piece in reversed(pieces):
+		if len(piece['points']) >= 2:
+			tip_pts = piece['points']
+			break
+	if tip_pts is None:
+		px, py, _, _ = stm_arc3_point_and_tangent(x1, y1, x2, y2, rad, 0.92)
+		tip_pts = [(px, py), (x2, y2)]
+	ax.add_patch(FancyArrowPatch(
+		tip_pts[-2],
+		(x2, y2),
+		arrowstyle='-|>',
+		mutation_scale=_STM_EDGE_MUTATION_SCALE,
+		linewidth=lw,
+		color='black',
+		alpha=0.75,
+		shrinkA=0.0,
+		shrinkB=shrink_b,
+		connectionstyle='arc3,rad=0.0',
+		zorder=_STM_EDGE_FOREGROUND_ZORDER,
+	))
 
 
 def _stm_draw_animal_map(
@@ -1696,18 +2819,34 @@ def _stm_draw_animal_map(
 	dpi=300,
 ):
 	'''Draw one animal state transition map PNG from computed metrics.'''
-	from matplotlib.patches import FancyArrowPatch
-
 	observed = metrics['observed_behaviors']
 	occupancy = metrics['occupancy']
 	count_df = metrics['count_matrix']
 	prob_df = metrics['probability_matrix']
 
-	fig, ax = plt.subplots(figsize=_STM_FIGSIZE)
+	ordered = stm_assign_edge_identifiers(
+		stm_ordered_transition_edges(observed, count_df, prob_df)
+	)
+	key_lines = stm_format_transition_key_lines(ordered)
+	n_key_body = max(len(key_lines), 1)
+	key_height = stm_key_region_height_inches(n_key_body)
+	key_pack = stm_key_pack_y_positions(n_key_body, key_height)
+
+	fig_w = _STM_FIGSIZE_MAP
+	fig_h = _STM_FIGSIZE_MAP + key_height
+	fig = plt.figure(figsize=(fig_w, fig_h))
+	gs = fig.add_gridspec(
+		2,
+		1,
+		height_ratios=[_STM_FIGSIZE_MAP, key_height],
+		hspace=0.12,
+	)
+	ax = fig.add_subplot(gs[0, 0])
+	ax_key = fig.add_subplot(gs[1, 0])
 	ax.set_aspect('equal')
 	ax.axis('off')
+	ax_key.axis('off')
 
-	# Fix view before transform-based label offsets (pixel → data).
 	pad = _STM_VIEW_PAD
 	xs = [positions[b][0] for b in observed]
 	ys = [positions[b][1] for b in observed]
@@ -1716,107 +2855,258 @@ def _stm_draw_animal_map(
 	fig.canvas.draw()
 
 	max_edge = 1e-6
-	for a in observed:
-		for b in observed:
-			n = int(count_df.loc[a, b])
-			if n >= 1:
-				p = float(prob_df.loc[a, b])
-				if not np.isnan(p):
-					max_edge = max(max_edge, p)
+	for edge in ordered:
+		max_edge = max(max_edge, float(edge['value']))
 
-	# Collect directed edges (layout positions unchanged; only curve rad for pairs).
-	edge_specs = []
-	for i, src in enumerate(observed):
-		for j, dst in enumerate(observed):
-			if i >= j:
-				continue
-			exists_ij = int(count_df.loc[src, dst]) >= 1
-			exists_ji = int(count_df.loc[dst, src]) >= 1
-			if exists_ij and exists_ji:
-				edge_specs.append((src, dst, _STM_EDGE_RAD_BIDIR))
-				edge_specs.append((dst, src, _STM_EDGE_RAD_BIDIR))
-			elif exists_ij:
-				edge_specs.append((src, dst, _STM_EDGE_RAD_SINGLE))
-			elif exists_ji:
-				edge_specs.append((dst, src, _STM_EDGE_RAD_SINGLE))
+	node_centers = {b: positions[b] for b in observed}
+
+	# Route selection under axes transform with bounded bounds↔select convergence.
+	# Each iteration fully reselects reasonable rads (pass-behind only when no
+	# clear alternative). If ordinary convergence hits its limit, apply a
+	# deterministic conservative envelope of *all* reasonable candidates once,
+	# then finalize selection under that fixed transform (no residual mismatch).
+	def _route_all_edges():
+		units_per_pt = _stm_data_units_per_point(ax)
+		pad_data = _STM_ROUTE_NODE_PAD_PT * units_per_pt
+		node_radii = {
+			b: _stm_node_radius_data(ax, stm_node_marker_size(occupancy[b]))
+			for b in observed
+		}
+		selected = []
+		pair_signs = {}
+		half_widths = []
+		for edge in ordered:
+			src = edge['src']
+			dst = edge['dst']
+			x1, y1 = positions[src]
+			x2, y2 = positions[dst]
+			linewidth = stm_edge_linewidth(edge['value'], max_edge)
+			half_w_pt = stm_visible_edge_halfwidth_pt(linewidth)
+			half_w = stm_edge_halfwidth_data(ax, half_w_pt)
+			half_widths.append(half_w)
+			seed = stm_edge_rad(src, dst, count_df)
+			pair_key = _stm_unordered_pair_key(src, dst)
+			paired_sign = pair_signs.get(pair_key)
+			route = stm_select_edge_route(
+				x1,
+				y1,
+				x2,
+				y2,
+				src,
+				dst,
+				seed,
+				node_centers,
+				node_radii,
+				half_w,
+				pad_data,
+				[e['polyline'] for e in selected],
+				paired_sign=paired_sign,
+			)
+			if src != dst and pair_key not in pair_signs:
+				pair_signs[pair_key] = _stm_rad_sign(route['rad'])
+			selected.append({
+				'src': src,
+				'dst': dst,
+				'edge_id': edge['edge_id'],
+				'rad': route['rad'],
+				'x1': x1,
+				'y1': y1,
+				'x2': x2,
+				'y2': y2,
+				'value': edge['value'],
+				'count': edge['count'],
+				'linewidth': linewidth,
+				'polyline': route['polyline'],
+				'clearance': route['clearance'],
+				'reciprocal_side_relaxed': route['reciprocal_side_relaxed'],
+				'pass_behind': route['pass_behind'],
+				'crossed_nodes': list(route['crossed_nodes']),
+			})
+		return selected, half_widths
+
+	def _limits_close(a, b):
+		return all(abs(x - y) <= _STM_ROUTE_LIMIT_EPS for x, y in zip(a, b))
+
+	def _active_limits():
+		return (
+			float(ax.get_xlim()[0]),
+			float(ax.get_xlim()[1]),
+			float(ax.get_ylim()[0]),
+			float(ax.get_ylim()[1]),
+		)
+
+	def _apply_limits(limits):
+		xmin, xmax, ymin, ymax = limits
+		ax.set_xlim(xmin, xmax)
+		ax.set_ylim(ymin, ymax)
 
 	drawn_edges = []
-	for src, dst, rad in edge_specs:
-		raw_count = int(count_df.loc[src, dst])
-		if raw_count < 1:
-			continue
-		edge_value = float(prob_df.loc[src, dst])
-		if np.isnan(edge_value) or edge_value <= 0:
-			continue
-		x1, y1 = positions[src]
-		x2, y2 = positions[dst]
-		linewidth = stm_edge_linewidth(edge_value, max_edge)
-		arrow = FancyArrowPatch(
-			(x1, y1),
-			(x2, y2),
-			arrowstyle='-|>',
-			mutation_scale=_STM_EDGE_MUTATION_SCALE,
-			linewidth=linewidth,
-			color='black',
-			alpha=0.75,
-			shrinkA=_STM_EDGE_SHRINK,
-			shrinkB=_STM_EDGE_SHRINK,
-			connectionstyle=f'arc3,rad={rad}',
-			zorder=1,
+	converged = False
+	for _it in range(_STM_ROUTE_CONVERGENCE_MAX):
+		fig.canvas.draw()
+		limits_before = _active_limits()
+		selected, half_widths = _route_all_edges()
+		xmin, xmax, ymin, ymax = stm_route_bounds_from_geometry(
+			positions,
+			observed,
+			[e['polyline'] for e in selected],
+			half_widths,
 		)
-		ax.add_patch(arrow)
-		drawn_edges.append({
-			'src': src,
-			'dst': dst,
-			'rad': rad,
-			'x1': x1,
-			'y1': y1,
-			'x2': x2,
-			'y2': y2,
-			'value': edge_value,
-			'count': raw_count,
-			'polyline': _stm_sample_arc3_polyline(x1, y1, x2, y2, rad),
-		})
+		bounds_after = (float(xmin), float(xmax), float(ymin), float(ymax))
+		_apply_limits(bounds_after)
+		drawn_edges = selected
+		if _limits_close(limits_before, bounds_after):
+			converged = True
+			break
 
-	# Node geometry for label collision (nodes drawn after labels for z-order).
-	node_centers = {b: positions[b] for b in observed}
+	if not converged:
+		# Deterministic conservative fallback: envelope every reasonable candidate
+		# (with casing growth against current span), apply once, final select.
+		fig.canvas.draw()
+		# Need linewidths on edge records for envelope halfwidth_pt.
+		edge_specs = []
+		for edge in ordered:
+			item = dict(edge)
+			item['linewidth'] = stm_edge_linewidth(edge['value'], max_edge)
+			edge_specs.append(item)
+		limits_now = _active_limits()
+		envelope = stm_route_conservative_envelope_bounds(
+			positions,
+			observed,
+			edge_specs,
+			count_df,
+			_stm_data_units_per_point(ax),
+			current_limits=limits_now,
+		)
+		_apply_limits(envelope)
+		fig.canvas.draw()
+		drawn_edges, half_widths = _route_all_edges()
+		final_limits = _active_limits()
+		if not stm_selected_routes_fit_axes_bounds(
+			drawn_edges, half_widths, final_limits,
+		):
+			raise RuntimeError(
+				'STM route bounds fallback failed: final selected routes and '
+				'casing exceed the conservative envelope applied to the axes. '
+				'envelope=%s geometry_bounds=%s' % (
+					final_limits,
+					stm_route_bounds_from_geometry(
+						positions,
+						observed,
+						[e['polyline'] for e in drawn_edges],
+						half_widths,
+					),
+				)
+			)
+	else:
+		# Ordinary convergence: selected geometry must still fit active bounds.
+		fig.canvas.draw()
+		half_widths = [
+			stm_edge_halfwidth_data(
+				ax, stm_visible_edge_halfwidth_pt(e['linewidth']),
+			)
+			for e in drawn_edges
+		]
+		final_limits = _active_limits()
+		if not stm_selected_routes_fit_axes_bounds(
+			drawn_edges, half_widths, final_limits,
+		):
+			raise RuntimeError(
+				'STM route bounds converged but selected geometry still exceeds '
+				'active axes limits. limits=%s' % (final_limits,)
+			)
+
+	units_per_pt = _stm_data_units_per_point(ax)
+	pad_data = _STM_ROUTE_NODE_PAD_PT * units_per_pt
+	dash_data = _STM_PASS_BEHIND_DASH_PT * units_per_pt
 	node_radii = {
 		b: _stm_node_radius_data(ax, stm_node_marker_size(occupancy[b]))
 		for b in observed
 	}
-	clear_data = (
-		_STM_EDGE_LABEL_OFFSET_PX * _stm_data_units_per_display_pixel(ax)
-	)
-	# Approximate half-size of "0.xx (nn)" at fontsize 8 + bbox pad.
-	label_half_w = 36.0 * (float(ax.figure.dpi) / 72.0) * _stm_data_units_per_display_pixel(ax)
-	label_half_h = 11.0 * (float(ax.figure.dpi) / 72.0) * _stm_data_units_per_display_pixel(ax)
+	min_label_clear = _STM_LABEL_MIN_CLEARANCE_PT * units_per_pt
+
+	any_pass_behind = False
+	for edge in drawn_edges:
+		# Per-edge dash Δt from total arc length estimate.
+		poly = edge['polyline']
+		arc_len = 0.0
+		for i in range(len(poly) - 1):
+			arc_len += math.hypot(
+				poly[i + 1][0] - poly[i][0],
+				poly[i + 1][1] - poly[i][1],
+			)
+		if arc_len < 1e-9:
+			edge_dash_dt = 0.05
+		else:
+			edge_dash_dt = min(0.2, max(0.02, dash_data / arc_len))
+		half_w = stm_edge_halfwidth_data(
+			ax, stm_visible_edge_halfwidth_pt(edge['linewidth'])
+		)
+		_stm_draw_edge_path(
+			ax,
+			edge,
+			occupancy,
+			node_centers,
+			node_radii,
+			half_w,
+			pad_data,
+			edge_dash_dt,
+		)
+		if edge.get('pass_behind'):
+			any_pass_behind = True
 
 	polylines = [e['polyline'] for e in drawn_edges]
 	placed_centers = []
 	for i, edge in enumerate(drawn_edges):
 		other = [polylines[j] for j in range(len(polylines)) if j != i]
-		label_x, label_y, label_rot = stm_pick_edge_label_position(
+		label_text = stm_format_edge_label(
+			edge['value'],
+			edge['count'],
+			edge_id=edge['edge_id'],
+		)
+		label_half_w, label_half_h = stm_edge_label_half_extents_data(
+			ax, label_text,
+		)
+		placement = stm_place_edge_label(
 			edge['x1'],
 			edge['y1'],
 			edge['x2'],
 			edge['y2'],
 			edge['rad'],
-			clear_data,
 			node_centers,
 			node_radii,
 			other,
 			placed_centers,
 			label_half_w,
 			label_half_h,
+			min_label_clear,
+			units_per_pt,
 		)
+		if placement['mode'] == 'callout':
+			ax.plot(
+				[placement['attach_x'], placement['x']],
+				[placement['attach_y'], placement['y']],
+				color='#333333',
+				linewidth=0.7,
+				zorder=3.5,
+				solid_capstyle='round',
+			)
+			ax.scatter(
+				[placement['attach_x']],
+				[placement['attach_y']],
+				s=12,
+				c='#111111',
+				zorder=3.6,
+				linewidths=0,
+			)
 		ax.text(
-			label_x,
-			label_y,
-			stm_format_edge_label(edge['value'], edge['count']),
-			fontsize=8,
+			placement['x'],
+			placement['y'],
+			label_text,
+			fontsize=_STM_EDGE_LABEL_FONTSIZE,
 			ha='center',
 			va='center',
-			rotation=label_rot,
+			rotation=placement['rotation'],
 			rotation_mode='anchor',
 			zorder=4,
 			bbox=dict(
@@ -1827,7 +3117,7 @@ def _stm_draw_animal_map(
 				alpha=1.0,
 			),
 		)
-		placed_centers.append((label_x, label_y))
+		placed_centers.append((placement['x'], placement['y']))
 
 	for behavior_name in observed:
 		x, y = positions[behavior_name]
@@ -1853,11 +3143,11 @@ def _stm_draw_animal_map(
 			va='center',
 			multialignment='center',
 			fontsize=fontsize,
+			color=stm_node_label_color(node_color),
 			linespacing=_STM_NODE_LABEL_LINESPACING,
 			zorder=6,
 		)
 
-	# Centered two-line title: main + slightly smaller ID line.
 	ax.text(
 		0.5,
 		1.065,
@@ -1878,11 +3168,13 @@ def _stm_draw_animal_map(
 		fontsize=_STM_TITLE_FONTSIZE * _STM_TITLE_SUBTITLE_SCALE,
 		zorder=10,
 	)
-	# Compact legend in a free corner (axes-fraction; outside layout radius).
+	legend_text = _STM_LEGEND_TEXT
+	if any_pass_behind:
+		legend_text = legend_text + '\n' + _STM_PASS_BEHIND_LEGEND
 	ax.text(
 		0.02,
 		0.02,
-		_STM_LEGEND_TEXT,
+		legend_text,
 		transform=ax.transAxes,
 		ha='left',
 		va='bottom',
@@ -1897,6 +3189,48 @@ def _stm_draw_animal_map(
 			linewidth=0.4,
 			alpha=0.92,
 		),
+	)
+
+	key_body = '\n'.join(key_lines) if key_lines else '(no transitions)'
+	ax_key.text(
+		0.0,
+		key_pack['title'],
+		'Transition key',
+		transform=ax_key.transAxes,
+		ha='left',
+		va='top',
+		fontsize=_STM_KEY_TITLE_FONTSIZE,
+		fontweight='bold',
+		color='#222222',
+		linespacing=_STM_KEY_LINE_SPACING,
+		clip_on=False,
+		wrap=False,
+	)
+	ax_key.text(
+		0.0,
+		key_pack['explain'],
+		_STM_KEY_EXPLAIN,
+		transform=ax_key.transAxes,
+		ha='left',
+		va='top',
+		fontsize=_STM_KEY_FONTSIZE,
+		color='#333333',
+		linespacing=_STM_KEY_LINE_SPACING,
+		clip_on=False,
+		wrap=False,
+	)
+	ax_key.text(
+		0.0,
+		key_pack['body'],
+		key_body,
+		transform=ax_key.transAxes,
+		ha='left',
+		va='top',
+		fontsize=_STM_KEY_FONTSIZE,
+		color='#222222',
+		linespacing=_STM_KEY_LINE_SPACING,
+		clip_on=False,
+		wrap=False,
 	)
 	plt.savefig(
 		os.path.join(animal_dir, 'state_transition_map.png'),
