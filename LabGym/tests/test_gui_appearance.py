@@ -3,6 +3,7 @@
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
+from LabGym import mywx  # patch wx.App before any import of wx
 import wx
 
 from LabGym import gui_appearance

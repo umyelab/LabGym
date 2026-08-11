@@ -3,6 +3,7 @@
 import os
 from pathlib import Path
 
+from LabGym import mywx  # patch wx.App before any import of wx / gui_utils
 from LabGym.gui_utils import (
 	behavior_label_from_filename,
 	count_prepared_examples,

@@ -1,5 +1,6 @@
 """AF regression: notebook page selection and close protection by object identity."""
 
+from LabGym import mywx  # patch wx.App before any import of wx / gui_utils
 from LabGym.gui_utils import is_protected_notebook_page, select_notebook_page
 
 

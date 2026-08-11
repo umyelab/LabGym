@@ -1,5 +1,6 @@
 """AF regression: Workflow Map client-size transform (no live GUI windows)."""
 
+from LabGym import mywx  # patch wx.App before any import of wx / gui_utils
 from LabGym.gui_utils import compute_workflow_map_transform
 
 
