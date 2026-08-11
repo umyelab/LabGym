@@ -38,8 +38,10 @@ from LabGym import __version__
 from .gui_appearance import select_for_appearance
 from .gui_utils import (
 	add_or_select_notebook_page,
+	compute_workflow_map_transform,
 	create_hyperlink,
 	hyperlink_html_style,
+	is_protected_notebook_page,
 )
 logger.debug('importing %s ...', '.gui_categorizer')
 from .gui_categorizer import PanelLv2_GenerateExamples,PanelLv2_TrainCategorizers,PanelLv2_SortBehaviors,PanelLv2_TestCategorizers
@@ -476,7 +478,8 @@ _GUIDE_PAGES = {
 	'section ll b': 18,
 	'section ll c': 21,
 	'section ll d': 23,
-	'section lll a': 26,
+	# Section III A → practical guide page 28 (user-confirmed for Background Subtraction).
+	'section lll a': 28,
 	'section lll b': 31,
 	'section lll c': 33,
 	'section lll d': 37,
@@ -484,6 +487,13 @@ _GUIDE_PAGES = {
 	'section lv b': 44,
 	'section lv c': 44,
 }
+
+
+def resolve_guide_page_number(ref: str):
+	"""Return practical-guide page number for a map popup guide token, or None."""
+	if not ref:
+		return None
+	return _GUIDE_PAGES.get(ref.strip().lower())
 
 
 class BoxInfoPopup(wx.Frame):
@@ -554,7 +564,7 @@ class BoxInfoPopup(wx.Frame):
 		base = 'https://www.labgym.org/guides/practical-guide#page-'
 		refs = []
 		for ref in (r.strip() for r in guide.split(',')):
-			page = _GUIDE_PAGES.get(ref.lower())
+			page = resolve_guide_page_number(ref)
 			refs.append(
 				'<a href="{}{}">{}</a>'.format(base, page, _h.escape(ref)) if page
 				else _h.escape(ref)
@@ -639,19 +649,19 @@ def _workflow_map_connector_styles():
 
 
 class WorkflowMapPanel(wx.Panel):
-	"""Displays the LabGym workflow map at a fixed scale for the fixed LabGym window size."""
+	"""Displays the LabGym workflow map scaled to the panel client size.
+
+	The main frame remains fixed at ``MainFrame.FIXED_FRAME_SIZE``. Logical layout
+	coordinates are fixed; scale and centering are recomputed each paint from
+	the actual client size so hit rectangles stay aligned with drawn boxes.
+	"""
 
 	# Logical (virtual) coordinate space — source of truth for layout.
 	VW = 2200
 	VH = 660
-	# Fixed drawing area: Workflow Map page client size inside FIXED_FRAME_SIZE (1100×650).
-	CANVAS_W = 1100
-	CANVAS_H = 560
-	# One-time aspect-preserving fit of the logical map into the fixed canvas.
-	SCALE = min(CANVAS_W / VW, CANVAS_H / VH)  # 0.5
-	# Centre the scaled logical rect on the fixed canvas.
-	OX = (CANVAS_W - VW * SCALE) / 2			# 0.0
-	OY = (CANVAS_H - VH * SCALE) / 2			# 115.0
+	# Fallback client size when GetClientSize is temporarily invalid (startup).
+	_FALLBACK_CLIENT_W = 1100
+	_FALLBACK_CLIENT_H = 560
 
 	# Connector geometry (logical units → client pixels via ps()).
 	# Between-phase: filled polygonal chevrons (most prominent neutrals).
@@ -677,6 +687,21 @@ class WorkflowMapPanel(wx.Panel):
 		frame = wx.GetTopLevelParent(self)
 		if frame is not None:
 			frame.Bind(wx.EVT_ACTIVATE, self._on_parent_activate)
+
+	def _map_transform(self):
+		"""Return (client_w, client_h, scale, ox, oy) from the current client size.
+
+		Tiny or invalid dimensions fall back to a nominal canvas so drawing and
+		hit tests remain well-defined during early layout passes.
+		"""
+		try:
+			cw, ch = self.GetClientSize()
+		except Exception:
+			cw, ch = 0, 0
+		return compute_workflow_map_transform(
+			cw, ch, vw=self.VW, vh=self.VH,
+			fallback_w=self._FALLBACK_CLIENT_W, fallback_h=self._FALLBACK_CLIENT_H,
+		)
 
 	def _apply_surface_colours(self):
 		"""Set the panel background from the current native appearance."""
@@ -706,8 +731,7 @@ class WorkflowMapPanel(wx.Panel):
 	def _draw(self, dc, text_fg, between_color, within_color):
 		import math								# needed for diagonal arrow angle calculations
 		self._clickable_boxes = []				# reset so hit-test rects match this paint
-		W, H = self.CANVAS_W, self.CANVAS_H
-		scale, ox, oy = self.SCALE, self.OX, self.OY
+		W, _H, scale, ox, oy = self._map_transform()
 
 		def px(v): return int(ox + v * scale)	# logical x → client pixel
 		def py(v): return int(oy + v * scale)	# logical y → client pixel
@@ -925,14 +949,13 @@ class MainFrame(wx.Frame):
 			wx.aui.AuiPaneInfo().CenterPane(),
 			)
 
-		# Add panel as a page to the notebook.
-		panel = InitialPanel(self.notebook)
-		title = 'Home'
-		self.notebook.AddPage(panel, title, select=True)
-		workflow_panel = WorkflowMapPanel(self.notebook)
-		self.notebook.AddPage(workflow_panel, 'Workflow Map', select=False)
+		# Store page objects for navigation/close protection (identity, not index/title).
+		self.home_page = InitialPanel(self.notebook)
+		self.notebook.AddPage(self.home_page, 'Home', select=True)
+		self.workflow_map_page = WorkflowMapPanel(self.notebook)
+		self.notebook.AddPage(self.workflow_map_page, 'Workflow Map', select=False)
 
-		# Bind the close event to prevent Home tab from being closed
+		# Bind the close event to protect stored Home / Workflow Map pages
 		self.notebook.Bind(wx.aui.EVT_AUINOTEBOOK_PAGE_CLOSE, self.on_page_close)
 
 		# Use a sizer to ensure the notebook fills the frame.
@@ -946,9 +969,14 @@ class MainFrame(wx.Frame):
 		self.Show()  # display the frame
 
 	def on_page_close(self, event):
-		"""Handle page close events to prevent Home tab from being closed."""
-		# Prevent the Home tab (index 0) from being closed
-		if event.GetSelection() in (0, 1):
+		"""Veto closing of the stored Home and Workflow Map page objects."""
+		selection = event.GetSelection()
+		try:
+			page = self.notebook.GetPage(selection)
+		except Exception:
+			page = None
+		if is_protected_notebook_page(
+				page, (self.home_page, self.workflow_map_page)):
 			event.Veto()
 		else:
 			# Allow other tabs to be closed normally

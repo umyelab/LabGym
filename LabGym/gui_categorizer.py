@@ -47,7 +47,15 @@ logger.debug('importing %s done', '.analyzebehavior_dt')
 from .categorizer import Categorizers
 from LabGym import config
 from .tools import sort_examples_from_csv
-from .gui_utils import add_or_select_notebook_page, add_info_button, create_hyperlink, INFO_COLOUR_S3
+from .gui_utils import (
+	add_or_select_notebook_page,
+	add_info_button,
+	create_hyperlink,
+	INFO_COLOUR_S3,
+	count_prepared_examples,
+	count_sorted_examples,
+	counts_enable_diagnostics,
+)
 
 
 class PanelLv2_GenerateExamples(wx.Panel):
@@ -1247,24 +1255,12 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 
 
 	def _count_examples(self,folder_path):
-		try:
-			entries=os.listdir(folder_path)
-		except OSError:
-			return {}
-		counts={}
-		avis=[f for f in entries if f.endswith('.avi')]
-		files=avis if avis else [f for f in entries if f.endswith('.jpg')]
-		for f in files:
-			base=os.path.splitext(f)[0]
-			if '_' in base:
-				category=base.split('_',1)[1]
-				counts[category]=counts.get(category,0)+1
-		return counts
+		return count_prepared_examples(folder_path)
 
 
 	def _update_count_display(self,folder_path):
 		counts=self._count_examples(folder_path)
-		if len(counts)<2:
+		if not counts_enable_diagnostics(counts):
 			self._counts={}
 			self.button_view_counts.Disable()
 			return
@@ -1325,7 +1321,8 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 		widths.append(dc.GetTextExtent(
 			f'Red text: Example count is below {threshold} (minimum threshold)')[0])
 		widths.append(dc.GetTextExtent(
-			'Yellow highlight: Example count is outside 1 standard deviation from the mean')[0])
+			'Yellow highlight: Example count is outside 1 population '
+			'standard deviation from the mean')[0])
 		# label + text field + Update button
 		widths.append(dc.GetTextExtent('Minimum recommended examples:')[0]+70+72+24)
 		for row in self._iter_count_rows(counts):
@@ -1340,6 +1337,7 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 
 
 	def _render_body(self,rtc,counts,threshold):
+		# Population SD (divide by n, not n-1); yellow when |count - mean| > SD
 		values=list(counts.values())
 		mean=sum(values)/len(values)
 		std=(sum((v-mean)**2 for v in values)/len(values))**0.5
@@ -1451,7 +1449,9 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 		yl_chip_s.Add(yl_sample,0,wx.ALL,1)
 		yl_chip.SetSizer(yl_chip_s)
 		yl_explain=wx.StaticText(
-			popup,label=' Example count is outside 1 standard deviation from the mean')
+			popup,label=(
+				' Example count is outside 1 population standard deviation '
+				'from the mean'))
 		yl_explain.SetFont(leg_font)
 		yl_explain.SetForegroundColour(fg)
 		yl_explain.SetBackgroundColour(bg)
@@ -1549,7 +1549,7 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 
 	def show_count_popup(self,event):
 		counts=getattr(self,'_counts',{})
-		if len(counts)<2:
+		if not counts_enable_diagnostics(counts):
 			return
 		if not hasattr(self,'_count_threshold'):
 			self._count_threshold=250
@@ -1559,21 +1559,12 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 
 
 	def _count_from_subfolders(self,folder_path):
-		try:
-			subfolders=[d for d in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path,d))]
-		except OSError:
-			return {}
-		counts={}
-		for subfolder in subfolders:
-			path=os.path.join(folder_path,subfolder)
-			avis=[f for f in os.listdir(path) if f.endswith('.avi')]
-			counts[subfolder]=len(avis) if avis else len([f for f in os.listdir(path) if f.endswith('.jpg')])
-		return counts
+		return count_sorted_examples(folder_path)
 
 
 	def _update_sorted_count_display(self,folder_path):
 		counts=self._count_from_subfolders(folder_path)
-		if len(counts)<2:
+		if not counts_enable_diagnostics(counts):
 			self._sorted_counts={}
 			self.button_view_sorted_counts.Disable()
 			return
@@ -1583,7 +1574,7 @@ class PanelLv2_TrainCategorizers(wx.Panel):
 
 	def show_sorted_count_popup(self,event):
 		counts=getattr(self,'_sorted_counts',{})
-		if len(counts)<2:
+		if not counts_enable_diagnostics(counts):
 			return
 		if not hasattr(self,'_sorted_count_threshold'):
 			self._sorted_count_threshold=250

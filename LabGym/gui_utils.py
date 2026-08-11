@@ -21,6 +21,8 @@ Email: bingye@umich.edu
 This module provides additional utility functions for the LabGym GUI. Currently, it contains a function to add a new page or select existing page if it already exists.
 '''
 
+import os
+
 import wx
 import wx.lib.agw.hyperlink as hl
 import wx.lib.buttons as wxbuttons
@@ -40,6 +42,131 @@ _LINK_LIGHT_NORMAL    = wx.Colour(0, 140, 158)    # darker cyan/teal on light su
 _LINK_DARK_NORMAL     = wx.Colour(70, 230, 240)   # brighter cyan on dark surfaces
 _LINK_LIGHT_ROLLOVER  = wx.Colour(0, 175, 195)    # lighter cyan (same family)
 _LINK_DARK_ROLLOVER   = wx.Colour(140, 245, 255)  # brighter cyan (same family)
+
+
+def behavior_label_from_filename(filename):
+	"""Return the prepared-example category label matching categorizer training.
+
+	LabGym training takes the final underscore-delimited segment of the stem.
+	Filenames without an underscore yield None and are ignored by counting.
+	"""
+	base = os.path.splitext(os.path.basename(filename))[0]
+	if '_' not in base:
+		return None
+	return base.split('_')[-1]
+
+
+def _list_media_for_counts(entries):
+	"""Prefer AVI listings in a directory; otherwise use JPG listings."""
+	avis = [f for f in entries if f.endswith('.avi')]
+	if avis:
+		return avis
+	return [f for f in entries if f.endswith('.jpg')]
+
+
+def _count_prepared_files_in_dir(dir_path):
+	"""Count prepared examples in a single flat directory (no recursion)."""
+	try:
+		entries = os.listdir(dir_path)
+	except OSError:
+		return {}
+	counts = {}
+	for f in _list_media_for_counts(entries):
+		label = behavior_label_from_filename(f)
+		if label is None:
+			continue
+		counts[label] = counts.get(label, 0) + 1
+	return counts
+
+
+def count_prepared_examples(folder_path):
+	"""Count prepared training examples by behavior label.
+
+	Supports:
+	- flat prepared folders (files directly under folder_path); or
+	- onfly layout with train/ plus validation/ (or counting-only vadilation/).
+
+	Split mode is used only when train/ and either validation/ or vadilation/
+	exist; counts are summed across recognized split directories (not recursive
+	below those directories). Incomplete split layouts fall back to flat-root scan.
+	"""
+	if not folder_path:
+		return {}
+	try:
+		os.listdir(folder_path)
+	except OSError:
+		return {}
+
+	train_path = os.path.join(folder_path, 'train')
+	validation_path = os.path.join(folder_path, 'validation')
+	vadilation_path = os.path.join(folder_path, 'vadilation')
+	has_train = os.path.isdir(train_path)
+	has_validation = os.path.isdir(validation_path)
+	has_vadilation = os.path.isdir(vadilation_path)
+
+	if has_train and (has_validation or has_vadilation):
+		counts = {}
+		for path in (train_path, validation_path, vadilation_path):
+			if not os.path.isdir(path):
+				continue
+			for label, n in _count_prepared_files_in_dir(path).items():
+				counts[label] = counts.get(label, 0) + n
+		return counts
+
+	return _count_prepared_files_in_dir(folder_path)
+
+
+def count_sorted_examples(folder_path):
+	"""Count sorted behavior examples per immediate behavior subfolder name.
+
+	AVI-over-JPG precedence applies independently within each subfolder.
+	Empty behavior subfolders are included with count 0.
+	"""
+	if not folder_path:
+		return {}
+	try:
+		names = os.listdir(folder_path)
+	except OSError:
+		return {}
+	counts = {}
+	for name in names:
+		path = os.path.join(folder_path, name)
+		if not os.path.isdir(path):
+			continue
+		try:
+			entries = os.listdir(path)
+		except OSError:
+			counts[name] = 0
+			continue
+		counts[name] = len(_list_media_for_counts(entries))
+	return counts
+
+
+def counts_enable_diagnostics(counts):
+	"""True when at least one category has one or more counted examples."""
+	return any(n > 0 for n in counts.values()) if counts else False
+
+
+def compute_workflow_map_transform(
+		client_w, client_h, vw=2200, vh=660,
+		fallback_w=1100, fallback_h=560):
+	"""Compute (client_w, client_h, scale, ox, oy) for the Workflow Map layout.
+
+	Tiny or invalid client dimensions fall back to nominal sizes so drawing and
+	hit tests remain well-defined during early layout passes.
+	"""
+	try:
+		cw, ch = int(client_w), int(client_h)
+	except Exception:
+		cw, ch = 0, 0
+	if cw < 1 or ch < 1:
+		cw, ch = fallback_w, fallback_h
+	scale = min(cw / vw, ch / vh)
+	if scale <= 0:
+		scale = min(fallback_w / vw, fallback_h / vh)
+	ox = (cw - vw * scale) / 2
+	oy = (ch - vh * scale) / 2
+	return cw, ch, scale, ox, oy
 
 
 def _colour_to_hex(colour) -> str:
@@ -125,10 +252,35 @@ def create_hyperlink(parent, label, url):
 create_tutorial_hyperlink = create_hyperlink
 
 
+def select_notebook_page(notebook, page) -> bool:
+	"""Select a notebook page by stored page-object identity (not index or title).
+
+	Returns True if the page was found and selected.
+	"""
+	if notebook is None or page is None:
+		return False
+	for i in range(notebook.GetPageCount()):
+		if notebook.GetPage(i) is page:
+			notebook.SetSelection(i)
+			return True
+	return False
+
+
+def is_protected_notebook_page(page, protected_pages) -> bool:
+	"""Return True when page is one of the protected main-frame page objects."""
+	if page is None:
+		return False
+	for protected in protected_pages:
+		if protected is not None and page is protected:
+			return True
+	return False
+
+
 def add_info_button(panel, boxsizer, colour):
 	"""Insert a coloured 'i' button at the top-right of a panel's vertical sizer.
 
-	Clicking the button switches the main notebook to the Workflow Map tab (index 1).
+	Clicking the button selects the main frame's stored Workflow Map page object
+	(``frame.workflow_map_page``) regardless of its notebook index or displayed title.
 	Use one of INFO_COLOUR_S1/S2/S3/GREY as the colour argument.
 	"""
 	bar = wx.BoxSizer(wx.HORIZONTAL)
@@ -143,8 +295,9 @@ def add_info_button(panel, boxsizer, colour):
 
 	def _go_to_workflow(evt):
 		frame = wx.GetTopLevelParent(panel)
-		if hasattr(frame, 'notebook'):
-			frame.notebook.SetSelection(1)
+		notebook = getattr(frame, 'notebook', None)
+		workflow_page = getattr(frame, 'workflow_map_page', None)
+		select_notebook_page(notebook, workflow_page)
 
 	btn.Bind(wx.EVT_BUTTON, _go_to_workflow)
 
