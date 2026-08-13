@@ -1,4 +1,4 @@
-"""AC matrix correct-cell color endpoint and CM width refresh."""
+"""Matrix correct-cell color endpoint and CM width refresh."""
 
 import inspect
 from unittest.mock import patch

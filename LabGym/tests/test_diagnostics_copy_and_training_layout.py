@@ -1,11 +1,11 @@
-"""AC Training Module single-column structure and diagnostic copy contracts."""
+"""Training Module single-column structure and diagnostic copy contracts."""
 
 from pathlib import Path
 
 from LabGym import mywx  # noqa: F401
 
 from LabGym.gui_categorizer import (
-	AC_DIAGNOSTIC_BUTTON_LABELS,
+	DIAGNOSTIC_BUTTON_LABELS,
 	collect_insufficient_support_entries,
 	insufficient_support_threshold,
 )
@@ -51,16 +51,16 @@ def test_training_module_source_has_single_column_bindings():
 		assert f'self.{handler}' in body
 
 
-def test_ac_diagnostic_labels_have_no_emoji_and_overview_first():
-	assert AC_DIAGNOSTIC_BUTTON_LABELS[0] == 'Overview'
-	assert AC_DIAGNOSTIC_BUTTON_LABELS == (
+def test_diagnostic_labels_have_no_emoji_and_overview_first():
+	assert DIAGNOSTIC_BUTTON_LABELS[0] == 'Overview'
+	assert DIAGNOSTIC_BUTTON_LABELS == (
 		'Overview',
 		'Major Confusions',
 		'Minor Confusions',
 		'Successes',
 		'Build Triage Plan',
 	)
-	joined = ' '.join(AC_DIAGNOSTIC_BUTTON_LABELS)
+	joined = ' '.join(DIAGNOSTIC_BUTTON_LABELS)
 	for ch in ('🔴', '🟡', '🟢', '🔵', '📝', '⚠️', '⚠'):
 		assert ch not in joined
 
@@ -74,7 +74,7 @@ def test_diagnostic_button_construction_uses_label_constant():
 	start = text.index('def init_ui(self):', class_start)
 	end = text.index('\tdef update_grid_data', start)
 	body = text[start:end]
-	assert 'AC_DIAGNOSTIC_BUTTON_LABELS' in body
+	assert 'DIAGNOSTIC_BUTTON_LABELS' in body
 	assert 'label="Overview"' not in body
 	assert 'label="🔴' not in body
 

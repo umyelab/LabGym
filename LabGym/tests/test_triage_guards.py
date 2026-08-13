@@ -1,4 +1,4 @@
-"""AC triage empty-plan, PDF preflight, package wrapper, and outcome helpers."""
+"""Triage empty-plan, PDF preflight, package wrapper, and outcome helpers."""
 
 from unittest.mock import MagicMock, patch
 

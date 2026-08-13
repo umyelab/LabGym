@@ -1,4 +1,4 @@
-"""AC categorizer class-mismatch contract."""
+"""Categorizer class-mismatch contract."""
 
 from unittest.mock import patch
 

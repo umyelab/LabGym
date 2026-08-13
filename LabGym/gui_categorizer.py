@@ -126,7 +126,7 @@ def reportlab_importable():
 		return False, str(e)
 
 
-AC_DIAGNOSTIC_BUTTON_LABELS = (
+DIAGNOSTIC_BUTTON_LABELS = (
 	'Overview',
 	'Major Confusions',
 	'Minor Confusions',
@@ -2514,7 +2514,7 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 			label_minor,
 			label_successes,
 			label_triage,
-		) = AC_DIAGNOSTIC_BUTTON_LABELS
+		) = DIAGNOSTIC_BUTTON_LABELS
 		self.btn_help = wx.Button(self, label=label_overview)
 		self.btn_major = wx.Button(self, label=label_major)
 		self.btn_minor = wx.Button(self, label=label_minor)

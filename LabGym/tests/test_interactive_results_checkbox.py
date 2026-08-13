@@ -1,4 +1,4 @@
-"""AC interactive-results checkbox on Test Categorizers."""
+"""Interactive-results checkbox on Test Categorizers."""
 
 from unittest.mock import patch
 
