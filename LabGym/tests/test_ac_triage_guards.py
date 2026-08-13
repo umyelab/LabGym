@@ -777,7 +777,7 @@ def test_generate_data_import_failure_returns_without_construct_or_repeat(wx_app
 def test_pyproject_declares_reportlab_min_5():
 	from pathlib import Path
 
-	text = (Path(__file__).resolve().parents[2] / 'pyproject.toml').read_text()
+	text = (Path(__file__).resolve().parents[2] / 'pyproject.toml').read_text(encoding='utf-8')
 	assert "'reportlab>=5.0.0'" in text
 	assert text.count('reportlab') == 1
 
@@ -786,7 +786,7 @@ def test_gui_categorizer_has_no_module_level_analyzer_imports():
 	from pathlib import Path
 	import re
 
-	text = (Path(__file__).resolve().parents[2] / 'LabGym' / 'gui_categorizer.py').read_text()
+	text = (Path(__file__).resolve().parents[2] / 'LabGym' / 'gui_categorizer.py').read_text(encoding='utf-8')
 	# Imports before the deferred-import helper are module-level.
 	head = text.split('def import_generate_examples_analyzer', 1)[0]
 	assert 'from .analyzebehavior import AnalyzeAnimal' not in head

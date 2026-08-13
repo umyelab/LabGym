@@ -25,7 +25,7 @@ APPROVED_ORDER = (
 
 def test_training_module_source_has_single_column_bindings():
 	src = Path(__file__).resolve().parents[2] / 'LabGym' / 'gui_main.py'
-	text = src.read_text()
+	text = src.read_text(encoding='utf-8')
 	start = text.index('class PanelLv1_TrainingModule')
 	end = text.index('class PanelLv1_AnalysisModule')
 	body = text[start:end]
@@ -67,7 +67,7 @@ def test_ac_diagnostic_labels_have_no_emoji_and_overview_first():
 
 def test_diagnostic_button_construction_uses_label_constant():
 	src = Path(__file__).resolve().parents[2] / 'LabGym' / 'gui_categorizer.py'
-	text = src.read_text()
+	text = src.read_text(encoding='utf-8')
 	start = text.index('def init_ui(self):')
 	# Limit to AutomatedDiagnosticsDialog.init_ui (first init_ui after that class).
 	class_start = text.index('class AutomatedDiagnosticsDialog')
@@ -81,7 +81,7 @@ def test_diagnostic_button_construction_uses_label_constant():
 
 def test_diagnostic_copy_rejects_overconfident_phrases_and_uses_new_low_support():
 	src = Path(__file__).resolve().parents[2] / 'LabGym' / 'gui_categorizer.py'
-	text = src.read_text()
+	text = src.read_text(encoding='utf-8')
 	banned = (
 		'Model looks great!',
 		'Statistically Meaningless',

@@ -71,7 +71,7 @@ def test_next_versioned_pdf_does_not_overwrite_existing(tmp_path):
 
 def test_triage_builder_source_is_fixed_and_anchored():
 	src = Path(__file__).resolve().parents[2] / 'LabGym' / 'gui_categorizer.py'
-	text = src.read_text()
+	text = src.read_text(encoding='utf-8')
 	start = text.index('class TriageBuilderDialog')
 	body = text[start:text.index('def move_items', start)]
 	assert 'wx.RESIZE_BORDER' not in body
