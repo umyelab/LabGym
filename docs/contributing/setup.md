@@ -89,16 +89,23 @@
 5. If you're on Windows or Linux, install PyTorch. If you're on macOS, PyTorch
    will already be installed.
 
-   ````{tab} GPU
-   ```console
-   $ python -m pip install --index-url https://download.pytorch.org/whl/cu118 torch==2.0.1 torchvision==0.15.2
-   ```
-   ````
+   Use the aligned PyTorch **2.8** family (`torch==2.8.0`, `torchvision==0.23.0`,
+   `torchaudio==2.8.0`). LabGym’s Windows metadata pins these base versions;
+   matching official CPU or CUDA wheel variants are accepted.
 
    ````{tab} CPU Only
    ```console
-   $ python -m pip install --index-url https://download.pytorch.org/whl/cpu torch==2.0.1 torchvision==0.15.2
+   $ python -m pip install torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cpu
    ```
+   ````
+
+   ````{tab} GPU
+   Select an official PyTorch **2.8**-compatible CUDA wheel index from
+   [PyTorch’s installation guidance](https://pytorch.org/get-started/locally/)
+   for your supported hardware and CUDA runtime, then install the same
+   `torch==2.8.0`, `torchvision==0.23.0`, and `torchaudio==2.8.0` base versions
+   from that index. Do not use older LabGym instructions that pinned PyTorch
+   2.0.1 / CUDA 11.8.
    ````
 
 6. Test your setup by launching LabGym. If the LabGym GUI shows up, your setup

@@ -12,17 +12,17 @@ To install LabGym on Windows, you will need to access the terminal. To do this, 
    py -3.10 --version
    ```
 
-2. If you're using an NVIDIA GPU, install CUDA Toolkit 11.8 and cuDNN, and install PyTorch v2.0.1 with cu118 support.
+2. Install the verified PyTorch 2.8 family for LabGym on Windows.
 
-   First, install [CUDA Toolkit 11.8](https://developer.nvidia.com/cuda-11-8-0-download-archive?target_os=Windows&target_arch=x86_64). Select your version of Windows, select "exe (local)," then click "Download."
-
-   Next, install [cuDNN](https://developer.nvidia.com/rdp/cudnn-archive). You will need to register an NVIDIA Developer account, which you can do for free. You can choose cuDNN v8.9.7 that supports CUDA toolkit v11.8. Choose 'Local Installer for Windows (Zip)', download and extract it. And then copy the three folders 'bin', 'lib', and 'include' into where the CUDA toolkit is installed (typcially, 'C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8\'), and replace all the three folders with the same names. After that, you may need to add the 'C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v11.8' to the 'PATH' environmental variable.
-
-   Finally, install PyTorch v2.0.1 with cu118 support.
+   The default, verified path is the official PyTorch CPU wheels:
 
    ```pwsh-session
-   py -3.10 -m pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
+   py -3.10 -m pip install torch==2.8.0 torchvision==0.23.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cpu
    ```
+
+   LabGym’s Windows package requirements use these base versions. Matching official CPU or CUDA builds (for example `2.8.0+cpu`) satisfy them.
+
+   If you need GPU acceleration, install a PyTorch **2.8**-compatible CUDA wheel from [PyTorch’s current installation guidance](https://pytorch.org/get-started/locally/) for your supported hardware and CUDA runtime. Do not use older LabGym documentation that pinned PyTorch 2.0.1.
 
 4. Upgrade `pip`, `wheel`, `setuptools`.
    
@@ -57,4 +57,3 @@ Launch LabGym:
    ```pwsh-session
    __main__.main()
    ```
-

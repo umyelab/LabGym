@@ -48,7 +48,15 @@ def tests(session:nox.Session):
 			"torchvision==0.23.0+cpu",
 			"torchaudio==2.8.0+cpu",
 		)
-
+	elif platform.system() == "Windows":
+		# Verified Windows CPU family; editable install below enforces numpy<=1.26.4
+		session.install(
+			"--no-cache-dir",
+			"--index-url", "https://download.pytorch.org/whl/cpu",
+			"torch==2.8.0",
+			"torchvision==0.23.0",
+			"torchaudio==2.8.0",
+		)
 
 	# package and test dependencies
 	session.install("-e", ".")
