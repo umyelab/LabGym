@@ -2489,8 +2489,6 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 			self.cm_grid.SetColLabelValue(i, name)
 
 		self.cm_grid.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK, self.on_cell_click)
-		
-		self.update_grid_data()
 
 		self.cm_grid.SetRowLabelSize(wx.grid.GRID_AUTOSIZE)
 		self.cm_grid.SetColLabelSize(wx.grid.GRID_AUTOSIZE)
@@ -2498,7 +2496,7 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 		self.cm_grid.DisableDragRowSize()
 		self.cm_grid.DisableDragColSize()
 
-		self.cm_grid.AutoSize()
+		self.update_grid_data()
 		sizer.Add(self.cm_grid, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 10)
 
 		bottom_dashboard_sizer = wx.BoxSizer(wx.HORIZONTAL)
@@ -2667,8 +2665,22 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 				self.cm_grid.SetCellAlignment(i, j, wx.ALIGN_CENTER, wx.ALIGN_CENTER)
 				self.cm_grid.SetCellBackgroundColour(i, j, bg_color)
 				self.cm_grid.SetCellTextColour(i, j, wx.Colour(255, 255, 255))
-		
+
+		self.refresh_cm_column_widths()
 		self.cm_grid.ForceRefresh()
+
+	def refresh_cm_column_widths(self):
+		"""Size columns from current labels/values, with a padded floor for ``100.0%``."""
+		grid = self.cm_grid
+		grid.AutoSizeColumns(False)
+		dc = wx.ClientDC(grid)
+		dc.SetFont(grid.GetDefaultCellFont())
+		text_w, _text_h = dc.GetTextExtent('100.0%')
+		# Modest horizontal padding so centered percentages are not clipped.
+		min_width = text_w + 16
+		for col in range(grid.GetNumberCols()):
+			if grid.GetColSize(col) < min_width:
+				grid.SetColSize(col, min_width)
 
 	def on_toggle_cm(self, event):
 		self.is_normalized = self.toggle_btn.GetValue()
