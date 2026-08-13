@@ -81,9 +81,8 @@ def wx_app():
 
 
 def _padded_100_pct_min_width(grid):
-	dc = wx.ClientDC(grid)
-	dc.SetFont(grid.GetDefaultCellFont())
-	text_w, _text_h = dc.GetTextExtent('100.0%')
+	font = grid.GetDefaultCellFont()
+	text_w, _h, _d, _el = grid.GetFullTextExtent('100.0%', font)
 	return text_w + 16
 
 

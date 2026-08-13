@@ -2673,9 +2673,8 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 		"""Size columns from current labels/values, with a padded floor for ``100.0%``."""
 		grid = self.cm_grid
 		grid.AutoSizeColumns(False)
-		dc = wx.ClientDC(grid)
-		dc.SetFont(grid.GetDefaultCellFont())
-		text_w, _text_h = dc.GetTextExtent('100.0%')
+		font = grid.GetDefaultCellFont()
+		text_w, _h, _d, _el = grid.GetFullTextExtent('100.0%', font)
 		# Modest horizontal padding so centered percentages are not clipped.
 		min_width = text_w + 16
 		for col in range(grid.GetNumberCols()):
