@@ -44,12 +44,6 @@ import wx.grid
 import wx.html
 
 # Local application/library specific imports.
-logger.debug('importing %s ...', '.analyzebehavior')
-from .analyzebehavior import AnalyzeAnimal
-logger.debug('importing %s done', '.analyzebehavior')
-logger.debug('importing %s ...', '.analyzebehavior_dt')
-from .analyzebehavior_dt import AnalyzeAnimalDetector
-logger.debug('importing %s done', '.analyzebehavior_dt')
 from .categorizer import Categorizers, CategorizerClassMismatchError
 from LabGym import config
 from .tools import sort_examples_from_csv
@@ -67,6 +61,41 @@ from .gui_utils import (
 # Confusion-matrix correct-cell colors: dark -> approved max green #2E7D32.
 CM_CORRECT_RGB_MIN = (20, 40, 20)
 CM_CORRECT_RGB_MAX = (46, 125, 50)  # #2E7D32
+
+
+def import_generate_examples_analyzer(kind):
+	"""
+	Import AnalyzeAnimal ('animal') or AnalyzeAnimalDetector ('detector').
+
+	Returns the class, or None after logging and a MessageBox when the import
+	raises ImportError or OSError (for example a missing native library).
+	Unknown kind values raise ValueError without attempting an import.
+	"""
+	if kind not in ('animal', 'detector'):
+		raise ValueError(
+			"import_generate_examples_analyzer kind must be 'animal' or 'detector', "
+			f'got {kind!r}'
+		)
+	try:
+		if kind == 'animal':
+			from .analyzebehavior import AnalyzeAnimal
+			return AnalyzeAnimal
+		if kind == 'detector':
+			from .analyzebehavior_dt import AnalyzeAnimalDetector
+			return AnalyzeAnimalDetector
+	except (ImportError, OSError):
+		logger.exception(
+			'Failed to import Generate Examples analyzer components (kind=%r)',
+			kind,
+		)
+		wx.MessageBox(
+			'LabGym could not load the analysis components required for this Generate '
+			'Examples workflow. Verify that the LabGym environment and its required '
+			'dependencies are installed correctly, then try again.',
+			'Analysis dependency unavailable',
+			wx.OK | wx.ICON_ERROR,
+		)
+		return None
 
 
 def cm_correct_cell_rgb(accuracy):
@@ -847,6 +876,9 @@ class PanelLv2_GenerateExamples(wx.Panel):
 				if self.path_to_detector is None:
 					wx.MessageBox('You need to select a Detector.','Error',wx.OK|wx.ICON_ERROR)
 				else:
+					AnalyzeAnimalDetector=import_generate_examples_analyzer('detector')
+					if AnalyzeAnimalDetector is None:
+						return
 					AAD=AnalyzeAnimalDetector()
 					AAD.analyze_images_individuals(self.path_to_detector,self.path_to_videos,self.result_path,self.animal_kinds,generate=True,imagewidth=self.framewidth,detection_threshold=self.detection_threshold,background_free=self.background_free,black_background=self.black_background)
 
@@ -873,6 +905,15 @@ class PanelLv2_GenerateExamples(wx.Panel):
 				dialog.Destroy()
 
 				if do_nothing is False:
+
+					if self.use_detector is False:
+						AnalyzeAnimal=import_generate_examples_analyzer('animal')
+						if AnalyzeAnimal is None:
+							return
+					else:
+						AnalyzeAnimalDetector=import_generate_examples_analyzer('detector')
+						if AnalyzeAnimalDetector is None:
+							return
 
 					for i in self.path_to_videos:
 
