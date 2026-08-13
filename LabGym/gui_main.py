@@ -204,7 +204,8 @@ class PanelLv1_TrainingModule(wx.Panel):
 		button_generateimages=wx.Button(panel,label='Generate Image Examples',size=(300,40))
 		button_generateimages.Bind(wx.EVT_BUTTON,self.generate_images)
 		wx.Button.SetToolTip(button_generateimages,'Extract frames from videos for annotating animals / objects in them so that they can be used to train a Detector to detect animals / objects of your interest. See Extended Guide for how to select images to annotate.')
-		detector_sizer.Add(button_generateimages,0,wx.ALIGN_CENTER|wx.BOTTOM, 15)
+		boxsizer.Add(button_generateimages,0,wx.ALIGN_CENTER,10)
+		boxsizer.Add(0,5,0)
 
 		link_annotate=create_hyperlink(panel,'Annotate images with EZannot','https://github.com/yujiahu415/EZannot')
 		detector_sizer.Add(link_annotate,0,wx.ALIGN_CENTER|wx.BOTTOM, 15)
@@ -212,7 +213,8 @@ class PanelLv1_TrainingModule(wx.Panel):
 		button_traindetectors=wx.Button(panel,label='Train Detectors',size=(300,40))
 		button_traindetectors.Bind(wx.EVT_BUTTON,self.train_detectors)
 		wx.Button.SetToolTip(button_traindetectors,'There are two detection methods in LabGym, the Detector-based method is more versatile (useful in any recording conditions and complex interactive behaviors) but slower than the other background subtraction-based method (requires static background and stable illumination in videos).')
-		detector_sizer.Add(button_traindetectors,0,wx.ALIGN_CENTER|wx.BOTTOM, 15)
+		boxsizer.Add(button_traindetectors,0,wx.ALIGN_CENTER,10)
+		boxsizer.Add(0,5,0)
 
 		button_testdetectors=wx.Button(panel,label='Test Detectors',size=(300,40))
 		button_testdetectors.Bind(wx.EVT_BUTTON,self.test_detectors)
@@ -232,30 +234,28 @@ class PanelLv1_TrainingModule(wx.Panel):
 		button_generatebehaviorexamples=wx.Button(panel,label='Generate Behavior Examples',size=(300,40))
 		button_generatebehaviorexamples.Bind(wx.EVT_BUTTON,self.generate_behaviorexamples)
 		wx.Button.SetToolTip(button_generatebehaviorexamples,'Generate behavior examples for sorting them so that they can be used to teach a Categorizer to recognize behaviors defined by you.')
-		categorizer_sizer.Add(button_generatebehaviorexamples,0,wx.ALIGN_CENTER|wx.BOTTOM, 15)
+		boxsizer.Add(button_generatebehaviorexamples,0,wx.ALIGN_CENTER,10)
+		boxsizer.Add(0,5,0)
 
 		button_sortbehaviorexamples=wx.Button(panel,label='Sort Behavior Examples',size=(300,40))
 		button_sortbehaviorexamples.Bind(wx.EVT_BUTTON,self.sort_behaviorexamples)
 		wx.Button.SetToolTip(button_sortbehaviorexamples,'Set shortcut keys for behavior categories to help sorting the behavior examples in an easier way. See Extended Guide for how to select and sort the behavior examples.')
-		categorizer_sizer.Add(button_sortbehaviorexamples,0,wx.ALIGN_CENTER|wx.BOTTOM, 15)
+		boxsizer.Add(button_sortbehaviorexamples,0,wx.ALIGN_CENTER,10)
+		boxsizer.Add(0,5,0)
 
 		button_traincategorizers=wx.Button(panel,label='Train Categorizers',size=(300,40))
 		button_traincategorizers.Bind(wx.EVT_BUTTON,self.train_categorizers)
 		wx.Button.SetToolTip(button_traincategorizers,'Customize a Categorizer and use the sorted behavior examples to train it so that it can recognize the behaviors of your interest during analysis.')
-		categorizer_sizer.Add(button_traincategorizers,0,wx.ALIGN_CENTER|wx.BOTTOM, 15)
+		boxsizer.Add(button_traincategorizers,0,wx.ALIGN_CENTER,10)
+		boxsizer.Add(0,5,0)
 
 		button_testcategorizers=wx.Button(panel,label='Test Categorizers',size=(300,40))
 		button_testcategorizers.Bind(wx.EVT_BUTTON,self.test_categorizers)
 		wx.Button.SetToolTip(button_testcategorizers,'Test trained Categorizers on the sorted ground-truth behavior examples (similar to the behavior examples used for training a Categorizer).')
-		categorizer_sizer.Add(button_testcategorizers,0,wx.ALIGN_CENTER|wx.BOTTOM, 15)
+		boxsizer.Add(button_testcategorizers,0,wx.ALIGN_CENTER,10)
+		boxsizer.Add(0,50,0)
 
-		columns_sizer.Add(detector_sizer, 1, wx.EXPAND | wx.RIGHT, 40)
-		columns_sizer.Add(divider_line, 0, wx.EXPAND | wx.TOP | wx.BOTTOM, 20)
-		columns_sizer.Add(categorizer_sizer, 1, wx.EXPAND | wx.LEFT, 40)
-
-		main_sizer.Add(columns_sizer, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 50)
-
-		panel.SetSizer(main_sizer)
+		panel.SetSizer(boxsizer)
 
 		self.Centre()
 		self.Show(True)
