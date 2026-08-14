@@ -25,6 +25,22 @@ nox.options.reuse_existing_virtualenvs=False
 
 EXTRAS_WX_URL = "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-22.04"
 
+# macOS Python 3.9 (wxPython ~4.2.x / Cocoa) can abort during interpreter
+# teardown when repeated real-wx.App lifecycle modules are alphabetically
+# interleaved with the rest of the native-importing suite. Isolate those
+# modules in a separate pytest process for Darwin+3.9 only; they are not
+# skipped. Add any future test module that creates/manages a real wx.App
+# fixture to this list.
+MACOS39_REAL_APP_TEST_FILES = (
+	"LabGym/tests/test_categorizer_class_mismatch.py",
+	"LabGym/tests/test_diagnostics_cm_colors.py",
+	"LabGym/tests/test_interactive_results_checkbox.py",
+	"LabGym/tests/test_triage_guards.py",
+	"LabGym/tests/test_mywx.py",
+	"LabGym/tests/test_registration.py",
+	"LabGym/tests/test_userdata_survey.py",
+)
+
 
 @nox.session(python=['3.9','3.10'])
 def tests(session:nox.Session):
@@ -69,8 +85,23 @@ def tests(session:nox.Session):
 	session.install("-e", ".")
 	session.install("pytest")
 
-
-	session.run("pytest", "-q")
+	# Darwin + Python 3.9: isolate real-wx.App lifecycle modules in process 1.
+	session_python = str(session.python)
+	if platform.system() == "Darwin" and (
+		session_python == "3.9" or session_python.startswith("3.9.")
+	):
+		session.run("pytest", "-q", *MACOS39_REAL_APP_TEST_FILES)
+		ignore_args = [f"--ignore={path}" for path in MACOS39_REAL_APP_TEST_FILES]
+		session.run(
+			"pytest",
+			"-q",
+			"LabGym/tests",
+			*ignore_args,
+			"tests/test_load.py",
+			"tests/test_main.py",
+		)
+	else:
+		session.run("pytest", "-q")
 
 
 @nox.session(reuse_venv=True)
