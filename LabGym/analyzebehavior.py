@@ -58,6 +58,34 @@ from .tools import (
 logger.debug('importing tools (done)')
 
 
+PROBABILITY_HEATMAP_FLOOR = 1e-3
+PROBABILITY_HEATMAP_MISSING_COLOR = 'gray'
+PROBABILITY_HEATMAP_MISSING_LEGEND = 'Gray: missing / non-finite'
+
+
+def prepare_probability_heatmap_array(values):
+	'''Clip finite probabilities for log-scale heat maps; mask non-finite values.
+
+	Does not modify the input array. Finite values are clipped to
+	[1e-3, 1]. NaN, inf, and -inf are masked rather than converted to
+	the plotting floor or to 1.
+	'''
+	data = np.array(values, dtype=np.float64, copy=True)
+	finite = np.isfinite(data)
+	clipped = np.empty_like(data)
+	clipped[finite] = np.clip(data[finite], PROBABILITY_HEATMAP_FLOOR, 1.0)
+	clipped[~finite] = np.nan
+	return np.ma.masked_where(~finite, clipped)
+
+
+def probability_heatmap_colormap():
+	'''Return an inferno copy with gray for masked / non-finite cells.'''
+	import matplotlib.pyplot as plt
+	cmap = plt.get_cmap('inferno').copy()
+	cmap.set_bad(color=PROBABILITY_HEATMAP_MISSING_COLOR, alpha=1.0)
+	return cmap
+
+
 class AnalyzeAnimal():
 
 	def __init__(self):
@@ -660,6 +688,7 @@ class AnalyzeAnimal():
 		import pandas as pd
 		import matplotlib.pyplot as plt
 		from matplotlib.colors import LogNorm
+		from matplotlib.patches import Patch
 
 		os.makedirs(self.results_path, exist_ok=True)
 
@@ -697,8 +726,7 @@ class AnalyzeAnimal():
 
 				time_plot = np.array(self.all_time)[::stride]
 
-				P_plot = np.nan_to_num(P_plot, nan=0.0, posinf=1.0, neginf=0.0)
-				P_plot = np.clip(P_plot, 1e-3, 1.0)
+				P_plot = prepare_probability_heatmap_array(P_plot)
 				P_plot = P_plot.T
 
 				num_behaviors, num_frames = P_plot.shape
@@ -712,7 +740,7 @@ class AnalyzeAnimal():
 					P_plot,
 					aspect='auto',
 					interpolation='nearest',
-					cmap='inferno',
+					cmap=probability_heatmap_colormap(),
 					norm=LogNorm(vmin=1e-3, vmax=1)
 				)
 
@@ -785,11 +813,23 @@ class AnalyzeAnimal():
 
 				cbar = fig.colorbar(im, ax=ax, pad=0.02)
 				cbar.set_label(
-					'Probability (log scale)',
+					'Probability (log scale)\n'+PROBABILITY_HEATMAP_MISSING_LEGEND,
 					fontsize=12,
 					fontweight='bold'
 				)
 				cbar.ax.tick_params(labelsize=10)
+				ax.legend(
+					handles=[
+						Patch(
+							facecolor=PROBABILITY_HEATMAP_MISSING_COLOR,
+							edgecolor='black',
+							label=PROBABILITY_HEATMAP_MISSING_LEGEND,
+							)
+						],
+					loc='upper right',
+					fontsize=8,
+					framealpha=0.85,
+					)
 
 				plt.tight_layout()
 

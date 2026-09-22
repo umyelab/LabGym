@@ -39,6 +39,12 @@ from keras.utils import img_to_array
 import torch
 
 # Local application/library specific imports.
+from .analyzebehavior import (
+	PROBABILITY_HEATMAP_MISSING_COLOR,
+	PROBABILITY_HEATMAP_MISSING_LEGEND,
+	prepare_probability_heatmap_array,
+	probability_heatmap_colormap,
+	)
 from .detector import Detector
 from .tools import (
 	crop_frame,
@@ -1100,6 +1106,7 @@ class AnalyzeAnimalDetector():
 		import pandas as pd
 		import matplotlib.pyplot as plt
 		from matplotlib.colors import LogNorm
+		from matplotlib.patches import Patch
 
 		os.makedirs(self.results_path, exist_ok=True)
 
@@ -1142,8 +1149,7 @@ class AnalyzeAnimalDetector():
 
 					time_plot = time_array[::stride]
 
-					P_plot = np.nan_to_num(P_plot, nan=0.0, posinf=1.0, neginf=0.0)
-					P_plot = np.clip(P_plot, 1e-3, 1.0)
+					P_plot = prepare_probability_heatmap_array(P_plot)
 					P_plot = P_plot.T
 
 					num_behaviors, num_frames = P_plot.shape
@@ -1157,7 +1163,7 @@ class AnalyzeAnimalDetector():
 						P_plot,
 						aspect='auto',
 						interpolation='nearest',
-						cmap='inferno',
+						cmap=probability_heatmap_colormap(),
 						norm=LogNorm(vmin=1e-3, vmax=1)
 					)
 
@@ -1208,8 +1214,24 @@ class AnalyzeAnimalDetector():
 					)
 
 					cbar = fig.colorbar(im, ax=ax, pad=0.02)
-					cbar.set_label('Probability', fontsize=12, fontweight='bold')
+					cbar.set_label(
+						'Probability (log scale)\n'+PROBABILITY_HEATMAP_MISSING_LEGEND,
+						fontsize=12,
+						fontweight='bold',
+						)
 					cbar.ax.tick_params(labelsize=10)
+					ax.legend(
+						handles=[
+							Patch(
+								facecolor=PROBABILITY_HEATMAP_MISSING_COLOR,
+								edgecolor='black',
+								label=PROBABILITY_HEATMAP_MISSING_LEGEND,
+								)
+							],
+						loc='upper right',
+						fontsize=8,
+						framealpha=0.85,
+						)
 
 					plt.tight_layout()
 
