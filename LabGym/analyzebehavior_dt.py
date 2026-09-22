@@ -44,6 +44,7 @@ from .analyzebehavior import (
 	PROBABILITY_HEATMAP_MISSING_LEGEND,
 	prepare_probability_heatmap_array,
 	probability_heatmap_colormap,
+	probability_heatmap_norm,
 	)
 from .detector import Detector
 from .tools import (
@@ -1105,7 +1106,6 @@ class AnalyzeAnimalDetector():
 		import numpy as np
 		import pandas as pd
 		import matplotlib.pyplot as plt
-		from matplotlib.colors import LogNorm
 		from matplotlib.patches import Patch
 
 		os.makedirs(self.results_path, exist_ok=True)
@@ -1164,7 +1164,7 @@ class AnalyzeAnimalDetector():
 						aspect='auto',
 						interpolation='nearest',
 						cmap=probability_heatmap_colormap(),
-						norm=LogNorm(vmin=1e-3, vmax=1)
+						norm=probability_heatmap_norm()
 					)
 
 					ax.set_yticks(np.arange(-0.5, num_behaviors, 1), minor=True)
@@ -1215,7 +1215,7 @@ class AnalyzeAnimalDetector():
 
 					cbar = fig.colorbar(im, ax=ax, pad=0.02)
 					cbar.set_label(
-						'Probability (log scale)\n'+PROBABILITY_HEATMAP_MISSING_LEGEND,
+						'Probability\n'+PROBABILITY_HEATMAP_MISSING_LEGEND,
 						fontsize=12,
 						fontweight='bold',
 						)

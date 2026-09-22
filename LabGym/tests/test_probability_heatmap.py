@@ -1,24 +1,23 @@
-"""Probability heat-map missing-value masking (non-detector and detector)."""
+"""Probability heat-map missing-value masking and linear 0–1 scale."""
 
-import math
 import os
 
 import matplotlib
 matplotlib.use('Agg')
 
 from matplotlib.axes import Axes
-from matplotlib.colors import LogNorm, to_rgba
+from matplotlib.colors import LogNorm, Normalize, to_rgba
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
 from LabGym.analyzebehavior import (
-	PROBABILITY_HEATMAP_FLOOR,
 	PROBABILITY_HEATMAP_MISSING_COLOR,
 	PROBABILITY_HEATMAP_MISSING_LEGEND,
 	AnalyzeAnimal,
 	prepare_probability_heatmap_array,
 	probability_heatmap_colormap,
+	probability_heatmap_norm,
 )
 from LabGym.analyzebehavior_dt import AnalyzeAnimalDetector
 
@@ -65,7 +64,14 @@ def _detector_analyzer(tmp_path, walk_probs, sit_probs, times=None):
 	return animal
 
 
-def test_nan_and_nonfinite_are_masked_not_floored():
+def _assert_fixed_linear_norm(norm):
+	assert isinstance(norm, Normalize)
+	assert not isinstance(norm, LogNorm)
+	assert float(norm.vmin) == pytest.approx(0.0)
+	assert float(norm.vmax) == pytest.approx(1.0)
+
+
+def test_nan_and_nonfinite_are_masked_not_converted_to_zero():
 	raw = np.array([[np.nan, np.inf, -np.inf, 0.2]], dtype=np.float64)
 	prepared = prepare_probability_heatmap_array(raw)
 	assert np.ma.is_masked(prepared)
@@ -77,25 +83,27 @@ def test_nan_and_nonfinite_are_masked_not_floored():
 	np.testing.assert_array_equal(raw, [[np.nan, np.inf, -np.inf, 0.2]])
 
 
-def test_finite_floor_value_is_not_missing():
-	raw = np.array([[PROBABILITY_HEATMAP_FLOOR, 0.0, 1.5]], dtype=np.float64)
+def test_zero_is_valid_plotted_data_not_raised_or_masked():
+	raw = np.array([[0.0, 0.001, 1.5, -0.1]], dtype=np.float64)
 	prepared = prepare_probability_heatmap_array(raw)
 	assert not np.any(prepared.mask)
-	assert prepared[0, 0] == pytest.approx(PROBABILITY_HEATMAP_FLOOR)
-	assert prepared[0, 1] == pytest.approx(PROBABILITY_HEATMAP_FLOOR)
+	assert prepared[0, 0] == pytest.approx(0.0)
+	assert prepared[0, 1] == pytest.approx(0.001)
 	assert prepared[0, 2] == pytest.approx(1.0)
+	assert prepared[0, 3] == pytest.approx(0.0)
 
 
-def test_finite_values_keep_lognorm_mapping():
-	raw = np.array([[0.001, 0.01, 0.1, 1.0]], dtype=np.float64)
+def test_linear_norm_maps_zero_and_intermediates_proportionally():
+	norm = probability_heatmap_norm()
+	_assert_fixed_linear_norm(norm)
+	raw = np.array([[0.0, 0.01, 0.5, 1.0]], dtype=np.float64)
 	prepared = prepare_probability_heatmap_array(raw)
-	norm = LogNorm(vmin=1e-3, vmax=1)
-	mapped = [float(norm(v)) for v in prepared.compressed()]
-	assert mapped[0] == pytest.approx(0.0)
-	assert mapped[-1] == pytest.approx(1.0)
-	assert mapped == sorted(mapped)
-	assert math.isclose(mapped[1], norm(0.01))
-	assert math.isclose(mapped[2], norm(0.1))
+	for value in prepared.compressed():
+		assert float(norm(value)) == pytest.approx(float(value))
+	assert float(norm(0.0)) == pytest.approx(0.0)
+	assert float(norm(0.01)) == pytest.approx(0.01)
+	assert float(norm(0.5)) == pytest.approx(0.5)
+	assert float(norm(1.0)) == pytest.approx(1.0)
 
 
 def test_colormap_bad_is_gray_and_does_not_mutate_global():
@@ -109,52 +117,83 @@ def test_colormap_bad_is_gray_and_does_not_mutate_global():
 	assert PROBABILITY_HEATMAP_MISSING_COLOR == 'gray'
 
 
-def _assert_plotted_missing_and_floor(captured):
+def _assert_plotted_linear_missing_and_zero(captured):
 	plotted = captured['X']
 	assert np.ma.is_masked(plotted)
 	# After transpose: behaviors x frames. walk is row 0.
 	assert plotted.mask[0, 1]
 	assert not plotted.mask[0, 0]
-	assert plotted[0, 0] == pytest.approx(PROBABILITY_HEATMAP_FLOOR)
+	assert plotted[0, 0] == pytest.approx(0.0)
+	assert not plotted.mask[0, 2]
+	assert plotted[0, 2] == pytest.approx(0.001)
 	assert not plotted.mask[1, 0]
 	assert plotted[1, 0] == pytest.approx(0.2)
-	norm = captured['kwargs']['norm']
-	assert isinstance(norm, LogNorm)
-	assert float(norm.vmin) == pytest.approx(1e-3)
-	assert float(norm.vmax) == pytest.approx(1.0)
+	_assert_fixed_linear_norm(captured['kwargs']['norm'])
 	cmap = captured['kwargs']['cmap']
 	expected_bad = np.array(to_rgba(PROBABILITY_HEATMAP_MISSING_COLOR))
 	np.testing.assert_allclose(cmap.get_bad(), expected_bad)
 	legend_labels = [t.get_text() for t in captured['self'].get_legend().get_texts()]
 	assert PROBABILITY_HEATMAP_MISSING_LEGEND in legend_labels
+	cbar = captured['self'].images[0].colorbar
+	assert 'log' not in cbar.ax.get_ylabel().lower()
+	assert 'Probability' in cbar.ax.get_ylabel()
 
 
-def test_non_detector_heatmap_masks_nan_and_keeps_floor(tmp_path, monkeypatch):
+def test_non_detector_heatmap_uses_fixed_linear_norm(tmp_path, monkeypatch):
 	captured = _capture_imshow(monkeypatch)
 	animal = _non_detector_analyzer(
 		tmp_path,
-		walk_probs=[0.001, np.nan, 0.4],
+		walk_probs=[0.0, np.nan, 0.001],
 		sit_probs=[0.2, 0.8, 1.0],
 		times=[0.0, 0.1, 0.2],
 	)
 	animal.export_probability_matrices(make_heatmap=True)
-	_assert_plotted_missing_and_floor(captured)
+	_assert_plotted_linear_missing_and_zero(captured)
 
 
-def test_detector_heatmap_follows_same_missing_rule(tmp_path, monkeypatch):
+def test_detector_heatmap_follows_same_linear_and_missing_rules(tmp_path, monkeypatch):
 	captured = _capture_imshow(monkeypatch)
 	animal = _detector_analyzer(
 		tmp_path,
-		walk_probs=[0.001, np.nan, 0.4],
+		walk_probs=[0.0, np.nan, 0.001],
 		sit_probs=[0.2, 0.8, 1.0],
 		times=[0.0, 0.1, 0.2],
 	)
 	animal.export_probability_matrices_dt(make_heatmap=True)
-	_assert_plotted_missing_and_floor(captured)
+	_assert_plotted_linear_missing_and_zero(captured)
+
+
+def test_detector_and_non_detector_share_the_same_fixed_limits(tmp_path, monkeypatch):
+	captured_nd = _capture_imshow(monkeypatch)
+	nd = _non_detector_analyzer(
+		tmp_path / 'nd',
+		walk_probs=[0.01, 0.5, 1.0],
+		sit_probs=[0.0, 0.2, 0.9],
+		times=[0.0, 0.1, 0.2],
+	)
+	(tmp_path / 'nd').mkdir()
+	nd.export_probability_matrices(make_heatmap=True)
+	nd_norm = captured_nd['kwargs']['norm']
+
+	captured_dt = _capture_imshow(monkeypatch)
+	dt = _detector_analyzer(
+		tmp_path / 'dt',
+		walk_probs=[0.3],
+		sit_probs=[0.7],
+		times=[0.0],
+	)
+	(tmp_path / 'dt').mkdir()
+	dt.export_probability_matrices_dt(make_heatmap=True)
+	dt_norm = captured_dt['kwargs']['norm']
+
+	_assert_fixed_linear_norm(nd_norm)
+	_assert_fixed_linear_norm(dt_norm)
+	assert float(nd_norm.vmin) == float(dt_norm.vmin)
+	assert float(nd_norm.vmax) == float(dt_norm.vmax)
 
 
 def test_saved_numeric_matrices_unchanged_by_plotting(tmp_path):
-	walk = [0.001, np.nan, 0.4]
+	walk = [0.0, np.nan, 0.4]
 	sit = [0.2, np.inf, 1.0]
 	expected = np.array([walk, sit], dtype=np.float32).T
 
