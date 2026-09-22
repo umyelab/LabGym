@@ -2644,11 +2644,10 @@ def stm_node_marker_size(occupancy):
 	return _STM_NODE_SIZE_MIN + _STM_NODE_SIZE_SPAN * occ
 
 
-def stm_edge_linewidth(probability, max_probability):
-	'''Compressed linewidth from row-normalized probability.'''
-	max_p = max(float(max_probability), 1e-6)
-	p = max(0.0, float(probability))
-	return _STM_EDGE_LW_MIN + _STM_EDGE_LW_SPAN * math.sqrt(p / max_p)
+def stm_edge_linewidth(probability):
+	'''Fixed-scale linewidth from row-normalized probability in [0, 1].'''
+	p = max(0.0, min(1.0, float(probability)))
+	return _STM_EDGE_LW_MIN + _STM_EDGE_LW_SPAN * p
 
 
 def stm_format_edge_label(probability, count, edge_id=None):
@@ -2854,10 +2853,6 @@ def _stm_draw_animal_map(
 	ax.set_ylim(min(ys) - pad, max(ys) + pad)
 	fig.canvas.draw()
 
-	max_edge = 1e-6
-	for edge in ordered:
-		max_edge = max(max_edge, float(edge['value']))
-
 	node_centers = {b: positions[b] for b in observed}
 
 	# Route selection under axes transform with bounded bounds↔select convergence.
@@ -2880,7 +2875,7 @@ def _stm_draw_animal_map(
 			dst = edge['dst']
 			x1, y1 = positions[src]
 			x2, y2 = positions[dst]
-			linewidth = stm_edge_linewidth(edge['value'], max_edge)
+			linewidth = stm_edge_linewidth(edge['value'])
 			half_w_pt = stm_visible_edge_halfwidth_pt(linewidth)
 			half_w = stm_edge_halfwidth_data(ax, half_w_pt)
 			half_widths.append(half_w)
@@ -2967,7 +2962,7 @@ def _stm_draw_animal_map(
 		edge_specs = []
 		for edge in ordered:
 			item = dict(edge)
-			item['linewidth'] = stm_edge_linewidth(edge['value'], max_edge)
+			item['linewidth'] = stm_edge_linewidth(edge['value'])
 			edge_specs.append(item)
 		limits_now = _active_limits()
 		envelope = stm_route_conservative_envelope_bounds(

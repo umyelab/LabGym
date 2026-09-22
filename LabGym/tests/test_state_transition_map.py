@@ -400,9 +400,9 @@ def test_figure_title_id_and_legend_constants():
 
 
 def test_arrowhead_increased_without_linewidth_change():
-	# Arrowheads grown since baseline 15; linewidth formula unchanged.
+	# Arrowheads grown since baseline 15; linewidth uses fixed 0–1 scale.
 	assert _STM_EDGE_MUTATION_SCALE > 15
-	lw_max = stm_edge_linewidth(1.0, 1.0)
+	lw_max = stm_edge_linewidth(1.0)
 	assert lw_max == pytest.approx(_STM_EDGE_LW_MIN + _STM_EDGE_LW_SPAN)
 	assert lw_max <= 4.0
 
@@ -559,15 +559,80 @@ def test_occupancy_percent_display_lt1_vs_zero():
 
 
 def test_linewidth_monotonic_and_compressed():
-	lw_small = stm_edge_linewidth(0.1, 1.0)
-	lw_mid = stm_edge_linewidth(0.5, 1.0)
-	lw_max = stm_edge_linewidth(1.0, 1.0)
+	lw_small = stm_edge_linewidth(0.1)
+	lw_mid = stm_edge_linewidth(0.5)
+	lw_max = stm_edge_linewidth(1.0)
 	assert lw_small < lw_mid < lw_max
 	# Previous formula: 0.4 + 8.0 * sqrt(p/max) -> max 8.4
 	previous_max = 0.4 + 8.0
 	assert lw_max == pytest.approx(_STM_EDGE_LW_MIN + _STM_EDGE_LW_SPAN)
 	assert lw_max < previous_max
 	assert lw_max <= 4.0
+
+
+def test_linewidth_same_probability_same_width_across_maps():
+	'''Width depends only on this edge's probability, not the map's maximum.'''
+	p = 0.25
+	lw = stm_edge_linewidth(p)
+	assert lw == pytest.approx(_STM_EDGE_LW_MIN + _STM_EDGE_LW_SPAN * p)
+	# Old formula scaled by map max: sqrt(0.25/1) vs sqrt(0.25/0.25) differed.
+	assert math.sqrt(p / 1.0) != math.sqrt(p / p)
+	assert stm_edge_linewidth(p) == lw
+
+
+def test_linewidth_unrelated_edge_cannot_change_target_width():
+	target = stm_edge_linewidth(0.4)
+	stm_edge_linewidth(1.0)
+	stm_edge_linewidth(0.01)
+	assert stm_edge_linewidth(0.4) == pytest.approx(target)
+
+
+def test_linewidth_monotonic_across_representative_probabilities():
+	prev = stm_edge_linewidth(0.0)
+	for p in (0.01, 0.1, 0.25, 0.5, 0.9, 1.0):
+		lw = stm_edge_linewidth(p)
+		assert lw >= prev
+		prev = lw
+
+
+def test_linewidth_small_positive_gets_minimum_visible_width():
+	lw = stm_edge_linewidth(0.01)
+	assert lw >= _STM_EDGE_LW_MIN
+	assert lw == pytest.approx(_STM_EDGE_LW_MIN + _STM_EDGE_LW_SPAN * 0.01)
+
+
+def test_linewidth_probability_one_reaches_fixed_maximum():
+	assert stm_edge_linewidth(1.0) == pytest.approx(
+		_STM_EDGE_LW_MIN + _STM_EDGE_LW_SPAN
+	)
+
+
+def test_linewidth_uses_probability_not_count():
+	import inspect
+	assert list(inspect.signature(stm_edge_linewidth).parameters) == ['probability']
+	# Same row-normalized p, different observed counts: same width.
+	metrics_few = stm_compute_animal_metrics(['A', 'B', 'A', 'B'], ['A', 'B'])
+	metrics_many = stm_compute_animal_metrics(['A', 'B'] * 10, ['A', 'B'])
+
+	def _ab(metrics):
+		return next(
+			e for e in stm_ordered_transition_edges(
+				metrics['observed_behaviors'],
+				metrics['count_matrix'],
+				metrics['probability_matrix'],
+			) if e['src'] == 'A' and e['dst'] == 'B'
+		)
+
+	few = _ab(metrics_few)
+	many = _ab(metrics_many)
+	assert few['value'] == pytest.approx(many['value'])
+	assert few['count'] != many['count']
+	assert stm_edge_linewidth(few['value']) == pytest.approx(
+		stm_edge_linewidth(many['value'])
+	)
+	assert stm_format_edge_label(few['value'], few['count']) == '%.2f (%d)' % (
+		few['value'], few['count'],
+	)
 
 
 def test_node_label_contrast_wcag_palette_and_custom():
@@ -967,7 +1032,6 @@ def test_fancy_arrow_patch_casing_and_shrink_integration(tmp_path, monkeypatch):
 
 	assert len(captured) == 2 * len(edges)
 	occupancy = metrics['occupancy']
-	max_edge = max(float(e['value']) for e in edges)
 	for i, edge in enumerate(edges):
 		casing = captured[2 * i]
 		fg = captured[2 * i + 1]
@@ -994,7 +1058,10 @@ def test_fancy_arrow_patch_casing_and_shrink_integration(tmp_path, monkeypatch):
 			stm_edge_shrink_points(stm_node_marker_size(occupancy[dst]))
 		)
 		assert float(fk['linewidth']) == pytest.approx(
-			stm_edge_linewidth(edge['value'], max_edge)
+			stm_edge_linewidth(edge['value'])
+		)
+		assert float(ck['linewidth']) == pytest.approx(
+			stm_edge_linewidth(edge['value']) + _STM_EDGE_CASING_EXTRA
 		)
 	assert not (tmp_path / '0' / 'state_transition_map.png').exists()
 
@@ -1587,10 +1654,9 @@ def test_conservative_envelope_fallback_when_convergence_hits_limit(
 			metrics['probability_matrix'],
 		)
 	)
-	max_edge = max(float(e['value']) for e in ordered)
 	halfs = []
 	for edge in ordered:
-		lw = stm_edge_linewidth(edge['value'], max_edge)
+		lw = stm_edge_linewidth(edge['value'])
 		halfs.append(
 			stm_edge_halfwidth_data(ax_chk, stm_visible_edge_halfwidth_pt(lw))
 		)
@@ -1815,7 +1881,6 @@ def test_routes_remain_valid_after_final_transform(tmp_path, monkeypatch):
 		metrics['count_matrix'],
 		metrics['probability_matrix'],
 	)
-	max_edge = max(float(e['value']) for e in edges) if edges else 1.0
 	node_centers = {b: positions[b] for b in metrics['observed_behaviors']}
 	node_radii = {b: 0.12 for b in metrics['observed_behaviors']}
 	selected = []
@@ -1825,7 +1890,7 @@ def test_routes_remain_valid_after_final_transform(tmp_path, monkeypatch):
 		x1, y1 = positions[src]
 		x2, y2 = positions[dst]
 		hw = 0.5 * (
-			stm_edge_linewidth(edge['value'], max_edge) + _STM_EDGE_CASING_EXTRA
+			stm_edge_linewidth(edge['value']) + _STM_EDGE_CASING_EXTRA
 		) * 0.01
 		seed = stm_edge_rad(src, dst, metrics['count_matrix'])
 		pk = tuple(sorted((src, dst)))
