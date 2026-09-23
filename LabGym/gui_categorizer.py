@@ -2441,19 +2441,19 @@ class PanelLv2_TestCategorizers(wx.Panel):
 class AutomatedDiagnosticsDialog(wx.Dialog):
 	def __init__(self, parent, report, cm, classnames, example_map, embedding_map, source_dataset_root=None):
 		super().__init__(parent, title="Automated Diagnostics - Test Results", size=(1000, 800), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER | wx.MAXIMIZE_BOX)
-		
+
 		self.report = report
 		self.cm = cm
 		self.classnames = classnames
 		self.example_map = example_map
 		self.embedding_map = embedding_map
 		self.source_dataset_root = source_dataset_root
-		
+
 		self.cm_normalized = self.calculate_normalized_cm(cm)
 		self.is_normalized = False
-		
+
 		self.init_ui()
-		
+
 		self.Maximize(True)
 
 	def calculate_normalized_cm(self, cm):
@@ -2474,16 +2474,16 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 		cm_label = wx.StaticText(self, label="Confusion Matrix:")
 		cm_label.SetFont(font)
 		header_sizer.Add(cm_label, 1, wx.ALIGN_CENTER_VERTICAL)
-		
+
 		self.toggle_btn = wx.ToggleButton(self, label="Show Normalized (%)")
 		self.toggle_btn.Bind(wx.EVT_TOGGLEBUTTON, self.on_toggle_cm)
 		header_sizer.Add(self.toggle_btn, 0, wx.ALIGN_CENTER_VERTICAL)
-		
+
 		sizer.Add(header_sizer, 0, wx.EXPAND | wx.ALL, 10)
 
 		self.cm_grid = wx.grid.Grid(self)
 		self.cm_grid.CreateGrid(len(self.classnames), len(self.classnames))
-		
+
 		for i, name in enumerate(self.classnames):
 			self.cm_grid.SetRowLabelValue(i, name)
 			self.cm_grid.SetColLabelValue(i, name)
@@ -2540,30 +2540,30 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 		sort_sizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.sort_label = wx.StaticText(self, label="Rank Insights By: ")
 		sort_sizer.Add(self.sort_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 5)
-		
+
 		self.sort_dropdown = wx.Choice(self, choices=["Instances", "Proportion"])
 		self.sort_dropdown.SetSelection(0)
 		self.sort_dropdown.Bind(wx.EVT_CHOICE, self.on_sort_changed)
 		sort_sizer.Add(self.sort_dropdown, 0, wx.ALIGN_CENTER_VERTICAL)
-		
+
 		nlp_sizer.Add(sort_sizer, 0, wx.BOTTOM | wx.LEFT, 5)
 
 
 		self.nlp_html = wx.html.HtmlWindow(self, style=wx.html.HW_SCROLLBAR_AUTO | wx.BORDER_NONE)
 		self.nlp_html.Bind(wx.html.EVT_HTML_LINK_CLICKED, self.on_insight_link_clicked)
-		
-		nlp_sizer.Add(self.nlp_html, 1, wx.EXPAND | wx.ALL, 5) 
+
+		nlp_sizer.Add(self.nlp_html, 1, wx.EXPAND | wx.ALL, 5)
 		bottom_dashboard_sizer.Add(nlp_sizer, 1, wx.EXPAND | wx.RIGHT, 10)
 
 		table_sizer = wx.BoxSizer(wx.VERTICAL)
-		
+
 		table_header_sizer = wx.BoxSizer(wx.HORIZONTAL)
 		self.table_label = wx.StaticText(self, label="Highlight behaviors below 0.60: ")
 		self.table_label.SetFont(font)
 		self.metric_choice = wx.Choice(self, choices=["F1-score", "Precision", "Recall"])
 		self.metric_choice.SetSelection(0)
 		self.metric_choice.Bind(wx.EVT_CHOICE, self.on_metric_change)
-		
+
 		table_header_sizer.Add(self.table_label, 0, wx.ALIGN_CENTER_VERTICAL | wx.RIGHT, 5)
 		table_header_sizer.Add(self.metric_choice, 0, wx.ALIGN_CENTER_VERTICAL)
 		table_sizer.Add(table_header_sizer, 0, wx.BOTTOM, 5)
@@ -2589,29 +2589,29 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 
 		self.analyze_confusion_data()
 		self.show_help_view(None)
-		
+
 		self.SetSizer(sizer)
 		self.Layout()
 
 	def on_build_triage(self, event):
 		"""Gathers all confusions and launches the Triage Builder."""
 		all_confusions = []
-		
+
 		for count, i, j, prop in self.nlp_major:
 			item = f"{self.classnames[i]} -> {self.classnames[j]} ({count} errors)"
 			if item not in all_confusions:
 				all_confusions.append(item)
-				
+
 		for mc in self.nlp_minor:
 			for err_count, pred_class in mc['top_confusions']:
 				item = f"{mc['class']} -> {pred_class} ({err_count} errors)"
 				if item not in all_confusions:
 					all_confusions.append(item)
-					
+
 		if not all_confusions:
 			wx.MessageBox("No confusions detected to triage!", "All Clear", wx.OK | wx.ICON_INFORMATION)
 			return
-			
+
 		dialog = TriageBuilderDialog(
 			self,
 			all_confusions,
@@ -2628,7 +2628,7 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 	def on_sort_changed(self, event):
 		"""Re-sorts the NLP data and refreshes the views when the dropdown changes."""
 		self.analyze_confusion_data()
-		
+
 		if getattr(self, 'current_view', 'major') == 'minor':
 			self.show_minor_confusions_view(None)
 		else:
@@ -2641,14 +2641,14 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 
 		for i in range(len(self.classnames)):
 			row_sum = sum(self.cm[i]) if i < cm_rows else 0
-			
+
 			for j in range(len(self.classnames)):
 				if i < cm_rows and j < cm_cols:
 					val = f"{data_to_use[i][j]}%" if self.is_normalized else str(data_to_use[i][j])
-					
+
 					if i != j and self.cm[i][j] > 0:
 						err_pct = self.cm[i][j] / row_sum if row_sum > 0 else 0
-						intensity = min(1.0, err_pct / 0.5) 
+						intensity = min(1.0, err_pct / 0.5)
 						r_val = int(40 + (215 * intensity))
 						bg_color = wx.Colour(r_val, 0, 0)
 					elif i == j and row_sum > 0:
@@ -2659,7 +2659,7 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 				else:
 					val = "0.0%" if self.is_normalized else "0"
 					bg_color = wx.Colour(30, 30, 30)
-				
+
 				self.cm_grid.SetCellValue(i, j, val)
 				self.cm_grid.SetReadOnly(i, j, True)
 				self.cm_grid.SetCellAlignment(i, j, wx.ALIGN_CENTER, wx.ALIGN_CENTER)
@@ -2687,15 +2687,15 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 			self.toggle_btn.SetLabel("Show Raw Counts")
 		else:
 			self.toggle_btn.SetLabel("Show Normalized (%)")
-		
+
 		self.update_grid_data()
 
 	def on_insight_link_clicked(self, event):
 		"""Highlights the specific grid cell or row when a user clicks the diagnostic text."""
 		href = event.GetLinkInfo().GetHref()
-		
+
 		self.update_grid_data()
-		
+
 		if href.startswith('cell:'):
 			coords = href.replace('cell:', '').split(',')
 			row, col = int(coords[0]), int(coords[1])
@@ -2706,16 +2706,16 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 		elif href.startswith('row:'):
 			row = int(href.replace('row:', ''))
 			self.cm_grid.MakeCellVisible(row, row)
-			
+
 			self.cm_grid.SetCellBackgroundColour(row, row, wx.Colour(0, 255, 255))
 			self.cm_grid.SetCellTextColour(row, row, wx.Colour(0, 0, 0))
-			
+
 			cm_rows = len(self.cm)
 			confusions = []
 			for j in range(cm_rows):
 				if row != j and self.cm[row][j] > 0:
 					confusions.append((self.cm[row][j], j))
-			
+
 			confusions.sort(reverse=True, key=lambda x: x[0])
 			for err_val, col in confusions[:3]:
 				self.cm_grid.SetCellBackgroundColour(row, col, wx.Colour(255, 203, 5))
@@ -2758,7 +2758,7 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 				if i != j and self.cm[i][j] > 0:
 					error_count = self.cm[i][j]
 					error_proportion = error_count / support
-					
+
 					if error_proportion >= 0.10:
 						self.nlp_major.append((error_count, i, j, error_proportion))
 						found_major_confusion = True
@@ -2771,7 +2771,7 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 				for j in range(cm_rows):
 					if i != j and self.cm[i][j] > 0:
 						specific_confusions.append((self.cm[i][j], self.classnames[j]))
-				
+
 				specific_confusions.sort(reverse=True, key=lambda x: x[0])
 				top_specifics = specific_confusions[:3]
 
@@ -2786,7 +2786,7 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 
 
 		sort_mode = self.sort_dropdown.GetStringSelection()
-		
+
 		if sort_mode == "Proportion":
 			self.nlp_major.sort(reverse=True, key=lambda x: x[3])
 			self.nlp_minor.sort(reverse=True, key=lambda x: x['pct_errors'])
@@ -2809,27 +2809,27 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 		self.sort_label.Show(True)
 		self.sort_dropdown.Show(True)
 		self.Layout()
-		
+
 		html = "<body bgcolor='#141414' text='#F8FAFC' style='font-family: Arial; font-size: 14px;'>"
-		
+
 		if not self.nlp_major:
 			html += "<h3 style='color: #4ADE80;'>No major confusion patterns</h3><p>No major confusion patterns were identified at the configured thresholds.</p>"
 		else:
 			html += "<h3 style='color: #FFCB05; margin-bottom: 10px; margin-top: 0;'>Major Systematic Confusions:</h3>"
-			for count, i, j, prop in self.nlp_major[:5]: 
+			for count, i, j, prop in self.nlp_major[:5]:
 				true_class = self.classnames[i]
 				pred_class = self.classnames[j]
 				prop_pct = round(prop * 100, 1)
 
 				link = f"<a href='cell:{i},{j}' style='color: #60A5FA; text-decoration: none;'><b>{true_class} &#8594; {pred_class}</b></a>"
 				html += "<div style='background-color: #1e1e1e; border-left: 4px solid #FFCB05; padding: 10px; margin-bottom: 12px; border-radius: 4px;'>"
-				
+
 				error_txt = f"<span style='color: #F87171;'>{count} errors, {prop_pct}% of {true_class} data</span>"
-				
+
 				html += f"<p style='margin: 0;'>{link} ({error_txt})</p>"
-				
+
 				html += "</div>"
-		
+
 		html += "</body>"
 		self.nlp_html.SetPage(html)
 
@@ -2838,10 +2838,10 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 		self.sort_label.Show(True)
 		self.sort_dropdown.Show(True)
 		self.Layout()
-		
+
 		html = "<body bgcolor='#141414' text='#F8FAFC' style='font-family: Arial; font-size: 14px;'>"
 
-		
+
 		if not self.nlp_minor:
 			html += "<h3 style='color: #4ADE80;'>No dispersed minor confusion patterns</h3><p>No dispersed minor confusion patterns were identified at the configured thresholds.</p>"
 		else:
@@ -2854,7 +2854,7 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 				supp = int(mc['support'])
 				errs = mc['total_errors']
 				pct = round(mc['pct_errors'], 1)
-				
+
 				warning = " (fewer than 100 examples)" if supp < 100 else ""
 				link = f"<a href='row:{c_idx}' style='color: #60A5FA; text-decoration: none;'><b>{c_name}</b></a>"
 
@@ -2868,7 +2868,7 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 						html += f"<li>To <b>{pred_class}</b>: {err_count} errors</li>"
 					html += "</ul>"
 				html += "</div>"
-		
+
 		html += "</body>"
 		self.nlp_html.SetPage(html)
 
@@ -2877,7 +2877,7 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 		self.sort_label.Show(False)
 		self.sort_dropdown.Show(False)
 		self.Layout()
-		
+
 		html = "<body bgcolor='#141414' text='#F8FAFC' style='font-family: Arial; font-size: 14px;'>"
 
 		if self.nlp_success:
@@ -2889,7 +2889,7 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 				c_name = sc['class']
 				f1_pct = round(sc['f1'] * 100, 1)
 				supp = int(sc['support'])
-				
+
 				link = f"<a href='row:{c_idx}' style='color: #60A5FA; text-decoration: none;'><b>{c_name}</b></a>"
 				html += f"<li style='margin-bottom: 6px;'>{link} <span style='color: #4ADE80;'>({f1_pct}% F1)</span> <span style='color: #FFFFFF; font-size: 12px;'>[{supp} examples]</span></li>"
 			html += "</ul>"
@@ -2918,7 +2918,7 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 		self.sort_label.Show(False)
 		self.sort_dropdown.Show(False)
 		self.Layout()
-		
+
 		html = """
 		<body bgcolor='#141414' text='#F8FAFC' style='font-family: Arial; font-size: 14px;'>
 			<h3 style='color: #60A5FA; margin-top: 5px;'>Overview</h3>
@@ -2937,7 +2937,7 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 
 	def update_table_data(self):
 		self.list_ctrl.DeleteAllItems()
-		
+
 		selection = self.metric_choice.GetStringSelection()
 		metric_key = 'f1-score'
 		if selection == "Precision":
@@ -2955,7 +2955,7 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 				recall = float(metrics.get('recall', 0.0))
 				f1 = float(metrics.get('f1-score', 0.0))
 				support = float(metrics.get('support', 0.0))
-				
+
 				self.list_ctrl.SetItem(index, 1, f"{precision:.2f}")
 				self.list_ctrl.SetItem(index, 2, f"{recall:.2f}")
 				self.list_ctrl.SetItem(index, 3, f"{f1:.2f}")
@@ -2966,7 +2966,7 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 					self.list_ctrl.SetItemBackgroundColour(index, wx.Colour(150, 0, 0))
 				else:
 					self.list_ctrl.SetItemBackgroundColour(index, wx.Colour(30, 30, 30))
-				
+
 				self.list_ctrl.SetItemTextColour(index, wx.Colour(255, 255, 255))
 				index += 1
 
@@ -2978,9 +2978,9 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 		for i in range(cm_rows):
 			true_class = self.classnames[i]
 			support_true = self.report.get(true_class, {}).get('support', 0)
-			
+
 			if support_true == 0:
-				continue 
+				continue
 
 			row_errors = sum(self.cm[i]) - self.cm[i][i]
 			if row_errors == 0:
@@ -2993,12 +2993,12 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 		errors.sort(reverse=True, key=lambda x: x[0])
 
 		html = "<body bgcolor='#141414' text='#F8FAFC' style='font-family: Arial; font-size: 14px;'>"
-		
+
 		if not errors:
 			html += "<h3 style='color: #4ADE80;'>No major confusion patterns</h3><p>No major confusion patterns were identified at the configured thresholds.</p>"
 		else:
 			html += "<h3 style='color: #FFCB05; margin-bottom: 10px; margin-top: 0;'>Here is where the Categorizer is struggling:</h3>"
-			
+
 			for count, i, j in errors[:top_n]:
 				true_class = self.classnames[i]
 				pred_class = self.classnames[j]
@@ -3006,15 +3006,15 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 				support_pred = self.report.get(pred_class, {}).get('support', 0)
 
 				link = f"<a href='cell:{i},{j}' style='color: #60A5FA; text-decoration: none;'><b>{true_class} &#8594; {pred_class}</b></a>"
-				
+
 				html += "<div style='background-color: #1e1e1e; border-left: 4px solid #FFCB05; padding: 10px; margin-bottom: 12px; border-radius: 4px;'>"
-				
+
 				if support_true >= support_threshold and support_pred >= support_threshold:
 					html += f"<p style='margin: 0;'>{link} ({count} errors)<br><br><span style='color: #94a3b8;'><b>Possible pattern (advisory):</b> Both behaviors have relatively robust support on this test set. Because the Categorizer is still confusing them, they might be visually similar. Consider reviewing whether labels overlap.</span></p>"
 				else:
 					lowest_class = true_class if support_true < support_pred else pred_class
 					html += f"<p style='margin: 0;'>{link} ({count} errors)<br><br><span style='color: #94a3b8;'><b>Possible pattern (advisory):</b> Support for <i>{lowest_class}</i> is limited on this test set. Adding more examples may help, but this is not a definitive diagnosis.</span></p>"
-				
+
 				html += "</div>"
 
 		if perfect_classes:
@@ -3027,54 +3027,54 @@ class AutomatedDiagnosticsDialog(wx.Dialog):
 	def on_cell_click(self, event):
 		row = event.GetRow()
 		col = event.GetCol()
-		
+
 		self.cm_grid.ClearSelection()
-		
+
 		if row == -1 or col == -1:
 			return
-		
+
 		if row < len(self.classnames) and col < len(self.classnames):
 			true_class = self.classnames[row]
 			pred_class = self.classnames[col]
-			
+
 			key = (true_class, pred_class)
 			examples = self.example_map.get(key, [])
-			
+
 			if examples:
 				viewer = ExampleViewerDialog(self, true_class, pred_class, examples)
 				viewer.ShowModal()
 				viewer.Destroy()
 			else:
 				wx.MessageBox(f"No examples found for True: '{true_class}', Predicted: '{pred_class}'", "No Data", wx.OK | wx.ICON_INFORMATION)
-				
+
 
 class ExampleViewerDialog(wx.Dialog):
 	def __init__(self, parent, true_class, pred_class, examples):
 		title = f"Reviewing Examples: True '{true_class}' -> Predicted '{pred_class}'"
 		super().__init__(parent, title=title, size=(600, 400), style=wx.DEFAULT_DIALOG_STYLE | wx.RESIZE_BORDER)
-		
+
 		self.examples = examples
 		self.init_ui()
-		
+
 	def init_ui(self):
 		sizer = wx.BoxSizer(wx.VERTICAL)
-		
+
 		info_label = wx.StaticText(self, label=f"Found {len(self.examples)} example(s). Double-click a file to open it:")
 		sizer.Add(info_label, 0, wx.ALL, 10)
-		
+
 		self.list_box = wx.ListBox(self, choices=self.examples, style=wx.LB_SINGLE | wx.LB_HSCROLL)
 		self.list_box.Bind(wx.EVT_LISTBOX_DCLICK, self.on_double_click)
 		sizer.Add(self.list_box, 1, wx.EXPAND | wx.LEFT | wx.RIGHT, 10)
-		
+
 		btn_sizer = wx.BoxSizer(wx.HORIZONTAL)
 		close_btn = wx.Button(self, wx.ID_CLOSE, "Close")
 		close_btn.Bind(wx.EVT_BUTTON, lambda evt: self.EndModal(wx.ID_CANCEL))
 		btn_sizer.Add(close_btn, 0, wx.ALL, 10)
 		sizer.Add(btn_sizer, 0, wx.ALIGN_RIGHT)
-		
+
 		self.SetSizer(sizer)
 		self.Layout()
-		
+
 	def on_double_click(self, event):
 		selection = self.list_box.GetSelection()
 		if selection != wx.NOT_FOUND:
@@ -3319,23 +3319,23 @@ class TriageBuilderDialog(wx.Dialog):
 		selections = source_lb.GetSelections()
 		if not selections:
 			return
-		
+
 		for idx in reversed(selections):
 			item_text = source_lb.GetString(idx)
 			target_lb.Append(f"{item_text} {append_text}")
 			source_lb.Delete(idx)
-			
+
 	def on_move_h2(self, event):
 		if not self.lb_unassigned.GetSelections():
 			return
-			
+
 		dlg = wx.TextEntryDialog(self, "What is the name of this new emergent behavior?", "Define Emergent Class")
 		if dlg.ShowModal() == wx.ID_OK:
 			new_name = dlg.GetValue().strip()
 			if new_name:
 				self.move_items(self.lb_unassigned, self.lb_h2, f"[NEW: {new_name}]")
 		dlg.Destroy()
-		
+
 	def on_return_items(self, event):
 		"""Returns selected items from any right-side bucket back to unassigned."""
 		for lb in [self.lb_h1, self.lb_h2, self.lb_h3]:

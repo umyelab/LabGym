@@ -2141,9 +2141,9 @@ class Categorizers():
 					example_map[key] = []
 				example_map[key].append(f_path)
 				embedding_map[f_path] = emb
-			
+
 			print('Testing completed!')
-			
+
 			return report, cm, example_map, embedding_map
 
 
