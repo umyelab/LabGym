@@ -2133,20 +2133,6 @@ class Categorizers():
 
 		return report, cm, example_map, embedding_map
 
-			example_map = {}
-			embedding_map = {}
-			for t_label_idx, p_label_idx, f_path, emb in zip(labels, flat_predictions, test_files, embeddings):
-				key = (classnames[t_label_idx], classnames[p_label_idx])
-				if key not in example_map:
-					example_map[key] = []
-				example_map[key].append(f_path)
-				embedding_map[f_path] = emb
-
-			print('Testing completed!')
-
-			return report, cm, example_map, embedding_map
-
-
 	def generate_probability_matrix(self, path_to_video, path_to_model, output_folder, batch_size=32):
 		"""
 		Frame-level probability matrix (T x K) using the trained Categorizer.
