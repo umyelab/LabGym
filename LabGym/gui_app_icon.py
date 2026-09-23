@@ -17,11 +17,11 @@ Email: bingye@umich.edu
 '''
 
 '''GUI application icon module for LabGym.
-This module provides cross-platform icon handling functionality for the LabGym
-GUI, including support for different icon formats (ICO, ICNS, PNG) and
-contexts (normal, small).
+This module provides cross-platform icon handling for the LabGym GUI using one
+simplified LabGym artwork set (ICO on Windows, PNG elsewhere, ICNS on macOS Dock).
 '''
 # Standard library imports.
+import logging
 import sys
 from pathlib import Path
 from importlib.resources import files
@@ -36,6 +36,9 @@ if sys.platform == "darwin":
 		from AppKit import NSApplication, NSImage
 	except ImportError:
 		NSApplication = None
+		NSImage = None
+
+logger = logging.getLogger(__name__)
 
 
 @lru_cache(maxsize=1)
@@ -43,77 +46,98 @@ def _get_icon_paths():
 	"""Get all icon paths once and cache them."""
 	base_path = files("LabGym") / "assets/icons"
 	return {
-		'small_ico': base_path / "labgym_small.ico",
-		'main_ico': base_path / "labgym.ico",
+		'ico': base_path / "labgym.ico",
 		'icns': base_path / "labgym.icns",
-		'png': base_path / "labgym.png"
+		'png': base_path / "labgym.png",
 	}
 
 
-def get_icon_for_context(context='normal', size=16):
-	"""Get appropriate icon path for given context and size."""
+def get_frame_icon_path():
+	"""Return the platform-appropriate path for wx frame icons.
+
+	Windows uses the multi-resolution labgym.ico. macOS and other platforms
+	use the matching labgym.png.
+	"""
 	icon_paths = _get_icon_paths()
 
 	if sys.platform.startswith("win"):
-		# Windows: Use ICO files for better compatibility
-		if context == 'small' or size <= 24:
-			return str(icon_paths['small_ico']) if icon_paths['small_ico'].is_file() else str(icon_paths['png'])
-		else:
-			return str(icon_paths['main_ico']) if icon_paths['main_ico'].is_file() else str(icon_paths['png'])
+		if icon_paths['ico'].is_file():
+			return str(icon_paths['ico'])
+		if icon_paths['png'].is_file():
+			return str(icon_paths['png'])
+		return ""
 
-	# macOS or fallback
-	return str(icon_paths['png']) if icon_paths['png'].is_file() else ""
+	# macOS and non-Windows fallback
+	if icon_paths['png'].is_file():
+		return str(icon_paths['png'])
+	return ""
 
 
-def set_frame_icon(frame, context='normal', size=16):
-	"""Set frame icon with proper error handling."""
+def set_frame_icon(frame):
+	"""Set the frame icon from the unified simplified artwork."""
 	try:
-		icon_path = get_icon_for_context(context, size)
+		icon_path = get_frame_icon_path()
 		if not icon_path or not Path(icon_path).is_file():
+			logger.warning('Frame icon asset not found')
 			return
 
 		icon = wx.Icon(icon_path, wx.BITMAP_TYPE_ANY)
 		if icon.IsOk():
 			frame.SetIcon(icon)
+		else:
+			logger.warning('Failed to load frame icon from %s', icon_path)
 	except Exception:
-		pass
+		logger.exception('Error setting frame icon')
 
 
-def set_windows_taskbar_icon():
-	"""Set the Windows taskbar icon.
-	Set the Windows taskbar icon using small ICO for better small-size
-	visibility.
+def set_windows_app_user_model_id():
+	"""Establish Windows process/taskbar identity via AppUserModelID.
+
+	Call this early (before the first visible window) when practical.
+	This does not embed an executable icon; it only sets runtime process
+	identity used by the shell for taskbar grouping.
 	"""
 	if not sys.platform.startswith("win"):
 		return
 	try:
-		# This sets AppUserModelID first - this is crucial for proper taskbar icon association
 		app_id = "umyelab.LabGym"
 		ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
 	except Exception:
-		pass
+		logger.exception('Failed to set Windows AppUserModelID')
+
+
+# Backward-compatible name used by older call sites.
+set_windows_taskbar_icon = set_windows_app_user_model_id
 
 
 def set_macos_dock_icon():
-	"""Set the Dock icon on macOS.
-	Set the Dock icon at runtime on macOS (requires optional PyObjC).
-	"""
+	"""Set the Dock icon on macOS for unbundled runs (optional PyObjC)."""
 	if sys.platform != "darwin" or not NSApplication:
 		return
 	try:
-		baseIconDir = files("LabGym")
-		icns = baseIconDir / "assets/icons/labgym.icns"
-		png = baseIconDir / "assets/icons/labgym.png"
+		icon_paths = _get_icon_paths()
+		if icon_paths['icns'].is_file():
+			icon_path = str(icon_paths['icns'])
+		elif icon_paths['png'].is_file():
+			icon_path = str(icon_paths['png'])
+		else:
+			logger.warning('macOS Dock icon asset not found')
+			return
 
-		icon_path = str(icns if icns.is_file() else png)
 		img = NSImage.alloc().initWithContentsOfFile_(icon_path)
 		if img:
 			NSApplication.sharedApplication().setApplicationIconImage_(img)
+		else:
+			logger.warning('Failed to load macOS Dock icon from %s', icon_path)
 	except Exception:
-		pass
+		logger.exception('Error setting macOS Dock icon')
 
 
 def setup_application_icons():
-	"""Set up all application icons for the current platform."""
+	"""Set up process/Dock icons for the current platform.
+
+	Safe to call more than once. Prefer an early call before the first
+	visible window so Windows AppUserModelID is established first.
+	"""
+	set_windows_app_user_model_id()
 	set_macos_dock_icon()
-	set_windows_taskbar_icon()

@@ -35,6 +35,7 @@ import wx
 
 # Local application/library specific imports.
 from .tools import preprocess_video
+from .gui_utils import add_info_button, create_hyperlink, INFO_COLOUR_S1
 
 
 class PanelLv2_ProcessVideos(wx.Panel):
@@ -71,6 +72,7 @@ class PanelLv2_ProcessVideos(wx.Panel):
 
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
+		add_info_button(self, boxsizer, INFO_COLOUR_S1)
 
 		module_inputvideos=wx.BoxSizer(wx.HORIZONTAL)
 		button_inputvideos=wx.Button(panel,label='Select the video(s)\nfor preprocessing',size=(300,40))
@@ -139,6 +141,18 @@ class PanelLv2_ProcessVideos(wx.Panel):
 		boxsizer.Add(0,5,0)
 		boxsizer.Add(button_preprocessvideos,0,wx.RIGHT|wx.ALIGN_RIGHT,90)
 		boxsizer.Add(0,10,0)
+
+		# Match nested 10px module + button margins so the link lines up with the button column.
+		module_tutorial=wx.BoxSizer(wx.HORIZONTAL)
+		module_tutorial.Add(
+			create_hyperlink(
+				panel,
+				'Preprocessing Basics Tutorial Video',
+				'https://youtu.be/51F-whqGIzU?si=IYMT3_etdnu46Zh3',
+			),
+			0, wx.LEFT|wx.RIGHT, 10)
+		boxsizer.Add(module_tutorial,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(0, 10, 0)
 
 		panel.SetSizer(boxsizer)
 
@@ -442,6 +456,7 @@ class PanelLv2_DrawMarkers(wx.Panel):
 
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
+		add_info_button(self, boxsizer, INFO_COLOUR_S1)
 
 		module_inputvideos=wx.BoxSizer(wx.HORIZONTAL)
 		button_inputvideos=wx.Button(panel,label='Select the video(s)\nfor marker drawing',size=(300,40))
@@ -470,6 +485,18 @@ class PanelLv2_DrawMarkers(wx.Panel):
 		boxsizer.Add(0,5,0)
 		boxsizer.Add(button_preprocessvideos,0,wx.RIGHT|wx.ALIGN_RIGHT,90)
 		boxsizer.Add(0,10,0)
+
+		# Match nested 10px module + button margins so the link lines up with the button column.
+		module_tutorial=wx.BoxSizer(wx.HORIZONTAL)
+		module_tutorial.Add(
+			create_hyperlink(
+				panel,
+				'Video preprocessing: Draw Markers Tutorial Video',
+				'https://youtu.be/8Y9RQUGuPtk?si=3jPVZCddf62o2EUB',
+			),
+			0, wx.LEFT|wx.RIGHT, 10)
+		boxsizer.Add(module_tutorial,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(0, 10, 0)
 
 		panel.SetSizer(boxsizer)
 

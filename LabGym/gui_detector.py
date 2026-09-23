@@ -37,6 +37,7 @@ import wx
 from LabGym import config
 from .detector import Detector
 from .tools import extract_frames
+from .gui_utils import add_info_button, create_hyperlink, INFO_COLOUR_S2
 
 
 class PanelLv2_GenerateImages(wx.Panel):
@@ -62,6 +63,7 @@ class PanelLv2_GenerateImages(wx.Panel):
 
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
+		add_info_button(self, boxsizer, INFO_COLOUR_S2)
 
 		module_inputvideos=wx.BoxSizer(wx.HORIZONTAL)
 		button_inputvideos=wx.Button(panel,label='Select the video(s) to generate\nimage examples',size=(300,40))
@@ -253,6 +255,7 @@ class PanelLv2_TrainDetectors(wx.Panel):
 
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
+		add_info_button(self, boxsizer, INFO_COLOUR_S2)
 
 		module_selectimages=wx.BoxSizer(wx.HORIZONTAL)
 		button_selectimages=wx.Button(panel,label='Select the folder containing\nall the training images',size=(300,40))
@@ -301,6 +304,18 @@ class PanelLv2_TrainDetectors(wx.Panel):
 		boxsizer.Add(0,5,0)
 		boxsizer.Add(button_train,0,wx.RIGHT|wx.ALIGN_RIGHT,90)
 		boxsizer.Add(0,10,0)
+
+		# Match nested 10px module + button margins so the link lines up with the button column.
+		module_tutorial=wx.BoxSizer(wx.HORIZONTAL)
+		module_tutorial.Add(
+			create_hyperlink(
+				panel,
+				'Training a Detector using LabGym',
+				'https://youtu.be/mvwc-kK1dCc?si=OLywKfHwg3qOz_u4',
+			),
+			0, wx.LEFT|wx.RIGHT, 10)
+		boxsizer.Add(module_tutorial,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
+		boxsizer.Add(0, 10, 0)
 
 		panel.SetSizer(boxsizer)
 
@@ -419,6 +434,7 @@ class PanelLv2_TestDetectors(wx.Panel):
 
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
+		add_info_button(self, boxsizer, INFO_COLOUR_S2)
 
 		module_selectdetector=wx.BoxSizer(wx.HORIZONTAL)
 		button_selectdetector=wx.Button(panel,label='Select a Detector\nto test',size=(300,40))

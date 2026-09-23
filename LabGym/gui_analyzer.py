@@ -41,6 +41,7 @@ from .analyzebehavior_dt import AnalyzeAnimalDetector
 from LabGym import config
 from .minedata import data_mining
 from .tools import plot_events, parse_all_events_file, calculate_distances
+from .gui_utils import add_info_button, INFO_COLOUR_S3, INFO_COLOUR_S4
 
 
 class ColorPicker(wx.Dialog):
@@ -142,6 +143,7 @@ class PanelLv2_AnalyzeBehaviors(wx.Panel):
 
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
+		add_info_button(self, boxsizer, INFO_COLOUR_S3)
 
 		module_selectcategorizer=wx.BoxSizer(wx.HORIZONTAL)
 		button_selectcategorizer=wx.Button(panel,label='Select a Categorizer for\nbehavior classification',size=(300,40))
@@ -1134,6 +1136,7 @@ class PanelLv2_MineResults(wx.Panel):
 
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
+		add_info_button(self, boxsizer, INFO_COLOUR_S4)
 
 		module_inputfolder=wx.BoxSizer(wx.HORIZONTAL)
 		button_inputfolder=wx.Button(panel,label='Select the folder that contains\nthe LabGym analysis output folders',size=(300,40))
@@ -1309,6 +1312,7 @@ class PanelLv2_PlotBehaviors(wx.Panel):
 
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
+		add_info_button(self, boxsizer, INFO_COLOUR_S4)
 
 		module_inputfile=wx.BoxSizer(wx.HORIZONTAL)
 		button_inputfile=wx.Button(panel,label='Select the\nall_events.xlsx file',size=(300,40))
@@ -1425,6 +1429,7 @@ class PanelLv2_CalculateDistances(wx.Panel):
 
 		panel = self
 		boxsizer=wx.BoxSizer(wx.VERTICAL)
+		add_info_button(self, boxsizer, INFO_COLOUR_S4)
 
 		module_inputfolder=wx.BoxSizer(wx.HORIZONTAL)
 		button_inputfolder=wx.Button(panel,label='Select the folder that stores\nLabGym analysis results',size=(300,40))
