@@ -188,18 +188,8 @@ class PanelLv1_TrainingModule(wx.Panel):
 	def display_window(self):
 
 		panel = self
-		main_sizer = wx.BoxSizer(wx.VERTICAL)
-		main_sizer.Add(0, 50, 0)
-
-		columns_sizer = wx.BoxSizer(wx.HORIZONTAL)
-
-		header_font = wx.Font(14, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
-
-		detector_sizer = wx.BoxSizer(wx.VERTICAL)
-
-		text_detector = wx.StaticText(panel, label='Detector Pipeline')
-		text_detector.SetFont(header_font)
-		detector_sizer.Add(text_detector, 0, wx.ALIGN_CENTER | wx.BOTTOM, 25)
+		boxsizer=wx.BoxSizer(wx.VERTICAL)
+		boxsizer.Add(0,60,0)
 
 		button_generateimages=wx.Button(panel,label='Generate Image Examples',size=(300,40))
 		button_generateimages.Bind(wx.EVT_BUTTON,self.generate_images)
@@ -207,8 +197,9 @@ class PanelLv1_TrainingModule(wx.Panel):
 		boxsizer.Add(button_generateimages,0,wx.ALIGN_CENTER,10)
 		boxsizer.Add(0,5,0)
 
-		link_annotate=create_hyperlink(panel,'Annotate images with EZannot','https://github.com/yujiahu415/EZannot')
-		detector_sizer.Add(link_annotate,0,wx.ALIGN_CENTER|wx.BOTTOM, 15)
+		link_annotate=create_hyperlink(panel,'\nAnnotate images with EZannot\n','https://github.com/yujiahu415/EZannot')
+		boxsizer.Add(link_annotate,0,wx.ALIGN_CENTER,10)
+		boxsizer.Add(0,5,0)
 
 		button_traindetectors=wx.Button(panel,label='Train Detectors',size=(300,40))
 		button_traindetectors.Bind(wx.EVT_BUTTON,self.train_detectors)
@@ -219,17 +210,8 @@ class PanelLv1_TrainingModule(wx.Panel):
 		button_testdetectors=wx.Button(panel,label='Test Detectors',size=(300,40))
 		button_testdetectors.Bind(wx.EVT_BUTTON,self.test_detectors)
 		wx.Button.SetToolTip(button_testdetectors,'Test trained Detectors on the annotated ground-truth image dataset (similar to the image dataset used for training a Detector).')
-		detector_sizer.Add(button_testdetectors,0,wx.ALIGN_CENTER|wx.BOTTOM, 15)
-
-
-		divider_line = wx.StaticLine(panel, style=wx.LI_VERTICAL)
-
-
-		categorizer_sizer = wx.BoxSizer(wx.VERTICAL)
-
-		text_categorizer = wx.StaticText(panel, label='Categorizer Pipeline')
-		text_categorizer.SetFont(header_font)
-		categorizer_sizer.Add(text_categorizer, 0, wx.ALIGN_CENTER | wx.BOTTOM, 25)
+		boxsizer.Add(button_testdetectors,0,wx.ALIGN_CENTER,10)
+		boxsizer.Add(0,50,0)
 
 		button_generatebehaviorexamples=wx.Button(panel,label='Generate Behavior Examples',size=(300,40))
 		button_generatebehaviorexamples.Bind(wx.EVT_BUTTON,self.generate_behaviorexamples)
