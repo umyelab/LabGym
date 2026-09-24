@@ -18,7 +18,6 @@ Email: bingye@umich.edu
 
 
 # Standard library imports.
-from curses.panel import panel
 import json
 import logging
 import os
