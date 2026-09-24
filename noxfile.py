@@ -17,7 +17,6 @@ Email: bingye@umich.edu
 '''
 
 import nox
-import os
 import platform
 
 
@@ -49,6 +48,13 @@ def tests(session:nox.Session):
 			"torchvision==0.23.0+cpu",
 			"torchaudio==2.8.0+cpu",
 		)
+	elif platform.system() == "Darwin":
+		# Keep the macOS GUI stack on the version family that completes CI cleanly.
+		session.install(
+			"--only-binary=:all:",
+			"wxPython==4.2.4",
+			"pyobjc-framework-Cocoa==11.1",
+		)
 	elif platform.system() == "Windows":
 		# Verified Windows CPU family; editable install below enforces numpy<=1.26.4
 		session.install(
@@ -64,16 +70,7 @@ def tests(session:nox.Session):
 	session.install("pytest")
 
 
-	if platform.system() == "Darwin":
-		# wxPython/PyObjC can abort during macOS interpreter teardown after
-		# pytest has completed successfully; preserve pytest's exit status.
-		session.run(
-			"python",
-			"-c",
-			"import os, pytest; os._exit(pytest.main(['-q']))",
-		)
-	else:
-		session.run("pytest", "-q")
+	session.run("pytest", "-q")
 
 
 @nox.session(reuse_venv=True)
