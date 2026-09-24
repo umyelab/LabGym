@@ -25,13 +25,13 @@ nox.options.reuse_existing_virtualenvs=False
 
 EXTRAS_WX_URL = "https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-22.04"
 
-# macOS Python 3.9 (wxPython ~4.2.x / Cocoa) can abort during interpreter
+# macOS native GUI frameworks can abort during interpreter
 # teardown when repeated real-wx.App lifecycle modules are alphabetically
 # interleaved with the rest of the native-importing suite. Isolate those
-# modules in a separate pytest process for Darwin+3.9 only; they are not
+# modules in a separate pytest process for Darwin only; they are not
 # skipped. Add any future test module that creates/manages a real wx.App
 # fixture to this list.
-MACOS39_REAL_APP_TEST_FILES = (
+MACOS_REAL_APP_TEST_FILES = (
 	"LabGym/tests/test_categorizer_class_mismatch.py",
 	"LabGym/tests/test_diagnostics_cm_colors.py",
 	"LabGym/tests/test_interactive_results_checkbox.py",
@@ -64,13 +64,6 @@ def tests(session:nox.Session):
 			"torchvision==0.23.0+cpu",
 			"torchaudio==2.8.0+cpu",
 		)
-	elif platform.system() == "Darwin":
-		# Keep the macOS GUI stack on the version family that completes CI cleanly.
-		session.install(
-			"--only-binary=:all:",
-			"wxPython==4.2.4",
-			"pyobjc-framework-Cocoa==11.1",
-		)
 	elif platform.system() == "Windows":
 		# Verified Windows CPU family; editable install below enforces numpy<=1.26.4
 		session.install(
@@ -85,13 +78,10 @@ def tests(session:nox.Session):
 	session.install("-e", ".")
 	session.install("pytest")
 
-	# Darwin + Python 3.9: isolate real-wx.App lifecycle modules in process 1.
-	session_python = str(session.python)
-	if platform.system() == "Darwin" and (
-		session_python == "3.9" or session_python.startswith("3.9.")
-	):
-		session.run("pytest", "-q", *MACOS39_REAL_APP_TEST_FILES)
-		ignore_args = [f"--ignore={path}" for path in MACOS39_REAL_APP_TEST_FILES]
+	# Darwin: isolate real-wx.App lifecycle modules in process 1.
+	if platform.system() == "Darwin":
+		session.run("pytest", "-q", *MACOS_REAL_APP_TEST_FILES)
+		ignore_args = [f"--ignore={path}" for path in MACOS_REAL_APP_TEST_FILES]
 		session.run(
 			"pytest",
 			"-q",
