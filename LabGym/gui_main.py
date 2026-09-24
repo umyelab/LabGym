@@ -185,7 +185,6 @@ class PanelLv1_TrainingModule(wx.Panel):
 		self.notebook = parent
 		self.display_window()
 
-
 	def display_window(self):
 
 		panel = self
@@ -243,55 +242,40 @@ class PanelLv1_TrainingModule(wx.Panel):
 		self.Centre()
 		self.Show(True)
 
-
 	def generate_images(self,event):
 		"""Open the Generate Image Examples panel."""
-
 		title = 'Generate Image Examples'
 		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_GenerateImages(self.notebook), title)
 
-
 	def train_detectors(self,event):
 		"""Open the Train Detectors panel."""
-
 		title = 'Train Detectors'
 		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_TrainDetectors(self.notebook), title)
 
-
 	def test_detectors(self,event):
 		"""Open the Test Detectors panel."""
-
 		title = 'Test Detectors'
 		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_TestDetectors(self.notebook), title)
 
-
 	def generate_behaviorexamples(self,event):
 		"""Open the Generate Behavior Examples panel."""
-
 		title = 'Generate Behavior Examples'
 		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_GenerateExamples(self.notebook), title)
 
-
 	def sort_behaviorexamples(self,event):
 		"""Open the Sort Behavior Examples panel."""
-
 		title = 'Sort Behavior Examples'
 		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_SortBehaviors(self.notebook), title)
 
-
 	def train_categorizers(self,event):
 		"""Open the Train Categorizers panel."""
-
 		title = 'Train Categorizers'
 		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_TrainCategorizers(self.notebook), title)
 
-
 	def test_categorizers(self,event):
 		"""Open the Test Categorizers panel."""
-
 		title = 'Test Categorizers'
 		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_TestCategorizers(self.notebook), title)
-
 
 
 class PanelLv1_AnalysisModule(wx.Panel):
@@ -378,7 +362,7 @@ class PanelLv1_AnalysisModule(wx.Panel):
 
 		title = 'Calculate Distances'
 		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_CalculateDistances(self.notebook), title)
-	
+
 	def state_transition_map(self,event):
 		"""Open the State Transition Map panel."""
 

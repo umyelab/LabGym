@@ -33,7 +33,7 @@ import pandas as pd
 from scipy import ndimage
 from skimage import exposure,transform
 from skimage.transform import AffineTransform
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelBinarizer
 import tensorflow as tf
@@ -221,6 +221,20 @@ class DatasetFromPath(Sequence):
 
 		return pattern_images,labels
 
+
+
+class CategorizerClassMismatchError(Exception):
+	"""Raised when ground-truth folder names do not match Categorizer classes."""
+
+	def __init__(self, unrecognized_folders, missing_classes):
+		self.unrecognized_folders = sorted(unrecognized_folders)
+		self.missing_classes = sorted(missing_classes)
+		parts = [
+			'Behavior folder names must exactly match the Categorizer classes.',
+			f'Unrecognized behavior folders: {self.unrecognized_folders}.',
+			f'Model classes absent from the fixture: {self.missing_classes}.',
+		]
+		super().__init__(' '.join(parts))
 
 
 class Categorizers():
@@ -1951,6 +1965,7 @@ class Categorizers():
 		animations=deque()
 		pattern_images=deque()
 		labels=deque()
+		test_files=[]
 
 		parameters=pd.read_csv(os.path.join(model_path,'model_parameters.txt'))
 
@@ -2018,82 +2033,105 @@ class Categorizers():
 		if len(incorrect_classes)>0:
 			print('Unused behavior names in the Categorizer: '+str(incorrect_classes))
 
-		if len(incorrect_behaviors)==0 and len(incorrect_classes)==0:
+		if len(incorrect_behaviors)>0 or len(incorrect_classes)>0:
+			raise CategorizerClassMismatchError(incorrect_behaviors, incorrect_classes)
 
-			for behavior in behaviornames:
-
-				if network!=0:
-					filenames=[i for i in os.listdir(os.path.join(groundtruth_path,behavior)) if i.endswith('.avi')]
-				else:
-					filenames=[i for i in os.listdir(os.path.join(groundtruth_path,behavior)) if i.endswith('.jpg')]
-
-				for i in filenames:
-
-					if network!=0:
-
-						path_to_animation=os.path.join(groundtruth_path,behavior,i)
-
-						capture=cv2.VideoCapture(path_to_animation)
-						animation=deque()
-						frames=deque(maxlen=length)
-
-						while True:
-							retval,frame=capture.read()
-							if frame is None:
-								break
-							frames.append(frame)
-
-						capture.release()
-
-						for frame in frames:
-							frame=np.uint8(exposure.rescale_intensity(frame,out_range=(0,255)))
-							if channel==1:
-								frame=cv2.cvtColor(np.uint8(frame),cv2.COLOR_BGR2GRAY)
-							frame=cv2.resize(frame,(dim_tconv,dim_tconv),interpolation=cv2.INTER_AREA)
-							frame=img_to_array(frame)
-							animation.append(frame)
-
-						animations.append(np.array(animation))
-
-					if network!=1:
-
-						path_to_pattern_image=os.path.splitext(os.path.join(groundtruth_path,behavior,i))[0]+'.jpg'
-						pattern_image=cv2.imread(path_to_pattern_image)
-						if behavior_mode==3:
-							if channel==1:
-								pattern_image=cv2.cvtColor(pattern_image,cv2.COLOR_BGR2GRAY)
-						pattern_image=cv2.resize(pattern_image,(dim_conv,dim_conv),interpolation=cv2.INTER_AREA)
-						pattern_images.append(img_to_array(pattern_image))
-
-					labels.append(classnames.index(behavior))
+		for behavior in behaviornames:
 
 			if network!=0:
-				animations=np.array(animations,dtype='float32')/255.0
-			pattern_images=np.array(pattern_images,dtype='float32')/255.0
-
-			labels=np.array(labels)
-
-			model=load_model(model_path)
-
-			if network==0:
-				predictions=model.predict(pattern_images,batch_size=32)
-			elif network==1:
-				predictions=model.predict(animations,batch_size=32)
+				filenames=[i for i in os.listdir(os.path.join(groundtruth_path,behavior)) if i.endswith('.avi')]
 			else:
-				predictions=model.predict([animations,pattern_images],batch_size=32)
+				filenames=[i for i in os.listdir(os.path.join(groundtruth_path,behavior)) if i.endswith('.jpg')]
 
-			if len(classnames)==2:
-				predictions=[round(i[0]) for i in predictions]
-				print(classification_report(labels,predictions,target_names=classnames))
-				report=classification_report(labels,predictions,target_names=classnames,output_dict=True)
-			else:
-				print(classification_report(labels,predictions.argmax(axis=1),target_names=classnames))
-				report=classification_report(labels,predictions.argmax(axis=1),target_names=classnames,output_dict=True)
+			for i in filenames:
 
-			if result_path is not None:
-				pd.DataFrame(report).transpose().to_excel(os.path.join(result_path,'testing_reports.xlsx'),float_format='%.2f')
+				test_files.append(os.path.join(groundtruth_path, behavior, i))
 
-			print('Testing completed!')
+				if network!=0:
+
+					path_to_animation=os.path.join(groundtruth_path,behavior,i)
+
+					capture=cv2.VideoCapture(path_to_animation)
+					animation=deque()
+					frames=deque(maxlen=length)
+
+					while True:
+						retval,frame=capture.read()
+						if frame is None:
+							break
+						frames.append(frame)
+
+					capture.release()
+
+					for frame in frames:
+						frame=np.uint8(exposure.rescale_intensity(frame,out_range=(0,255)))
+						if channel==1:
+							frame=cv2.cvtColor(np.uint8(frame),cv2.COLOR_BGR2GRAY)
+						frame=cv2.resize(frame,(dim_tconv,dim_tconv),interpolation=cv2.INTER_AREA)
+						frame=img_to_array(frame)
+						animation.append(frame)
+
+					animations.append(np.array(animation))
+
+				if network!=1:
+
+					path_to_pattern_image=os.path.splitext(os.path.join(groundtruth_path,behavior,i))[0]+'.jpg'
+					pattern_image=cv2.imread(path_to_pattern_image)
+					if behavior_mode==3:
+						if channel==1:
+							pattern_image=cv2.cvtColor(pattern_image,cv2.COLOR_BGR2GRAY)
+					pattern_image=cv2.resize(pattern_image,(dim_conv,dim_conv),interpolation=cv2.INTER_AREA)
+					pattern_images.append(img_to_array(pattern_image))
+
+				labels.append(classnames.index(behavior))
+
+		if network!=0:
+			animations=np.array(animations,dtype='float32')/255.0
+		pattern_images=np.array(pattern_images,dtype='float32')/255.0
+
+		labels=np.array(labels)
+
+		model=load_model(model_path)
+
+		from keras.models import Model
+		multi_model = Model(inputs=model.inputs, outputs=[model.layers[-2].output, model.output])
+
+		if network==0:
+			embeddings, predictions = multi_model.predict(pattern_images,batch_size=32)
+		elif network==1:
+			embeddings, predictions = multi_model.predict(animations,batch_size=32)
+		else:
+			embeddings, predictions = multi_model.predict([animations,pattern_images],batch_size=32)
+
+
+		if len(classnames)==2:
+			predictions=[round(i[0]) for i in predictions]
+			flat_predictions = predictions
+			print(classification_report(labels,predictions,target_names=classnames))
+			report=classification_report(labels,predictions,target_names=classnames,output_dict=True)
+			cm=confusion_matrix(labels,predictions)
+		else:
+			flat_predictions = predictions.argmax(axis=1)
+			print(classification_report(labels,flat_predictions,target_names=classnames))
+			report=classification_report(labels,flat_predictions,target_names=classnames,output_dict=True)
+			cm=confusion_matrix(labels,flat_predictions)
+
+		if result_path is not None:
+			pd.DataFrame(report).transpose().to_excel(os.path.join(result_path,'testing_reports.xlsx'),float_format='%.2f')
+			pd.DataFrame(cm, index=classnames, columns=classnames).to_csv(os.path.join(result_path,'confusion_matrix.csv'))
+
+		example_map = {}
+		embedding_map = {}
+		for t_label_idx, p_label_idx, f_path, emb in zip(labels, flat_predictions, test_files, embeddings):
+			key = (classnames[t_label_idx], classnames[p_label_idx])
+			if key not in example_map:
+				example_map[key] = []
+			example_map[key].append(f_path)
+			embedding_map[f_path] = emb
+
+		print('Testing completed!')
+
+		return report, cm, example_map, embedding_map
 
 	def generate_probability_matrix(self, path_to_video, path_to_model, output_folder, batch_size=32):
 		"""

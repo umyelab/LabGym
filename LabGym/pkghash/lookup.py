@@ -34,7 +34,10 @@ try:
 	# tomllib is included in the Python Standard Library since version 3.11
 	import tomllib  # type: ignore
 except ModuleNotFoundError:
-	import tomli as tomllib  # A lil' TOML parser
+	try:
+		import tomli as tomllib  # A lil' TOML parser
+	except ModuleNotFoundError:
+		tomllib = None
 
 # Local application/library specific imports.
 from .hash import get_hashval
