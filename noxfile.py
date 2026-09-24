@@ -17,6 +17,7 @@ Email: bingye@umich.edu
 '''
 
 import nox
+import os
 import platform
 
 
@@ -63,7 +64,16 @@ def tests(session:nox.Session):
 	session.install("pytest")
 
 
-	session.run("pytest", "-q")
+	if platform.system() == "Darwin":
+		# wxPython/PyObjC can abort during macOS interpreter teardown after
+		# pytest has completed successfully; preserve pytest's exit status.
+		session.run(
+			"python",
+			"-c",
+			"import os, pytest; os._exit(pytest.main(['-q']))",
+		)
+	else:
+		session.run("pytest", "-q")
 
 
 @nox.session(reuse_venv=True)
