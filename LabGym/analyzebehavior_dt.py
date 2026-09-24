@@ -39,6 +39,13 @@ from keras.utils import img_to_array
 import torch
 
 # Local application/library specific imports.
+from .analyzebehavior import (
+	PROBABILITY_HEATMAP_MISSING_COLOR,
+	PROBABILITY_HEATMAP_MISSING_LEGEND,
+	prepare_probability_heatmap_array,
+	probability_heatmap_colormap,
+	probability_heatmap_norm,
+	)
 from .detector import Detector
 from .tools import (
 	crop_frame,
@@ -48,6 +55,7 @@ from .tools import (
 	generate_patternimage,
 	generate_patternimage_all,
 	generate_patternimage_interact,
+	plot_state_transition_map,
 	)
 
 
@@ -1087,8 +1095,153 @@ class AnalyzeAnimalDetector():
 							continued_length=1
 						i+=1
 
+		self.export_probability_matrices_dt()
+
 		print('Behavioral categorization completed!')
 		self.log.append('Behavioral categorization completed!')
+
+	def export_probability_matrices_dt(self, make_heatmap=True, max_frames_for_heatmap=6000):
+
+		import os
+		import numpy as np
+		import pandas as pd
+		import matplotlib.pyplot as plt
+		from matplotlib.patches import Patch
+
+		os.makedirs(self.results_path, exist_ok=True)
+
+		time_array = np.array(self.all_time)
+		T = len(time_array)
+
+		for animal_name in self.event_probability:
+
+			behavior_names = list(self.all_behavior_parameters[animal_name].keys())
+
+			for ID in self.event_probability[animal_name]:
+
+				P = np.zeros((T, len(behavior_names)), dtype=np.float32)
+
+				for k, behavior_name in enumerate(behavior_names):
+					probs = self.all_behavior_parameters[animal_name][behavior_name]['probability'][ID]
+					P[:, k] = np.array(probs, dtype=np.float32)
+
+				np.save(
+					os.path.join(self.results_path, f'{animal_name}_probability_matrix_ID{ID}.npy'),
+					P
+				)
+
+				df = pd.DataFrame(P, columns=behavior_names)
+				df.insert(0, 'time_s', time_array)
+				df.insert(0, 'frame', np.arange(T))
+				df.to_csv(
+					os.path.join(self.results_path, f'{animal_name}_probability_matrix_ID{ID}.csv'),
+					index=False,
+					float_format='%.4f'
+				)
+
+				if make_heatmap:
+					P_plot = P
+					stride = 1
+
+					if P_plot.shape[0] > max_frames_for_heatmap:
+						stride = int(np.ceil(P_plot.shape[0] / max_frames_for_heatmap))
+						P_plot = P_plot[::stride, :]
+
+					time_plot = time_array[::stride]
+
+					P_plot = prepare_probability_heatmap_array(P_plot)
+					P_plot = P_plot.T
+
+					num_behaviors, num_frames = P_plot.shape
+
+					fig_width = max(18, num_frames / 140)
+					fig_height = max(8, num_behaviors * 0.55)
+
+					fig, ax = plt.subplots(figsize=(fig_width, fig_height), dpi=200)
+
+					im = ax.imshow(
+						P_plot,
+						aspect='auto',
+						interpolation='nearest',
+						cmap=probability_heatmap_colormap(),
+						norm=probability_heatmap_norm()
+					)
+
+					ax.set_yticks(np.arange(-0.5, num_behaviors, 1), minor=True)
+					ax.grid(which='minor', axis='y', color='white', linestyle='-', linewidth=2.2)
+
+					ax.set_xticks(np.arange(-0.5, num_frames, 1), minor=True)
+					ax.grid(which='minor', axis='x', color='white', linestyle='-', linewidth=0.12, alpha=0.25)
+
+					ax.tick_params(which='minor', bottom=False, left=False)
+
+					if num_frames <= 50:
+						xticks = np.arange(num_frames)
+					else:
+						step = max(1, num_frames // 20)
+						xticks = np.arange(0, num_frames, step)
+
+					ax.set_xticks(xticks)
+
+					frame_labels = xticks * stride
+					time_labels = time_plot[xticks]
+
+					ax.set_xticklabels(
+						[
+							f'{frame}\n{time:.2f}s'
+							for frame, time in zip(frame_labels, time_labels)
+						],
+						fontsize=9,
+						rotation=45,
+						ha='right'
+					)
+
+					ax.set_yticks(np.arange(num_behaviors))
+					ax.set_yticklabels(behavior_names, fontsize=13, fontweight='bold')
+
+					ax.set_xlabel(
+						'Frame / Time (s)' if stride == 1 else f'Frame / Time (s), stride={stride}',
+						fontsize=14,
+						fontweight='bold'
+					)
+
+					ax.set_ylabel('Behavior', fontsize=14, fontweight='bold')
+
+					ax.set_title(
+						f'Frame-Level Probability Matrix: {animal_name} ID {ID}',
+						fontsize=16,
+						fontweight='bold'
+					)
+
+					cbar = fig.colorbar(im, ax=ax, pad=0.02)
+					cbar.set_label(
+						'Probability\n'+PROBABILITY_HEATMAP_MISSING_LEGEND,
+						fontsize=12,
+						fontweight='bold',
+						)
+					cbar.ax.tick_params(labelsize=10)
+					ax.legend(
+						handles=[
+							Patch(
+								facecolor=PROBABILITY_HEATMAP_MISSING_COLOR,
+								edgecolor='black',
+								label=PROBABILITY_HEATMAP_MISSING_LEGEND,
+								)
+							],
+						loc='upper right',
+						fontsize=8,
+						framealpha=0.85,
+						)
+
+					plt.tight_layout()
+
+					plt.savefig(
+						os.path.join(self.results_path, f'{animal_name}_probability_heatmap_ID{ID}.png'),
+						dpi=300,
+						bbox_inches='tight'
+					)
+
+					plt.close(fig)
 
 
 	def correct_identity(self,specific_behaviors):

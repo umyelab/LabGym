@@ -22,6 +22,8 @@ import json
 import logging
 import os
 from pathlib import Path
+from tkinter import dialog
+import numpy as np
 
 # Log the load of this module (by the module loader, on first import).
 # Intentionally positioning these statements before other imports, against the
@@ -40,7 +42,14 @@ from .analyzebehavior import AnalyzeAnimal
 from .analyzebehavior_dt import AnalyzeAnimalDetector
 from LabGym import config
 from .minedata import data_mining
-from .tools import plot_events, parse_all_events_file, calculate_distances
+from .tools import (
+	plot_events,
+	parse_all_events_file,
+	calculate_distances,
+	plot_state_transition_map,
+	stm_session_colors,
+	stm_default_behavior_color,
+)
 from .gui_utils import add_info_button, INFO_COLOUR_S3, INFO_COLOUR_S4
 
 
@@ -1550,3 +1559,659 @@ class PanelLv2_CalculateDistances(wx.Panel):
 				all_data=pd.concat(all_data,keys=names,names=['File name','ID/parameter'])
 				all_data.drop(all_data.columns[0],axis=1,inplace=True)
 				all_data.to_excel(os.path.join(self.out_path,'all_summary.xlsx'),float_format='%.2f')
+
+
+
+
+	def pick_color(self,event):
+
+		width,height=self.color_panel.GetSize()
+		center_x=width//2
+		center_y=height//2
+		radius=min(width,height)//2-10
+
+		x,y=event.GetPosition()
+		dx=x-center_x
+		dy=y-center_y
+		dist=(dx*dx+dy*dy)**0.5
+
+		if dist>radius:
+			return
+
+		hue=(np.arctan2(dy,dx)+np.pi)/(2*np.pi)
+		sat=dist/radius
+		val=1.0
+
+		r,g,b=self.hsv_to_rgb(hue,sat,val)
+		self.current_color='#{:02x}{:02x}{:02x}'.format(r,g,b)
+
+		self.preview.SetBackgroundColour(self.current_color)
+		self.preview.Refresh()
+
+		self.text_current.SetLabel(
+			'Current behavior: '+str(self.current_behavior)
+			+'    Color: '+str(self.current_color)
+		)
+
+
+	def apply_one_color(self,event):
+
+		if self.current_behavior is None:
+			return
+
+		self.behavior_colors[self.current_behavior]=self.current_color
+
+		wx.MessageBox(
+			'Applied color for '+str(self.current_behavior)+': '+str(self.current_color),
+			'Color applied',
+			wx.OK|wx.ICON_INFORMATION
+		)
+
+
+	def hsv_to_rgb(self,h,s,v):
+
+		i=int(h*6)
+		f=h*6-i
+		p=v*(1-s)
+		q=v*(1-f*s)
+		t=v*(1-(1-f)*s)
+		i=i%6
+
+		if i==0:
+			r,g,b=v,t,p
+		elif i==1:
+			r,g,b=q,v,p
+		elif i==2:
+			r,g,b=p,v,t
+		elif i==3:
+			r,g,b=p,q,v
+		elif i==4:
+			r,g,b=t,p,v
+		else:
+			r,g,b=v,p,q
+
+		return int(r*255),int(g*255),int(b*255)
+
+
+	def get_behavior_colors(self):
+
+		return self.behavior_colors
+	
+
+class BehaviorColorDialog(wx.Dialog):
+
+	def __init__(self, parent, behavior_names, behavior_colors):
+
+		super().__init__(parent=parent, title='Set behavior colors', size=(480,320))
+
+		self.behavior_names = behavior_names
+		self.behavior_colors = behavior_colors.copy()
+
+		boxsizer = wx.BoxSizer(wx.VERTICAL)
+
+		self.choice_behavior = wx.Choice(self, choices=self.behavior_names)
+		self.choice_behavior.SetSelection(0)
+		self.choice_behavior.Bind(wx.EVT_CHOICE, self.on_select_behavior)
+
+		self.color_picker = wx.ColourPickerCtrl(self)
+		self.color_picker.Bind(wx.EVT_COLOURPICKER_CHANGED, self.on_pick_color)
+
+		self.color_text = wx.TextCtrl(self, size=(160,28))
+		self.color_text.Bind(wx.EVT_TEXT, self.on_type_color)
+
+		self.preview = wx.Panel(self, size=(120,35))
+
+		buttons = wx.BoxSizer(wx.HORIZONTAL)
+
+		button_apply = wx.Button(self, label='Apply color to this behavior')
+		button_apply.Bind(wx.EVT_BUTTON, self.apply_current_color)
+
+		button_done = wx.Button(self, wx.ID_OK, label='Done')
+		button_done.Bind(wx.EVT_BUTTON, self.on_done)
+		button_cancel = wx.Button(self, wx.ID_CANCEL, label='Cancel')
+
+		buttons.Add(button_apply, 0, wx.ALL, 5)
+		buttons.Add(button_done, 0, wx.ALL, 5)
+		buttons.Add(button_cancel, 0, wx.ALL, 5)
+
+		boxsizer.Add(wx.StaticText(self, label='Select behavior:'), 0, wx.ALL, 8)
+		boxsizer.Add(self.choice_behavior, 0, wx.ALL|wx.EXPAND, 8)
+
+		boxsizer.Add(wx.StaticText(self, label='Pick from color wheel or enter hex code:'), 0, wx.ALL, 8)
+		boxsizer.Add(self.color_picker, 0, wx.ALL|wx.CENTER, 8)
+		boxsizer.Add(self.color_text, 0, wx.ALL|wx.CENTER, 8)
+		boxsizer.Add(self.preview, 0, wx.ALL|wx.CENTER, 8)
+		boxsizer.Add(buttons, 0, wx.ALL|wx.CENTER, 8)
+
+		self.SetSizer(boxsizer)
+		self.load_behavior_color()
+
+
+	def valid_hex(self, color):
+
+		if not isinstance(color, str):
+			return False
+
+		if len(color) != 7 or color[0] != '#':
+			return False
+
+		try:
+			int(color[1:], 16)
+			return True
+		except ValueError:
+			return False
+
+
+	def hex_to_rgb(self, color):
+
+		color = color.lstrip('#')
+		return tuple(int(color[i:i+2], 16) for i in (0,2,4))
+
+
+	def rgb_to_hex(self, color):
+
+		return '#%02x%02x%02x' % (
+			color.Red(),
+			color.Green(),
+			color.Blue()
+		)
+
+
+	def current_behavior(self):
+
+		return self.choice_behavior.GetStringSelection()
+
+
+	def load_behavior_color(self):
+
+		behavior = self.current_behavior()
+		color = self.behavior_colors.get(behavior, '#ffffff')
+
+		if not self.valid_hex(color):
+			color = '#ffffff'
+
+		rgb = self.hex_to_rgb(color)
+
+		self.color_picker.SetColour(wx.Colour(*rgb))
+		self.color_text.SetValue(color)
+		self.preview.SetBackgroundColour(wx.Colour(*rgb))
+		self.preview.Refresh()
+
+
+	def on_select_behavior(self, event):
+
+		# Preserve the color for the previously active behavior before switching.
+		self.commit_current_color(show_error=False)
+		self.load_behavior_color()
+
+
+	def on_pick_color(self, event):
+
+		color = self.color_picker.GetColour()
+		hex_color = self.rgb_to_hex(color)
+
+		self.color_text.SetValue(hex_color)
+		self.preview.SetBackgroundColour(color)
+		self.preview.Refresh()
+		# Live-commit so Done is not dependent on Apply.
+		behavior = self.current_behavior()
+		if behavior:
+			self.behavior_colors[behavior] = hex_color
+
+
+	def on_type_color(self, event):
+
+		color = self.color_text.GetValue().strip()
+
+		if self.valid_hex(color):
+			rgb = self.hex_to_rgb(color)
+			self.color_picker.SetColour(wx.Colour(*rgb))
+			self.preview.SetBackgroundColour(wx.Colour(*rgb))
+			self.preview.Refresh()
+			behavior = self.current_behavior()
+			if behavior:
+				self.behavior_colors[behavior] = color
+
+
+	def commit_current_color(self, show_error=True):
+
+		behavior = self.current_behavior()
+		if not behavior:
+			return True
+
+		color = self.color_text.GetValue().strip()
+		if not self.valid_hex(color):
+			if show_error:
+				wx.MessageBox(
+					'Invalid color code. Please enter a hex color like #66ccff.',
+					'Invalid color',
+					wx.OK|wx.ICON_ERROR
+				)
+			return False
+
+		self.behavior_colors[behavior] = color
+		return True
+
+
+	def apply_current_color(self, event):
+
+		if self.commit_current_color(show_error=True):
+			wx.MessageBox(
+				'Color applied to: ' + self.current_behavior(),
+				'Applied',
+				wx.OK|wx.ICON_INFORMATION
+			)
+
+
+	def on_done(self, event):
+		'''Done preserves the currently selected color without requiring Apply.'''
+		if not self.commit_current_color(show_error=True):
+			return
+		self.EndModal(wx.ID_OK)
+
+
+	def get_colors(self):
+
+		return self.behavior_colors
+
+
+def stm_gui_exclusion_status_label(exclusions):
+	'''Status text for the STM exclusion row.'''
+	if not exclusions:
+		return 'Default: none.'
+	return 'Excluded: ' + str(list(exclusions)) + '.'
+
+
+def stm_gui_color_status_label(colors_are_custom):
+	'''Status text for the STM color row.'''
+	if colors_are_custom:
+		return 'Custom behavior colors set.'
+	return 'Default behavior colors.'
+
+
+def stm_gui_apply_exclusion_dialog_result(previous_exclusions, selected_behaviors, accepted):
+	'''
+	Compute exclusion list after the multi-choice dialog closes.
+
+	Cancel/close (accepted=False) preserves previous_exclusions.
+	'''
+	if not accepted:
+		return list(previous_exclusions)
+	return list(selected_behaviors)
+
+
+class PanelLv2_StateTransitionMap(wx.Panel):
+
+	'''
+	The 'State Transition Map' functional unit (V1 product).
+	'''
+
+	def __init__(self, parent):
+
+		super().__init__(parent)
+		self.notebook = parent
+
+		self.path_to_events = None
+		self.result_path = None  # user-selected parent folder
+		self.stm_dir = None
+
+		self.behavior_names = []
+		self.behavior_to_exclude = []
+		self.behavior_colors = {}
+		self.colors_are_custom = False
+
+		self.display_window()
+
+
+	def resolve_stm_dir(self):
+		'''Return <parent>/state_transition_map when an output folder is set.'''
+		if self.result_path is None:
+			return None
+		return os.path.join(self.result_path, 'state_transition_map')
+
+
+	def refresh_paths_status(self):
+		self.stm_dir = self.resolve_stm_dir()
+		if self.stm_dir is None:
+			self.text_output.SetLabel('None.')
+			return
+		self.text_output.SetLabel(
+			'Results folder (regeneration updates existing files here):\n'
+			+ self.stm_dir
+		)
+
+
+	def refresh_exclude_status(self):
+		self.text_exclude.SetLabel(
+			stm_gui_exclusion_status_label(self.behavior_to_exclude)
+		)
+
+
+	def refresh_color_status(self):
+		self.text_colors.SetLabel(
+			stm_gui_color_status_label(self.colors_are_custom)
+		)
+
+
+	def ensure_session_colors(self):
+		'''Fill missing behaviors with defaults; keep session custom colors.'''
+		included = [b for b in self.behavior_names if b not in self.behavior_to_exclude]
+		if not included:
+			self.behavior_colors = {}
+			self.refresh_color_status()
+			return
+		self.behavior_colors = stm_session_colors(
+			included,
+			existing_colors=self.behavior_colors,
+		)
+		self.refresh_color_status()
+
+
+	def reset_input_dependent_state(self):
+		'''Clear all input-derived STM state (used after parse failure).'''
+		self.path_to_events = None
+		self.behavior_names = []
+		self.behavior_to_exclude = []
+		self.behavior_colors = {}
+		self.colors_are_custom = False
+		self.text_input.SetLabel('No valid all_events.xlsx file selected.')
+		self.refresh_exclude_status()
+		self.refresh_color_status()
+		# Output parent may still be set; destination does not depend on input stem.
+		self.refresh_paths_status()
+
+
+	def apply_successful_input_load(self, path, behavior_names):
+		'''Apply a successfully parsed all_events.xlsx selection.'''
+		self.path_to_events = path
+		self.behavior_names = list(behavior_names)
+		self.behavior_to_exclude = []
+		self.behavior_colors = {}
+		self.colors_are_custom = False
+		self.text_input.SetLabel('Selected: ' + str(path) + '.')
+		self.refresh_exclude_status()
+		self.ensure_session_colors()
+		self.refresh_paths_status()
+
+
+	def apply_exclusion_dialog_result(self, selected_behaviors, accepted):
+		'''Update exclusions after multi-choice OK/Cancel (Cancel preserves).'''
+		self.behavior_to_exclude = stm_gui_apply_exclusion_dialog_result(
+			self.behavior_to_exclude,
+			selected_behaviors,
+			accepted,
+		)
+		if accepted:
+			self.refresh_exclude_status()
+			self.ensure_session_colors()
+
+
+	def apply_color_dialog_result(self, new_colors, accepted):
+		'''Update session colors after color dialog OK/Cancel (Cancel preserves).'''
+		if not accepted:
+			return
+		self.behavior_colors = dict(new_colors)
+		self.colors_are_custom = True
+		self.refresh_color_status()
+
+
+	def generate_is_blocked(self):
+		'''True when Generate cannot run (no valid input and/or no output parent).'''
+		return self.path_to_events is None or self.result_path is None
+
+
+	def display_window(self):
+
+		panel = self
+		boxsizer = wx.BoxSizer(wx.VERTICAL)
+
+		module_input = wx.BoxSizer(wx.HORIZONTAL)
+		# Multi-line labels (with \\n) keep the large rectangular LabGym button
+		# look on macOS; single-line labels render as small native rounded buttons.
+		button_input = wx.Button(
+			panel,
+			label='Select an all_events.xlsx\nfile',
+			size=(300,40),
+		)
+		button_input.Bind(wx.EVT_BUTTON, self.select_events_file)
+		self.text_input = wx.StaticText(panel, label='None.', style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
+		module_input.Add(button_input, 0, wx.LEFT|wx.RIGHT|wx.EXPAND, 10)
+		module_input.Add(self.text_input, 0, wx.LEFT|wx.RIGHT|wx.EXPAND, 10)
+
+		boxsizer.Add(0,10,0)
+		boxsizer.Add(module_input, 0, wx.LEFT|wx.RIGHT|wx.EXPAND, 10)
+		boxsizer.Add(0,5,0)
+
+		module_output = wx.BoxSizer(wx.HORIZONTAL)
+		button_output = wx.Button(
+			panel,
+			label='Select a folder to store\nthe state map results',
+			size=(300,40),
+		)
+		button_output.Bind(wx.EVT_BUTTON, self.select_outpath)
+		self.text_output = wx.StaticText(panel, label='None.', style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
+		module_output.Add(button_output, 0, wx.LEFT|wx.RIGHT|wx.EXPAND, 10)
+		module_output.Add(self.text_output, 0, wx.LEFT|wx.RIGHT|wx.EXPAND, 10)
+
+		boxsizer.Add(module_output, 0, wx.LEFT|wx.RIGHT|wx.EXPAND, 10)
+		boxsizer.Add(0,5,0)
+
+		module_exclude = wx.BoxSizer(wx.HORIZONTAL)
+		button_exclude = wx.Button(
+			panel,
+			label='Select behaviors to\nexclude',
+			size=(300,40),
+		)
+		button_exclude.Bind(wx.EVT_BUTTON, self.select_exclusions)
+		self.text_exclude = wx.StaticText(panel, label='Default: none.', style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END)
+		module_exclude.Add(button_exclude, 0, wx.LEFT|wx.RIGHT|wx.EXPAND, 10)
+		module_exclude.Add(self.text_exclude, 0, wx.LEFT|wx.RIGHT|wx.EXPAND, 10)
+
+		boxsizer.Add(module_exclude, 0, wx.LEFT|wx.RIGHT|wx.EXPAND, 10)
+		boxsizer.Add(0,5,0)
+
+		module_colors = wx.BoxSizer(wx.HORIZONTAL)
+		button_colors = wx.Button(
+			panel,
+			label='Set behavior\ncolors',
+			size=(300,40),
+		)
+		button_colors.Bind(wx.EVT_BUTTON, self.set_behavior_colors)
+		self.text_colors = wx.StaticText(
+			panel,
+			label='Default behavior colors.',
+			style=wx.ALIGN_LEFT|wx.ST_ELLIPSIZE_END,
+		)
+		module_colors.Add(button_colors, 0, wx.LEFT|wx.RIGHT|wx.EXPAND, 10)
+		module_colors.Add(self.text_colors, 0, wx.LEFT|wx.RIGHT|wx.EXPAND, 10)
+
+		boxsizer.Add(module_colors, 0, wx.LEFT|wx.RIGHT|wx.EXPAND, 10)
+		boxsizer.Add(0,5,0)
+
+		# Single-line native rounded button (not the multi-line rectangular action style).
+		button_generate = wx.Button(
+			panel,
+			label='Generate state transition maps',
+			size=(300,40),
+		)
+		button_generate.Bind(wx.EVT_BUTTON, self.generate_map)
+
+		boxsizer.Add(0,5,0)
+		boxsizer.Add(button_generate, 0, wx.RIGHT|wx.ALIGN_RIGHT, 90)
+		boxsizer.Add(0,10,0)
+
+		panel.SetSizer(boxsizer)
+		self.Centre()
+		self.Show(True)
+
+
+	def select_events_file(self,event):
+
+		wildcard = 'Excel files (*.xlsx;*.xls)|*.xlsx;*.xls'
+		dialog = wx.FileDialog(
+			self,
+			'Select an all_events.xlsx file',
+			'',
+			'',
+			wildcard,
+			style=wx.FD_OPEN|wx.FD_FILE_MUST_EXIST
+		)
+
+		if dialog.ShowModal() == wx.ID_OK:
+
+			path = dialog.GetPath()
+			try:
+				_,_,behavior_names = parse_all_events_file(path)
+				self.apply_successful_input_load(path, behavior_names)
+
+			except Exception as exc:
+				wx.MessageBox(
+					'Failed to parse the selected file:\n'+str(exc),
+					'Error',
+					wx.OK|wx.ICON_ERROR
+				)
+				self.reset_input_dependent_state()
+
+		dialog.Destroy()
+
+
+	def select_outpath(self,event):
+
+		dialog = wx.DirDialog(self,'Select a directory','',style=wx.DD_DEFAULT_STYLE)
+
+		if dialog.ShowModal() == wx.ID_OK:
+			self.result_path = dialog.GetPath()
+			self.refresh_paths_status()
+
+		dialog.Destroy()
+
+
+	def select_exclusions(self,event):
+
+		if self.path_to_events is None or len(self.behavior_names) == 0:
+			wx.MessageBox(
+				'Please select an all_events.xlsx file first.',
+				'Error',
+				wx.OK|wx.ICON_ERROR
+			)
+			return
+
+		dialog = wx.MultiChoiceDialog(
+			self,
+			message=(
+				'Select behaviors to exclude from the state transition map.\n'
+				'Excluded behaviors are not shown as nodes and break the bout sequence\n'
+				'(surrounding behaviors are not bridged into a new transition).'
+			),
+			caption='Behaviors to exclude',
+			choices=self.behavior_names
+		)
+
+		accepted = dialog.ShowModal() == wx.ID_OK
+		selected = []
+		if accepted:
+			selected = [self.behavior_names[i] for i in dialog.GetSelections()]
+		self.apply_exclusion_dialog_result(selected, accepted)
+
+		dialog.Destroy()
+
+
+	def set_behavior_colors(self, event):
+
+		if self.path_to_events is None:
+			wx.MessageBox(
+				'Please select an all_events.xlsx file first.',
+				'Error',
+				wx.OK|wx.ICON_ERROR
+			)
+			return
+
+		behavior_names = [
+			b for b in self.behavior_names
+			if b not in self.behavior_to_exclude
+		]
+
+		if len(behavior_names) == 0:
+			wx.MessageBox(
+				'No behaviors available for color setting.',
+				'Error',
+				wx.OK|wx.ICON_ERROR
+			)
+			return
+
+		self.ensure_session_colors()
+		dialog = BehaviorColorDialog(
+			self,
+			behavior_names,
+			self.behavior_colors
+		)
+
+		accepted = dialog.ShowModal() == wx.ID_OK
+		new_colors = dialog.get_colors() if accepted else None
+		if accepted:
+			self.apply_color_dialog_result(new_colors, True)
+
+		dialog.Destroy()
+
+
+	def generate_map(self,event):
+
+		if self.generate_is_blocked():
+			wx.MessageBox(
+				'Please select an input file and an output folder.',
+				'Error',
+				wx.OK|wx.ICON_ERROR
+			)
+			return
+
+		try:
+			event_probability,_,behavior_names = parse_all_events_file(self.path_to_events)
+
+			behavior_names = [b for b in behavior_names if b not in self.behavior_to_exclude]
+
+			if len(behavior_names) == 0:
+				wx.MessageBox(
+					'No behaviors remain after exclusion.',
+					'Error',
+					wx.OK|wx.ICON_ERROR
+				)
+				return
+
+			stm_dir = self.resolve_stm_dir()
+			os.makedirs(stm_dir, exist_ok=True)
+			self.stm_dir = stm_dir
+			self.refresh_paths_status()
+
+			self.behavior_colors = stm_session_colors(
+				behavior_names,
+				existing_colors=self.behavior_colors,
+			)
+
+			result = plot_state_transition_map(
+				stm_dir,
+				event_probability,
+				behavior_to_include=behavior_names,
+				behavior_colors=self.behavior_colors,
+				input_path=self.path_to_events,
+				excluded_behaviors=self.behavior_to_exclude,
+				draw_maps=True,
+			)
+
+			if result.get('behavior_colors'):
+				self.behavior_colors = result['behavior_colors']
+
+			status = result.get('status', 'error')
+			message = result.get('message', 'State transition map finished.')
+			if status == 'success':
+				wx.MessageBox(message, 'Done', wx.OK|wx.ICON_INFORMATION)
+			elif status in ('warning_partial', 'warning_no_maps'):
+				wx.MessageBox(message, 'Warning', wx.OK|wx.ICON_WARNING)
+			else:
+				wx.MessageBox(message, 'Error', wx.OK|wx.ICON_ERROR)
+
+		except Exception as e:
+			wx.MessageBox(
+				'Failed to generate state-transition map:\n'+str(e),
+				'Error',
+				wx.OK|wx.ICON_ERROR
+			)

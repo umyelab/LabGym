@@ -48,7 +48,7 @@ from .gui_categorizer import PanelLv2_GenerateExamples,PanelLv2_TrainCategorizer
 logger.debug('importing %s done', '.gui_categorizer')
 from .gui_detector import PanelLv2_GenerateImages,PanelLv2_TrainDetectors,PanelLv2_TestDetectors
 from .gui_preprocessor import PanelLv2_ProcessVideos,PanelLv2_DrawMarkers
-from .gui_analyzer import PanelLv2_AnalyzeBehaviors,PanelLv2_MineResults,PanelLv2_PlotBehaviors,PanelLv2_CalculateDistances
+from .gui_analyzer import PanelLv2_AnalyzeBehaviors,PanelLv2_MineResults,PanelLv2_PlotBehaviors,PanelLv2_CalculateDistances, PanelLv2_StateTransitionMap
 from LabGym import selftest
 
 
@@ -328,6 +328,18 @@ class PanelLv1_AnalysisModule(wx.Panel):
 		boxsizer.Add(button_rasterplot,0,wx.ALIGN_CENTER,10)
 		boxsizer.Add(0,20,0)
 
+		button_statetransition=wx.Button(panel,label='State Transition Map',size=(300,40))
+		button_statetransition.Bind(wx.EVT_BUTTON,self.state_transition_map)
+		wx.Button.SetToolTip(
+			button_statetransition,
+			'Generate one State Transition Map per animal from a LabGym all_events.xlsx file. '
+			'Results go to state_transition_map under your chosen folder (updated on regenerate). '
+			'Nodes show time occupancy; edges show bout-level transition probabilities. '
+			'Excluded behaviors remove nodes and break sequences rather than bridging transitions.'
+			)
+		boxsizer.Add(button_statetransition,0,wx.ALIGN_CENTER,10)
+		boxsizer.Add(0,20,0)
+
 		button_calculatedistances=wx.Button(panel,label='Calculate Distances',size=(300,40))
 		button_calculatedistances.Bind(wx.EVT_BUTTON,self.calculate_distances)
 		wx.Button.SetToolTip(button_calculatedistances,'Using LabGym analysis results to calculate: 1. The shortest distances among the locations where animals perform the selected behaviors for the first time, in chronological order. 2. The total traveling distances of the actual route the animals.')
@@ -366,7 +378,16 @@ class PanelLv1_AnalysisModule(wx.Panel):
 
 		title = 'Calculate Distances'
 		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_CalculateDistances(self.notebook), title)
+	
+	def state_transition_map(self,event):
+		"""Open the State Transition Map panel."""
 
+		title = 'State Transition Map'
+		add_or_select_notebook_page(
+			self.notebook,
+			lambda: PanelLv2_StateTransitionMap(self.notebook),
+			title
+		)
 
 # Popup content for each clickable workflow-map box: (section_title, box_title, description, guide_sections)
 _BOX_POPUP = {
