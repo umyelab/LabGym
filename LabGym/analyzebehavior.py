@@ -53,8 +53,42 @@ from .tools import (
 	contour_frame,
 	generate_patternimage,
 	generate_patternimage_all,
+	plot_state_transition_map,
 	)
 logger.debug('importing tools (done)')
+
+
+PROBABILITY_HEATMAP_MISSING_COLOR = 'gray'
+PROBABILITY_HEATMAP_MISSING_LEGEND = 'Gray: missing / non-finite'
+
+
+def prepare_probability_heatmap_array(values):
+	'''Clip finite probabilities for linear 0–1 heat maps; mask non-finite values.
+
+	Does not modify the input array. Finite values are clipped to
+	[0, 1]. NaN, inf, and -inf are masked rather than converted to
+	0 or 1.
+	'''
+	data = np.array(values, dtype=np.float64, copy=True)
+	finite = np.isfinite(data)
+	clipped = np.empty_like(data)
+	clipped[finite] = np.clip(data[finite], 0.0, 1.0)
+	clipped[~finite] = np.nan
+	return np.ma.masked_where(~finite, clipped)
+
+
+def probability_heatmap_colormap():
+	'''Return an inferno copy with gray for masked / non-finite cells.'''
+	import matplotlib.pyplot as plt
+	cmap = plt.get_cmap('inferno').copy()
+	cmap.set_bad(color=PROBABILITY_HEATMAP_MISSING_COLOR, alpha=1.0)
+	return cmap
+
+
+def probability_heatmap_norm():
+	'''Return a fixed linear 0–1 scale, independent of the plotted data.'''
+	from matplotlib.colors import Normalize
+	return Normalize(vmin=0.0, vmax=1.0)
 
 
 class AnalyzeAnimal():
@@ -646,9 +680,170 @@ class AnalyzeAnimal():
 							self.event_probability[n][i-continued_length:i]=[['NA',-1]]*continued_length
 						continued_length=1
 					i+=1
+		
+		self.export_probability_matrices(make_heatmap=True)
 
 		print('Behavioral categorization completed!')
 		self.log.append('Behavioral categorization completed!')
+
+	def export_probability_matrices(self, make_heatmap=True, max_frames_for_heatmap=6000):
+
+		import os
+		import numpy as np
+		import pandas as pd
+		import matplotlib.pyplot as plt
+		from matplotlib.patches import Patch
+
+		os.makedirs(self.results_path, exist_ok=True)
+
+		behavior_names = list(self.all_behavior_parameters.keys())
+		T = len(self.all_time)
+
+		for ID in self.event_probability:
+			P = np.zeros((T, len(behavior_names)), dtype=np.float32)
+
+			for k, behavior_name in enumerate(behavior_names):
+				probs = self.all_behavior_parameters[behavior_name]['probability'][ID]
+				P[:, k] = np.array(probs, dtype=np.float32)
+
+			np.save(
+				os.path.join(self.results_path, f'probability_matrix_ID{ID}.npy'),
+				P
+			)
+
+			df = pd.DataFrame(P, columns=behavior_names)
+			df.insert(0, 'time_s', np.array(self.all_time))
+			df.insert(0, 'frame', np.arange(T))
+			df.to_csv(
+				os.path.join(self.results_path, f'probability_matrix_ID{ID}.csv'),
+				index=False,
+				float_format='%.4f'
+			)
+
+			if make_heatmap:
+				P_plot = P
+				stride = 1
+
+				if P_plot.shape[0] > max_frames_for_heatmap:
+					stride = int(np.ceil(P_plot.shape[0] / max_frames_for_heatmap))
+					P_plot = P_plot[::stride, :]
+
+				time_plot = np.array(self.all_time)[::stride]
+
+				P_plot = prepare_probability_heatmap_array(P_plot)
+				P_plot = P_plot.T
+
+				num_behaviors, num_frames = P_plot.shape
+
+				fig_width = max(18, num_frames / 140)
+				fig_height = max(8, num_behaviors * 0.55)
+
+				fig, ax = plt.subplots(figsize=(fig_width, fig_height), dpi=200)
+
+				im = ax.imshow(
+					P_plot,
+					aspect='auto',
+					interpolation='nearest',
+					cmap=probability_heatmap_colormap(),
+					norm=probability_heatmap_norm()
+				)
+
+				ax.set_yticks(np.arange(-0.5, num_behaviors, 1), minor=True)
+				ax.grid(
+					which='minor',
+					axis='y',
+					color='white',
+					linestyle='-',
+					linewidth=2.2
+				)
+
+				ax.set_xticks(np.arange(-0.5, num_frames, 1), minor=True)
+				ax.grid(
+					which='minor',
+					axis='x',
+					color='white',
+					linestyle='-',
+					linewidth=0.12,
+					alpha=0.25
+				)
+
+				ax.tick_params(which='minor', bottom=False, left=False)
+
+				if num_frames <= 50:
+					xticks = np.arange(num_frames)
+				else:
+					step = max(1, num_frames // 20)
+					xticks = np.arange(0, num_frames, step)
+
+				ax.set_xticks(xticks)
+
+				frame_labels = xticks * stride
+				time_labels = time_plot[xticks]
+
+				ax.set_xticklabels(
+					[
+						f'{frame}\n{time:.2f}s'
+						for frame, time in zip(frame_labels, time_labels)
+					],
+					fontsize=9,
+					rotation=45,
+					ha='right'
+				)
+
+				ax.set_yticks(np.arange(num_behaviors))
+				ax.set_yticklabels(
+					behavior_names,
+					fontsize=13,
+					fontweight='bold'
+				)
+
+				ax.set_xlabel(
+					'Frame / Time (s)' if stride == 1 else f'Frame / Time (s), stride={stride}',
+					fontsize=14,
+					fontweight='bold'
+				)
+
+				ax.set_ylabel(
+					'Behavior',
+					fontsize=14,
+					fontweight='bold'
+				)
+
+				ax.set_title(
+					f'Frame-Level Probability Matrix (ID {ID})',
+					fontsize=16,
+					fontweight='bold'
+				)
+
+				cbar = fig.colorbar(im, ax=ax, pad=0.02)
+				cbar.set_label(
+					'Probability\n'+PROBABILITY_HEATMAP_MISSING_LEGEND,
+					fontsize=12,
+					fontweight='bold'
+				)
+				cbar.ax.tick_params(labelsize=10)
+				ax.legend(
+					handles=[
+						Patch(
+							facecolor=PROBABILITY_HEATMAP_MISSING_COLOR,
+							edgecolor='black',
+							label=PROBABILITY_HEATMAP_MISSING_LEGEND,
+							)
+						],
+					loc='upper right',
+					fontsize=8,
+					framealpha=0.85,
+					)
+
+				plt.tight_layout()
+
+				plt.savefig(
+					os.path.join(self.results_path, f'probability_heatmap_ID{ID}.png'),
+					dpi=300,
+					bbox_inches='tight'
+				)
+
+				plt.close(fig)
 
 
 	def annotate_video(self,ID_colors,behavior_to_include,show_legend=True,interact_all=False):
@@ -1125,7 +1320,7 @@ class AnalyzeAnimal():
 		if self.categorize_behavior:
 			events_df=pd.DataFrame(self.event_probability,index=self.all_time)
 			events_df.to_excel(os.path.join(self.results_path,'all_event_probability.xlsx'),float_format='%.2f',index_label='time/ID')
-
+			
 		all_parameters=[]
 
 		if self.categorize_behavior:

@@ -27,6 +27,7 @@ All the trained Detectors are stored in '../LabGym/detectors/'. Use `pip show La
 | [Fly_TopView_640_10](https://drive.google.com/file/d/1sHRWi3FCuW-ayjwMtuILvAO8A4pjvJrp/view?usp=sharing) | Detecting 5 interacting flies with 0 ID switching, dedicated to [this video](https://drive.google.com/file/d/1SUxojWr7lsCMMRAzkSUBn601tQzY1CwW/view?usp=sharing) | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
 | [Fly_TopView_640_11](https://drive.google.com/file/d/15dUoPBYl1ORTmnJPLAqf3DfW46O5x71v/view?usp=sharing) | Detecting 5 interacting flies with 0 ID switching, dedicated to [this video](https://drive.google.com/file/d/17H_PZJuHX5dEdRSTA3PXHhYPcwyi68i1/view?usp=sharing) | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
 | [Fly_TopView_640_12](https://drive.google.com/file/d/1gnhviMCvncE3AlXc8hd_bHIV-fT1SAIA/view?usp=sharing) | Detecting 5 interacting flies with 0 ID switching, dedicated to [this video](https://drive.google.com/file/d/1TQ3-W5KBFbYSHS4AX0t3uxMDLXz-vJtP/view?usp=sharing) | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [2026.4.6 detector Facial expression](https://drive.google.com/file/d/1XL__T4WZox6PYR06LLAmn8NgUAzhZP6o/view?usp=sharing) | Detecting the ear, eye, and nose regions of a mouse face | [Dong et al 2026.](https://doi.org/10.64898/2026.07.31.742042) |
 
 <p>&nbsp;</p>
 
@@ -48,6 +49,7 @@ All the trained Detectors are stored in '../LabGym/detectors/'. Use `pip show La
 | [5 flies 10](https://drive.google.com/file/d/1_hGbXQ9Ydbrj8id04VIzymfMBatIqM3p/view?usp=sharing) | Used to train 'Fly_TopView_640_10' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
 | [5 flies 11](https://drive.google.com/file/d/19iNXDAs42FkJco7ex6Tp8dqkLJ-KG0YK/view?usp=sharing) | Used to train 'Fly_TopView_640_11' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
 | [5 flies 12](https://drive.google.com/file/d/1evhT_iNWt85AHs0hjFZFLQyKr6yW2Ehq/view?usp=sharing) | Used to train 'Fly_TopView_640_12' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [Mouse facial regions](https://drive.google.com/file/d/1DiwkvXYRaBSByPTiJr1OZZ6HNh8Ux318/view?usp=sharing) | Used to train '2026.4.6 detector Facial expression' | [Dong et al 2026.](https://doi.org/10.64898/2026.07.31.742042) |
 
 <p>&nbsp;</p>
 
@@ -64,6 +66,7 @@ All the trained Categorizers are stored in '../LabGym/models/'. Use `pip show La
 | [Mouse_SocialRecognition_TopView_15fps](https://drive.google.com/file/d/1jBJq--yPdVitFEUjGajEZdgOMoZdB9LE/view?usp=sharing) | Categorizing 9 mouse behaviors in mouse-boxes interactions | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
 | [Vole_PairBound_TopView_30fps](https://drive.google.com/file/d/1x_wLN494PEILFOAXcgyW4xhssiU4U1W3/view?usp=sharing) | Categorizing 9 vole behaviors in two-vole interactions | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
 | [Macaque_SocialGroom_FrontView_25fps](https://drive.google.com/file/d/1JNzZC0YvFUUshwvLNoC-pYbY4R7PcMBa/view?usp=sharing) | Categorizing 3 macaque behaviors in their social interactions in the field | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [LabGrymace_categorizer](https://drive.google.com/file/d/1v7fk4PoOmLYSvkJE8YKytIn_gMM82leu/view?usp=sharing) | Categorizing 10 facial-region states (ear, eye, nose) used to compute the pain score | [Dong et al 2026.](https://doi.org/10.64898/2026.07.31.742042) |
 
 <p>&nbsp;</p>
 
@@ -78,3 +81,4 @@ All the trained Categorizers are stored in '../LabGym/models/'. Use `pip show La
 | [One mouse two boxes](https://drive.google.com/file/d/1PPCNyHlTYSijU0AqQOIpsfKyNyvOhP_l/view?usp=sharing) | Used to train 'Mouse_SocialRecognition_TopView_15fps' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
 | [Two voles](https://drive.google.com/file/d/15EMsQyS1ZH12UsvrakPufeL8t24MQ7xv/view?usp=sharing) | Used to train 'Vole_PairBound_TopView_30fps' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
 | [Macaques in the field](https://drive.google.com/file/d/1Y7MgBWpffNYE4d6gHeXeHikchg5RL_u9/view?usp=sharing) | Used to train 'Macaque_SocialGroom_FrontView_25fps' | [Goss et al 2024.](https://www.biorxiv.org/content/10.1101/2024.07.07.602350v1) |
+| [Mouse facial-region behaviors](https://drive.google.com/file/d/1gXQ6NyDMWXAg2vLtIb34wSdpEvA0pbOS/view?usp=sharing) | Used to train 'LabGrymace_categorizer' | [Dong et al 2026.](https://doi.org/10.64898/2026.07.31.742042) |

@@ -19,7 +19,6 @@ Email: bingye@umich.edu
 
 # Standard library imports.
 import logging
-import sys
 from .gui_app_icon import set_frame_icon, setup_application_icons
 
 # Log the load of this module (by the module loader, on first import).
@@ -31,17 +30,25 @@ logger.debug('loading %s', __file__)
 # Related third party imports.
 import wx
 import wx.aui
-import wx.lib.agw.hyperlink as hl
+import wx.html
+import webbrowser
 
 # Local application/library specific imports.
 from LabGym import __version__
-from .gui_utils import add_or_select_notebook_page
+from .gui_appearance import select_for_appearance
+from .gui_utils import (
+	add_or_select_notebook_page,
+	compute_workflow_map_transform,
+	create_hyperlink,
+	hyperlink_html_style,
+	is_protected_notebook_page,
+)
 logger.debug('importing %s ...', '.gui_categorizer')
 from .gui_categorizer import PanelLv2_GenerateExamples,PanelLv2_TrainCategorizers,PanelLv2_SortBehaviors,PanelLv2_TestCategorizers
 logger.debug('importing %s done', '.gui_categorizer')
 from .gui_detector import PanelLv2_GenerateImages,PanelLv2_TrainDetectors,PanelLv2_TestDetectors
 from .gui_preprocessor import PanelLv2_ProcessVideos,PanelLv2_DrawMarkers
-from .gui_analyzer import PanelLv2_AnalyzeBehaviors,PanelLv2_MineResults,PanelLv2_PlotBehaviors,PanelLv2_CalculateDistances
+from .gui_analyzer import PanelLv2_AnalyzeBehaviors,PanelLv2_MineResults,PanelLv2_PlotBehaviors,PanelLv2_CalculateDistances, PanelLv2_StateTransitionMap
 from LabGym import selftest
 
 
@@ -66,16 +73,15 @@ class InitialPanel(wx.Panel):
 		boxsizer.Add(self.text_welcome,0,wx.LEFT|wx.RIGHT|wx.EXPAND,5)
 		boxsizer.Add(0,60,0)
 		self.text_developers=wx.StaticText(panel,
-			label='Created by Yujia Hu and Bing Ye\n\nLife Sciences Institute, University of Michigan\n\n\n\nContributor list:\n\nJie Zhou, John Ruckstuhl, Brendon O. Waston, Carrie R. Ferrario, Kelly Goss,\n\nRohan Satapathy, Bobby Tomlinson, Isabelle Baker, M. Victor Struman',style=wx.ALIGN_CENTER|wx.ST_ELLIPSIZE_END)
+			label='Created by Yujia Hu and Bing Ye\n\nLife Sciences Institute, University of Michigan\n\n\n\nContributor list:\n\nJie Zhou, John Ruckstuhl, Brendon O. Waston, Carrie R. Ferrario, Kelly Goss,\n\nRohan Satapathy, Bobby Tomlinson, Alexander Chumak, Alisa Ficiciyan, Myra Lyu,\n\nIsabelle Baker, M. Victor Struman',style=wx.ALIGN_CENTER|wx.ST_ELLIPSIZE_END)
 		boxsizer.Add(self.text_developers,0,wx.LEFT|wx.RIGHT|wx.EXPAND,5)
 		boxsizer.Add(0,60,0)
 
-		links=wx.BoxSizer(wx.HORIZONTAL)
-		homepage=hl.HyperLinkCtrl(panel,0,'Home Page',URL='https://github.com/umyelab/LabGym')
-		userguide=hl.HyperLinkCtrl(panel,0,'Extended Guide',URL='https://github.com/yujiahu415/LabGym/blob/master/LabGym_extended_user_guide.pdf')
-		links.Add(homepage,0,wx.LEFT|wx.EXPAND,10)
-		links.Add(userguide,0,wx.LEFT|wx.RIGHT|wx.EXPAND,10)
-		boxsizer.Add(links,0,wx.ALIGN_CENTER,50)
+		homepage=create_hyperlink(panel,'Home Page','https://www.labgym.org')
+		boxsizer.Add(homepage,0,wx.ALIGN_CENTER,50)
+		boxsizer.Add(0,14,0)
+		resources=create_hyperlink(panel,'Resources','https://www.labgym.org/resources')
+		boxsizer.Add(resources,0,wx.ALIGN_CENTER,50)
 		boxsizer.Add(0,50,0)
 
 		module_modules=wx.BoxSizer(wx.HORIZONTAL)
@@ -179,7 +185,6 @@ class PanelLv1_TrainingModule(wx.Panel):
 		self.notebook = parent
 		self.display_window()
 
-
 	def display_window(self):
 
 		panel = self
@@ -192,7 +197,7 @@ class PanelLv1_TrainingModule(wx.Panel):
 		boxsizer.Add(button_generateimages,0,wx.ALIGN_CENTER,10)
 		boxsizer.Add(0,5,0)
 
-		link_annotate=wx.lib.agw.hyperlink.HyperLinkCtrl(panel,0,'\nAnnotate images with EZannot\n',URL='https://github.com/yujiahu415/EZannot')
+		link_annotate=create_hyperlink(panel,'\nAnnotate images with EZannot\n','https://github.com/yujiahu415/EZannot')
 		boxsizer.Add(link_annotate,0,wx.ALIGN_CENTER,10)
 		boxsizer.Add(0,5,0)
 
@@ -237,55 +242,40 @@ class PanelLv1_TrainingModule(wx.Panel):
 		self.Centre()
 		self.Show(True)
 
-
 	def generate_images(self,event):
 		"""Open the Generate Image Examples panel."""
-
 		title = 'Generate Image Examples'
 		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_GenerateImages(self.notebook), title)
 
-
 	def train_detectors(self,event):
 		"""Open the Train Detectors panel."""
-
 		title = 'Train Detectors'
 		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_TrainDetectors(self.notebook), title)
 
-
 	def test_detectors(self,event):
 		"""Open the Test Detectors panel."""
-
 		title = 'Test Detectors'
 		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_TestDetectors(self.notebook), title)
 
-
 	def generate_behaviorexamples(self,event):
 		"""Open the Generate Behavior Examples panel."""
-
 		title = 'Generate Behavior Examples'
 		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_GenerateExamples(self.notebook), title)
 
-
 	def sort_behaviorexamples(self,event):
 		"""Open the Sort Behavior Examples panel."""
-
 		title = 'Sort Behavior Examples'
 		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_SortBehaviors(self.notebook), title)
 
-
 	def train_categorizers(self,event):
 		"""Open the Train Categorizers panel."""
-
 		title = 'Train Categorizers'
 		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_TrainCategorizers(self.notebook), title)
 
-
 	def test_categorizers(self,event):
 		"""Open the Test Categorizers panel."""
-
 		title = 'Test Categorizers'
 		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_TestCategorizers(self.notebook), title)
-
 
 
 class PanelLv1_AnalysisModule(wx.Panel):
@@ -320,6 +310,18 @@ class PanelLv1_AnalysisModule(wx.Panel):
 		button_rasterplot.Bind(wx.EVT_BUTTON,self.plot_behavior)
 		wx.Button.SetToolTip(button_rasterplot,'Generate a behavior plot given an all_events.xlsx file.')
 		boxsizer.Add(button_rasterplot,0,wx.ALIGN_CENTER,10)
+		boxsizer.Add(0,20,0)
+
+		button_statetransition=wx.Button(panel,label='State Transition Map',size=(300,40))
+		button_statetransition.Bind(wx.EVT_BUTTON,self.state_transition_map)
+		wx.Button.SetToolTip(
+			button_statetransition,
+			'Generate one State Transition Map per animal from a LabGym all_events.xlsx file. '
+			'Results go to state_transition_map under your chosen folder (updated on regenerate). '
+			'Nodes show time occupancy; edges show bout-level transition probabilities. '
+			'Excluded behaviors remove nodes and break sequences rather than bridging transitions.'
+			)
+		boxsizer.Add(button_statetransition,0,wx.ALIGN_CENTER,10)
 		boxsizer.Add(0,20,0)
 
 		button_calculatedistances=wx.Button(panel,label='Calculate Distances',size=(300,40))
@@ -361,20 +363,582 @@ class PanelLv1_AnalysisModule(wx.Panel):
 		title = 'Calculate Distances'
 		add_or_select_notebook_page(self.notebook, lambda: PanelLv2_CalculateDistances(self.notebook), title)
 
+	def state_transition_map(self,event):
+		"""Open the State Transition Map panel."""
+
+		title = 'State Transition Map'
+		add_or_select_notebook_page(
+			self.notebook,
+			lambda: PanelLv2_StateTransitionMap(self.notebook),
+			title
+		)
+
+# Popup content for each clickable workflow-map box: (section_title, box_title, description, guide_sections)
+_BOX_POPUP = {
+	'collect_footage': (
+		'Video Prep',
+		'Collect Footage',
+		'This is the video collection stage. Before LabGym can track animals or classify behaviors, you need videos that clearly capture the animals and the behaviors of interest. Good video quality, appropriate lighting, and consistent recording conditions will make downstream tracking and classification much more accurate.',
+		'Part 2, Part 3.5',
+	),
+	'preprocessing': (
+		'Video Prep',
+		'Preprocessing (Optional)',
+		'This step involves modifying videos before analysis if needed. Examples include cropping, trimming, stabilizing recordings, adjusting contrast, or adding spatial markers. LabGym also includes tools that can help prepare videos for later analysis.',
+		'Part 4.5, Part 4.6, Section l',
+	),
+	'tracking': (
+		'Tracking',
+		'Tracking / Animal Detection',
+		'This is where LabGym finds and follows animals across video frames. Every animal receives an identity and location over time, creating the movement information needed for behavior classification later. LabGym can use either background subtraction or a trained detector depending on video complexity.',
+		'Part 3.1, Part 4.1, Section ll',
+	),
+	'bg_sub': (
+		'Tracking',
+		'Background Subtraction',
+		'For videos with stable lighting and a fixed background, LabGym automatically estimates the background and removes it. This leaves only the moving animal(s), making tracking faster and more reliable.',
+		'Part 3.1, Part 4.1, Section lll A',
+	),
+	'detector': (
+		'Tracking',
+		'Detector',
+		'When backgrounds are complicated, lighting changes, or animals frequently overlap, LabGym can use a trained object detector instead of simple background subtraction. The detector learns what the target animal looks like and identifies it directly in each frame.',
+		'Part 3.1, Part 4.1, Section ll',
+	),
+	'generate_images': (
+		'Tracking',
+		'Generate Images',
+		"LabGym extracts representative frames from your videos that will be used to train a detector. These images become the dataset that you'll later annotate with animal locations.",
+		'Section ll A',
+	),
+	'roboflow': (
+		'Tracking',
+		'Roboflow OR EZannot',
+		'These tools are used to annotate the generated images. You draw boxes around animals and label them so the detector can learn what the target animal looks like.',
+		'Section ll B',
+	),
+	'train_detector': (
+		'Tracking',
+		'Train Detector',
+		'LabGym uses the annotated images to train an object detection model. The resulting detector can then automatically locate animals in new videos.',
+		'Section ll C, Section ll D',
+	),
+	'generate_examples': (
+		'Classification',
+		'Generate and Sort Behavior Examples',
+		'LabGym tracks animals and automatically generates behavior examples. Each example contains both an animation and a "pattern image" that summarizes the animal\'s movement through time. Users then sort these examples into behavior categories such as grooming, rearing, or locomotion.',
+		'Section lll A, Section lll B',
+	),
+	'train_categorizer': (
+		'Classification',
+		'Train Categorizer',
+		'The categorized behavior examples are used to train LabGym\'s "Categorizer," the deep-learning model that identifies behaviors. It learns from both the raw animations and the movement-pattern images.',
+		'Section lll C',
+	),
+	'test_categorizer': (
+		'Classification',
+		'Test Categorizer',
+		'After training, LabGym evaluates how accurately the categorizer identifies behaviors it has not seen before. This helps determine whether more training examples are needed.',
+		'Part 4.3, Section lll D',
+	),
+	'analyze_behaviors': (
+		'Classification',
+		'Analyze Behaviors',
+		'The trained categorizer is applied to experimental videos. LabGym classifies behaviors frame-by-frame and records when each behavior occurs. It also generates quantitative measurements such as duration, frequency, and movement metrics.',
+		'Part 4.4, Section lV',
+	),
+	'mine_results': (
+		'Post Classification Analysis',
+		'Mine Results',
+		'LabGym exports spreadsheets and structured behavioral data that can be explored statistically. Users can compare groups, quantify treatment effects, or examine temporal patterns in behavior.',
+		'Section lV B',
+	),
+	'generate_plot': (
+		'Post Classification Analysis',
+		'Generate Behavior Plot',
+		'LabGym can visualize behavior occurrence over time using raster plots and other summaries. These plots help users quickly identify patterns, transitions, and temporal organization of behaviors.',
+		'Section lV C',
+	),
+	'calc_distances': (
+		'Post Classification Analysis',
+		'Calculate Distances',
+		'Using tracking information, LabGym computes movement-based measurements such as distance traveled, speed, and location-related metrics. These can be analyzed alongside behavior classifications.',
+		'Part 4.4, Section lV',
+	),
+}
+
+# Practical-guide page numbers keyed by reference text (lowercase for case-insensitive lookup)
+_GUIDE_PAGES = {
+	'part 2':        4,
+	'part 3.1':      5,
+	'part 3.5':      6,
+	'part 4.1':      7,
+	'part 4.3':      8,
+	'part 4.4':      8,
+	'part 4.5':      9,
+	'part 4.6':      9,
+	'section l':    14,
+	'section ll':   16,
+	'section ll a': 16,
+	'section ll b': 18,
+	'section ll c': 21,
+	'section ll d': 23,
+	# Section III A → practical guide page 28 (user-confirmed for Background Subtraction).
+	'section lll a': 28,
+	'section lll b': 31,
+	'section lll c': 33,
+	'section lll d': 37,
+	'section lv':   38,
+	'section lv b': 44,
+	'section lv c': 44,
+}
+
+
+def resolve_guide_page_number(ref: str):
+	"""Return practical-guide page number for a map popup guide token, or None."""
+	if not ref:
+		return None
+	return _GUIDE_PAGES.get(ref.strip().lower())
+
+
+class BoxInfoPopup(wx.Frame):
+	"""Info popup shown when clicking a workflow-map box. Closes on focus loss."""
+
+	def __init__(self, parent, section, title, description, guide, fill, ink):
+		super().__init__(None, style=wx.FRAME_NO_TASKBAR | wx.STAY_ON_TOP | wx.NO_BORDER)
+		self.SetBackgroundColour(ink)  # ink peeks through as the border
+
+		# Blend fill 50% toward white for a softer popup background
+		pf = wx.Colour(
+			fill.Red()   + (255 - fill.Red())   // 2,
+			fill.Green() + (255 - fill.Green()) // 2,
+			fill.Blue()  + (255 - fill.Blue())  // 2,
+		)
+
+		panel = wx.Panel(self)
+		panel.SetBackgroundColour(pf)
+
+		html_win = wx.html.HtmlWindow(panel, size=(440, 100), style=wx.html.HW_NO_SELECTION)
+		html_win.SetBackgroundColour(pf)
+		html_win.SetBorders(0)
+		html_win.SetPage(self._make_html(section, title, description, guide, pf))
+		html_win.Bind(wx.html.EVT_HTML_LINK_CLICKED, self._on_link)
+
+		content_h = html_win.GetInternalRepresentation().GetHeight()
+		html_win.SetMinSize((440, content_h + 4))
+
+		inner = wx.BoxSizer(wx.VERTICAL)
+		inner.Add(html_win, 0, wx.ALL, 20)
+		panel.SetSizer(inner)
+		panel.Fit()
+
+		outer = wx.BoxSizer(wx.VERTICAL)
+		outer.Add(panel, 1, wx.ALL | wx.EXPAND, 3)  # 3px gap exposes ink-coloured frame background as border
+		self.SetSizer(outer)
+		self.Fit()
+
+		frame = wx.GetTopLevelParent(parent)
+		fx, fy = frame.GetPosition()
+		fw, fh = frame.GetSize()
+		pw, ph = self.GetSize()
+		self.SetPosition((fx + (fw - pw) // 2, fy + (fh - ph) // 2))
+
+		self._ready = False
+		self.Bind(wx.EVT_ACTIVATE, self._on_activate)
+		wx.CallLater(150, self._set_ready)
+
+	def _set_ready(self):
+		self._ready = True
+
+	def _on_activate(self, evt):
+		if self._ready and not evt.GetActive():
+			wx.CallAfter(self.Close)
+		evt.Skip()
+
+	def _on_link(self, evt):
+		webbrowser.open(evt.GetLinkInfo().GetHref())
+
+	def _make_html(self, section, title, description, guide, fill):
+		import html as _h
+		bg = '#{:02X}{:02X}{:02X}'.format(fill.Red(), fill.Green(), fill.Blue())
+		# Section-tinted cards stay light; pin dark body text for contrast under
+		# OS dark mode (HtmlWindow may otherwise inherit a light default).
+		text = select_for_appearance('#000000', '#111111')
+		# Shared cyan link family: normal == visited; hover slightly brighter.
+		link_c, vlink_c, hover_c = hyperlink_html_style()
+		base = 'https://www.labgym.org/guides/practical-guide#page-'
+		refs = []
+		for ref in (r.strip() for r in guide.split(',')):
+			page = resolve_guide_page_number(ref)
+			refs.append(
+				'<a href="{}{}">{}</a>'.format(base, page, _h.escape(ref)) if page
+				else _h.escape(ref)
+			)
+		guide_html = ', '.join(refs)
+		# body link/vlink + CSS cover both classic HtmlWindow and engines that
+		# honor style rules; visited never becomes purple.
+		return (
+			'<html><head><style type="text/css">'
+			'a:link {{ color: {link}; }}'
+			'a:visited {{ color: {vlink}; }}'
+			'a:hover {{ color: {hover}; }}'
+			'a:active {{ color: {hover}; }}'
+			'</style></head>'
+			'<body bgcolor="{bg}" text="{text}" link="{link}" vlink="{vlink}" alink="{hover}">'
+			'<center>'
+			'<font size="+1"><b>{section}</b><br>{title}</font>'
+			'<br><br>'
+			'{desc}'
+			'<br><br>'
+			'Learn more in the following LabGym Practical Guide sections: {guide}'
+			'</center>'
+			'</body></html>'
+		).format(
+			bg=bg,
+			text=text,
+			link=link_c,
+			vlink=vlink_c,
+			hover=hover_c,
+			section=_h.escape(section),
+			title=_h.escape(title),
+			desc=_h.escape(description, quote=False),
+			guide=guide_html,
+		)
+
+
+def _system_colour(index, fallback):
+	"""Return a wx.SystemSettings colour, or fallback if unavailable."""
+	try:
+		colour = wx.SystemSettings.GetColour(index)
+		if colour and colour.IsOk():
+			return colour
+	except Exception:
+		pass
+	return fallback
+
+
+def _workflow_map_surface_colours():
+	"""Native canvas / text colours for the Workflow Map (not connector greys).
+
+	Canvas and free-canvas text follow the system window colour pair. Connector
+	styles are resolved separately so greys can be tuned for hierarchy.
+	"""
+	window_bg = _system_colour(wx.SYS_COLOUR_WINDOW, wx.WHITE)
+	window_fg = _system_colour(wx.SYS_COLOUR_WINDOWTEXT, wx.BLACK)
+	# Light: retain a light canvas (prefer system window, else white).
+	# Dark: native/system window background (near-native dark surface).
+	canvas_bg = select_for_appearance(window_bg, window_bg)
+	# Titles and free-canvas labels follow system window text for contrast.
+	text_fg = select_for_appearance(window_fg, window_fg)
+	return canvas_bg, text_fg
+
+
+def _workflow_map_connector_styles():
+	"""Appearance-aware connector colours for the Workflow Map.
+
+	Between-phase greys are the most prominent neutrals; within-phase greys are
+	clearly visible but slightly less strong. Explicit greys (not grey-text /
+	button system roles) so connectors do not disappear against the canvas.
+	"""
+	# Between-phase: strongest neutrals — medium–dark on light; light on dark.
+	between_color = select_for_appearance(
+		wx.Colour(80, 80, 80),
+		wx.Colour(205, 205, 205),
+	)
+	# Within-phase: secondary neutrals — medium on light; slightly dimmer light grey on dark.
+	within_color = select_for_appearance(
+		wx.Colour(120, 120, 120),
+		wx.Colour(168, 168, 168),
+	)
+	return between_color, within_color
+
+
+class WorkflowMapPanel(wx.Panel):
+	"""Displays the LabGym workflow map scaled to the panel client size.
+
+	The main frame remains fixed at ``MainFrame.FIXED_FRAME_SIZE``. Logical layout
+	coordinates are fixed; scale and centering are recomputed each paint from
+	the actual client size so hit rectangles stay aligned with drawn boxes.
+	"""
+
+	# Logical (virtual) coordinate space — source of truth for layout.
+	VW = 2200
+	VH = 660
+	# Fallback client size when GetClientSize is temporarily invalid (startup).
+	_FALLBACK_CLIENT_W = 1100
+	_FALLBACK_CLIENT_H = 560
+
+	# Connector geometry (logical units → client pixels via ps()).
+	# Between-phase: filled polygonal chevrons (most prominent neutrals).
+	BETWEEN_SHAFT_HALF = 9					# half-height of the thick shaft
+	BETWEEN_HEAD_HALF = 17					# arrowhead half-width
+	BETWEEN_NECK = 26						# distance from tip to neck
+	BETWEEN_OUTLINE_W = 2					# outline pen (logical; scaled with floor)
+	# Within-phase: stroke arrows (vertical / diagonal), secondary weight.
+	WITHIN_LINE_W = 4						# shaft thickness (logical; becomes ≥2 px)
+	WITHIN_HEAD_HALF = 6					# arrowhead half-width
+	WITHIN_HEAD_LEN = 11					# arrowhead length along shaft
+
+	def __init__(self, parent):
+		super().__init__(parent)
+		self._clickable_boxes = []				# list of (bx, by, bw, bh, fill, ink, popup_data) in client pixels
+		self._apply_surface_colours()
+		self.Bind(wx.EVT_PAINT, self.on_paint)
+		self.Bind(wx.EVT_LEFT_DOWN, self._on_box_click)
+		# Refresh this map only when the OS appearance/system colours change.
+		if hasattr(wx, 'EVT_SYS_COLOUR_CHANGED'):
+			self.Bind(wx.EVT_SYS_COLOUR_CHANGED, self._on_sys_colour_changed)
+		# Some platforms update appearance on reactivation rather than colour-change.
+		frame = wx.GetTopLevelParent(self)
+		if frame is not None:
+			frame.Bind(wx.EVT_ACTIVATE, self._on_parent_activate)
+
+	def _map_transform(self):
+		"""Return (client_w, client_h, scale, ox, oy) from the current client size.
+
+		Tiny or invalid dimensions fall back to a nominal canvas so drawing and
+		hit tests remain well-defined during early layout passes.
+		"""
+		try:
+			cw, ch = self.GetClientSize()
+		except Exception:
+			cw, ch = 0, 0
+		return compute_workflow_map_transform(
+			cw, ch, vw=self.VW, vh=self.VH,
+			fallback_w=self._FALLBACK_CLIENT_W, fallback_h=self._FALLBACK_CLIENT_H,
+		)
+
+	def _apply_surface_colours(self):
+		"""Set the panel background from the current native appearance."""
+		canvas_bg, _ = _workflow_map_surface_colours()
+		self.SetBackgroundColour(canvas_bg)
+
+	def _on_sys_colour_changed(self, event):
+		self._apply_surface_colours()
+		self.Refresh()
+		event.Skip()
+
+	def _on_parent_activate(self, event):
+		if event.GetActive():
+			self._apply_surface_colours()
+			self.Refresh()
+		event.Skip()
+
+	def on_paint(self, event):
+		canvas_bg, text_fg = _workflow_map_surface_colours()
+		between_color, within_color = _workflow_map_connector_styles()
+		self.SetBackgroundColour(canvas_bg)
+		dc = wx.PaintDC(self)
+		dc.SetBackground(wx.Brush(canvas_bg))
+		dc.Clear()
+		self._draw(dc, text_fg, between_color, within_color)
+
+	def _draw(self, dc, text_fg, between_color, within_color):
+		import math								# needed for diagonal arrow angle calculations
+		self._clickable_boxes = []				# reset so hit-test rects match this paint
+		W, _H, scale, ox, oy = self._map_transform()
+
+		def px(v): return int(ox + v * scale)	# logical x → client pixel
+		def py(v): return int(oy + v * scale)	# logical y → client pixel
+		def ps(v): return max(1, int(v * scale))# logical size/thickness → pixels (minimum 1)
+
+		# Centralized connector metrics (client pixels). Floors keep hierarchy at scale 0.5.
+		between_outline_w = max(1, ps(self.BETWEEN_OUTLINE_W))
+		between_sh = max(5, ps(self.BETWEEN_SHAFT_HALF))
+		between_hw = max(10, ps(self.BETWEEN_HEAD_HALF))
+		between_neck = max(14, ps(self.BETWEEN_NECK))
+		within_line_w = max(2, ps(self.WITHIN_LINE_W))
+		within_ah = max(3, ps(self.WITHIN_HEAD_HALF))
+		within_al = max(5, ps(self.WITHIN_HEAD_LEN))
+
+		# Section fill and ink (border only) colors — unchanged identity colours
+		s1_fill = wx.Colour(255, 210, 210)		# super light red    — section 1
+		s1_ink  = wx.Colour(160, 55, 55)		# darker red         — section 1 borders
+		s2_fill = wx.Colour(210, 228, 255)		# super light blue   — section 2
+		s2_ink  = wx.Colour(55, 95, 165)		# darker blue        — section 2 borders
+		s3_fill = wx.Colour(255, 228, 195)		# super light orange — section 3
+		s3_ink  = wx.Colour(175, 100, 20)		# darker orange      — section 3 borders
+		s4_fill = wx.Colour(235, 215, 255)		# light lavender     — section 4
+		s4_ink  = wx.Colour(120, 60, 180)		# deeper purple      — section 4 borders
+
+		font      = wx.Font(max(12, ps(16)), wx.FONTFAMILY_DEFAULT,
+		                    wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL)	# body text font at fixed map scale
+		bold_font = wx.Font(max(18, ps(26)), wx.FONTFAMILY_DEFAULT,
+		                    wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)	# large bold font for the main title
+		head_font = wx.Font(max(15, ps(22)), wx.FONTFAMILY_DEFAULT,
+		                    wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)	# smaller bold font for section headings
+
+		dc.SetFont(font)
+		lh = dc.GetCharHeight()			# single-line height in pixels
+		MX = ps(14)						# horizontal margin each side in pixels
+		MY = ps(8)						# vertical margin each side in pixels
+		def hbh(n): return (lh * n + 2 * MY) / 2 / scale  # virtual half-box-height for n lines of text
+
+		def draw_box(cx, cy, lines, fill, ink, key=None):
+			dc.SetFont(font)
+			# Light pastel fills: keep black labels (already correct contrast).
+			dc.SetTextForeground(wx.BLACK)
+			line_widths = [dc.GetTextExtent(l)[0] for l in lines]
+			box_w = max(line_widths) + 2 * MX
+			box_h = lh * len(lines) + 2 * MY
+			bx = px(cx) - box_w // 2
+			by = py(cy) - box_h // 2
+			dc.SetPen(wx.Pen(ink, ps(1)))
+			dc.SetBrush(wx.Brush(fill))
+			dc.DrawRoundedRectangle(bx, by, box_w, box_h, ps(5))
+			ty = by + MY
+			for i, (line, lw) in enumerate(zip(lines, line_widths)):
+				dc.DrawText(line, px(cx) - lw // 2, ty + i * lh)
+			if key is not None:
+				self._clickable_boxes.append((bx, by, box_w, box_h, fill, ink, _BOX_POPUP[key]))
+
+		def v_arr(x, y1, y2):
+			"""Vertical within-phase connector (downward) using secondary neutral style."""
+			dc.SetPen(wx.Pen(within_color, within_line_w))
+			dc.SetBrush(wx.Brush(within_color))
+			dc.DrawLine(px(x), py(y1), px(x), py(y2))
+			dc.DrawPolygon([(px(x),    py(y2)),
+			                (px(x)-within_ah, py(y2)-within_al),
+			                (px(x)+within_ah, py(y2)-within_al)])
+
+		def diag_arr(x1, y1, x2, y2, lines=(), label_dx=0, label_dy=0):
+			"""Diagonal within-phase connector using secondary neutral style."""
+			dc.SetPen(wx.Pen(within_color, within_line_w))
+			dc.SetBrush(wx.Brush(within_color))
+			dc.DrawLine(px(x1), py(y1), px(x2), py(y2))
+			dx_v, dy_v = x2 - x1, y2 - y1
+			length = math.hypot(dx_v, dy_v)
+			ux, uy = dx_v / length, dy_v / length
+			tip_x, tip_y = px(x2), py(y2)
+			lft_x = int(tip_x - within_al * ux + within_ah * (-uy))
+			lft_y = int(tip_y - within_al * uy + within_ah * ux)
+			rgt_x = int(tip_x - within_al * ux - within_ah * (-uy))
+			rgt_y = int(tip_y - within_al * uy - within_ah * ux)
+			dc.DrawPolygon([(tip_x, tip_y), (lft_x, lft_y), (rgt_x, rgt_y)])
+			if lines:
+				perp_x, perp_y = uy, -ux			# 90 degrees left of arrow direction in screen coords
+				if perp_y > 0:						# if that points downward, flip so label is always above the arrow
+					perp_x, perp_y = -perp_x, -perp_y
+				offset = ps(80)						# pixels to push text away from the shaft
+				cx_label = px((x1 + x2) / 2) + int(perp_x * offset) + label_dx
+				cy_label = py((y1 + y2) / 2) + int(perp_y * offset) + label_dy
+				dc.SetFont(font)
+				dc.SetTextForeground(text_fg)
+				lh = dc.GetCharHeight()
+				top = cy_label - (lh * len(lines)) // 2
+				for i, line in enumerate(lines):
+					lw, _ = dc.GetTextExtent(line)
+					dc.DrawText(line, cx_label - lw // 2, top + i * lh)
+
+		def big_arr(x1, x2, cy):
+			"""Large between-phase connector (right-pointing) using primary neutral style."""
+			neck = px(x2) - between_neck
+			dc.SetPen(wx.Pen(between_color, between_outline_w))
+			dc.SetBrush(wx.Brush(between_color))
+			dc.DrawPolygon([
+				(px(x1), py(cy) - between_sh),
+				(neck,   py(cy) - between_sh),
+				(neck,   py(cy) - between_hw),
+				(px(x2), py(cy)),
+				(neck,   py(cy) + between_hw),
+				(neck,   py(cy) + between_sh),
+				(px(x1), py(cy) + between_sh),
+			])
+
+
+		# MAIN TITLE
+		dc.SetFont(bold_font)
+		dc.SetTextForeground(text_fg)
+		tw, _ = dc.GetTextExtent('LabGym Workflow Map')
+		dc.DrawText('LabGym Workflow Map', (W - tw) // 2, py(65) // 3)
+
+		# SECTION HEADINGS
+		dc.SetFont(head_font)
+		dc.SetTextForeground(text_fg)
+		for label, cx in [('1. Video Prep', 155), ('2. Tracking', 755), ('3. Classification', 1355)]:
+			tw, _ = dc.GetTextExtent(label)
+			dc.DrawText(label, px(cx) - tw // 2, py(65))
+		lh_head = dc.GetCharHeight()
+		for i, line in enumerate(['4. Post Classification', 'Analysis']):
+			tw, _ = dc.GetTextExtent(line)
+			dc.DrawText(line, px(1955) - tw // 2, py(65) + i * lh_head)
+
+
+		# ── Section 1: Video Prep ──────────────────────────────────────────────
+		v_arr(155, 154 + hbh(2), 259 - hbh(2))				# Collect Footage -> Preprocessing
+		big_arr(380, 555, 65)								# section 1 -> section 2 transition (centred in gap, at subtitle height)
+
+		# ── Section 2: Tracking ───────────────────────────────────────────────
+		diag_arr(715, 148 + hbh(2), 540, 280 - hbh(2), ['Static', 'Background'],  label_dx=-ps(30), label_dy=ps(38))	# Tracking -> Background Subtraction (steeper angle)
+		diag_arr(795, 148 + hbh(2), 950, 280 - hbh(1), ['Dynamic', 'Background'], label_dx= ps(30), label_dy=ps(25))	# Tracking -> Detector (steeper angle)
+		v_arr(950, 280 + hbh(1), 380 - hbh(2))				# Detector -> Generate Images
+		v_arr(933, 380 + hbh(2), 480 - hbh(2))				# Generate Images -> Roboflow OR EZannot (left fork)
+		v_arr(967, 380 + hbh(2), 480 - hbh(2))				# Generate Images -> Roboflow OR EZannot (right fork)
+		v_arr(950, 480 + hbh(2), 580 - hbh(2))				# Roboflow OR EZannot -> Train Detector
+		big_arr(967, 1142, 65)								# section 2 -> section 3 transition (centred in gap, at subtitle height)
+
+		# ── Section 3: Classification ─────────────────────────────────────────
+		v_arr(1355, 164 + hbh(3), 278 - hbh(2))			# Generate and sort -> Train Categorizer
+		v_arr(1355, 278 + hbh(2), 378 - hbh(2))			# Train Categorizer -> Test Categorizer
+		v_arr(1355, 378 + hbh(2), 478 - hbh(2))			# Test Categorizer -> Analyze Behaviors
+		big_arr(1567, 1742, 65)								# section 3 -> section 4 transition (centred in gap, at subtitle height)
+
+
+		# BOXES
+
+		# section 1
+		draw_box( 155, 154, ['Collect', 'Footage'],                        s1_fill, s1_ink, 'collect_footage')
+		draw_box( 155, 259, ['Preprocessing', '(Optional)'],                s1_fill, s1_ink, 'preprocessing')
+
+		# section 2
+		draw_box( 755, 148, ['Tracking /', 'Animal Detection'],             s2_fill, s2_ink, 'tracking')
+		draw_box( 540, 280, ['Background', 'Subtraction'],                 s2_fill, s2_ink, 'bg_sub')
+		draw_box( 950, 280, ['Detector'],                                  s2_fill, s2_ink, 'detector')
+		draw_box( 950, 380, ['Generate', 'Images'],                        s2_fill, s2_ink, 'generate_images')
+		draw_box( 950, 480, ['Roboflow OR', 'EZannot'],                    s2_fill, s2_ink, 'roboflow')
+		draw_box( 950, 580, ['Train', 'Detector'],                         s2_fill, s2_ink, 'train_detector')
+
+		# section 3
+		draw_box(1355, 164, ['Generate and', 'Sort Behavior', 'Examples'], s3_fill, s3_ink, 'generate_examples')
+		draw_box(1355, 278, ['Train', 'Categorizer'],                      s3_fill, s3_ink, 'train_categorizer')
+		draw_box(1355, 378, ['Test', 'Categorizer'],                       s3_fill, s3_ink, 'test_categorizer')
+		draw_box(1355, 478, ['Analyze', 'Behaviors'],                      s3_fill, s3_ink, 'analyze_behaviors')
+
+		# section 4
+		draw_box(1955, 195, ['Mine', 'Results'],           s4_fill, s4_ink, 'mine_results')
+		draw_box(1955, 295, ['Generate', 'Behavior Plot'], s4_fill, s4_ink, 'generate_plot')
+		draw_box(1955, 395, ['Calculate', 'Distances'],    s4_fill, s4_ink, 'calc_distances')
+
+	def _on_box_click(self, evt):
+		# Click coords are already in client space; box rects are recorded in the same space during paint.
+		x, y = evt.GetPosition()
+		for bx, by, bw, bh, fill, ink, data in self._clickable_boxes:
+			if bx <= x < bx + bw and by <= y < by + bh:
+				section, title, desc, guide = data
+				popup = BoxInfoPopup(self, section, title, desc, guide, fill, ink)
+				popup.Show()
+				return
+		evt.Skip()
 
 
 class MainFrame(wx.Frame):
 	"""Main frame and its notebook."""
 
+	# Fixed outer window size — large enough for the full Workflow Map (canvas 1100×560) without scroll.
+	# Height includes map client + notebook tabs + menubar/chrome (~90px). Not resizable.
+	FIXED_FRAME_SIZE = (1100, 650)
+
 	def __init__(self):
-		super().__init__(None, title=f'LabGym v{__version__}')
+		# Disable resize border and maximize so the frame stays at FIXED_FRAME_SIZE.
+		style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX)
+		super().__init__(None, title=f'LabGym v{__version__}', style=style)
 
-		self.SetSize((1000, 600))
+		self.SetSize(self.FIXED_FRAME_SIZE)
+		self.SetMinSize(self.FIXED_FRAME_SIZE)
+		self.SetMaxSize(self.FIXED_FRAME_SIZE)
 
-		# Set the app icon within GUI
-		set_frame_icon(self, context='normal')  # Set normal icon first
-		if sys.platform.startswith("win"):
-			set_frame_icon(self, context='small', size=16)  # Override with small icon for title bar
+		# Set the app icon within GUI (unified simplified artwork on all platforms)
+		set_frame_icon(self)
 
 		self.init_menubar()
 
@@ -390,12 +954,13 @@ class MainFrame(wx.Frame):
 			wx.aui.AuiPaneInfo().CenterPane(),
 			)
 
-		# Add panel as a page to the notebook.
-		panel = InitialPanel(self.notebook)
-		title = 'Home'
-		self.notebook.AddPage(panel, title, select=True)
+		# Store page objects for navigation/close protection (identity, not index/title).
+		self.home_page = InitialPanel(self.notebook)
+		self.notebook.AddPage(self.home_page, 'Home', select=True)
+		self.workflow_map_page = WorkflowMapPanel(self.notebook)
+		self.notebook.AddPage(self.workflow_map_page, 'Workflow Map', select=False)
 
-		# Bind the close event to prevent Home tab from being closed
+		# Bind the close event to protect stored Home / Workflow Map pages
 		self.notebook.Bind(wx.aui.EVT_AUINOTEBOOK_PAGE_CLOSE, self.on_page_close)
 
 		# Use a sizer to ensure the notebook fills the frame.
@@ -409,9 +974,14 @@ class MainFrame(wx.Frame):
 		self.Show()  # display the frame
 
 	def on_page_close(self, event):
-		"""Handle page close events to prevent Home tab from being closed."""
-		# Prevent the Home tab (index 0) from being closed
-		if event.GetSelection() == 0:
+		"""Veto closing of the stored Home and Workflow Map page objects."""
+		selection = event.GetSelection()
+		try:
+			page = self.notebook.GetPage(selection)
+		except Exception:
+			page = None
+		if is_protected_notebook_page(
+				page, (self.home_page, self.workflow_map_page)):
 			event.Veto()
 		else:
 			# Allow other tabs to be closed normally

@@ -156,7 +156,7 @@ def probe_url_to_verify_cacert() -> None:
 	try:
 		# requests.get(url) returns <Response [403]>
 		response = requests.get(url, timeout=8)
-	except requests.exceptions.SSLError as e:
+	except requests.exceptions.RequestException as e:
 		logger.debug('%s: %r', 'certifi.where()', certifi.where())
 
 		# sys.exit(f'(fatal) Trouble in SSL cert chain... ({e})')
