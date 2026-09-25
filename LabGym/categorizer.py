@@ -155,6 +155,81 @@ class DatasetFromPath_AA(Sequence):
 
 
 
+class DatasetFromPath_AAonly(Sequence):
+
+	'''
+	Load batches of training examples (animations only) from path
+	'''
+
+	def __init__(self,path_to_examples,length=15,batch_size=32,dim=16,channel=1):
+
+		self.path_to_examples=path_to_examples
+		self.length=length
+		self.batch_size=batch_size
+		self.dim=dim
+		self.channel=channel
+		self.pattern_image_paths,self.classmapping=self.load_info()
+
+
+	def load_info(self):
+
+		pattern_image_paths=[]
+		classnames=[]
+
+		for pattern_image in os.listdir(self.path_to_examples):
+			if pattern_image.endswith('.jpg'):
+				pattern_image_paths.append(os.path.join(self.path_to_examples,pattern_image))
+				classname=pattern_image.split('.jpg')[0].split('_')[-1]
+				if classname not in classnames:
+					classnames.append(classname)
+
+		np.random.shuffle(pattern_image_paths)
+
+		classnames.sort()
+		labels=np.array(classnames)
+		lb=LabelBinarizer()
+		labels=lb.fit_transform(labels)
+		labels=[list(i) for i in labels]
+		classmapping={name:labels[i] for i,name in enumerate(classnames)}
+
+		return pattern_image_paths,classmapping
+
+
+	def __len__(self):
+
+		return int(np.floor(len(self.pattern_image_paths)/self.batch_size))
+
+
+	def __getitem__(self,idx):
+
+		batch=self.pattern_image_paths[idx*self.batch_size:(idx+1)*self.batch_size]
+		animations=[]
+		labels=[]
+
+		for path_to_pattern_image in batch:
+
+			animation=deque([np.zeros((self.dim,self.dim,self.channel),dtype='uint8')],maxlen=self.length)*self.length
+			capture=cv2.VideoCapture(path_to_pattern_image.split('.jpg')[0]+'.avi')
+			while True:
+				retval,frame=capture.read()
+				if frame is None:
+					break
+				if self.channel==1:
+					frame=cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
+				frame=cv2.resize(frame,(self.dim,self.dim),interpolation=cv2.INTER_AREA)
+				animation.append(img_to_array(frame))
+			animations.append(np.array(animation))
+
+			labels.append(np.array(self.classmapping[path_to_pattern_image.split('.jpg')[0].split('_')[-1]]))
+
+		animations=np.array(animations)
+		animations=animations.astype('float32')/255.0
+		labels=np.array(labels)
+
+		return animations,labels
+
+
+
 class DatasetFromPath(Sequence):
 
 	'''
@@ -1637,8 +1712,8 @@ class Categorizers():
 
 		inputs=Input(shape=(dim,dim,channel))
 
-		print('Training Categorizer with both Animation Analyzer and Pattern Recognizer using the behavior examples in: '+str(data_path))
-		self.log.append('Training Categorizer with both Animation Analyzer and Pattern Recognizer using the behavior examples in: '+str(data_path))
+		print('Training the Categorizer w/ only Pattern Recognizer using the behavior examples in: '+str(data_path))
+		self.log.append('Training the Categorizer w/ only Pattern Recognizer using the behavior examples in: '+str(data_path))
 		print(datetime.datetime.now())
 		self.log.append(str(datetime.datetime.now()))
 
@@ -1753,10 +1828,10 @@ class Categorizers():
 		for i in range(round(dim/60)):
 			filters=min(int(filters*2),64)
 
-		inputs=Input(shape=(dim,dim,channel))
+		inputs=Input(shape=(time_step,dim,dim,channel))
 
-		print('Training Categorizer with both Animation Analyzer and Pattern Recognizer using the behavior examples in: '+str(data_path))
-		self.log.append('Training Categorizer with both Animation Analyzer and Pattern Recognizer using the behavior examples in: '+str(data_path))
+		print('Training the Categorizer w/ only Animation Analyzer using the behavior examples in: '+str(data_path))
+		self.log.append('Training the Categorizer w/ only Animation Analyzer using the behavior examples in: '+str(data_path))
 		print(datetime.datetime.now())
 		self.log.append(str(datetime.datetime.now()))
 
@@ -1774,8 +1849,8 @@ class Categorizers():
 			else:
 				batch_size=4
 
-			train_data=DatasetFromPath_AA(train_folder,length=time_step,batch_size=batch_size,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel)
-			validation_data=DatasetFromPath_AA(validation_folder,length=time_step,batch_size=batch_size,dim_tconv=dim_tconv,dim_conv=dim_conv,channel=channel)
+			train_data=DatasetFromPath_AAonly(train_folder,length=time_step,batch_size=batch_size,dim=dim,channel=channel)
+			validation_data=DatasetFromPath_AAonly(validation_folder,length=time_step,batch_size=batch_size,dim=dim,channel=channel)
 
 			if include_bodyparts:
 				inner_code=0
@@ -1992,7 +2067,7 @@ class Categorizers():
 			if 'color_code' in list(parameters.keys()):
 				color_code=int(parameters['color_code'][0])
 				if color_code==0:
-					print('The Categorizer recognizes RGB scale main character and RGB scale  supporting characters.')
+					print('The Categorizer recognizes RGB scale main character and RGB scale supporting characters.')
 				else:
 					print('The Categorizer recognizes RGB scale main character and grayscale supporting characters.')
 			else:
@@ -2091,6 +2166,10 @@ class Categorizers():
 
 		labels=np.array(labels)
 
+		with tf.device('CPU'):
+				if network!=0:
+					animations=tf.convert_to_tensor(np.array(animations,dtype='float32')/255.0)
+				pattern_images=tf.convert_to_tensor(np.array(pattern_images,dtype='float32')/255.0)
 		model=load_model(model_path)
 
 		from keras.models import Model
