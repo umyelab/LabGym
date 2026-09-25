@@ -1,5 +1,16 @@
 # Changelog
 
+## v3.1.0
+
+### What's Changed
+
+- Added workflow-map navigation and contextual guide links throughout the interface.
+- Added behavior-example count summaries to support categorizer data preparation.
+- Added frame-level categorizer probability exports and heatmaps, plus state-transition-map analysis.
+- Added interactive categorizer diagnostics, advisory triage reports, and representative reference examples.
+- Added Alisa Ficiciyan, Myra Lyu, and Alexander Chumak to the contributor list.
+- Improved cross-platform CI reliability for Windows and macOS.
+
 ## v3.0.1
 ### What's Changed
 * Fixed a bug in installation.

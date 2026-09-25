@@ -103,6 +103,10 @@ def main() -> None:
 	wx.App()
 	mywx.bring_wxapp_to_foreground()
 
+	# Establish Windows AppUserModelID / macOS Dock icon before any
+	# probe dialog or main window is shown (taskbar process identity only).
+	gui_main.setup_application_icons()
+
 	# Perform some pre-op sanity checks and probes of outside resources.
 	probes.probes()
 
