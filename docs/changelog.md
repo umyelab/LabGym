@@ -1,10 +1,11 @@
 # Changelog
 
 ## v3.1.1
-
 ### What's Changed
 
-- Fixed Windows package dependency metadata so upgrading LabGym no longer forces PyTorch 2.8.0, allowing existing compatible installations such as GPU-enabled 2.0.1+cu118 to remain in place.
+* Fixed Windows package dependency metadata so upgrading LabGym no longer forces PyTorch 2.8.0, allowing existing compatible installations such as GPU-enabled 2.0.1+cu118 to remain in place.
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v3.1.0...v3.1.1>
 
 ## v3.1.0
 ### What's Changed
