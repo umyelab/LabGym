@@ -124,7 +124,7 @@ class PanelLv2_AnalyzeBehaviors(wx.Panel):
 		self.dim_tconv=8 # input dimension for Animation Analyzer in Categorizer
 		self.dim_conv=8 # input dimension for Pattern Recognizer in Categorizer
 		self.channel=1 # input channel for Animation Analyzer, 1--gray scale, 3--RGB scale
-		self.length=15 # input time step for Animation Analyzer, also the duration / length for a behavior example
+		self.length=1 # input time step for Animation Analyzer, also the duration / length for a behavior example
 		self.animal_vs_bg=0 # 0: animals birghter than the background; 1: animals darker than the background; 2: hard to tell
 		self.stable_illumination=True # whether the illumination in videos is stable
 		self.animation_analyzer=True # whether to include Animation Analyzer in the Categorizers
@@ -897,6 +897,12 @@ class PanelLv2_AnalyzeBehaviors(wx.Panel):
 		else:
 
 			if self.path_to_categorizer is None:
+				dialog=wx.NumberEntryDialog(self,'The time window for calculating parameters','Enter the time window (the unit is frame): ','Time window',1,1,1000000)
+				if dialog.ShowModal()==wx.ID_OK:
+					self.length=dialog.GetValue()
+				else:
+					self.length=1
+				dialog.Destroy()
 				parameters=['3 areal parameters','3 length parameters','4 locomotion parameters']
 			else:
 				if self.behavior_mode==1:
