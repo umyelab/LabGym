@@ -1,5 +1,12 @@
 # Changelog
 
+## v3.1.2
+### What's Changed
+
+* Fixed Test Categorizer so confusion-matrix results are trustworthy again: test inputs were being scaled twice after a merge, which made almost every example look like one behavior even when the categorizer was fine.
+
+**Full Changelog**: <https://github.com/umyelab/LabGym/compare/v3.1.1...v3.1.2>
+
 ## v3.1.1
 ### What's Changed
 

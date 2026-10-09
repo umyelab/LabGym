@@ -2168,8 +2168,8 @@ class Categorizers():
 
 		with tf.device('CPU'):
 				if network!=0:
-					animations=tf.convert_to_tensor(np.array(animations,dtype='float32')/255.0)
-				pattern_images=tf.convert_to_tensor(np.array(pattern_images,dtype='float32')/255.0)
+					animations=tf.convert_to_tensor(animations)
+				pattern_images=tf.convert_to_tensor(pattern_images)
 		model=load_model(model_path)
 
 		from keras.models import Model
