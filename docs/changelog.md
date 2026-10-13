@@ -3,7 +3,8 @@
 ## v3.1.2
 ### What's Changed
 
-* Fixed Test Categorizer so confusion-matrix results are trustworthy again: test inputs were being scaled twice after a merge, which made almost every example look like one behavior even when the categorizer was fine.
+* Fixed Test Categorizer so confusion-matrix results are trustworthy again: test inputs were being scaled twice after a merge, which made almost every example look like one behavior even when the Categorizer was fine.
+* Provided users with an option to specify the time window for calculating body kinematics when not using a Categorizer for behavior classification.
 
 **Full Changelog**: <https://github.com/umyelab/LabGym/compare/v3.1.1...v3.1.2>
 
@@ -18,9 +19,9 @@
 ### What's Changed
 
 * Added workflow-map navigation and contextual guide links throughout the interface.
-* Added behavior-example count summaries to support categorizer data preparation.
-* Added frame-level categorizer probability exports and heatmaps, plus state-transition-map analysis.
-* Added interactive categorizer diagnostics, advisory triage reports, and representative reference examples.
+* Added behavior-example count summaries to support Categorizer data preparation.
+* Added frame-level Categorizer probability exports and heatmaps, plus state-transition-map analysis.
+* Added interactive Categorizer diagnostics, advisory triage reports, and representative reference examples.
 * Added Alisa Ficiciyan, Myra Lyu, and Alexander Chumak to the contributor list.
 * Improved cross-platform CI reliability for Windows and macOS.
 
