@@ -144,7 +144,7 @@ Headless animal tracking and behavior classification on videos or static images.
   * `--behavior-to-include` (`behavior_to_include`): Behaviors to quantify (default: `['all']`)
   * `--detector-batch` (`detector_batch`): Batch size for detector processing (default: 1)
   * `--detection-threshold` (`detection_threshold`): Detection confidence threshold 0.0–1.0 (default: 0.0)
-  * `--animal-number` (`animal_number`): Total animal count (integer) or video-to-count JSON mapping
+  * `--animal-number` (`animal_number`): Total animal count (positive integer) for all inference modes, or animal-kind-to-count mapping (e.g. `{"mouse": 2, "fly": 1}`) when detector inference is enabled (`--use-detector` / `use_detector: true`). Structured mappings are rejected without detector inference.
   * `--decode-animalnumber` / `--no-decode-animalnumber`: Extract animal counts from video filenames
   * `--autofind-t` / `--no-autofind-t`: Automatically detect optical stimulation trigger start time (default: False)
   * `--t` (`t`): Analysis start offset in seconds (default: 0.0)
@@ -279,6 +279,6 @@ The LabGym CLI adheres to POSIX process exit conventions:
 * **Exit Code `0`**: Workflow succeeded.
 * **Exit Code `1`**: Runtime scientific execution failure (e.g. underlying computation or model exception).
 * **Exit Code `2`**: Configuration, syntax, or validation error (e.g. missing/unreadable YAML file, unknown keys, invalid types, out-of-range bounds, incompatible parameter combinations, or missing required arguments).
-* **Standard Output (`stdout`)**: Informational human-readable workflow progress and success confirmations.
-* **Standard Error (`stderr`)**: Error messages, validation diagnostics, and command-line usage help.
+* **Standard Output (`stdout`)**: Informational human-readable workflow progress, success confirmations, and successful command help output (`--help` / `-h`).
+* **Standard Error (`stderr`)**: Error messages, validation diagnostics, and error usage output (syntax or argument errors).
 

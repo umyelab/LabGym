@@ -1457,15 +1457,28 @@ def test_animal_number_scalar_and_structured_types_and_validation():
     assert res['animal_number'] == 5
     assert isinstance(res['animal_number'], int)
 
-    cli_args = {'animal_number': '{"mouse": 2, "fly": 1}'}
+    cli_args = {'animal_number': 5, 'use_detector': True}
+    res = resolve_config("labgym infer", INFER_DEFAULTS, ALLOWED_INFER_KEYS, set(), None, cli_args)
+    assert res['animal_number'] == 5
+    assert isinstance(res['animal_number'], int)
+
+    cli_args = {'animal_number': '{"mouse": 2, "fly": 1}', 'use_detector': True}
     res = resolve_config("labgym infer", INFER_DEFAULTS, ALLOWED_INFER_KEYS, set(), None, cli_args)
     assert res['animal_number'] == {"mouse": 2, "fly": 1}
     assert isinstance(res['animal_number'], dict)
 
-    cli_args = {'animal_number': {"mouse": 3}}
+    cli_args = {'animal_number': {"mouse": 3}, 'use_detector': True}
     res = resolve_config("labgym infer", INFER_DEFAULTS, ALLOWED_INFER_KEYS, set(), None, cli_args)
     assert res['animal_number'] == {"mouse": 3}
     assert isinstance(res['animal_number'], dict)
+
+    with pytest.raises(CLIConfigError) as exc_info:
+        resolve_config("labgym infer", INFER_DEFAULTS, ALLOWED_INFER_KEYS, set(), None, {'animal_number': '{"mouse": 2}'})
+    assert "Structured 'animal_number' mapping is only supported when detector inference is enabled" in str(exc_info.value)
+
+    with pytest.raises(CLIConfigError) as exc_info:
+        resolve_config("labgym infer", INFER_DEFAULTS, ALLOWED_INFER_KEYS, set(), None, {'animal_number': {"mouse": 2}, 'use_detector': False})
+    assert "Structured 'animal_number' mapping is only supported when detector inference is enabled" in str(exc_info.value)
 
     invalid_inputs = [
         True,
@@ -1479,11 +1492,40 @@ def test_animal_number_scalar_and_structured_types_and_validation():
         {"mouse": -1},
         {"mouse": True},
         {"mouse": "two"},
+        {"": 2},
+        {"   ": 2},
         [1, 2],
     ]
     for bad_val in invalid_inputs:
         with pytest.raises(CLIConfigError):
-            resolve_config("labgym infer", INFER_DEFAULTS, ALLOWED_INFER_KEYS, set(), None, {'animal_number': bad_val})
+            resolve_config("labgym infer", INFER_DEFAULTS, ALLOWED_INFER_KEYS, set(), None, {'animal_number': bad_val, 'use_detector': True})
+
+
+def test_animal_number_structured_mapping_without_detector_fails_exit_2(tmp_path):
+    video = tmp_path / "vid.mp4"
+    video.write_bytes(b"vid")
+    out = tmp_path / "out"
+
+    exit_code = main([
+        "infer",
+        "--path-to-videos", str(video),
+        "--result-path", str(out),
+        "--animal-number", '{"mouse": 2}'
+    ])
+    assert exit_code == 2
+    assert not out.exists()
+
+    cfg_file = tmp_path / "infer_non_det_mapping.yaml"
+    with open(cfg_file, "w") as f:
+        yaml.dump({
+            "path_to_videos": [str(video)],
+            "result_path": str(out),
+            "animal_number": {"mouse": 2},
+            "use_detector": False
+        }, f)
+    exit_code = main(["infer", "-c", str(cfg_file)])
+    assert exit_code == 2
+    assert not out.exists()
 
 
 def test_headless_smoke_workflow_train_test_infer(tmp_path, capsys):
@@ -1605,10 +1647,20 @@ def test_cli_subprocess_headless_execution():
         "-c",
         "import sys, subprocess; "
         "res = subprocess.run([sys.executable, '-m', 'LabGym.cli', '--help'], capture_output=True, text=True); "
-        "sys.exit(0 if (res.returncode == 0 and 'LabGym CLI' in res.stdout) else 1)"
+        "sys.exit(0 if (res.returncode == 0 and 'LabGym CLI' in res.stdout and res.stderr == '') else 1)"
     ]
     proc = subprocess.run(cmd, capture_output=True, text=True)
     assert proc.returncode == 0
+
+    err_cmd = [
+        sys.executable,
+        "-c",
+        "import sys, subprocess; "
+        "res = subprocess.run([sys.executable, '-m', 'LabGym.cli', 'invalid_subcmd'], capture_output=True, text=True); "
+        "sys.exit(0 if (res.returncode == 2 and 'invalid choice' in res.stderr and res.stdout == '') else 1)"
+    ]
+    proc_err = subprocess.run(err_cmd, capture_output=True, text=True)
+    assert proc_err.returncode == 0
 
     no_wx_cmd = [
         sys.executable,

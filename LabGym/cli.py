@@ -294,6 +294,10 @@ def validate_types_and_ranges(command_name, config):
                 )
         elif isinstance(val, dict):
             for k, v in val.items():
+                if not isinstance(k, str) or not k.strip():
+                    raise CLIConfigError(
+                        f"Animal kinds in 'animal_number' dictionary must be non-empty strings (got {k!r})."
+                    )
                 if isinstance(v, bool) or not isinstance(v, int) or v <= 0:
                     raise CLIConfigError(
                         f"Animal counts in 'animal_number' dictionary must be positive integers (got {v!r} for '{k}')."
@@ -301,6 +305,13 @@ def validate_types_and_ranges(command_name, config):
         else:
             raise CLIConfigError(
                 f"Parameter 'animal_number' must be a positive integer or dictionary (got {type(val).__name__}: {val!r})."
+            )
+
+    if command_name == "labgym infer":
+        if isinstance(config.get('animal_number'), dict) and not config.get('use_detector'):
+            raise CLIConfigError(
+                "Structured 'animal_number' mapping is only supported when detector inference is enabled ('--use-detector'). "
+                "For non-detector inference, specify a single positive integer."
             )
 
     if command_name == "labgym train categorizer":
@@ -1217,10 +1228,7 @@ def handle_infer(args):
                 if use_detector:
                     animal_num = {animal_name: animal_num for animal_name in animal_kinds}
             elif isinstance(animal_num, dict):
-                if use_detector:
-                    animal_num = {animal_name: int(animal_num.get(animal_name, 1)) for animal_name in animal_kinds}
-                else:
-                    animal_num = int(list(animal_num.values())[0]) if animal_num else 1
+                animal_num = {animal_name: int(animal_num.get(animal_name, 1)) for animal_name in animal_kinds}
 
             if config['decode_t']:
                 for x in filename:
