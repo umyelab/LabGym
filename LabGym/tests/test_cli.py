@@ -2,6 +2,8 @@ import json
 import os
 import subprocess
 import sys
+from pathlib import Path
+
 import pytest
 import yaml
 from unittest.mock import patch, MagicMock
@@ -1672,4 +1674,35 @@ def test_cli_subprocess_headless_execution():
     ]
     proc_wx = subprocess.run(no_wx_cmd, capture_output=True, text=True)
     assert proc_wx.returncode == 0
+
+
+def _load_project_console_scripts():
+    """Return [project.scripts] from the repo pyproject.toml (Python 3.10-safe)."""
+    pyproject = Path(__file__).resolve().parents[2] / "pyproject.toml"
+    text = pyproject.read_text(encoding="utf-8")
+    try:
+        import tomllib
+    except ModuleNotFoundError:  # Python < 3.11
+        import tomli as tomllib
+    data = tomllib.loads(text)
+    scripts = data.get("project", {}).get("scripts")
+    assert isinstance(scripts, dict) and scripts, "pyproject.toml missing [project.scripts]"
+    return scripts
+
+
+def test_console_scripts_declare_distinct_gui_and_cli_entry_points():
+    scripts = _load_project_console_scripts()
+
+    assert scripts.get("LabGym") == "LabGym.__main__:main"
+    assert scripts.get("labgym-cli") == "LabGym.cli:main"
+    assert "labgym" not in scripts
+
+    # Reject case-only collisions (e.g. LabGym vs labgym) that break macOS/Windows installs.
+    seen = {}
+    for name in scripts:
+        key = name.casefold()
+        assert key not in seen, f"case-only console script collision: {seen[key]!r} vs {name!r}"
+        seen[key] = name
+
+    assert set(scripts) == {"LabGym", "labgym-cli"}
 

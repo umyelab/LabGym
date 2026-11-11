@@ -77,7 +77,7 @@ Issues='http://github.com/umyelab/LabGym/issues'
 
 [project.scripts]
 LabGym='LabGym.__main__:main'
-labgym='LabGym.cli:main'
+labgym-cli='LabGym.cli:main'
 
 [tool.pdm]
 distribution=true

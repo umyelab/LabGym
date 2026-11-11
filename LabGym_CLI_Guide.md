@@ -2,21 +2,23 @@
 
 This guide details the command syntax, configuration contract, parameter precedence, and options for the headless command-line interface (CLI) in LabGym.
 
+**Entry points:** `LabGym` remains the desktop GUI command. `labgym-cli` is the headless command-line interface for training, testing, and inference. Use `LabGym` to open the graphical application; use `labgym-cli` with a subcommand for scripted and HPC workflows.
+
 ---
 
 ## 1. Architecture & Subcommand Structure
 
 The LabGym CLI is organized into nested subcommands reflecting canonical actions and targets:
 
-* `labgym train categorizer`
-* `labgym train detector`
-* `labgym test categorizer`
-* `labgym test detector`
-* `labgym infer`
+* `labgym-cli train categorizer`
+* `labgym-cli train detector`
+* `labgym-cli test categorizer`
+* `labgym-cli test detector`
+* `labgym-cli infer`
 
-Running `labgym` without a subcommand launches the desktop graphical interface:
+Launch the desktop GUI with the separate `LabGym` command:
 ```bash
-labgym
+LabGym
 ```
 
 ### 3-Tier Precedence Hierarchy
@@ -37,12 +39,12 @@ The `--config` / `-c` flag specifies a **per-command workflow (job) configuratio
 
 ## 2. Command Reference
 
-### `labgym train categorizer`
+### `labgym-cli train categorizer`
 Headless training for behavior classification sub-networks (Pattern Recognizer, Animation Analyzer, or CombNet).
 
 * **Syntax**:
   ```bash
-  labgym train categorizer --config <file.yaml> [inline-overrides]
+  labgym-cli train categorizer --config <file.yaml> [inline-overrides]
   ```
 
 * **Required Parameters**:
@@ -70,12 +72,12 @@ Headless training for behavior classification sub-networks (Pattern Recognizer, 
   * `--color-costar` / `--no-color-costar`: Render supporting actors in RGB scale (default: False)
   * `--training-onfly` / `--no-training-onfly`: Train on the fly without pre-caching frames (default: False)
 
-### `labgym train detector`
+### `labgym-cli train detector`
 Headless training for Detectron2 object detection models.
 
 * **Syntax**:
   ```bash
-  labgym train detector --config <file.yaml> [inline-overrides]
+  labgym-cli train detector --config <file.yaml> [inline-overrides]
   ```
 
 * **Required Parameters**:
@@ -87,12 +89,12 @@ Headless training for Detectron2 object detection models.
   * `--iteration-num` (`iteration_num`): Number of training iterations (default: 200)
   * `--inference-size` (`inference_size`): Image frame resizing dimension for inference (default: 480)
 
-### `labgym test categorizer`
+### `labgym-cli test categorizer`
 Headless evaluation of a trained behavior classifier against ground-truth data.
 
 * **Syntax**:
   ```bash
-  labgym test categorizer --config <file.yaml> [inline-overrides]
+  labgym-cli test categorizer --config <file.yaml> [inline-overrides]
   ```
 
 * **Required Parameters**:
@@ -102,12 +104,12 @@ Headless evaluation of a trained behavior classifier against ground-truth data.
 * **Key Options**:
   * `--result-path` (`result_path`): Directory to write evaluation metrics and confusion matrices
 
-### `labgym test detector`
+### `labgym-cli test detector`
 Headless evaluation of a trained object detector against annotated testing images.
 
 * **Syntax**:
   ```bash
-  labgym test detector --config <file.yaml> [inline-overrides]
+  labgym-cli test detector --config <file.yaml> [inline-overrides]
   ```
 
 * **Required Parameters**:
@@ -116,14 +118,14 @@ Headless evaluation of a trained object detector against annotated testing image
   * `--model-path` (`model_path`): Path to trained Detector directory
   * `--result-path` (`result_path`): Directory to write detection test results
 
-### `labgym infer`
+### `labgym-cli infer`
 Headless animal tracking and behavior classification on videos or static images.
 
 > **Model Metadata Inheritance**: Architecture hyperparameters (`dim_conv`, `dim_tconv`, `channel`, `time_step`) and preprocessing settings (`background_free`, `black_background`, `behavior_mode`, `social_distance`, `color_costar`) are authoritative inside the trained Categorizer model's `model_parameters.txt` and are inherited automatically during inference.
 
 * **Syntax**:
   ```bash
-  labgym infer --config <file.yaml> [inline-overrides]
+  labgym-cli infer --config <file.yaml> [inline-overrides]
   ```
 
 * **Required Parameters**:
@@ -169,7 +171,7 @@ Headless animal tracking and behavior classification on videos or static images.
 
 ### Categorizer Training (`train_categorizer.yaml`)
 ```yaml
-# labgym train categorizer -c train_categorizer.yaml
+# labgym-cli train categorizer -c train_categorizer.yaml
 data_path: "~/data/behavior_examples"
 model_path: "~/models/categorizer_combnet"
 network_type: "combnet"
@@ -196,7 +198,7 @@ social_distance: 0.0
 
 ### Detector Training (`train_detector.yaml`)
 ```yaml
-# labgym train detector -c train_detector.yaml
+# labgym-cli train detector -c train_detector.yaml
 path_to_annotation: "~/data/annotations/train_coco.json"
 path_to_trainingimages: "~/data/training_images"
 model_path: "~/models/detector_mouse"
@@ -206,7 +208,7 @@ inference_size: 480
 
 ### Model Evaluation (`test_categorizer.yaml`)
 ```yaml
-# labgym test categorizer -c test_categorizer.yaml
+# labgym-cli test categorizer -c test_categorizer.yaml
 groundtruth_path: "~/data/groundtruth_examples"
 model_path: "~/models/categorizer_combnet"
 result_path: "~/results/categorizer_eval"
@@ -214,7 +216,7 @@ result_path: "~/results/categorizer_eval"
 
 ### Detector Evaluation (`test_detector.yaml`)
 ```yaml
-# labgym test detector -c test_detector.yaml
+# labgym-cli test detector -c test_detector.yaml
 path_to_annotation: "~/data/annotations/test_coco.json"
 path_to_testingimages: "~/data/test_images"
 model_path: "~/models/detector_mouse"
@@ -223,7 +225,7 @@ result_path: "~/results/detector_eval"
 
 ### Behavioral Inference (`infer.yaml`)
 ```yaml
-# labgym infer -c infer.yaml
+# labgym-cli infer -c infer.yaml
 path_to_videos:
   - "~/videos/session_1.mp4"
   - "~/videos/session_2.mp4"
@@ -263,7 +265,7 @@ Below is an example job script for submitting a headless training run on an HPC 
 module load python/3.10
 source ~/envs/labgym/bin/activate
 
-labgym train categorizer \
+labgym-cli train categorizer \
   --config train_categorizer.yaml \
   --data-path ~/data/behavior_dataset \
   --model-path ~/models/combnet_run \
@@ -281,4 +283,3 @@ The LabGym CLI adheres to POSIX process exit conventions:
 * **Exit Code `2`**: Configuration, syntax, or validation error (e.g. missing/unreadable YAML file, unknown keys, invalid types, out-of-range bounds, incompatible parameter combinations, or missing required arguments).
 * **Standard Output (`stdout`)**: Informational human-readable workflow progress, success confirmations, and successful command help output (`--help` / `-h`).
 * **Standard Error (`stderr`)**: Error messages, validation diagnostics, and error usage output (syntax or argument errors).
-
