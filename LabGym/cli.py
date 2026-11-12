@@ -427,7 +427,7 @@ def add_common_config_arg(parser):
 
 def build_parser():
     parser = argparse.ArgumentParser(
-        prog="labgym",
+        prog="labgym-cli",
         description="LabGym CLI: Headless command-line interface for training, testing, and behavioral inference."
     )
     subparsers = parser.add_subparsers(dest="action", help="Available actions")
@@ -1347,17 +1347,12 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
 
-    if len(argv) == 0:
-        try:
-            print("Launching LabGym GUI...", file=sys.stdout)
-            from LabGym.__main__ import main as gui_main
-            return gui_main()
-        except Exception as e:
-            print(f"Error launching LabGym GUI: {e}", file=sys.stderr)
-            return 1
-
     parser = build_parser()
-    
+
+    if len(argv) == 0:
+        parser.print_help(file=sys.stdout)
+        return 0
+
     try:
         args = parser.parse_args(argv)
     except SystemExit as e:

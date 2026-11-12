@@ -1706,3 +1706,31 @@ def test_console_scripts_declare_distinct_gui_and_cli_entry_points():
 
     assert set(scripts) == {"LabGym", "labgym-cli"}
 
+
+def test_parser_prog_is_labgym_cli():
+    assert build_parser().prog == "labgym-cli"
+
+
+def test_bare_command_prints_help_exits_zero(capsys):
+    exit_code = main([])
+    assert exit_code == 0
+    captured = capsys.readouterr()
+    assert "labgym-cli" in captured.out
+    assert "LabGym CLI" in captured.out
+    assert captured.err == ""
+
+
+def test_bare_command_does_not_import_or_launch_gui():
+    cmd = [
+        sys.executable,
+        "-c",
+        "from LabGym import cli; import sys; "
+        "code = cli.main([]); "
+        "blocked = ('wx' in sys.modules) or ('LabGym.__main__' in sys.modules); "
+        "sys.exit(0 if (code == 0 and not blocked) else 1)"
+    ]
+    proc = subprocess.run(cmd, capture_output=True, text=True)
+    assert proc.returncode == 0
+    assert "labgym-cli" in proc.stdout
+    assert proc.stderr == ""
+
