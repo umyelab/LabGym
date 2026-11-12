@@ -1099,6 +1099,45 @@ def resolve_media_paths(paths, behavior_mode):
     return deduped
 
 
+def rollup_behavior_summaries(result_path, behaviornames_and_colors, use_detector=False, animal_kinds=None):
+    """Aggregate per-video behavior summaries at the result root (GUI parity)."""
+    import pandas as pd
+
+    folders = [i for i in os.listdir(result_path) if os.path.isdir(os.path.join(result_path, i))]
+    folders.sort()
+    if not use_detector:
+        for behavior_name in behaviornames_and_colors:
+            all_summary = []
+            for folder in folders:
+                individual_summary = os.path.join(result_path, folder, behavior_name, 'all_summary.xlsx')
+                if os.path.exists(individual_summary):
+                    all_summary.append(pd.read_excel(individual_summary))
+            if len(all_summary) >= 1:
+                all_summary = pd.concat(all_summary, ignore_index=True)
+                all_summary.to_excel(
+                    os.path.join(result_path, behavior_name + '_summary.xlsx'),
+                    float_format='%.2f',
+                    index_label='ID/parameter'
+                )
+    else:
+        for animal_name in animal_kinds:
+            for behavior_name in behaviornames_and_colors:
+                all_summary = []
+                for folder in folders:
+                    individual_summary = os.path.join(
+                        result_path, folder, behavior_name, animal_name + '_all_summary.xlsx'
+                    )
+                    if os.path.exists(individual_summary):
+                        all_summary.append(pd.read_excel(individual_summary))
+                if len(all_summary) >= 1:
+                    all_summary = pd.concat(all_summary, ignore_index=True)
+                    all_summary.to_excel(
+                        os.path.join(result_path, animal_name + '_' + behavior_name + '_summary.xlsx'),
+                        float_format='%.2f',
+                        index_label='ID/parameter'
+                    )
+
+
 def handle_infer(args):
     config = resolve_config(
         command_name="labgym infer",
@@ -1339,6 +1378,14 @@ def handle_infer(args):
                     all_events_df = pd.DataFrame(event_data, index=all_time)
                     all_events_df.to_excel(os.path.join(result_path, 'all_events.xlsx'), float_format='%.2f', index_label='time/ID')
                     plot_events(result_path, event_data, all_time, cat_meta['behaviornames_and_colors'], behavior_to_include, width=0, height=0)
+
+        if path_to_categorizer is not None:
+            rollup_behavior_summaries(
+                result_path,
+                cat_meta['behaviornames_and_colors'],
+                use_detector=use_detector,
+                animal_kinds=animal_kinds,
+            )
 
     print("Inference completed successfully.", file=sys.stdout)
 

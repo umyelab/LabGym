@@ -8,6 +8,8 @@ import pytest
 import yaml
 from unittest.mock import patch, MagicMock
 
+import pandas as pd
+
 from LabGym.cli import (
     build_parser,
     resolve_config,
@@ -16,6 +18,7 @@ from LabGym.cli import (
     load_categorizer_metadata,
     load_detector_metadata,
     resolve_media_paths,
+    rollup_behavior_summaries,
     TRAIN_CATEGORIZER_DEFAULTS,
     ALLOWED_TRAIN_CATEGORIZER_KEYS,
     REQUIRED_TRAIN_CATEGORIZER_KEYS,
@@ -1733,4 +1736,121 @@ def test_bare_command_does_not_import_or_launch_gui():
     assert proc.returncode == 0
     assert "labgym-cli" in proc.stdout
     assert proc.stderr == ""
+
+
+def test_rollup_non_detector_two_videos_sorted_order(tmp_path):
+    result = tmp_path / "result"
+    for stem, count in (("video_b", 20), ("video_a", 10)):
+        behavior_dir = result / stem / "groom"
+        behavior_dir.mkdir(parents=True)
+        pd.DataFrame({"count": [count]}).to_excel(
+            behavior_dir / "all_summary.xlsx", index=False
+        )
+
+    rollup_behavior_summaries(
+        str(result),
+        behaviornames_and_colors={"groom": ["#ffffff", "#000000"]},
+        use_detector=False,
+    )
+
+    out = result / "groom_summary.xlsx"
+    assert out.is_file()
+    df = pd.read_excel(out)
+    assert list(df["count"]) == [10, 20]
+
+
+def test_rollup_detector_two_videos(tmp_path):
+    result = tmp_path / "result"
+    for stem, count in (("video_b", 5), ("video_a", 3)):
+        behavior_dir = result / stem / "groom"
+        behavior_dir.mkdir(parents=True)
+        pd.DataFrame({"count": [count]}).to_excel(
+            behavior_dir / "mouse_all_summary.xlsx", index=False
+        )
+
+    rollup_behavior_summaries(
+        str(result),
+        behaviornames_and_colors={"groom": ["#ffffff", "#000000"]},
+        use_detector=True,
+        animal_kinds=["mouse"],
+    )
+
+    out = result / "mouse_groom_summary.xlsx"
+    assert out.is_file()
+    assert not (result / "groom_summary.xlsx").exists()
+    df = pd.read_excel(out)
+    assert list(df["count"]) == [3, 5]
+
+
+def test_rollup_missing_per_video_summaries_creates_no_root_summary(tmp_path):
+    result = tmp_path / "result"
+    (result / "video_a" / "groom").mkdir(parents=True)
+    (result / "video_b" / "groom").mkdir(parents=True)
+
+    rollup_behavior_summaries(
+        str(result),
+        behaviornames_and_colors={"groom": ["#ffffff", "#000000"]},
+        use_detector=False,
+    )
+
+    assert not (result / "groom_summary.xlsx").exists()
+
+
+def test_infer_without_categorizer_does_not_rollup(tmp_path):
+    result = tmp_path / "result"
+    result.mkdir()
+    video = tmp_path / "v.mp4"
+    video.write_bytes(b"video")
+
+    planted = result / "video_a" / "groom"
+    planted.mkdir(parents=True)
+    pd.DataFrame({"count": [7]}).to_excel(planted / "all_summary.xlsx", index=False)
+
+    class FakeAnimal:
+        def __init__(self):
+            self.event_probability = {}
+            self.all_time = []
+
+        def prepare_analysis(self, *a, **k):
+            pass
+
+        def acquire_information(self, *a, **k):
+            pass
+
+        def craft_data(self):
+            pass
+
+        def annotate_video(self, *a, **k):
+            pass
+
+        def export_results(self, *a, **k):
+            pass
+
+    with patch("LabGym.analyzebehavior.AnalyzeAnimal", FakeAnimal):
+        exit_code = main([
+            "infer",
+            "--path-to-videos", str(video),
+            "--result-path", str(result),
+        ])
+    assert exit_code == 0
+    assert not (result / "groom_summary.xlsx").exists()
+
+
+def test_rollup_overwrites_existing_root_summary(tmp_path):
+    result = tmp_path / "result"
+    behavior_dir = result / "video_a" / "groom"
+    behavior_dir.mkdir(parents=True)
+    pd.DataFrame({"count": [42]}).to_excel(behavior_dir / "all_summary.xlsx", index=False)
+
+    stale = result / "groom_summary.xlsx"
+    pd.DataFrame({"count": [999]}).to_excel(stale, index=False)
+
+    rollup_behavior_summaries(
+        str(result),
+        behaviornames_and_colors={"groom": ["#ffffff", "#000000"]},
+        use_detector=False,
+    )
+
+    df = pd.read_excel(stale)
+    assert list(df["count"]) == [42]
 
