@@ -35,7 +35,7 @@ dependencies=[
     'torchaudio',
     'PyYAML',
     'tomli',
-    'reportlab>=5.0.0',
+    'reportlab>=5.0.0,<5.1',
     'Pillow>=7.1',
     'matplotlib',
     'pycocotools>=2.0.2',
