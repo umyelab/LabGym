@@ -307,14 +307,14 @@ def validate_types_and_ranges(command_name, config):
                 f"Parameter 'animal_number' must be a positive integer or dictionary (got {type(val).__name__}: {val!r})."
             )
 
-    if command_name == "labgym infer":
+    if command_name == "labgym-cli infer":
         if isinstance(config.get('animal_number'), dict) and not config.get('use_detector'):
             raise CLIConfigError(
                 "Structured 'animal_number' mapping is only supported when detector inference is enabled ('--use-detector'). "
                 "For non-detector inference, specify a single positive integer."
             )
 
-    if command_name == "labgym train categorizer":
+    if command_name == "labgym-cli train categorizer":
         net_type = config.get('network_type', 'combnet')
         if config.get('training_onfly'):
             if config.get('aug_methods'):
@@ -527,7 +527,7 @@ def build_parser():
 
 def handle_train_categorizer(args):
     config = resolve_config(
-        command_name="labgym train categorizer",
+        command_name="labgym-cli train categorizer",
         defaults=TRAIN_CATEGORIZER_DEFAULTS,
         allowed_keys=ALLOWED_TRAIN_CATEGORIZER_KEYS,
         required_keys=REQUIRED_TRAIN_CATEGORIZER_KEYS,
@@ -657,7 +657,7 @@ def handle_train_categorizer(args):
 
 def handle_train_detector(args):
     config = resolve_config(
-        command_name="labgym train detector",
+        command_name="labgym-cli train detector",
         defaults=TRAIN_DETECTOR_DEFAULTS,
         allowed_keys=ALLOWED_TRAIN_DETECTOR_KEYS,
         required_keys=REQUIRED_TRAIN_DETECTOR_KEYS,
@@ -756,7 +756,7 @@ def handle_train_detector(args):
 
 def handle_test_categorizer(args):
     config = resolve_config(
-        command_name="labgym test categorizer",
+        command_name="labgym-cli test categorizer",
         defaults=TEST_CATEGORIZER_DEFAULTS,
         allowed_keys=ALLOWED_TEST_CATEGORIZER_KEYS,
         required_keys=REQUIRED_TEST_CATEGORIZER_KEYS,
@@ -811,7 +811,7 @@ def handle_test_categorizer(args):
 
 def handle_test_detector(args):
     config = resolve_config(
-        command_name="labgym test detector",
+        command_name="labgym-cli test detector",
         defaults=TEST_DETECTOR_DEFAULTS,
         allowed_keys=ALLOWED_TEST_DETECTOR_KEYS,
         required_keys=REQUIRED_TEST_DETECTOR_KEYS,
@@ -1140,7 +1140,7 @@ def rollup_behavior_summaries(result_path, behaviornames_and_colors, use_detecto
 
 def handle_infer(args):
     config = resolve_config(
-        command_name="labgym infer",
+        command_name="labgym-cli infer",
         defaults=INFER_DEFAULTS,
         allowed_keys=ALLOWED_INFER_KEYS,
         required_keys=REQUIRED_INFER_KEYS,
@@ -1406,7 +1406,7 @@ def main(argv=None):
         return e.code
 
     if args.action in ['train', 'test'] and getattr(args, 'target', None) is None:
-        print(f"Error: 'labgym {args.action}' requires a target (e.g. 'categorizer' or 'detector').", file=sys.stderr)
+        print(f"Error: 'labgym-cli {args.action}' requires a target (e.g. 'categorizer' or 'detector').", file=sys.stderr)
         return 2
 
     if not hasattr(args, 'func'):

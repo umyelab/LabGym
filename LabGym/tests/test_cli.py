@@ -105,12 +105,18 @@ def test_command_routing_infer():
     assert args.result_path == "out/"
 
 
-def test_missing_target_fails():
+def test_missing_target_fails(capsys):
     exit_code = main(["train"])
     assert exit_code == 2
+    captured = capsys.readouterr()
+    assert "labgym-cli train" in captured.err
+    assert "labgym " not in captured.err.replace("labgym-cli", "")
 
     exit_code_test = main(["test"])
     assert exit_code_test == 2
+    captured_test = capsys.readouterr()
+    assert "labgym-cli test" in captured_test.err
+    assert "labgym " not in captured_test.err.replace("labgym-cli", "")
 
 
 def test_precedence_defaults_only():
@@ -119,7 +125,7 @@ def test_precedence_defaults_only():
         'model_path': '/my/model',
     }
     resolved = resolve_config(
-        command_name="labgym train categorizer",
+        command_name="labgym-cli train categorizer",
         defaults=TRAIN_CATEGORIZER_DEFAULTS,
         allowed_keys=ALLOWED_TRAIN_CATEGORIZER_KEYS,
         required_keys=REQUIRED_TRAIN_CATEGORIZER_KEYS,
@@ -148,7 +154,7 @@ def test_precedence_yaml_overrides_defaults(tmp_path):
 
     cli_args = {}
     resolved = resolve_config(
-        command_name="labgym train categorizer",
+        command_name="labgym-cli train categorizer",
         defaults=TRAIN_CATEGORIZER_DEFAULTS,
         allowed_keys=ALLOWED_TRAIN_CATEGORIZER_KEYS,
         required_keys=REQUIRED_TRAIN_CATEGORIZER_KEYS,
@@ -181,7 +187,7 @@ def test_precedence_inline_overrides_yaml(tmp_path):
         'background_free': True,
     }
     resolved = resolve_config(
-        command_name="labgym train categorizer",
+        command_name="labgym-cli train categorizer",
         defaults=TRAIN_CATEGORIZER_DEFAULTS,
         allowed_keys=ALLOWED_TRAIN_CATEGORIZER_KEYS,
         required_keys=REQUIRED_TRAIN_CATEGORIZER_KEYS,
@@ -213,7 +219,7 @@ def test_absent_inline_flags_never_overwrite_yaml(tmp_path):
         'result_path': None,
     }
     resolved = resolve_config(
-        command_name="labgym infer",
+        command_name="labgym-cli infer",
         defaults=INFER_DEFAULTS,
         allowed_keys=ALLOWED_INFER_KEYS,
         required_keys=REQUIRED_INFER_KEYS,
@@ -264,7 +270,7 @@ def test_paired_boolean_flag_overrides_yaml_false_with_true(tmp_path):
         yaml.dump({'path_to_videos': 'vid.mp4', 'result_path': 'out/', 'use_detector': False}, f)
 
     resolved = resolve_config(
-        command_name="labgym infer",
+        command_name="labgym-cli infer",
         defaults=INFER_DEFAULTS,
         allowed_keys=ALLOWED_INFER_KEYS,
         required_keys=REQUIRED_INFER_KEYS,
@@ -280,7 +286,7 @@ def test_paired_boolean_flag_overrides_yaml_true_with_false(tmp_path):
         yaml.dump({'path_to_videos': 'vid.mp4', 'result_path': 'out/', 'use_detector': True}, f)
 
     resolved = resolve_config(
-        command_name="labgym infer",
+        command_name="labgym-cli infer",
         defaults=INFER_DEFAULTS,
         allowed_keys=ALLOWED_INFER_KEYS,
         required_keys=REQUIRED_INFER_KEYS,
@@ -293,7 +299,7 @@ def test_paired_boolean_flag_overrides_yaml_true_with_false(tmp_path):
 def test_missing_config_file_raises_error():
     with pytest.raises(CLIConfigError) as exc_info:
         resolve_config(
-            command_name="labgym train categorizer",
+            command_name="labgym-cli train categorizer",
             defaults=TRAIN_CATEGORIZER_DEFAULTS,
             allowed_keys=ALLOWED_TRAIN_CATEGORIZER_KEYS,
             required_keys=REQUIRED_TRAIN_CATEGORIZER_KEYS,
@@ -314,7 +320,7 @@ def test_unknown_yaml_key_raises_error(tmp_path):
 
     with pytest.raises(CLIConfigError) as exc_info:
         resolve_config(
-            command_name="labgym train categorizer",
+            command_name="labgym-cli train categorizer",
             defaults=TRAIN_CATEGORIZER_DEFAULTS,
             allowed_keys=ALLOWED_TRAIN_CATEGORIZER_KEYS,
             required_keys=REQUIRED_TRAIN_CATEGORIZER_KEYS,
@@ -328,7 +334,7 @@ def test_unknown_yaml_key_raises_error(tmp_path):
 def test_missing_required_keys_raises_error():
     with pytest.raises(CLIConfigError) as exc_info:
         resolve_config(
-            command_name="labgym train categorizer",
+            command_name="labgym-cli train categorizer",
             defaults=TRAIN_CATEGORIZER_DEFAULTS,
             allowed_keys=ALLOWED_TRAIN_CATEGORIZER_KEYS,
             required_keys=REQUIRED_TRAIN_CATEGORIZER_KEYS,
@@ -342,7 +348,7 @@ def test_missing_required_keys_raises_error():
 def test_invalid_integer_bounds_raises_error():
     with pytest.raises(CLIConfigError) as exc_info:
         resolve_config(
-            command_name="labgym train detector",
+            command_name="labgym-cli train detector",
             defaults=TRAIN_DETECTOR_DEFAULTS,
             allowed_keys=ALLOWED_TRAIN_DETECTOR_KEYS,
             required_keys=REQUIRED_TRAIN_DETECTOR_KEYS,
@@ -354,13 +360,13 @@ def test_invalid_integer_bounds_raises_error():
                 'iteration_num': -100
             }
         )
-    assert "Parameter 'iteration_num' for 'labgym train detector' must be a positive integer" in str(exc_info.value)
+    assert "Parameter 'iteration_num' for 'labgym-cli train detector' must be a positive integer" in str(exc_info.value)
 
 
 def test_invalid_channel_raises_error():
     with pytest.raises(CLIConfigError) as exc_info:
         resolve_config(
-            command_name="labgym train categorizer",
+            command_name="labgym-cli train categorizer",
             defaults=TRAIN_CATEGORIZER_DEFAULTS,
             allowed_keys=ALLOWED_TRAIN_CATEGORIZER_KEYS,
             required_keys=REQUIRED_TRAIN_CATEGORIZER_KEYS,
@@ -377,7 +383,7 @@ def test_invalid_channel_raises_error():
 def test_invalid_network_type_raises_error():
     with pytest.raises(CLIConfigError) as exc_info:
         resolve_config(
-            command_name="labgym train categorizer",
+            command_name="labgym-cli train categorizer",
             defaults=TRAIN_CATEGORIZER_DEFAULTS,
             allowed_keys=ALLOWED_TRAIN_CATEGORIZER_KEYS,
             required_keys=REQUIRED_TRAIN_CATEGORIZER_KEYS,
@@ -398,7 +404,7 @@ def test_detector_training_does_not_require_categorizer_data():
         'model_path': 'models/detector',
     }
     resolved = resolve_config(
-        command_name="labgym train detector",
+        command_name="labgym-cli train detector",
         defaults=TRAIN_DETECTOR_DEFAULTS,
         allowed_keys=ALLOWED_TRAIN_DETECTOR_KEYS,
         required_keys=REQUIRED_TRAIN_DETECTOR_KEYS,
@@ -416,7 +422,7 @@ def test_user_path_expansion():
         'model_path': '~/my_model',
     }
     resolved = resolve_config(
-        command_name="labgym train categorizer",
+        command_name="labgym-cli train categorizer",
         defaults=TRAIN_CATEGORIZER_DEFAULTS,
         allowed_keys=ALLOWED_TRAIN_CATEGORIZER_KEYS,
         required_keys=REQUIRED_TRAIN_CATEGORIZER_KEYS,
@@ -442,7 +448,7 @@ def test_cli_main_invalid_args_returns_code_2():
 def test_booleans_rejected_for_integer_and_numeric_fields():
     with pytest.raises(CLIConfigError) as exc_info:
         resolve_config(
-            command_name="labgym train categorizer",
+            command_name="labgym-cli train categorizer",
             defaults=TRAIN_CATEGORIZER_DEFAULTS,
             allowed_keys=ALLOWED_TRAIN_CATEGORIZER_KEYS,
             required_keys=REQUIRED_TRAIN_CATEGORIZER_KEYS,
@@ -453,75 +459,75 @@ def test_booleans_rejected_for_integer_and_numeric_fields():
 
     with pytest.raises(CLIConfigError) as exc_info:
         resolve_config(
-            command_name="labgym train categorizer",
+            command_name="labgym-cli train categorizer",
             defaults=TRAIN_CATEGORIZER_DEFAULTS,
             allowed_keys=ALLOWED_TRAIN_CATEGORIZER_KEYS,
             required_keys=REQUIRED_TRAIN_CATEGORIZER_KEYS,
             config_path=None,
             cli_args_dict={'data_path': 'd', 'model_path': 'm', 'dim_conv': True}
         )
-    assert "Parameter 'dim_conv' for 'labgym train categorizer' must be a positive integer" in str(exc_info.value)
+    assert "Parameter 'dim_conv' for 'labgym-cli train categorizer' must be a positive integer" in str(exc_info.value)
 
     with pytest.raises(CLIConfigError) as exc_info:
         resolve_config(
-            command_name="labgym infer",
+            command_name="labgym-cli infer",
             defaults=INFER_DEFAULTS,
             allowed_keys=ALLOWED_INFER_KEYS,
             required_keys=REQUIRED_INFER_KEYS,
             config_path=None,
             cli_args_dict={'path_to_videos': ['v.mp4'], 'result_path': 'r', 'framewidth': True}
         )
-    assert "Parameter 'framewidth' for 'labgym infer' must be a positive integer" in str(exc_info.value)
+    assert "Parameter 'framewidth' for 'labgym-cli infer' must be a positive integer" in str(exc_info.value)
 
     with pytest.raises(CLIConfigError) as exc_info:
         resolve_config(
-            command_name="labgym infer",
+            command_name="labgym-cli infer",
             defaults=INFER_DEFAULTS,
             allowed_keys=ALLOWED_INFER_KEYS,
             required_keys=REQUIRED_INFER_KEYS,
             config_path=None,
             cli_args_dict={'path_to_videos': ['v.mp4'], 'result_path': 'r', 'min_length': False}
         )
-    assert "Parameter 'min_length' for 'labgym infer' must be a positive integer" in str(exc_info.value)
+    assert "Parameter 'min_length' for 'labgym-cli infer' must be a positive integer" in str(exc_info.value)
 
 
 def test_negative_values_rejected_for_framewidth_and_min_length():
     with pytest.raises(CLIConfigError) as exc_info:
         resolve_config(
-            command_name="labgym infer",
+            command_name="labgym-cli infer",
             defaults=INFER_DEFAULTS,
             allowed_keys=ALLOWED_INFER_KEYS,
             required_keys=REQUIRED_INFER_KEYS,
             config_path=None,
             cli_args_dict={'path_to_videos': ['v.mp4'], 'result_path': 'r', 'framewidth': -640}
         )
-    assert "Parameter 'framewidth' for 'labgym infer' must be a positive integer" in str(exc_info.value)
+    assert "Parameter 'framewidth' for 'labgym-cli infer' must be a positive integer" in str(exc_info.value)
 
     with pytest.raises(CLIConfigError) as exc_info:
         resolve_config(
-            command_name="labgym infer",
+            command_name="labgym-cli infer",
             defaults=INFER_DEFAULTS,
             allowed_keys=ALLOWED_INFER_KEYS,
             required_keys=REQUIRED_INFER_KEYS,
             config_path=None,
             cli_args_dict={'path_to_videos': ['v.mp4'], 'result_path': 'r', 'min_length': -5}
         )
-    assert "Parameter 'min_length' for 'labgym infer' must be a positive integer" in str(exc_info.value)
+    assert "Parameter 'min_length' for 'labgym-cli infer' must be a positive integer" in str(exc_info.value)
 
     with pytest.raises(CLIConfigError) as exc_info:
         resolve_config(
-            command_name="labgym infer",
+            command_name="labgym-cli infer",
             defaults=INFER_DEFAULTS,
             allowed_keys=ALLOWED_INFER_KEYS,
             required_keys=REQUIRED_INFER_KEYS,
             config_path=None,
             cli_args_dict={'path_to_videos': ['v.mp4'], 'result_path': 'r', 'ex_end': -1}
         )
-    assert "Parameter 'ex_end' for 'labgym infer' must be a non-negative integer" in str(exc_info.value)
+    assert "Parameter 'ex_end' for 'labgym-cli infer' must be a non-negative integer" in str(exc_info.value)
 
     with pytest.raises(CLIConfigError) as exc_info:
         resolve_config(
-            command_name="labgym infer",
+            command_name="labgym-cli infer",
             defaults=INFER_DEFAULTS,
             allowed_keys=ALLOWED_INFER_KEYS,
             required_keys=REQUIRED_INFER_KEYS,
@@ -542,14 +548,14 @@ def test_strings_rejected_where_lists_are_expected(tmp_path):
 
     with pytest.raises(CLIConfigError) as exc_info:
         resolve_config(
-            command_name="labgym infer",
+            command_name="labgym-cli infer",
             defaults=INFER_DEFAULTS,
             allowed_keys=ALLOWED_INFER_KEYS,
             required_keys=REQUIRED_INFER_KEYS,
             config_path=str(cfg),
             cli_args_dict={}
         )
-    assert "Parameter 'animal_kinds' for 'labgym infer' must be a list of strings" in str(exc_info.value)
+    assert "Parameter 'animal_kinds' for 'labgym-cli infer' must be a list of strings" in str(exc_info.value)
 
     with open(cfg, 'w') as f:
         yaml.dump({
@@ -560,14 +566,14 @@ def test_strings_rejected_where_lists_are_expected(tmp_path):
 
     with pytest.raises(CLIConfigError) as exc_info:
         resolve_config(
-            command_name="labgym train categorizer",
+            command_name="labgym-cli train categorizer",
             defaults=TRAIN_CATEGORIZER_DEFAULTS,
             allowed_keys=ALLOWED_TRAIN_CATEGORIZER_KEYS,
             required_keys=REQUIRED_TRAIN_CATEGORIZER_KEYS,
             config_path=str(cfg),
             cli_args_dict={}
         )
-    assert "Parameter 'aug_methods' for 'labgym train categorizer' must be a list of strings" in str(exc_info.value)
+    assert "Parameter 'aug_methods' for 'labgym-cli train categorizer' must be a list of strings" in str(exc_info.value)
 
     with open(cfg, 'w') as f:
         yaml.dump({
@@ -578,14 +584,14 @@ def test_strings_rejected_where_lists_are_expected(tmp_path):
 
     with pytest.raises(CLIConfigError) as exc_info:
         resolve_config(
-            command_name="labgym infer",
+            command_name="labgym-cli infer",
             defaults=INFER_DEFAULTS,
             allowed_keys=ALLOWED_INFER_KEYS,
             required_keys=REQUIRED_INFER_KEYS,
             config_path=str(cfg),
             cli_args_dict={}
         )
-    assert "Items in 'animal_kinds' for 'labgym infer' must be strings" in str(exc_info.value)
+    assert "Items in 'animal_kinds' for 'labgym-cli infer' must be strings" in str(exc_info.value)
 
 
 def test_infer_rejects_model_preprocessing_settings(tmp_path):
@@ -599,14 +605,14 @@ def test_infer_rejects_model_preprocessing_settings(tmp_path):
             }, f)
         with pytest.raises(CLIConfigError) as exc_info:
             resolve_config(
-                command_name="labgym infer",
+                command_name="labgym-cli infer",
                 defaults=INFER_DEFAULTS,
                 allowed_keys=ALLOWED_INFER_KEYS,
                 required_keys=REQUIRED_INFER_KEYS,
                 config_path=str(cfg),
                 cli_args_dict={}
             )
-        assert f"Unknown configuration key(s) in '{cfg}' for command 'labgym infer': {forbidden_key}" in str(exc_info.value)
+        assert f"Unknown configuration key(s) in '{cfg}' for command 'labgym-cli infer': {forbidden_key}" in str(exc_info.value)
 
 
 def test_load_categorizer_metadata_success(tmp_path):
@@ -839,7 +845,7 @@ def test_handle_infer_e2e_detector_execution(tmp_path, capsys):
 def test_path_to_videos_rejects_empty_strings():
     with pytest.raises(CLIConfigError) as exc_info:
         resolve_config(
-            command_name="labgym infer",
+            command_name="labgym-cli infer",
             defaults=INFER_DEFAULTS,
             allowed_keys=ALLOWED_INFER_KEYS,
             required_keys=REQUIRED_INFER_KEYS,
@@ -850,7 +856,7 @@ def test_path_to_videos_rejects_empty_strings():
 
     with pytest.raises(CLIConfigError) as exc_info:
         resolve_config(
-            command_name="labgym infer",
+            command_name="labgym-cli infer",
             defaults=INFER_DEFAULTS,
             allowed_keys=ALLOWED_INFER_KEYS,
             required_keys=REQUIRED_INFER_KEYS,
@@ -1453,36 +1459,36 @@ def test_train_rejects_irrelevant_cross_command_parameters(tmp_path):
 
 def test_animal_number_scalar_and_structured_types_and_validation():
     cli_args = {'animal_number': '2'}
-    res = resolve_config("labgym infer", INFER_DEFAULTS, ALLOWED_INFER_KEYS, set(), None, cli_args)
+    res = resolve_config("labgym-cli infer", INFER_DEFAULTS, ALLOWED_INFER_KEYS, set(), None, cli_args)
     assert res['animal_number'] == 2
     assert isinstance(res['animal_number'], int)
 
     cli_args = {'animal_number': 5}
-    res = resolve_config("labgym infer", INFER_DEFAULTS, ALLOWED_INFER_KEYS, set(), None, cli_args)
+    res = resolve_config("labgym-cli infer", INFER_DEFAULTS, ALLOWED_INFER_KEYS, set(), None, cli_args)
     assert res['animal_number'] == 5
     assert isinstance(res['animal_number'], int)
 
     cli_args = {'animal_number': 5, 'use_detector': True}
-    res = resolve_config("labgym infer", INFER_DEFAULTS, ALLOWED_INFER_KEYS, set(), None, cli_args)
+    res = resolve_config("labgym-cli infer", INFER_DEFAULTS, ALLOWED_INFER_KEYS, set(), None, cli_args)
     assert res['animal_number'] == 5
     assert isinstance(res['animal_number'], int)
 
     cli_args = {'animal_number': '{"mouse": 2, "fly": 1}', 'use_detector': True}
-    res = resolve_config("labgym infer", INFER_DEFAULTS, ALLOWED_INFER_KEYS, set(), None, cli_args)
+    res = resolve_config("labgym-cli infer", INFER_DEFAULTS, ALLOWED_INFER_KEYS, set(), None, cli_args)
     assert res['animal_number'] == {"mouse": 2, "fly": 1}
     assert isinstance(res['animal_number'], dict)
 
     cli_args = {'animal_number': {"mouse": 3}, 'use_detector': True}
-    res = resolve_config("labgym infer", INFER_DEFAULTS, ALLOWED_INFER_KEYS, set(), None, cli_args)
+    res = resolve_config("labgym-cli infer", INFER_DEFAULTS, ALLOWED_INFER_KEYS, set(), None, cli_args)
     assert res['animal_number'] == {"mouse": 3}
     assert isinstance(res['animal_number'], dict)
 
     with pytest.raises(CLIConfigError) as exc_info:
-        resolve_config("labgym infer", INFER_DEFAULTS, ALLOWED_INFER_KEYS, set(), None, {'animal_number': '{"mouse": 2}'})
+        resolve_config("labgym-cli infer", INFER_DEFAULTS, ALLOWED_INFER_KEYS, set(), None, {'animal_number': '{"mouse": 2}'})
     assert "Structured 'animal_number' mapping is only supported when detector inference is enabled" in str(exc_info.value)
 
     with pytest.raises(CLIConfigError) as exc_info:
-        resolve_config("labgym infer", INFER_DEFAULTS, ALLOWED_INFER_KEYS, set(), None, {'animal_number': {"mouse": 2}, 'use_detector': False})
+        resolve_config("labgym-cli infer", INFER_DEFAULTS, ALLOWED_INFER_KEYS, set(), None, {'animal_number': {"mouse": 2}, 'use_detector': False})
     assert "Structured 'animal_number' mapping is only supported when detector inference is enabled" in str(exc_info.value)
 
     invalid_inputs = [
@@ -1503,7 +1509,7 @@ def test_animal_number_scalar_and_structured_types_and_validation():
     ]
     for bad_val in invalid_inputs:
         with pytest.raises(CLIConfigError):
-            resolve_config("labgym infer", INFER_DEFAULTS, ALLOWED_INFER_KEYS, set(), None, {'animal_number': bad_val, 'use_detector': True})
+            resolve_config("labgym-cli infer", INFER_DEFAULTS, ALLOWED_INFER_KEYS, set(), None, {'animal_number': bad_val, 'use_detector': True})
 
 
 def test_animal_number_structured_mapping_without_detector_fails_exit_2(tmp_path):
@@ -1834,6 +1840,62 @@ def test_infer_without_categorizer_does_not_rollup(tmp_path):
         ])
     assert exit_code == 0
     assert not (result / "groom_summary.xlsx").exists()
+
+
+def test_handle_infer_with_categorizer_creates_root_behavior_summary(tmp_path):
+    cat_dir = tmp_path / "cat"
+    cat_dir.mkdir()
+    (cat_dir / "model_parameters.txt").write_text(
+        "classnames,dim_conv,channel,time_step,network,inner_code,std,"
+        "background_free,black_background,behavior_kind,social_distance,color_code\n"
+        "groom,64,1,15,0,0,0,0,0,0,0,1\n"
+    )
+    video = tmp_path / "video_a.mp4"
+    video.write_bytes(b"video")
+    out = tmp_path / "out"
+
+    class FakeAnimal:
+        def __init__(self):
+            self.event_probability = {0: [["groom", 0.95]]}
+            self.all_time = [0.1]
+            self._video_path = None
+            self._result_path = None
+
+        def prepare_analysis(self, video_path, result_path, *a, **k):
+            self._video_path = video_path
+            self._result_path = result_path
+
+        def acquire_information(self, *a, **k):
+            pass
+
+        def craft_data(self):
+            pass
+
+        def categorize_behaviors(self, *a, **k):
+            pass
+
+        def annotate_video(self, *a, **k):
+            pass
+
+        def export_results(self, *a, **k):
+            stem = os.path.splitext(os.path.basename(self._video_path))[0]
+            behavior_dir = Path(self._result_path) / stem / "groom"
+            behavior_dir.mkdir(parents=True, exist_ok=True)
+            pd.DataFrame({"count": [3]}).to_excel(behavior_dir / "all_summary.xlsx", index=False)
+
+    with patch("LabGym.analyzebehavior.AnalyzeAnimal", FakeAnimal), patch("LabGym.tools.plot_events"):
+        exit_code = main([
+            "infer",
+            "--path-to-videos", str(video),
+            "--result-path", str(out),
+            "--path-to-categorizer", str(cat_dir),
+        ])
+
+    assert exit_code == 0
+    root_summary = out / "groom_summary.xlsx"
+    assert root_summary.exists()
+    df = pd.read_excel(root_summary)
+    assert list(df["count"]) == [3]
 
 
 def test_rollup_overwrites_existing_root_summary(tmp_path):

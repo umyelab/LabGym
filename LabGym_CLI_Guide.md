@@ -130,7 +130,7 @@ Headless animal tracking and behavior classification on videos or static images.
 
 * **Required Parameters**:
   * `--path-to-videos` (`path_to_videos`): One or more video file paths or directories
-  * `--result-path` (`result_path`): Directory to write tracking and classification results
+  * `--result-path` (`result_path`): Directory to write tracking and classification results. Reusing an existing directory can include leftover per-video folders in a new root summary roll-up; if a behavior has no new per-video summaries, an outdated root `*_summary.xlsx` file can remain unchanged. Use a clean result directory for each run.
 
 * **Model Selection**:
   * `--path-to-categorizer` (`path_to_categorizer`): Path to trained Categorizer directory
