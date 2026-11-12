@@ -596,7 +596,7 @@ def test_strings_rejected_where_lists_are_expected(tmp_path):
 
 def test_infer_rejects_model_preprocessing_settings(tmp_path):
     cfg = tmp_path / "bad_infer.yaml"
-    for forbidden_key in ['background_free', 'black_background', 'behavior_mode', 'animal_vs_bg', 'social_distance', 'color_costar']:
+    for forbidden_key in ['background_free', 'black_background', 'behavior_mode', 'social_distance', 'color_costar']:
         with open(cfg, 'w') as f:
             yaml.dump({
                 'path_to_videos': ['v.mp4'],
@@ -613,6 +613,197 @@ def test_infer_rejects_model_preprocessing_settings(tmp_path):
                 cli_args_dict={}
             )
         assert f"Unknown configuration key(s) in '{cfg}' for command 'labgym-cli infer': {forbidden_key}" in str(exc_info.value)
+
+
+def test_animal_vs_bg_cli_parsing():
+    parser = build_parser()
+    args = parser.parse_args([
+        "infer",
+        "--path-to-videos", "vid.mp4",
+        "--result-path", "out/",
+        "--animal-vs-bg", "1",
+    ])
+    assert args.animal_vs_bg == 1
+
+    args_default = parser.parse_args([
+        "infer",
+        "--path-to-videos", "vid.mp4",
+        "--result-path", "out/",
+    ])
+    assert args_default.animal_vs_bg is None
+
+
+def test_animal_vs_bg_yaml_default_and_cli_precedence(tmp_path):
+    cfg = tmp_path / "infer_avb.yaml"
+    with open(cfg, 'w') as f:
+        yaml.dump({
+            'path_to_videos': ['vid.mp4'],
+            'result_path': 'out/',
+            'animal_vs_bg': 2,
+        }, f)
+
+    from_yaml = resolve_config(
+        command_name="labgym-cli infer",
+        defaults=INFER_DEFAULTS,
+        allowed_keys=ALLOWED_INFER_KEYS,
+        required_keys=REQUIRED_INFER_KEYS,
+        config_path=str(cfg),
+        cli_args_dict={'animal_vs_bg': None},
+    )
+    assert from_yaml['animal_vs_bg'] == 2
+
+    overridden = resolve_config(
+        command_name="labgym-cli infer",
+        defaults=INFER_DEFAULTS,
+        allowed_keys=ALLOWED_INFER_KEYS,
+        required_keys=REQUIRED_INFER_KEYS,
+        config_path=str(cfg),
+        cli_args_dict={'animal_vs_bg': 1},
+    )
+    assert overridden['animal_vs_bg'] == 1
+
+    defaults_only = resolve_config(
+        command_name="labgym-cli infer",
+        defaults=INFER_DEFAULTS,
+        allowed_keys=ALLOWED_INFER_KEYS,
+        required_keys=REQUIRED_INFER_KEYS,
+        config_path=None,
+        cli_args_dict={'path_to_videos': ['vid.mp4'], 'result_path': 'out/', 'animal_vs_bg': None},
+    )
+    assert defaults_only['animal_vs_bg'] == 0
+
+
+def test_animal_vs_bg_rejects_invalid_values():
+    for bad in (3, -1, True, "1"):
+        with pytest.raises(CLIConfigError) as exc_info:
+            resolve_config(
+                command_name="labgym-cli infer",
+                defaults=INFER_DEFAULTS,
+                allowed_keys=ALLOWED_INFER_KEYS,
+                required_keys=REQUIRED_INFER_KEYS,
+                config_path=None,
+                cli_args_dict={
+                    'path_to_videos': ['vid.mp4'],
+                    'result_path': 'out/',
+                    'animal_vs_bg': bad,
+                },
+            )
+        assert "animal_vs_bg" in str(exc_info.value)
+        assert "0, 1, or 2" in str(exc_info.value)
+
+
+def test_animal_vs_bg_accepted_in_yaml(tmp_path):
+    cfg = tmp_path / "infer_avb_ok.yaml"
+    with open(cfg, 'w') as f:
+        yaml.dump({
+            'path_to_videos': ['vid.mp4'],
+            'result_path': 'out/',
+            'animal_vs_bg': 1,
+        }, f)
+    resolved = resolve_config(
+        command_name="labgym-cli infer",
+        defaults=INFER_DEFAULTS,
+        allowed_keys=ALLOWED_INFER_KEYS,
+        required_keys=REQUIRED_INFER_KEYS,
+        config_path=str(cfg),
+        cli_args_dict={},
+    )
+    assert resolved['animal_vs_bg'] == 1
+
+
+def test_animal_vs_bg_detector_rejects_nonzero():
+    with pytest.raises(CLIConfigError) as exc_info:
+        resolve_config(
+            command_name="labgym-cli infer",
+            defaults=INFER_DEFAULTS,
+            allowed_keys=ALLOWED_INFER_KEYS,
+            required_keys=REQUIRED_INFER_KEYS,
+            config_path=None,
+            cli_args_dict={
+                'path_to_videos': ['vid.mp4'],
+                'result_path': 'out/',
+                'use_detector': True,
+                'animal_vs_bg': 1,
+            },
+        )
+    assert "animal_vs_bg" in str(exc_info.value)
+    assert "background-subtraction" in str(exc_info.value)
+
+    ok = resolve_config(
+        command_name="labgym-cli infer",
+        defaults=INFER_DEFAULTS,
+        allowed_keys=ALLOWED_INFER_KEYS,
+        required_keys=REQUIRED_INFER_KEYS,
+        config_path=None,
+        cli_args_dict={
+            'path_to_videos': ['vid.mp4'],
+            'result_path': 'out/',
+            'use_detector': True,
+            'animal_vs_bg': 0,
+        },
+    )
+    assert ok['animal_vs_bg'] == 0
+
+
+def test_handle_infer_passes_animal_vs_bg_to_prepare_analysis(tmp_path):
+    v = tmp_path / "vid.mp4"
+    v.write_bytes(b"video")
+    out = tmp_path / "out"
+    seen = {}
+
+    class FakeAnimal:
+        def __init__(self):
+            self.event_probability = {}
+            self.all_time = []
+
+        def prepare_analysis(self, *a, **k):
+            seen['animal_vs_bg'] = k.get('animal_vs_bg')
+
+        def acquire_information(self, *a, **k):
+            pass
+
+        def craft_data(self):
+            pass
+
+        def annotate_video(self, *a, **k):
+            pass
+
+        def export_results(self, *a, **k):
+            pass
+
+    with patch('LabGym.analyzebehavior.AnalyzeAnimal', FakeAnimal):
+        exit_code = main([
+            "infer",
+            "--path-to-videos", str(v),
+            "--result-path", str(out),
+            "--animal-vs-bg", "2",
+        ])
+    assert exit_code == 0
+    assert seen['animal_vs_bg'] == 2
+
+
+def test_handle_infer_detector_nonzero_animal_vs_bg_exits_2(tmp_path, capsys):
+    det_dir = tmp_path / "det"
+    det_dir.mkdir()
+    (det_dir / "model_parameters.txt").write_text(
+        json.dumps({"animal_mapping": {"0": "mouse"}, "inferencing_framesize": 480})
+    )
+    v = tmp_path / "v.mp4"
+    v.write_bytes(b"video")
+    out = tmp_path / "out_never"
+
+    exit_code = main([
+        "infer",
+        "--path-to-videos", str(v),
+        "--result-path", str(out),
+        "--use-detector",
+        "--path-to-detector", str(det_dir),
+        "--animal-vs-bg", "1",
+    ])
+    assert exit_code == 2
+    captured = capsys.readouterr()
+    assert "animal_vs_bg" in captured.err
+    assert not out.exists()
 
 
 def test_load_categorizer_metadata_success(tmp_path):

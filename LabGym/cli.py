@@ -99,6 +99,7 @@ INFER_DEFAULTS = {
     'ex_start': 0,
     'ex_end': None,
     'stable_illumination': True,
+    'animal_vs_bg': 0,
     'ID_colors': [(255, 255, 255)],
     'parameter_to_analyze': [],
     'uncertain': 0.0,
@@ -187,6 +188,14 @@ def validate_types_and_ranges(command_name, config):
         if isinstance(val, bool) or not isinstance(val, int) or val not in (1, 3):
             raise CLIConfigError(
                 f"Parameter 'channel' must be 1 or 3 (got {val!r})."
+            )
+
+    if 'animal_vs_bg' in config and config['animal_vs_bg'] is not None:
+        val = config['animal_vs_bg']
+        if isinstance(val, bool) or not isinstance(val, int) or val not in (0, 1, 2):
+            raise CLIConfigError(
+                f"Parameter 'animal_vs_bg' must be 0, 1, or 2 "
+                f"(0=animal brighter than background, 1=animal darker, 2=hard to tell; got {val!r})."
             )
 
     for level_key in ['level_conv', 'level_tconv']:
@@ -312,6 +321,11 @@ def validate_types_and_ranges(command_name, config):
             raise CLIConfigError(
                 "Structured 'animal_number' mapping is only supported when detector inference is enabled ('--use-detector'). "
                 "For non-detector inference, specify a single positive integer."
+            )
+        if config.get('use_detector') and config.get('animal_vs_bg', 0) != 0:
+            raise CLIConfigError(
+                "Parameter 'animal_vs_bg' applies only to background-subtraction inference. "
+                "With detector inference enabled ('--use-detector'), leave 'animal_vs_bg' at the default 0."
             )
 
     if command_name == "labgym-cli train categorizer":
@@ -512,6 +526,12 @@ def build_parser():
     infer_parser.add_argument("--ex-start", type=int, default=None, help="Extraction start frame number")
     infer_parser.add_argument("--ex-end", type=int, default=None, help="Extraction end frame number")
     infer_parser.add_argument("--stable-illumination", action=argparse.BooleanOptionalAction, default=None, help="Illumination stability")
+    infer_parser.add_argument(
+        "--animal-vs-bg",
+        type=int,
+        default=None,
+        help="Animal vs background contrast for background subtraction: 0=brighter (default), 1=darker, 2=hard to tell",
+    )
     infer_parser.add_argument("--ID-colors", type=str, default=None, help="Colormap sequence mapping IDs to colors")
     infer_parser.add_argument("--parameter-to-analyze", type=str, nargs="+", default=None, help="Kinematic parameters to extract")
     infer_parser.add_argument("--uncertain", type=float, default=None, help="Uncertainty threshold")
@@ -1297,7 +1317,7 @@ def handle_infer(args):
                     categorize_behavior=categorize_behavior, animation_analyzer=cat_meta['animation_analyzer'],
                     path_background=config['background_path'], autofind_t=config['autofind_t'],
                     t=t_val, duration=config['duration'], ex_start=ex_start_val, ex_end=ex_end_val,
-                    length=cat_meta['length'], animal_vs_bg=0
+                    length=cat_meta['length'], animal_vs_bg=config['animal_vs_bg']
                 )
                 if behavior_mode == 0:
                     AA.acquire_information(background_free=cat_meta['background_free'], black_background=cat_meta['black_background'])
