@@ -156,6 +156,7 @@ Headless animal tracking and behavior classification on videos or static images.
   * `--ex-end` (`ex_end`): Extraction end frame number
   * `--decode-extraction` / `--no-decode-extraction`: Extract start/end frames from filenames
   * `--stable-illumination` / `--no-stable-illumination`: Illumination stability flag (default: True)
+  * `--animal-vs-bg` (`animal_vs_bg`): Animal-to-background contrast for background-subtraction inference: `0` = animal brighter than background, `1` = animal darker than background, `2` = hard to tell. Default: `0`. This option is not used with `--use-detector`; a nonzero value in Detector mode is rejected.
   * `--ID-colors` (`ID_colors`): List of RGB color tuples for animal IDs
   * `--parameter-to-analyze` (`parameter_to_analyze`): Kinematic parameters to quantify. If this list is empty (the default), the current run writes no per-video summary workbook, so a Categorizer produces no root `*_summary.xlsx` roll-up from current-run data. Reused result directories can still contain or reuse earlier summaries.
   * `--uncertain` (`uncertain`): Probability difference gap for uncertainty threshold (default: 0.0)
