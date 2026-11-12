@@ -88,6 +88,8 @@ Cite LabGym:
 
 ## Overview
 
+`LabGym` launches the desktop GUI. `labgym-cli` is the headless command-line interface for training, testing, and inference. See the [LabGym CLI Guide](LabGym_CLI_Guide.md) for command syntax and configuration.
+
 You can use LabGym via its user interface (no coding knowledge needed), or via command prompt. See [**Extended User Guide**](https://github.com/yujiahu415/LabGym/blob/master/LabGym_extended_user_guide.pdf) for details. 
 
 You may also refer to this [**Practical "How To" Guide**](https://github.com/yujiahu415/LabGym/blob/master/LabGym_practical_guide.pdf) with layman language and examples.

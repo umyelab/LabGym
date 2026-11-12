@@ -11,6 +11,8 @@ We recommend that you follow the instructions below for your operating system to
 
 The simplest way to install LabGym is using `pip`. You may also use `pipx` or `Anaconda` to install LabGym in an isolated environment. For more information, please see the system-specific instructions below.
 
+After installation, `LabGym` launches the desktop GUI. For scripted or HPC workflows, use `labgym-cli` (headless). See the [LabGym CLI Guide](https://github.com/umyelab/LabGym/blob/master/LabGym_CLI_Guide.md) for details.
+
 ```{toctree}
 windows
 macos
