@@ -1,9 +1,5 @@
 # Changelog
 
-## Unreleased
-### What's Changed
-* Breaking: the headless console entry point is now `labgym-cli` (formerly `labgym`). `LabGym` remains the desktop GUI command.
-
 ## v3.1.2
 ### What's Changed
 
