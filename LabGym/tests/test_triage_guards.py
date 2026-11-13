@@ -778,7 +778,7 @@ def test_pyproject_declares_reportlab_min_5():
 	from pathlib import Path
 
 	text = (Path(__file__).resolve().parents[2] / 'pyproject.toml').read_text(encoding='utf-8')
-	assert "'reportlab>=5.0.0'" in text
+	assert "'reportlab>=5.0.0,<5.1'" in text
 	assert text.count('reportlab') == 1
 
 
